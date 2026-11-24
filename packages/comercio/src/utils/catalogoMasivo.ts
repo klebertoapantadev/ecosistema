@@ -88,6 +88,9 @@ export interface VarianteImportadaMasiva {
   var_activo?: boolean;
   tipo_envoltorio?: TipoEnvoltorioFloral;
   portada_url?: string | null;
+  album_url?: string | null;
+  tiempo_entrega?: string | null;
+  galeria_urls?: string[];
 }
 
 export interface ProductoImportadoMasivo {
@@ -770,7 +773,9 @@ export function exportarCatalogoAMarkdown(
 }
 
 /**
- * Construye las 3 hojas de Excel (`Productos`, `Variantes`, `Guia_IA`) para exportación masiva.
+ * Construye el libro de Excel unificado (`Catalogo` + `Guia_IA`) para análisis y edición masiva:
+ * cada producto aparece como una fila `MASTER` seguida inmediatamente de una fila `VARIANTE`
+ * por cada tamaño/opción para comparar fácilmente sus precios, SKU, fotos y envoltorio lado a lado.
  */
 export function construirHojasExcelCatalogo(
   productos: ProductoCatalogo[],
@@ -778,31 +783,29 @@ export function construirHojasExcelCatalogo(
   opciones: { negocio: string }
 ): Array<{ nombre: string; filas: Record<string, unknown>[]; anchosColumnas?: number[] }> {
   const neg = opciones.negocio.toLowerCase();
-  const filasProductos: Record<string, unknown>[] = [];
-  const filasVariantes: Record<string, unknown>[] = [];
+  const esFloristeria = neg.includes("tinkay") || neg.includes("margarita");
+  const filasCatalogo: Record<string, unknown>[] = [];
 
   for (const p of productos) {
     const b = construirBorradorDesdeProducto(p, { negocio: neg });
     const pf = b.personalizacionFloral;
     const log = b.logistica || {};
-    const v0 = b.variantes[0];
 
-    filasProductos.push({
+    // 1. Fila MASTER del producto
+    filasCatalogo.push({
+      nivel_fila: "MASTER",
       pro_id: b.pro_id || "",
+      var_id: "",
       slug: b.pro_slug || "",
+      sku: "",
       nombre: b.nombre,
       categoria: b.categoriaNombre || "",
       tipo: b.tipo,
       activo: b.activo ? "SI" : "NO",
       destacado: b.destacado ? "SI" : "NO",
       tarifa_iva: b.tarifaIvaPredeterminada,
-      sku_principal: v0?.var_sku || "",
-      precio_principal_base: v0 ? Number(v0.var_precio.toFixed(2)) : "",
-      precio_principal_comparacion:
-        v0?.var_precio_comparacion != null
-          ? Number(v0.var_precio_comparacion.toFixed(2))
-          : "",
-      total_variantes: b.variantes.length,
+      precio_base: "",
+      precio_comparacion: "",
       descripcion: b.descripcion,
       beneficios: b.beneficios.join(" | "),
       requisitos: (b.requisitos || []).join(" | "),
@@ -836,39 +839,104 @@ export function construirHojasExcelCatalogo(
       galeria_urls: (b.galeriaUrls || []).join(", "),
     });
 
-    for (const v of b.variantes) {
-      filasVariantes.push({
+    // 2. Una fila VARIANTE por cada variante/tamaño justo debajo del MASTER
+    const variantesRaw = Array.isArray(p.variantes) ? p.variantes : [];
+    for (let i = 0; i < b.variantes.length; i += 1) {
+      const v = b.variantes[i]!;
+      const vRaw = variantesRaw[i];
+      const vdet = (vRaw?.var_detalle_variante && typeof vRaw.var_detalle_variante === "object"
+        ? vRaw.var_detalle_variante
+        : {}) as Record<string, any>;
+      const persVar = esFloristeria
+        ? resolverPersonalizacionFloralEfectiva({
+            configMaster: pf,
+            configVariante: vdet.personalizacion_floral,
+            modoVariante: vdet.personalizacion_floral_modo,
+            habilitadaPorDefecto: esFloristeria,
+            tipoEnvoltorioPorDefecto: pf?.tipoEnvoltorio,
+          })
+        : null;
+      const galVar = Array.isArray(vdet.galeria_urls) ? vdet.galeria_urls.filter(Boolean) : [];
+      const benVar =
+        (vdet.beneficios_modo === "reemplazar" || vdet.beneficios_modo === "anexar") &&
+        Array.isArray(vdet.beneficios_custom)
+          ? vdet.beneficios_custom.filter(Boolean).join(" | ")
+          : "";
+      const usosVar =
+        vdet.usos_modo === "personalizado" && Array.isArray(vdet.usos)
+          ? vdet.usos.filter(Boolean).join(", ")
+          : "";
+
+      filasCatalogo.push({
+        nivel_fila: "VARIANTE",
         pro_id: b.pro_id || "",
-        producto_nombre: b.nombre,
         var_id: v.var_id || "",
-        var_sku: v.var_sku,
-        var_nombre: v.var_nombre,
-        var_precio: Number(v.var_precio.toFixed(2)),
-        var_precio_comparacion:
+        slug: b.pro_slug || "",
+        sku: v.var_sku,
+        nombre: v.var_nombre,
+        categoria: b.categoriaNombre || "",
+        tipo: "",
+        activo: v.var_activo ? "SI" : "NO",
+        destacado: "",
+        tarifa_iva: v.var_tarifa_iva_porcentaje,
+        precio_base: Number(v.var_precio.toFixed(2)),
+        precio_comparacion:
           v.var_precio_comparacion != null ? Number(v.var_precio_comparacion.toFixed(2)) : "",
-        var_tarifa_iva_porcentaje: v.var_tarifa_iva_porcentaje,
-        var_activo: v.var_activo ? "SI" : "NO",
-        var_tipo_envoltorio: v.tipo_envoltorio || "",
-        var_portada_url: v.portada_url || "",
+        descripcion: "",
+        beneficios: benVar,
+        requisitos: "",
+        tiempo_entrega: vdet.tiempo_entrega ? String(vdet.tiempo_entrega) : "",
+        usos: usosVar,
+        etiquetas: "",
+        canales: "",
+        vigencia_tipo: "",
+        fecha_inicio: "",
+        fecha_fin: "",
+        etiqueta_temporada: "",
+        delivery_incluido: "",
+        modalidad_transporte: "",
+        etiqueta_transporte: "",
+        cobertura_texto: "",
+        recargo_transporte_usd: "",
+        floral_habilitada: "",
+        floral_max_colores_rosas: persVar ? persVar.maxColoresRosas : "",
+        floral_colores_rosas: "",
+        floral_solo_rosas: "",
+        floral_solo_girasoles: "",
+        floral_girasoles_y_rosas: "",
+        floral_orquideas_min: "",
+        floral_orquideas_max: "",
+        floral_tipo_envoltorio: v.tipo_envoltorio || "",
+        floral_colores_envoltorio: persVar ? persVar.coloresBaseDisponibles.join(", ") : "",
+        floral_indicaciones: "",
+        imagen_url: v.portada_url || "",
+        album_fotos_url: vdet.album_url ? String(vdet.album_url) : "",
+        video_url: "",
+        galeria_urls: galVar.join(", "),
       });
     }
   }
 
   const filasGuia: Record<string, unknown>[] = [
     {
+      Seccion: "Estructura (nivel_fila)",
+      Instruccion:
+        "Cada producto tiene una fila `MASTER` (datos generales del producto) seguida inmediatamente de una fila `VARIANTE` por cada tamaño/opción para compararlos lado a lado.",
+    },
+    {
       Seccion: "Identificación",
       Instruccion:
-        "No borres ni alteres las columnas `pro_id` ni `var_id`. Sirven para emparejar cada producto y variante al re-importar.",
+        "No borres ni alteres las columnas `nivel_fila`, `pro_id` ni `var_id`. Sirven para emparejar cada producto Master y sus variantes al re-importar.",
     },
     {
-      Seccion: "Hoja Productos",
+      Seccion: "Filas MASTER",
       Instruccion:
-        "Edita nombre, categoria, descripcion, beneficios (separados por ` | ` o salto de línea), tiempo_entrega, usos, etiquetas, canales, logística y personalización floral.",
+        "Edita nombre, categoria, descripcion, beneficios (separados por ` | ` o salto de línea), tiempo_entrega, usos, etiquetas, canales, logística, multimedia y personalización floral.",
     },
     {
-      Seccion: "Hoja Variantes",
+      Seccion: "Filas VARIANTE",
       Instruccion:
-        "Edita precios (`var_precio`), precios anteriores (`var_precio_comparacion`), nombres de tamaño, SKU, IVA (0 o 15), estado (`SI`/`NO`) y `var_tipo_envoltorio` (`base` | `papel_envoltorio` | `no_aplica`).",
+        "Edita `nombre` (tamaño), `sku`, `precio_base`, `precio_comparacion`, `tarifa_iva` (0 o 15), `activo` (`SI`/`NO`), `floral_tipo_envoltorio` (`base` | `papel_envoltorio` | `no_aplica`), `tiempo_entrega` (vacío = hereda del Master), `imagen_url` (portada variante) y `album_fotos_url`.",
     },
     {
       Seccion: "Categorías válidas",
@@ -882,22 +950,17 @@ export function construirHojasExcelCatalogo(
 
   return [
     {
-      nombre: "Productos",
-      filas: filasProductos,
+      nombre: "Catalogo",
+      filas: filasCatalogo,
       anchosColumnas: [
-        36, 26, 30, 22, 12, 8, 10, 10, 18, 14, 14, 10, 48, 48, 32, 28, 26, 26, 32, 14, 12, 12, 18,
-        12, 18, 28, 24, 12, 10, 10, 22, 10, 10, 10, 10, 10, 16, 20, 10, 36, 28, 28, 36,
+        11, 36, 36, 24, 18, 30, 22, 11, 8, 10, 10, 13, 15, 48, 46, 28, 28, 26, 26, 32, 14, 12, 12,
+        18, 12, 18, 28, 24, 12, 10, 10, 22, 10, 10, 10, 10, 10, 16, 20, 10, 36, 28, 28, 36,
       ],
-    },
-    {
-      nombre: "Variantes",
-      filas: filasVariantes,
-      anchosColumnas: [36, 28, 36, 20, 28, 12, 14, 10, 10, 18, 36],
     },
     {
       nombre: "Guia_IA",
       filas: filasGuia,
-      anchosColumnas: [24, 95],
+      anchosColumnas: [24, 98],
     },
   ];
 }
@@ -1356,8 +1419,115 @@ export function parsearCatalogoDesdeMarkdown(
   };
 }
 
+function extraerVarianteDesdeFilaExcel(fila: Record<string, unknown>): {
+  proIdRef: string;
+  slugRef: string;
+  prodNombreRef: string;
+  variante: VarianteImportadaMasiva;
+} {
+  let proIdRef = "";
+  let slugRef = "";
+  let prodNombreRef = "";
+  const vItem: VarianteImportadaMasiva = {};
+
+  for (const [col, val] of Object.entries(fila)) {
+    const k = normalizarClave(col);
+    const s = String(val ?? "").trim();
+    switch (k) {
+      case "pro_id":
+      case "producto_id":
+        proIdRef = s;
+        break;
+      case "slug":
+      case "pro_slug":
+        slugRef = s;
+        break;
+      case "producto_nombre":
+        prodNombreRef = s;
+        break;
+      case "var_id":
+      case "id":
+        if (s) vItem.var_id = s;
+        break;
+      case "var_sku":
+      case "sku":
+        if (s) vItem.var_sku = s;
+        break;
+      case "var_nombre":
+      case "nombre":
+      case "tamano":
+        if (s) vItem.var_nombre = s;
+        break;
+      case "var_precio":
+      case "precio":
+      case "precio_base": {
+        const n = parsearNumeroFlexible(val);
+        if (n !== undefined && n > 0) vItem.var_precio = Number(n.toFixed(4));
+        break;
+      }
+      case "var_precio_comparacion":
+      case "precio_comparacion":
+      case "antes": {
+        if (!s) {
+          vItem.var_precio_comparacion = null;
+        } else {
+          const n = parsearNumeroFlexible(val);
+          if (n !== undefined) {
+            vItem.var_precio_comparacion = n > 0 ? Number(n.toFixed(4)) : null;
+          }
+        }
+        break;
+      }
+      case "var_tarifa_iva_porcentaje":
+      case "tarifa_iva":
+      case "iva_pct":
+      case "iva": {
+        const n = parsearNumeroFlexible(val);
+        if (n !== undefined) vItem.var_tarifa_iva_porcentaje = n > 0 ? 15 : 0;
+        break;
+      }
+      case "var_activo":
+      case "activo": {
+        const b = parsearBooleanoFlexible(val);
+        if (b !== undefined) vItem.var_activo = b;
+        break;
+      }
+      case "var_tipo_envoltorio":
+      case "floral_tipo_envoltorio":
+      case "tipo_envoltorio":
+      case "envoltorio": {
+        const t = parsearTipoEnvoltorioFlexible(val);
+        if (t) vItem.tipo_envoltorio = t;
+        break;
+      }
+      case "var_portada_url":
+      case "portada_url":
+      case "imagen_url":
+        vItem.portada_url = s || null;
+        break;
+      case "album_fotos_url":
+      case "album_url":
+        vItem.album_url = s || null;
+        break;
+      case "tiempo_entrega":
+      case "promesa_entrega":
+        vItem.tiempo_entrega = s || null;
+        break;
+      case "galeria_urls":
+        vItem.galeria_urls = parsearListaTexto(val);
+        break;
+      default:
+        break;
+    }
+  }
+
+  return { proIdRef, slugRef, prodNombreRef, variante: vItem };
+}
+
 /**
  * Parsea hojas de un libro Excel (.xlsx / .xls / .csv) exportado en registros estructurados.
+ * Soporta tanto la hoja unificada `Catalogo` (con columna `nivel_fila = MASTER | VARIANTE`)
+ * como el formato anterior de 2 hojas (`Productos` + `Variantes`).
  */
 export function parsearCatalogoDesdeHojasExcel(
   hojas: Record<string, Record<string, unknown>[]>
@@ -1365,119 +1535,101 @@ export function parsearCatalogoDesdeHojasExcel(
   const advertencias: string[] = [];
   const nombresHojas = Object.keys(hojas);
 
-  const nombreHojaProd =
+  const nombreHojaPrincipal =
+    nombresHojas.find((n) => normalizarClave(n).includes("catalogo")) ||
     nombresHojas.find((n) => normalizarClave(n).includes("producto")) ||
-    nombresHojas.find((n) => !normalizarClave(n).includes("guia") && !normalizarClave(n).includes("variante")) ||
+    nombresHojas.find(
+      (n) => !normalizarClave(n).includes("guia") && !normalizarClave(n).includes("variante")
+    ) ||
     nombresHojas[0];
 
   const nombreHojaVar = nombresHojas.find((n) => normalizarClave(n).includes("variante"));
 
-  const filasProd = nombreHojaProd ? hojas[nombreHojaProd] || [] : [];
-  const filasVar = nombreHojaVar ? hojas[nombreHojaVar] || [] : [];
+  const filasPrincipal = nombreHojaPrincipal ? hojas[nombreHojaPrincipal] || [] : [];
+  const filasVarSeparadas = nombreHojaVar ? hojas[nombreHojaVar] || [] : [];
 
   const productos: ProductoImportadoMasivo[] = [];
   const mapaPorProId = new Map<string, ProductoImportadoMasivo>();
+  const mapaPorSlug = new Map<string, ProductoImportadoMasivo>();
   const mapaPorNombre = new Map<string, ProductoImportadoMasivo>();
 
-  filasProd.forEach((fila, idx) => {
+  let ultimoMasterVisto: ProductoImportadoMasivo | null = null;
+
+  filasPrincipal.forEach((fila, idx) => {
+    // Detectar si esta fila corresponde al nivel VARIANTE en la hoja unificada
+    let nivelRaw = "";
+    let tieneVarId = false;
+    for (const [col, val] of Object.entries(fila)) {
+      const k = normalizarClave(col);
+      if (k === "nivel_fila" || k === "nivel" || k === "tipo_fila") {
+        nivelRaw = normalizarTextoComparacion(String(val ?? ""));
+      } else if (k === "var_id" && String(val ?? "").trim()) {
+        tieneVarId = true;
+      }
+    }
+
+    const esFilaVariante =
+      nivelRaw === "variante" ||
+      nivelRaw === "var" ||
+      nivelRaw === "tamano" ||
+      (!nivelRaw && tieneVarId);
+
+    if (esFilaVariante) {
+      const { proIdRef, slugRef, prodNombreRef, variante } = extraerVarianteDesdeFilaExcel(fila);
+      if (!variante.var_id && !variante.var_sku && !variante.var_nombre) return;
+
+      let padre =
+        (proIdRef && mapaPorProId.get(proIdRef)) ||
+        (slugRef && mapaPorSlug.get(slugRef.toLowerCase())) ||
+        (prodNombreRef && mapaPorNombre.get(normalizarTextoComparacion(prodNombreRef))) ||
+        ultimoMasterVisto;
+
+      // Si el usuario solo dejó filas VARIANTE (sin fila MASTER), crear contenedor parcial por pro_id
+      if (!padre && (proIdRef || slugRef)) {
+        padre = {
+          origenIndice: idx + 1,
+          pro_id: proIdRef || undefined,
+          slug: slugRef || undefined,
+          variantes: [],
+        };
+        productos.push(padre);
+        if (padre.pro_id) mapaPorProId.set(padre.pro_id, padre);
+        if (padre.slug) mapaPorSlug.set(padre.slug.toLowerCase(), padre);
+      }
+
+      if (padre) {
+        padre.variantes = padre.variantes ?? [];
+        padre.variantes.push(variante);
+      }
+      return;
+    }
+
+    // Fila MASTER (o fila de producto en formato clásico)
     const prod: ProductoImportadoMasivo = { origenIndice: idx + 1 };
     for (const [col, val] of Object.entries(fila)) {
       asignarCampoProductoImportado(prod, col, val);
     }
     if (prod.pro_id || prod.slug || prod.nombre || prod.sku_principal) {
       productos.push(prod);
+      ultimoMasterVisto = prod;
       if (prod.pro_id) mapaPorProId.set(prod.pro_id.trim(), prod);
+      if (prod.slug) mapaPorSlug.set(prod.slug.trim().toLowerCase(), prod);
       if (prod.nombre) mapaPorNombre.set(normalizarTextoComparacion(prod.nombre), prod);
     }
   });
 
-  // Adjuntar filas de la hoja Variantes a cada producto
-  filasVar.forEach((fila) => {
-    let proIdRef = "";
-    let prodNombreRef = "";
-    const vItem: VarianteImportadaMasiva = {};
-
-    for (const [col, val] of Object.entries(fila)) {
-      const k = normalizarClave(col);
-      const s = String(val ?? "").trim();
-      switch (k) {
-        case "pro_id":
-        case "producto_id":
-          proIdRef = s;
-          break;
-        case "producto_nombre":
-          prodNombreRef = s;
-          break;
-        case "var_id":
-        case "id":
-          if (s) vItem.var_id = s;
-          break;
-        case "var_sku":
-        case "sku":
-          if (s) vItem.var_sku = s;
-          break;
-        case "var_nombre":
-        case "nombre":
-        case "tamano":
-          if (s) vItem.var_nombre = s;
-          break;
-        case "var_precio":
-        case "precio":
-        case "precio_base": {
-          const n = parsearNumeroFlexible(val);
-          if (n !== undefined && n > 0) vItem.var_precio = Number(n.toFixed(4));
-          break;
-        }
-        case "var_precio_comparacion":
-        case "precio_comparacion":
-        case "antes": {
-          if (!s) {
-            vItem.var_precio_comparacion = null;
-          } else {
-            const n = parsearNumeroFlexible(val);
-            if (n !== undefined) {
-              vItem.var_precio_comparacion = n > 0 ? Number(n.toFixed(4)) : null;
-            }
-          }
-          break;
-        }
-        case "var_tarifa_iva_porcentaje":
-        case "iva_pct":
-        case "iva": {
-          const n = parsearNumeroFlexible(val);
-          if (n !== undefined) vItem.var_tarifa_iva_porcentaje = n > 0 ? 15 : 0;
-          break;
-        }
-        case "var_activo":
-        case "activo": {
-          const b = parsearBooleanoFlexible(val);
-          if (b !== undefined) vItem.var_activo = b;
-          break;
-        }
-        case "var_tipo_envoltorio":
-        case "tipo_envoltorio":
-        case "envoltorio": {
-          const t = parsearTipoEnvoltorioFlexible(val);
-          if (t) vItem.tipo_envoltorio = t;
-          break;
-        }
-        case "var_portada_url":
-        case "portada_url":
-          vItem.portada_url = s || null;
-          break;
-        default:
-          break;
-      }
-    }
-
+  // Retrocompatibilidad: adjuntar filas de hoja `Variantes` separada si existe
+  filasVarSeparadas.forEach((fila) => {
+    const { proIdRef, slugRef, prodNombreRef, variante } = extraerVarianteDesdeFilaExcel(fila);
     const padre =
       (proIdRef && mapaPorProId.get(proIdRef)) ||
+      (slugRef && mapaPorSlug.get(slugRef.toLowerCase())) ||
       (prodNombreRef && mapaPorNombre.get(normalizarTextoComparacion(prodNombreRef))) ||
       null;
 
-    if (padre && (vItem.var_id || vItem.var_sku || vItem.var_nombre)) {
+    if (padre && (variante.var_id || variante.var_sku || variante.var_nombre)) {
       padre.variantes = padre.variantes ?? [];
-      padre.variantes.push(vItem);
+      padre.variantes.push(variante);
     }
   });
 
@@ -1988,8 +2140,60 @@ export function calcularPlanActualizacionMasiva(
           : Number(vOrig.var_tarifa_iva_porcentaje ?? ivaFinal);
       const nuevoActivo = vImp?.var_activo !== undefined ? vImp.var_activo : vOrig.var_activo !== false;
 
+      const etiquetaVar = prod.variantes.length > 1 ? ` [${vOrig.var_nombre}]` : "";
+
       if (vImp?.portada_url !== undefined) {
-        vdetOrig.portada_url = vImp.portada_url;
+        const portOrig = String(vdetOrig.portada_url || vdetOrig.imagen_url || "").trim();
+        const portNueva = String(vImp.portada_url || "").trim();
+        if (portNueva !== portOrig) {
+          vdetOrig.portada_url = portNueva || null;
+          cambios.push({
+            campo: `variante_portada_${vOrig.var_id}`,
+            etiqueta: `Portada${etiquetaVar}`,
+            antes: resumirValor(portOrig),
+            despues: resumirValor(portNueva),
+          });
+        }
+      }
+      if (vImp?.album_url !== undefined) {
+        const albOrig = String(vdetOrig.album_url || "").trim();
+        const albNuevo = String(vImp.album_url || "").trim();
+        if (albNuevo !== albOrig) {
+          vdetOrig.album_url = albNuevo || null;
+          cambios.push({
+            campo: `variante_album_${vOrig.var_id}`,
+            etiqueta: `Álbum${etiquetaVar}`,
+            antes: resumirValor(albOrig),
+            despues: resumirValor(albNuevo),
+          });
+        }
+      }
+      if (vImp?.tiempo_entrega !== undefined) {
+        const entOrig = String(vdetOrig.tiempo_entrega || "").trim();
+        const entNuevo = String(vImp.tiempo_entrega || "").trim();
+        if (entNuevo !== entOrig) {
+          vdetOrig.tiempo_entrega = entNuevo || null;
+          cambios.push({
+            campo: `variante_entrega_${vOrig.var_id}`,
+            etiqueta: `Entrega${etiquetaVar}`,
+            antes: resumirValor(entOrig),
+            despues: resumirValor(entNuevo),
+          });
+        }
+      }
+      if (vImp?.galeria_urls !== undefined) {
+        const galVarOrig: string[] = Array.isArray(vdetOrig.galeria_urls)
+          ? vdetOrig.galeria_urls.filter(Boolean)
+          : [];
+        if (!listasIguales(galVarOrig, vImp.galeria_urls)) {
+          vdetOrig.galeria_urls = vImp.galeria_urls;
+          cambios.push({
+            campo: `variante_galeria_${vOrig.var_id}`,
+            etiqueta: `Galería${etiquetaVar}`,
+            antes: `${galVarOrig.length} foto(s)`,
+            despues: `${vImp.galeria_urls.length} foto(s)`,
+          });
+        }
       }
       if (vImp?.tipo_envoltorio && esFloristeria) {
         const pfVarActual = resolverPersonalizacionFloralEfectiva({
@@ -2010,11 +2214,16 @@ export function calcularPlanActualizacionMasiva(
             },
             { habilitadaPorDefecto: esFloristeria, tipoEnvoltorioPorDefecto: vImp.tipo_envoltorio }
           );
+          cambios.push({
+            campo: `variante_env_${vOrig.var_id}`,
+            etiqueta: `Envoltorio${etiquetaVar}`,
+            antes: obtenerEtiquetaTipoEnvoltorio(pfVarActual.tipoEnvoltorio),
+            despues: obtenerEtiquetaTipoEnvoltorio(vImp.tipo_envoltorio),
+          });
         }
       }
 
       // Registrar diffs de variante
-      const etiquetaVar = prod.variantes.length > 1 ? ` [${vOrig.var_nombre}]` : "";
       if (Math.abs(nuevoPrecio - Number(vOrig.var_precio || 0)) >= 0.005) {
         cambios.push({
           campo: `variante_precio_${vOrig.var_id}`,

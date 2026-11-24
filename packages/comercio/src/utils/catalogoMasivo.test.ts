@@ -185,11 +185,18 @@ describe("catalogoMasivo — copiar config, exportar/importar MD y Excel", () =>
     expect(item.patch?.variantes[1]?.var_precio).toBe(42);
   });
 
-  it("hace round-trip limpio en hojas de Excel y aplica ediciones de Productos + Variantes", () => {
+  it("hace round-trip limpio en Excel unificado (fila MASTER + filas VARIANTE) y aplica ediciones", () => {
     const hojas = construirHojasExcelCatalogo([PRODUCTO_MOCK], CATEGORIAS_MOCK, {
       negocio: "tinkay",
     });
-    expect(hojas.map((h) => h.nombre)).toEqual(["Productos", "Variantes", "Guia_IA"]);
+    expect(hojas.map((h) => h.nombre)).toEqual(["Catalogo", "Guia_IA"]);
+    // 1 fila MASTER + 2 filas VARIANTE = 3 filas en Catalogo
+    expect(hojas[0]!.filas).toHaveLength(3);
+    expect(hojas[0]!.filas[0]!.nivel_fila).toBe("MASTER");
+    expect(hojas[0]!.filas[1]!.nivel_fila).toBe("VARIANTE");
+    expect(hojas[0]!.filas[1]!.sku).toBe("TNK-GIR-06");
+    expect(hojas[0]!.filas[2]!.nivel_fila).toBe("VARIANTE");
+    expect(hojas[0]!.filas[2]!.sku).toBe("TNK-GIR-12");
 
     const dictOriginal: Record<string, Record<string, unknown>[]> = {};
     for (const h of hojas) dictOriginal[h.nombre] = h.filas.map((f) => ({ ...f }));
@@ -203,10 +210,11 @@ describe("catalogoMasivo — copiar config, exportar/importar MD y Excel", () =>
     );
     expect(planOrig.totalConCambios).toBe(0);
 
-    // Simular edición en Excel: cambiar etiquetas en Productos y precio de variante Grande en Variantes
-    dictOriginal.Productos![0]!.etiquetas = "girasoles, verano, regalo";
-    dictOriginal.Productos![0]!.activo = "NO";
-    dictOriginal.Variantes![1]!.var_precio = "45.00";
+    // Simular edición en Excel: editar etiquetas y activo en fila MASTER + precio y envoltorio en fila VARIANTE 2
+    dictOriginal.Catalogo![0]!.etiquetas = "girasoles, verano, regalo";
+    dictOriginal.Catalogo![0]!.activo = "NO";
+    dictOriginal.Catalogo![2]!.precio_base = "45.00";
+    dictOriginal.Catalogo![2]!.floral_tipo_envoltorio = "base";
 
     const parseEdit = parsearCatalogoDesdeHojasExcel(dictOriginal);
     const planEdit = calcularPlanActualizacionMasiva(
@@ -222,6 +230,9 @@ describe("catalogoMasivo — copiar config, exportar/importar MD y Excel", () =>
     expect(patch.etiquetas).toEqual(["girasoles", "verano", "regalo"]);
     expect(patch.variantes[0]!.var_precio).toBe(25);
     expect(patch.variantes[1]!.var_precio).toBe(45);
+    expect(
+      (patch.variantes[1]!.var_detalle_variante as any).personalizacion_floral?.tipoEnvoltorio
+    ).toBe("base");
   });
 
   it("reporta productos inexistentes sin romper el resto del lote", () => {

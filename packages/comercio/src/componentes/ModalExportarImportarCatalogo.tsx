@@ -661,13 +661,14 @@ export function ModalExportarImportarCatalogo({
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <FileSpreadsheet size={20} color="#166534" />
                     <strong style={{ fontSize: "0.94rem", color: "#1F1C19" }}>
-                      Formato Excel (.xlsx) — Multi-hoja
+                      Formato Excel (.xlsx) — Master + Variantes por Fila
                     </strong>
                   </div>
                   <p style={{ margin: 0, fontSize: "0.81rem", color: "#3A5A46", lineHeight: 1.5 }}>
-                    Genera 3 hojas sincronizadas: <strong>Productos</strong> (todos los atributos),
-                    <strong> Variantes</strong> (precios, tamaños, SKU, IVA, envoltorio) y{" "}
-                    <strong>Guia_IA</strong>. Edítalo en Excel, Google Sheets o IA y vuelve a subirlo.
+                    Genera una hoja unificada <strong>Catalogo</strong> con una fila{" "}
+                    <strong>MASTER</strong> por producto seguida de una fila{" "}
+                    <strong>VARIANTE</strong> por cada tamaño/opción (precios, SKU, IVA, foto y
+                    envoltorio lado a lado), más <strong>Guia_IA</strong>. Edítalo y vuelve a subirlo.
                   </p>
                   <div style={{ display: "flex", gap: "8px", marginTop: "auto" }}>
                     <button
