@@ -95,8 +95,19 @@ export function ModalExportarImportarCatalogo({
 
   const markdownGenerado = useMemo(() => {
     if (!abierto) return "";
-    return exportarCatalogoAMarkdown(productosAlcance, categorias, { negocio });
+    try {
+      return exportarCatalogoAMarkdown(productosAlcance || [], categorias || [], { negocio });
+    } catch (err) {
+      return `# Error generando vista previa Markdown\n\n${err instanceof Error ? err.message : "Error inesperado"}`;
+    }
   }, [abierto, productosAlcance, categorias, negocio]);
+
+  const itemsSeleccionadosParaAplicar = useMemo(() => {
+    if (!planImportacion) return [];
+    return planImportacion.items.filter(
+      (it) => it.estado === "CON_CAMBIOS" && it.pro_id && it.patch && seleccionadosIds[it.pro_id]
+    );
+  }, [planImportacion, seleccionadosIds]);
 
   if (!abierto) return null;
 
@@ -199,13 +210,6 @@ export function ModalExportarImportarCatalogo({
     setPlanImportacion(plan);
     inicializarSeleccionDesdePlan(plan);
   };
-
-  const itemsSeleccionadosParaAplicar = useMemo(() => {
-    if (!planImportacion) return [];
-    return planImportacion.items.filter(
-      (it) => it.estado === "CON_CAMBIOS" && it.pro_id && it.patch && seleccionadosIds[it.pro_id]
-    );
-  }, [planImportacion, seleccionadosIds]);
 
   const handleAplicarActualizacionMasiva = async () => {
     if (itemsSeleccionadosParaAplicar.length === 0 || aplicando) return;

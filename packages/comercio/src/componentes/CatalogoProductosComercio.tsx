@@ -824,7 +824,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 onClick={() => setModalMasivoAbierto(true)}
                 className="btn-responsive-accion"
                 title="Ver, exportar a Markdown / Excel o importar actualización masiva de productos"
-                aria-label="MD / Excel"
+                aria-label="Exportar Catálogo"
                 style={{
                   background: "#EAF3ED",
                   color: "#1F352C",
@@ -842,7 +842,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 }}
               >
                 <FileSpreadsheet size={14} color="#2F4737" />
-                <span className="btn-texto-responsive">MD / Excel</span>
+                <span className="btn-texto-responsive">Exportar / Masivo</span>
               </button>
 
               {!esModoMovil && (
