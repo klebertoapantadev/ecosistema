@@ -116,6 +116,16 @@ describe("Motor de logística y cobertura Tinkay", () => {
     const elRecreo = { lat: -0.252, lng: -78.522 };
     expect(puntoEnPoligono(elRecreo, config.zonas.find((z) => z.codigo === "entrega_6_usd")!.poligono)).toBe(true);
     expect(puntoEnPoligono(elRecreo, config.zonas.find((z) => z.codigo === "entrega_5_usd")!.poligono)).toBe(false);
+
+    // Solanda (~17.58 km): Entrega $7 (19 km); Pomasqui (~19.55 km): Entrega $8 (21 km);
+    // Quitumbe (~22.97 km): Entrega $9 (23 km); Mitad del Mundo (~23.31 km): Entrega $10 (25 km)
+    expect(puntoEnPoligono({ lat: -0.264, lng: -78.538 }, config.zonas.find((z) => z.codigo === "entrega_7_usd")!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.056, lng: -78.458 }, config.zonas.find((z) => z.codigo === "entrega_7_usd")!.poligono)).toBe(false);
+    expect(puntoEnPoligono({ lat: -0.056, lng: -78.458 }, config.zonas.find((z) => z.codigo === "entrega_8_usd")!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.298, lng: -78.552 }, config.zonas.find((z) => z.codigo === "entrega_8_usd")!.poligono)).toBe(false);
+    expect(puntoEnPoligono({ lat: -0.298, lng: -78.552 }, config.zonas.find((z) => z.codigo === "entrega_9_usd")!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.008, lng: -78.453 }, config.zonas.find((z) => z.codigo === "entrega_9_usd")!.poligono)).toBe(false);
+    expect(puntoEnPoligono({ lat: -0.008, lng: -78.453 }, config.zonas.find((z) => z.codigo === "entrega_10_usd")!.poligono)).toBe(true);
   });
 
   it("aplica tarifa fija de zona en Cumbayá ($3.50)", () => {
