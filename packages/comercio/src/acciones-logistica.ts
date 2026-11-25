@@ -1236,8 +1236,6 @@ export async function registrarPedidoTiendaAction(
   } = await supabase.auth.getUser();
 
   const configCheckout = await obtenerConfiguracionTiendaCheckoutAction(negNorm);
-  const umbralSinDatos = Math.max(0, Number(configCheckout.montoMaximoPagoSinDatosUsd ?? 0));
-  const esMenorAlUmbral = umbralSinDatos <= 0 || Number(entrada.totalPagar) < umbralSinDatos;
   const esRetiroEnTienda =
     entrada.modalidadEntrega === "unificada"
       ? Boolean(logisticaPrincipal.retiro_en_local)
@@ -1292,21 +1290,8 @@ export async function registrarPedidoTiendaAction(
   const telIngresado = (entrada.comprador.telefono || "").trim();
   const digitosTel = telIngresado.replace(/\D+/g, "");
 
-  if (!esMenorAlUmbral) {
-    if (nombreIngresado.length < 2) {
-      return {
-        ok: false,
-        error: `Para compras desde $${umbralSinDatos.toFixed(2)} USD es obligatorio ingresar el nombre o razón social para facturación.`,
-      };
-    }
-    if (idIngresada.length < 5) {
-      return {
-        ok: false,
-        error: `Para compras desde $${umbralSinDatos.toFixed(2)} USD es obligatorio ingresar la Cédula, RUC o Pasaporte.`,
-      };
-    }
-  }
-
+  // Único dato obligatorio del comprador en checkout rápido: WhatsApp para coordinar la entrega.
+  // Nombre, identificación y correo son opcionales (se completa Consumidor Final si se omiten).
   if (digitosTel.length < 7) {
     return {
       ok: false,

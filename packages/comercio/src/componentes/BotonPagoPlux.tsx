@@ -20,6 +20,12 @@ import {
 import { leerAtribucionNavegador } from "../marketing-meta";
 import { SCRIPT_JQUERY, SCRIPT_PAYBOX, respuestaExitosa, type PagadorPlux } from "../plux";
 
+export interface DetalleErrorPlux {
+  codigo: string;
+  mensajeUsuario: string;
+  detalleTecnico: string;
+}
+
 interface Props {
   negocio: string;
   varianteId?: string;
@@ -35,6 +41,10 @@ interface Props {
    * `motivo` viene de PLUX (p. ej. MONTO_DISTINTO: hubo cobro y va a revisión).
    */
   alCambiarFase?: (fase: FasePlux, mensaje: string | null, motivo: string | null) => void;
+  /**
+   * Avisa de inmediato ante cualquier error de carga, CORS/red en Paybox, apertura fallida o rechazo.
+   */
+  alErrorPago?: (detalle: DetalleErrorPlux) => void;
   /** Texto del botón principal, p. ej. el importe. */
   etiqueta?: React.ReactNode;
   /** Prepara y despliega de inmediato el botón oficial PLUX sin requerir un clic intermedio. */
@@ -114,6 +124,7 @@ export function BotonPagoPlux({
   ambiente,
   alPagoAprobado,
   alCambiarFase,
+  alErrorPago,
   etiqueta,
   autoIniciar = false,
   autoAbrirModal = false,
@@ -125,9 +136,28 @@ export function BotonPagoPlux({
   const identificador = useRef<string | null>(null);
   const resuelto = useRef(false);
   const motivo = useRef<string | null>(null);
+  const faseRef = useRef<Fase>(autoIniciar ? "preparando" : "inicio");
   const autoIniciadoRef = useRef(false);
   const autoAbiertoRef = useRef(false);
   const esperaModalTimerRef = useRef<number | null>(null);
+
+  faseRef.current = fase;
+
+  const avisarError = useRef(alErrorPago);
+  avisarError.current = alErrorPago;
+
+  const reportarErrorPlux = (
+    codigo: string,
+    mensajeUsuario: string,
+    detalleTecnico: string,
+    faseDestino: "error" | "rechazado" = "error"
+  ) => {
+    limpiarEsperaModal();
+    setAbriendoFormulario(false);
+    setFase(faseDestino);
+    setMensaje(mensajeUsuario);
+    avisarError.current?.({ codigo, mensajeUsuario, detalleTecnico });
+  };
 
   const limpiarEsperaModal = () => {
     if (esperaModalTimerRef.current !== null && typeof window !== "undefined") {
@@ -143,9 +173,23 @@ export function BotonPagoPlux({
     let ticks = 0;
     esperaModalTimerRef.current = window.setInterval(() => {
       ticks += 1;
-      if (existeModalPluxVisible() || ticks >= 30) {
+      if (existeModalPluxVisible()) {
         limpiarEsperaModal();
         setAbriendoFormulario(false);
+        return;
+      }
+      if (faseRef.current !== "listo") {
+        limpiarEsperaModal();
+        setAbriendoFormulario(false);
+        return;
+      }
+      if (ticks >= 36) {
+        reportarErrorPlux(
+          "PLUX_MODAL_NO_ABRIO",
+          "No se pudo abrir la ventana segura de pago con tarjeta (PLUX). Puedes pagar por Transferencia / DeUna o escribirnos por WhatsApp.",
+          `La ventana de Paybox PLUX (${ambiente}) no se abrió tras hacer clic en Pagar ahora (posible error CORS o desajuste de ambiente Sandbox/Producción).`,
+          "error"
+        );
       }
     }, 150);
   };
@@ -155,6 +199,50 @@ export function BotonPagoPlux({
   useEffect(() => {
     avisar.current?.(fase, mensaje, motivo.current);
   }, [fase, mensaje]);
+
+  // Intercepta errores XHR/CORS del script oficial de PLUX (que usa jQuery.ajax)
+  // para que nunca quede un fallo silencioso sin aviso al cliente.
+  useEffect(() => {
+    if (fase !== "listo" || typeof window === "undefined") return;
+    const jq = (window as any).jQuery;
+    if (!jq) return;
+
+    const manejarAjaxError = (
+      _evt: unknown,
+      jqXHR: { status?: number; statusText?: string; responseText?: string } | undefined,
+      settings: { url?: string } | undefined,
+      thrownError: string | undefined
+    ) => {
+      const url = String(settings?.url || "");
+      if (!/pagoplux|paybox|getEstablishmentByEmail/i.test(url)) return;
+      if (resuelto.current || faseRef.current !== "listo") return;
+
+      const status = Number(jqXHR?.status ?? 0);
+      const urlSinQuery = url.split("?")[0] ?? url;
+      const endpointCorto = urlSinQuery.split("/").slice(-2).join("/") || url;
+      const detalle =
+        status === 0
+          ? `CORS/red bloqueada en ${endpointCorto} (ambiente: ${ambiente})`
+          : `HTTP ${status} (${thrownError || jqXHR?.statusText || "error"}) en ${endpointCorto} (ambiente: ${ambiente})`;
+
+      reportarErrorPlux(
+        status === 0 ? "PLUX_XHR_CORS" : `PLUX_XHR_${status}`,
+        "La pasarela de tarjetas PLUX presentó un error de conexión en este momento. Puedes pagar al instante por Transferencia / DeUna o contactarnos por WhatsApp.",
+        detalle,
+        "error"
+      );
+    };
+
+    jq(document).on("ajaxError.ecoPlux", manejarAjaxError);
+    return () => {
+      try {
+        jq(document).off("ajaxError.ecoPlux", manejarAjaxError);
+      } catch {
+        // Ignorar si jQuery ya no está disponible
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fase, ambiente]);
 
   // Con #ButtonPaybox ya en el DOM se dispara el `load` que espera PLUX para
   // inyectar su botón. En un efecto y no tras el setState: así es seguro que
@@ -236,11 +324,15 @@ export function BotonPagoPlux({
         alPagoAprobado(id, r.data);
       } else {
         motivo.current = r.data.motivo;
-        setFase("rechazado");
-        setMensaje(
+        const msgRechazo =
           r.data.motivo === "MONTO_DISTINTO"
             ? "PLUX informó un monto distinto al del pedido. No se activó nada; el equipo lo revisará."
-            : "PLUX no aprobó el pago. No se te cobró y puedes intentarlo de nuevo.",
+            : "PLUX no aprobó el pago. No se te cobró; puedes intentarlo de nuevo, pagar por transferencia o escribirnos por WhatsApp.";
+        reportarErrorPlux(
+          r.data.motivo || "PLUX_RECHAZADO",
+          msgRechazo,
+          `Webhook PLUX devolvió estado ${r.data.estado} (motivo: ${r.data.motivo || "rechazado"})`,
+          "rechazado"
         );
       }
       return;
@@ -270,8 +362,7 @@ export function BotonPagoPlux({
         ? await prepararPagoPluxAction({ negocio, varianteId, pagador })
         : { ok: false as const, error: "Falta el producto o la proforma para iniciar el pago." };
     if (!r.ok) {
-      setFase("error");
-      setMensaje(r.error);
+      reportarErrorPlux("PLUX_PREPARAR_ERROR", r.error, `Error en prepararPagoPlux: ${r.error}`, "error");
       return;
     }
     identificador.current = r.data.identificador;
@@ -281,8 +372,25 @@ export function BotonPagoPlux({
     // El script de PLUX lee `data` cada vez que se abre el modal.
     w.data = r.data.paybox;
     w.onAuthorize = async (respuesta: unknown) => {
-      // Al cerrar el modal llega un "failed" aunque el pago haya salido bien.
-      if (!respuestaExitosa(respuesta) || !identificador.current || resuelto.current) return;
+      // Al cerrar el modal llega un "failed" con "Paybox cerrado" aunque el pago haya salido bien.
+      if (!respuestaExitosa(respuesta)) {
+        if (resuelto.current) return;
+        const desc = String(
+          (respuesta as { description?: unknown; message?: unknown } | null)?.description ??
+            (respuesta as { message?: unknown } | null)?.message ??
+            ""
+        ).trim();
+        if (desc && !/cerrad|closed|cancel/i.test(desc)) {
+          reportarErrorPlux(
+            "PLUX_AUTORIZACION_FALLIDA",
+            `No se pudo completar el pago con tarjeta (${desc}). Puedes pagar por Transferencia / DeUna o contactarnos por WhatsApp.`,
+            `onAuthorize PLUX falló: ${desc}`,
+            "rechazado"
+          );
+        }
+        return;
+      }
+      if (!identificador.current || resuelto.current) return;
       const idActual = identificador.current;
       setFase("esperando");
 
@@ -321,8 +429,8 @@ export function BotonPagoPlux({
       await esperarEntornoPlux();
       setFase("listo");
     } catch (e: any) {
-      setFase("error");
-      setMensaje(e?.message || "No se pudo cargar PLUX.");
+      const msg = e?.message || "No se pudo cargar la pasarela PLUX.";
+      reportarErrorPlux("PLUX_SCRIPT_ERROR", msg, `Error cargando scripts PLUX (${ambiente}): ${msg}`, "error");
     }
   }
 

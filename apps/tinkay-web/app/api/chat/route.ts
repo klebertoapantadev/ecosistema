@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
   let visitante: unknown;
   let atribucion: unknown;
   let respuestaRespaldo: unknown;
+  let alertaErrorPago: unknown;
   try {
     ({
       prompt,
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
       visitante,
       atribucion,
       respuesta_respaldo: respuestaRespaldo,
+      alerta_error_pago: alertaErrorPago,
     } = await req.json());
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido" }, { status: 400 });
@@ -80,6 +82,71 @@ export async function POST(req: NextRequest) {
     typeof conversationId === "string" && FORMATO_CONVERSACION.test(conversationId)
       ? conversationId
       : undefined;
+
+  if (alertaErrorPago && typeof alertaErrorPago === "object" && conversacion) {
+    const a = alertaErrorPago as Record<string, unknown>;
+    const vis =
+      visitante && typeof visitante === "object"
+        ? (visitante as Record<string, unknown>)
+        : {};
+    const codigoOrden = String(a.codigoOrden || "").trim().slice(0, 60);
+    const totalUsd = Number(a.totalUsd || 0);
+    const itemsResumen = String(a.itemsResumen || "").trim().slice(0, 260);
+    const detalleTecnico = String(a.detalleTecnico || "Error al conectar con PLUX")
+      .trim()
+      .slice(0, 300);
+    const whatsappCliente = String(a.whatsapp || vis.telefono || "").trim().slice(0, 40);
+    const nombreCliente = String(a.nombre || vis.nombre || "").trim().slice(0, 120);
+    const correoCliente = String(a.correo || vis.correo || "").trim().slice(0, 120);
+
+    const textoAlertaStaff = [
+      `⚠️ Intento de pago con tarjeta (PLUX) con error en la tienda web.`,
+      codigoOrden ? `Pedido: ${codigoOrden}` : null,
+      totalUsd > 0 ? `Monto: $${totalUsd.toFixed(2)} USD` : null,
+      whatsappCliente ? `WhatsApp cliente: ${whatsappCliente}` : null,
+      itemsResumen ? `Productos: ${itemsResumen}` : null,
+      `Detalle técnico: ${detalleTecnico}`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    const textoRespuestaMia =
+      `Hola 👋 Noté que hubo un inconveniente al intentar completar tu pago con tarjeta` +
+      `${codigoOrden ? ` (${codigoOrden})` : ""}${totalUsd > 0 ? ` por $${totalUsd.toFixed(2)} USD` : ""}. ` +
+      `Para que no pierdas tu pedido, puedes pagar de inmediato por Transferencia Bancaria / QR DeUna en la caja de pago, ` +
+      `o escribirnos directo por WhatsApp y te ayudamos en este momento.`;
+
+    try {
+      await registrarInteraccionChatWebAction({
+        negocio: NEGOCIO,
+        claveHilo: conversacion,
+        fase: "ENTRADA_CLIENTE",
+        contenido: textoAlertaStaff,
+        metadatos: {
+          tipo_evento: "alerta_error_pago_plux",
+          codigo_orden: codigoOrden || undefined,
+          monto_usd: totalUsd > 0 ? totalUsd : undefined,
+          detalle_tecnico: detalleTecnico,
+          ...(nombreCliente ? { nombre_cliente: nombreCliente } : {}),
+          ...(whatsappCliente ? { telefono: whatsappCliente } : {}),
+          ...(correoCliente ? { correo: correoCliente } : {}),
+        },
+      });
+      await registrarInteraccionChatWebAction({
+        negocio: NEGOCIO,
+        claveHilo: conversacion,
+        fase: "RESPUESTA_ARIA",
+        contenido: textoRespuestaMia,
+        metadatos: {
+          nombre_agente: "Mía (Asistente Web)",
+          tipo_evento: "alerta_error_pago_plux",
+        },
+      });
+    } catch {
+      // No interrumpir flujo público si falla registro auxiliar
+    }
+    return NextResponse.json({ ok: true });
+  }
 
   if (typeof respuestaRespaldo === "string" && respuestaRespaldo.trim() && conversacion) {
     try {

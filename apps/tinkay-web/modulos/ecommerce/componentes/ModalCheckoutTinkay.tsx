@@ -21,10 +21,16 @@ import {
   type ComprobanteTransferenciaSubido,
   type ConfiguracionEmisorSri,
   type ConfiguracionTiendaCheckout,
+  type DetalleErrorPlux,
   type EstadoRegaloPrimeraCompra,
   type FacturaElectronicaResumen,
   type PagoPluxConsultado,
 } from '@eco/comercio';
+import {
+  IconoWhatsappVector,
+  abrirWhatsappTiendaConPuenteOmnicanal,
+  obtenerContextoVisitanteOmnicanal,
+} from '../puente-omnicanal-cliente';
 import {
   PAISES_TELEFONO,
   PAIS_TELEFONO_DEFECTO,
@@ -161,6 +167,8 @@ export function ModalCheckoutTinkay() {
   const [pasoWizard, setPasoWizard] = useState<1 | 2 | 3 | 4>(1);
   const [codigoOrdenGenerado, setCodigoOrdenGenerado] = useState<string>('');
   const [errorPago, setErrorPago] = useState<string | null>(null);
+  const [errorPluxDetalle, setErrorPluxDetalle] = useState<DetalleErrorPlux | null>(null);
+  const alertaPluxEnviadaRef = useRef<string | null>(null);
   const [preparandoOrdenPlux, setPreparandoOrdenPlux] = useState<boolean>(false);
   const huellaAutoPluxRef = useRef<string | null>(null);
   const [ordenPluxPreparada, setOrdenPluxPreparada] = useState<{
@@ -384,20 +392,14 @@ export function ModalCheckoutTinkay() {
     return `${paisObj.prefijo}${soloDigitos}`;
   }, [datosFactura.telefono, paisObj]);
 
-  const umbralSinDatosUsd = Math.max(
-    0,
-    Number(configCheckoutLocal.montoMaximoPagoSinDatosUsd ?? 0)
-  );
-  const tieneControlMontoFacturacion = umbralSinDatosUsd > 0;
   const esRetiroEnTienda =
     modalidadEntrega === 'unificada' && Boolean(entregaUnificada.retiroEnLocal);
 
-  // Reglas de negocio exactas:
-  // 1. Únicos requisitos obligatorios para pagar: al menos 1 producto en el carrito y número de WhatsApp para coordinar la entrega.
-  // 2. La restricción por monto (`montoMaximoPagoSinDatosUsd`) es configurable: si está en 0, NO se aplica ningún control de datos de factura.
-  // 3. Facturación electrónica se gestiona manualmente de momento (sin checkbox opcional en checkout).
-  const requiereDatosFacturacion = tieneControlMontoFacturacion && totalPagar >= umbralSinDatosUsd;
-  const mostrarCamposFacturacion = requiereDatosFacturacion;
+  // Regla de negocio de checkout rápido:
+  // El ÚNICO dato personal obligatorio para iniciar el pago es el número de WhatsApp
+  // para coordinar la entrega. Nunca se exige cédula/RUC ni identificación para pagar.
+  const requiereDatosFacturacion = false;
+  const mostrarCamposFacturacion = false;
   const requiereWhatsappCoordinacion = true;
 
   const itemsPrincipales = useMemo(
@@ -556,9 +558,8 @@ export function ModalCheckoutTinkay() {
       : 'Multidestino individual';
 
   const construirPayloadPedido = (metodo: 'plux' | 'transferencia') => {
-    const usarDatosFactura = mostrarCamposFacturacion;
-    const nombreEfectivo = usarDatosFactura ? datosFactura.nombreCompleto.trim() : '';
-    const idEfectiva = usarDatosFactura ? datosFactura.identificacion.trim() : '';
+    const nombreEfectivo = datosFactura.nombreCompleto.trim();
+    const idEfectiva = '';
     const correoCandidato = datosFactura.correo.trim();
     const correoEfectivo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoCandidato)
       ? correoCandidato
@@ -689,23 +690,6 @@ export function ModalCheckoutTinkay() {
       return 'Ingresa tu número de WhatsApp: es obligatorio para coordinar la entrega de tu pedido.';
     }
 
-    if (requiereDatosFacturacion) {
-      if (datosFactura.nombreCompleto.trim().length < 3) {
-        return `Para compras desde $${umbralSinDatosUsd.toFixed(2)} USD, ingresa tu nombre o razón social.`;
-      }
-      if (!/^[A-Za-z0-9]{5,20}$/.test(datosFactura.identificacion.trim())) {
-        return 'Ingresa una Cédula, RUC o Pasaporte válido (sin espacios ni guiones).';
-      }
-    }
-
-    if (
-      mostrarCamposFacturacion &&
-      datosFactura.correo.trim() &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datosFactura.correo.trim())
-    ) {
-      return 'Ingresa un correo electrónico válido.';
-    }
-
     return null;
   };
 
@@ -779,8 +763,69 @@ export function ModalCheckoutTinkay() {
     }
   };
 
+  const notificarErrorPagoPlux = (detalle: DetalleErrorPlux) => {
+    setErrorPluxDetalle(detalle);
+
+    const codigoOrd = ordenPluxPreparada?.codigoOrden || codigoOrdenGenerado || '';
+    const claveDedup = `${codigoOrd || huellaActual}:${detalle.codigo}`;
+    if (alertaPluxEnviadaRef.current === claveDedup) return;
+    alertaPluxEnviadaRef.current = claveDedup;
+
+    const itemsResumen = items
+      .map((it) => `${it.cantidad}x ${it.producto.nombre}`)
+      .join(', ')
+      .slice(0, 220);
+
+    const textoMia =
+      `Hola 👋 Noté que tuviste un inconveniente al intentar pagar con tarjeta` +
+      `${codigoOrd ? ` tu pedido ${codigoOrd}` : ''} ($${totalPagar.toFixed(2)} USD). ` +
+      `Puedes completarlo al instante por Transferencia / DeUna o escribirnos directo por WhatsApp y te ayudo enseguida.`;
+
+    if (typeof window !== 'undefined') {
+      const ctxWeb = obtenerContextoVisitanteOmnicanal();
+
+      // 1. Notificar a Mía (Web) en el widget flotante
+      window.dispatchEvent(
+        new CustomEvent('tinkay:mia-alerta-pago', {
+          detail: {
+            textoMia,
+            abrirChat: false,
+            nombre: datosFactura.nombreCompleto.trim() || undefined,
+            telefono: telefonoNormalizado || undefined,
+            correo: datosFactura.correo.trim() || undefined,
+          },
+        })
+      );
+
+      // 2. Registrar alerta en Mía (Web) -> Ventas y Chats en Vivo + campana/push del equipo
+      void fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: ctxWeb.claveHiloWeb,
+          visitante: {
+            nombre: datosFactura.nombreCompleto.trim() || undefined,
+            telefono: telefonoNormalizado || undefined,
+            correo: datosFactura.correo.trim() || undefined,
+          },
+          alerta_error_pago: {
+            codigoOrden: codigoOrd,
+            totalUsd: totalPagar,
+            itemsResumen,
+            detalleTecnico: `${detalle.codigo}: ${detalle.detalleTecnico}`,
+            whatsapp: telefonoNormalizado || datosFactura.telefono || '',
+            nombre: datosFactura.nombreCompleto.trim() || '',
+            correo: datosFactura.correo.trim() || '',
+          },
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+  };
+
   const handlePrepararOrdenPlux = async () => {
     setErrorPago(null);
+    setErrorPluxDetalle(null);
     if (!tarjetaHabilitada) {
       setErrorPago('El procesamiento con tarjeta de crédito/débito está temporalmente deshabilitado.');
       return;
@@ -795,11 +840,15 @@ export function ModalCheckoutTinkay() {
     try {
       const resultado = await registrarPedidoTiendaAction(construirPayloadPedido('plux'));
       if (!resultado.ok || !resultado.tokenAprobacion) {
-        setErrorPago(
-          !resultado.ok
-            ? resultado.error
-            : 'No se pudo generar el token seguro de orden para PLUX.'
-        );
+        const msgErr = !resultado.ok
+          ? resultado.error
+          : 'No se pudo generar el token seguro de orden para PLUX.';
+        setErrorPago(msgErr);
+        notificarErrorPagoPlux({
+          codigo: 'PLUX_ORDEN_ERROR',
+          mensajeUsuario: msgErr,
+          detalleTecnico: msgErr,
+        });
         return;
       }
 
@@ -810,6 +859,14 @@ export function ModalCheckoutTinkay() {
         tokenEdicionTarjeta: resultado.tokenEdicionTarjeta,
         respaldoFirmado: resultado.respaldoFirmado,
         huella: huellaActual,
+      });
+    } catch (err: any) {
+      const msgErr = err?.message || 'Error inesperado al preparar el pago con PLUX.';
+      setErrorPago(msgErr);
+      notificarErrorPagoPlux({
+        codigo: 'PLUX_ORDEN_EXCEPCION',
+        mensajeUsuario: 'No pudimos conectar con la pasarela de tarjeta en este momento.',
+        detalleTecnico: msgErr,
       });
     } finally {
       setPreparandoOrdenPlux(false);
@@ -881,6 +938,8 @@ export function ModalCheckoutTinkay() {
     setPaso('formulario');
     setPasoWizard(1);
     setErrorPago(null);
+    setErrorPluxDetalle(null);
+    alertaPluxEnviadaRef.current = null;
     setOrdenPluxPreparada(null);
     huellaAutoPluxRef.current = null;
     setComprobanteSubido(null);
@@ -2479,6 +2538,7 @@ export function ModalCheckoutTinkay() {
                         onClick={() => {
                           setMetodoPago('transferencia');
                           setErrorPago(null);
+                          setErrorPluxDetalle(null);
                         }}
                         title="Pagar mediante transferencia bancaria o QR DeUna"
                         aria-label="Transferencia o QR"
@@ -2498,6 +2558,8 @@ export function ModalCheckoutTinkay() {
                         onClick={() => {
                           setMetodoPago('plux');
                           setErrorPago(null);
+                          setErrorPluxDetalle(null);
+                          alertaPluxEnviadaRef.current = null;
                           huellaAutoPluxRef.current = null;
                         }}
                         title="Pagar en línea con tarjeta de crédito o débito mediante PLUX"
@@ -2643,13 +2705,10 @@ export function ModalCheckoutTinkay() {
                           autoIniciar
                           autoAbrirModal={false}
                           omitirFacturaAutomatica={true}
+                          alErrorPago={notificarErrorPagoPlux}
                           pagador={{
-                            nombre: mostrarCamposFacturacion
-                              ? datosFactura.nombreCompleto.trim()
-                              : '',
-                            identificacion: mostrarCamposFacturacion
-                              ? datosFactura.identificacion.trim()
-                              : '',
+                            nombre: datosFactura.nombreCompleto.trim(),
+                            identificacion: '',
                             email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datosFactura.correo.trim())
                               ? datosFactura.correo.trim()
                               : '',
@@ -2716,6 +2775,148 @@ export function ModalCheckoutTinkay() {
                             }
                           }}
                         />
+                      </div>
+                    )}
+
+                    {errorPluxDetalle && (
+                      <div
+                        role="alert"
+                        style={{
+                          marginTop: '4px',
+                          padding: '13px 14px',
+                          borderRadius: '12px',
+                          background: '#FFFBEB',
+                          border: '1px solid #FCD34D',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '8px',
+                            color: '#92400E',
+                            fontSize: '0.82rem',
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          <AlertTriangle size={17} style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div>
+                            <strong style={{ display: 'block', marginBottom: '2px' }}>
+                              ¿Problemas con el pago con tarjeta?
+                            </strong>
+                            <span>
+                              Puedes completar tu pedido de inmediato por{' '}
+                              <strong>Transferencia / QR DeUna</strong> o escribirnos por{' '}
+                              <strong>WhatsApp</strong>. También avisamos a Mía para ayudarte.
+                            </span>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                            gap: '8px',
+                          }}
+                        >
+                          {transf.habilitada && (
+                            <button
+                              type="button"
+                              title="Cambiar a pago por Transferencia bancaria o QR DeUna"
+                              aria-label="Pagar por Transferencia"
+                              onClick={() => {
+                                setMetodoPago('transferencia');
+                                setErrorPago(null);
+                                setErrorPluxDetalle(null);
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                padding: '10px 12px',
+                                borderRadius: '10px',
+                                border: 'none',
+                                background: '#2D4734',
+                                color: '#FFFFFF',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <Building2 size={15} />
+                              <span>Pagar Transferencia</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            title="Contactar a Tinkay por WhatsApp para completar tu pago"
+                            aria-label="Contactar WhatsApp"
+                            onClick={() => {
+                              const cod = ordenPluxPreparada?.codigoOrden
+                                ? ` (${ordenPluxPreparada.codigoOrden})`
+                                : '';
+                              abrirWhatsappTiendaConPuenteOmnicanal({
+                                whatsappTienda: configCheckoutLocal.whatsappTienda,
+                                consultaInicial: `Hola Tinkay 🌿, intenté pagar con tarjeta mi pedido${cod} por $${totalPagar.toFixed(
+                                  2
+                                )} USD pero me apareció un error. Mi WhatsApp es ${
+                                  telefonoNormalizado || datosFactura.telefono
+                                }. ¿Me ayudan a completarlo?`,
+                              });
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              padding: '10px 12px',
+                              borderRadius: '10px',
+                              border: '1px solid #16A34A',
+                              background: '#ECFDF5',
+                              color: '#166534',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <IconoWhatsappVector size={15} color="#166534" />
+                            <span>Escribir WhatsApp</span>
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          title="Abrir chat web con Mía para recibir ayuda en vivo"
+                          aria-label="Hablar con Mía"
+                          onClick={() => {
+                            setCheckoutAbierto(false);
+                            if (typeof window !== 'undefined') {
+                              window.dispatchEvent(new CustomEvent('tinkay:abrir-chat-mia'));
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            padding: '7px 10px',
+                            borderRadius: '8px',
+                            border: '1px dashed #D97706',
+                            background: '#FFFFFF',
+                            color: '#92400E',
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <MessageCircle size={14} />
+                          <span>Hablar con Mía</span>
+                        </button>
                       </div>
                     )}
                   </div>

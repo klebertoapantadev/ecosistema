@@ -178,6 +178,7 @@ export function ChatAriaFlotante() {
   const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
 
   const [abierto, setAbierto] = useState(false);
+  const [tieneAlertaPagoMia, setTieneAlertaPagoMia] = useState(false);
   const [ocultoHastaRecarga, setOcultoHastaRecarga] = useState(false);
   const [posicionFlotante, setPosicionFlotante] = useState<{ x: number; y: number } | null>(null);
   const [arrastrandoFlotante, setArrastrandoFlotante] = useState(false);
@@ -254,9 +255,77 @@ export function ChatAriaFlotante() {
       // Ignorar si ya fue liberado
     }
     if (!fueArrastre) {
+      setTieneAlertaPagoMia(false);
       setAbierto(true);
     }
   };
+
+  // Escucha alertas proactivas del checkout (ej. error al intentar pagar con PLUX)
+  // y solicitudes directas para abrir a Mía (Web).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const manejarAlertaPago = (evt: Event) => {
+      const detalle = (evt as CustomEvent<{
+        textoMia?: string;
+        abrirChat?: boolean;
+        nombre?: string;
+        telefono?: string;
+        correo?: string;
+      }>).detail;
+      if (!detalle) return;
+
+      if (detalle.telefono || detalle.nombre || detalle.correo) {
+        setPerfilVisitante((prev) => {
+          const actualizado: PerfilVisitanteChat = {
+            nombre: detalle.nombre?.trim() || prev?.nombre || 'Cliente',
+            telefono: detalle.telefono?.trim() || prev?.telefono,
+            correo: detalle.correo?.trim() || prev?.correo,
+            esRegistrado: prev?.esRegistrado,
+          };
+          try {
+            window.localStorage.setItem(CLAVE_VISITANTE_STORAGE, JSON.stringify(actualizado));
+          } catch {
+            // Ignorar modo privado
+          }
+          return actualizado;
+        });
+      }
+
+      if (detalle.textoMia) {
+        setMensajes((prev) => [
+          ...prev,
+          {
+            id: `mia-pago-${Date.now()}`,
+            remitente: 'aria',
+            texto: detalle.textoMia!,
+            timestamp: 'Ahora',
+          },
+        ]);
+      }
+
+      setOcultoHastaRecarga(false);
+      if (detalle.abrirChat) {
+        setTieneAlertaPagoMia(false);
+        setAbierto(true);
+      } else {
+        setTieneAlertaPagoMia(true);
+      }
+    };
+
+    const manejarAbrirChat = () => {
+      setOcultoHastaRecarga(false);
+      setTieneAlertaPagoMia(false);
+      setAbierto(true);
+    };
+
+    window.addEventListener('tinkay:mia-alerta-pago', manejarAlertaPago);
+    window.addEventListener('tinkay:abrir-chat-mia', manejarAbrirChat);
+    return () => {
+      window.removeEventListener('tinkay:mia-alerta-pago', manejarAlertaPago);
+      window.removeEventListener('tinkay:abrir-chat-mia', manejarAbrirChat);
+    };
+  }, []);
 
   const emitirEventoRealtimeCliente = (payload: EventoBroadcastChatWeb) => {
     try {
@@ -1210,10 +1279,26 @@ export function ChatAriaFlotante() {
           >
             <X size={11} strokeWidth={2.6} />
           </button>
-          <div className="icono-avatar-chat">
+          <div className="icono-avatar-chat" style={{ position: 'relative' }}>
             <span role="img" aria-label="Mía Asesora Floral">
               🌹
             </span>
+            {tieneAlertaPagoMia && (
+              <span
+                aria-label="Mía tiene un mensaje de ayuda para tu pago"
+                style={{
+                  position: 'absolute',
+                  top: '-3px',
+                  right: '-3px',
+                  width: '14px',
+                  height: '14px',
+                  borderRadius: '999px',
+                  background: '#DC2626',
+                  border: '2px solid #FFFFFF',
+                  boxShadow: '0 0 0 2px rgba(220, 38, 38, 0.25)',
+                }}
+              />
+            )}
           </div>
         </div>
       )}
