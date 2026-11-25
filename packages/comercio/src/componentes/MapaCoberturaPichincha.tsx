@@ -381,10 +381,41 @@ export function MapaCoberturaPichincha({
     capaZonasRef.current.clearLayers();
 
     const activas = zonas.filter((z) => z.activo && Array.isArray(z.poligono) && z.poligono.length >= 3);
+
+    const calcularAreaAprox = (poligono: [number, number][]): number => {
+      let minLa = Infinity, maxLa = -Infinity, minLn = Infinity, maxLn = -Infinity;
+      for (const [la, ln] of poligono) {
+        if (la < minLa) minLa = la;
+        if (la > maxLa) maxLa = la;
+        if (ln < minLn) minLn = ln;
+        if (ln > maxLn) maxLn = ln;
+      }
+      return Math.max(0, (maxLa - minLa) * (maxLn - minLn));
+    };
+
+    const puntoEnPolyLocal = (lat: number, lng: number, poligono: [number, number][]): boolean => {
+      let dentro = false;
+      for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+        const xi = poligono[i]![0];
+        const yi = poligono[i]![1];
+        const xj = poligono[j]![0];
+        const yj = poligono[j]![1];
+        const inter =
+          yi > lng !== yj > lng && lat < ((xj - xi) * (lng - yi)) / (yj - yi) + xi;
+        if (inter) dentro = !dentro;
+      }
+      return dentro;
+    };
+
+    const areasPorId = new Map<string, number>();
+    activas.forEach((z) => areasPorId.set(z.id, calcularAreaAprox(z.poligono)));
+
+    // Dibujar primero los polígonos más grandes y al final los más pequeños (y la zona resaltada siempre arriba)
     const ordenadasParaDibujo = [...activas].sort((a, b) => {
       const aSel = zonaResaltadaId === a.id || zonaResaltadaId === a.codigo ? 1 : 0;
       const bSel = zonaResaltadaId === b.id || zonaResaltadaId === b.codigo ? 1 : 0;
-      return aSel - bSel;
+      if (aSel !== bSel) return aSel - bSel;
+      return (areasPorId.get(b.id) ?? 0) - (areasPorId.get(a.id) ?? 0);
     });
 
     ordenadasParaDibujo.forEach((zona) => {
@@ -415,20 +446,58 @@ export function MapaCoberturaPichincha({
 
       poly.addTo(capaZonasRef.current);
 
-      // Etiqueta fija legible dentro del polígono ("Cobertura Gratuita", "Calderón +$3", etc.)
+      // Etiqueta fija legible dentro del polígono ("Cobertura Gratuita", "Entrega $1", "Entrega $2", "Calderón +$3", etc.)
       if (!modoDibujoPoligono) {
         try {
-          const centroZona = poly.getBounds().getCenter();
+          const boundsZona = poly.getBounds();
+          let puntoEtiqueta: [number, number] = [
+            boundsZona.getCenter().lat,
+            boundsZona.getCenter().lng,
+          ];
+
+          // Si el centro cae dentro de una zona interna más pequeña (anillos concéntricos como Entrega $1 / Entrega $2),
+          // desplazar la etiqueta hacia la franja libre superior del anillo para evitar superposición.
+          const areaPropia = areasPorId.get(zona.id) ?? 0;
+          const zonasInternas = activas.filter(
+            (otra) => otra.id !== zona.id && (areasPorId.get(otra.id) ?? 0) < areaPropia * 0.92
+          );
+          const centroTapado = zonasInternas.some((otra) =>
+            puntoEnPolyLocal(puntoEtiqueta[0], puntoEtiqueta[1], otra.poligono)
+          );
+          if (centroTapado) {
+            // Buscar vértice más al norte del polígono y ubicar la etiqueta en la banda libre de ese anillo
+            let vNorte = zona.poligono[0]!;
+            for (const v of zona.poligono) {
+              if (v[0] > vNorte[0]) vNorte = v;
+            }
+            const factores = [0.86, 0.78, 0.92, 0.7, 0.62];
+            for (const f of factores) {
+              const candLat = puntoEtiqueta[0] + (vNorte[0] - puntoEtiqueta[0]) * f;
+              const candLng = puntoEtiqueta[1] + (vNorte[1] - puntoEtiqueta[1]) * f;
+              const dentroPropia = puntoEnPolyLocal(candLat, candLng, zona.poligono);
+              const fueraInternas = !zonasInternas.some((otra) =>
+                puntoEnPolyLocal(candLat, candLng, otra.poligono)
+              );
+              if (dentroPropia && fueraInternas) {
+                puntoEtiqueta = [candLat, candLng];
+                break;
+              }
+            }
+          }
+
           const colorZona = zona.color || (zona.modoCobro === "GRATIS" ? "#16A34A" : "#0284C7");
           const precioTexto =
             zona.tarifaFija % 1 === 0
               ? `$${zona.tarifaFija.toFixed(0)}`
               : `$${zona.tarifaFija.toFixed(2)}`;
+          const nombreYaTienePrecio = /\$\s*\d/.test(zona.nombre);
           const textoPill =
             zona.modoCobro === "GRATIS"
               ? "Cobertura Gratuita"
               : zona.modoCobro === "TARIFA_FIJA"
-                ? `${zona.nombre} +${precioTexto}`
+                ? nombreYaTienePrecio
+                  ? zona.nombre
+                  : `${zona.nombre} +${precioTexto}`
                 : `${zona.nombre} (por km)`;
           const textoEscapado = textoPill
             .replace(/&/g, "&amp;")
@@ -437,14 +506,14 @@ export function MapaCoberturaPichincha({
           const esGratis = zona.modoCobro === "GRATIS";
           const bgPill = esGratis
             ? "rgba(236, 253, 245, 0.92)"
-            : "rgba(255, 255, 255, 0.9)";
+            : "rgba(255, 255, 255, 0.92)";
           const fgPill = esGratis ? "#166534" : "#1E293B";
           const borderPill = esGratis ? "#16A34A" : colorZona;
 
-          L.marker(centroZona, {
+          L.marker(puntoEtiqueta, {
             interactive: false,
             keyboard: false,
-            zIndexOffset: esGratis ? -60 : -100,
+            zIndexOffset: esGratis ? -50 : -90,
             icon: L.divIcon({
               className: "eco-etiqueta-zona-mapa",
               iconSize: [0, 0],

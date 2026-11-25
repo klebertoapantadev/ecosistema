@@ -55,6 +55,30 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(puntoEnPoligono({ lat: -0.2014, lng: -78.4912 }, config.zonas[0]!.poligono)).toBe(false);
   });
 
+  it("aplica Entrega $1 (5-7 km en auto) y Entrega $2 (7-9 km en auto) alrededor de la zona gratuita", () => {
+    // Plaza Foch / La Mariscal (~5.25 km en auto): cae en Entrega $1 y Entrega $2 -> gana tarifa más baja ($1.00)
+    const plazaFoch = { lat: -0.2014, lng: -78.4912 };
+    const res1 = cotizarEnvioDomicilio({
+      config,
+      destino: plazaFoch,
+      distanciaVialKm: 5.25,
+    });
+    expect(res1.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
+    expect(res1.zonaDetectada?.nombre).toBe("Entrega $1");
+    expect(res1.costoTotalEnvio).toBe(1.0);
+
+    // Centro Histórico (~8.59 km en auto): fuera de Entrega $1, dentro de Entrega $2 -> $2.00
+    const centroHistorico = { lat: -0.2201, lng: -78.5123 };
+    const res2 = cotizarEnvioDomicilio({
+      config,
+      destino: centroHistorico,
+      distanciaVialKm: 8.59,
+    });
+    expect(res2.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
+    expect(res2.zonaDetectada?.nombre).toBe("Entrega $2");
+    expect(res2.costoTotalEnvio).toBe(2.0);
+  });
+
   it("aplica tarifa fija de zona en Cumbayá ($3.50)", () => {
     const parqueCumbaya = { lat: -0.205, lng: -78.435 };
     const res = cotizarEnvicilioHelper(config, parqueCumbaya, 9.8);
