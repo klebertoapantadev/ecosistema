@@ -77,6 +77,45 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(res2.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
     expect(res2.zonaDetectada?.nombre).toBe("Entrega $2");
     expect(res2.costoTotalEnvio).toBe(2.0);
+
+    // El Condado Shopping (~10.26 km en auto): dentro de Entrega $3 (11 km) -> $3.00
+    const condado = { lat: -0.1045, lng: -78.4975 };
+    const res3 = cotizarEnvioDomicilio({
+      config,
+      destino: condado,
+      distanciaVialKm: 10.26,
+    });
+    expect(res3.zonaDetectada?.nombre).toBe("Entrega $3");
+    expect(res3.costoTotalEnvio).toBe(3.0);
+
+    // Carcelén (~12.47 km en auto): fuera de Entrega $3 (11 km), dentro de Entrega $4 (13 km)
+    const carcelen = { lat: -0.0885, lng: -78.474 };
+    expect(puntoEnPoligono(carcelen, config.zonas.find((z) => z.codigo === "entrega_3_usd")!.poligono)).toBe(false);
+    expect(puntoEnPoligono(carcelen, config.zonas.find((z) => z.codigo === "entrega_4_usd")!.poligono)).toBe(true);
+    // Zona dentro de Entrega $4 sin otra zona fija más barata (ej. Mena del Hierro / El Condado Oeste) -> $4.00
+    const condadoOeste = { lat: -0.118, lng: -78.52 };
+    const res4 = cotizarEnvioDomicilio({
+      config,
+      destino: condadoOeste,
+      distanciaVialKm: 12.8,
+    });
+    expect(res4.zonaDetectada?.nombre).toBe("Entrega $4");
+    expect(res4.costoTotalEnvio).toBe(4.0);
+
+    // Calderón / Carapungo (~14.26 km en auto): dentro de Entrega $5 (15 km) -> $5.00
+    const calderon = { lat: -0.095, lng: -78.423 };
+    const res5 = cotizarEnvioDomicilio({
+      config,
+      destino: calderon,
+      distanciaVialKm: 14.26,
+    });
+    expect(res5.costoTotalEnvio).toBe(4.0); // POR_KM (14.26*0.5-3=4.13->4.00) o Entrega $5 ($5.00): gana la tarifa más baja ($4.00)
+    expect(puntoEnPoligono(calderon, config.zonas.find((z) => z.codigo === "entrega_5_usd")!.poligono)).toBe(true);
+
+    // El Recreo (~15.90 km en auto): dentro de Entrega $6 (17 km)
+    const elRecreo = { lat: -0.252, lng: -78.522 };
+    expect(puntoEnPoligono(elRecreo, config.zonas.find((z) => z.codigo === "entrega_6_usd")!.poligono)).toBe(true);
+    expect(puntoEnPoligono(elRecreo, config.zonas.find((z) => z.codigo === "entrega_5_usd")!.poligono)).toBe(false);
   });
 
   it("aplica tarifa fija de zona en Cumbayá ($3.50)", () => {
@@ -151,7 +190,7 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(redondearTarifaComercialEnvio(5.51)).toBe(6.0);
     expect(redondearTarifaComercialEnvio(5.92)).toBe(6.0);
 
-    const surQuito = { lat: -0.245, lng: -78.518 };
+    const surQuito = { lat: -0.298, lng: -78.552 }; // Quitumbe (fuera de anillos de tarifa fija hasta 17 km)
 
     // 16.06 km * $0.50 - $3.00 = $5.03 -> menos de 25 ctv -> $5.00
     const casoMenos25 = cotizarEnvioDomicilio({
