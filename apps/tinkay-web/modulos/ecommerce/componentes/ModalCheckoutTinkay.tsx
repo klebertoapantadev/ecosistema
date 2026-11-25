@@ -2093,6 +2093,7 @@ export function ModalCheckoutTinkay() {
                               negocio="tinkay"
                               configuracionInicial={configLogistica}
                               clienteRegistrado={usuarioRegistradoTinkay}
+                              mostrarDetalleRutaStaff={Boolean(estadoRegalo?.esStaffNegocio)}
                               deliveryIncluidoProducto={!algunoNoIncluyeDelivery}
                               recargoLogisticoProducto={recargoEspecialTotal}
                               permitirModoRetiro={false}

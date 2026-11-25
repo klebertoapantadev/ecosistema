@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
   ExternalLink,
@@ -10,6 +10,7 @@ import {
   Map as MapIcon,
   MapPin,
   Maximize2,
+  RefreshCw,
   Search,
   Store,
   Truck,
@@ -53,6 +54,8 @@ export interface PropsSelectorUbicacionEntrega {
   mostrarMapaPorDefecto?: boolean;
   /** Si se indica explícitamente, define si el comprador tiene cuenta registrada activa en el negocio */
   clienteRegistrado?: boolean;
+  /** Si es true (o si el usuario autenticado es Operador/Admin/Ventas), muestra el detalle interno de ruta (KM reales, costo delivery, fórmula y ubicación) */
+  mostrarDetalleRutaStaff?: boolean;
   onCambioCotizacion: (evento: EventoCotizacionUbicacion) => void;
 }
 
@@ -68,6 +71,7 @@ export function SelectorUbicacionEntrega({
   cotizacionInicial = null,
   mostrarMapaPorDefecto = false,
   clienteRegistrado,
+  mostrarDetalleRutaStaff,
   onCambioCotizacion,
 }: PropsSelectorUbicacionEntrega) {
   const [config, setConfig] = useState<ConfiguracionLogisticaNegocio>(
@@ -76,9 +80,13 @@ export function SelectorUbicacionEntrega({
   const [registradoDetectado, setRegistradoDetectado] = useState<boolean>(
     typeof clienteRegistrado === "boolean" ? clienteRegistrado : false
   );
+  const [esStaffDetectado, setEsStaffDetectado] = useState<boolean>(
+    typeof mostrarDetalleRutaStaff === "boolean" ? mostrarDetalleRutaStaff : false
+  );
   const [verificandoRegistro, setVerificandoRegistro] = useState<boolean>(
     typeof clienteRegistrado !== "boolean"
   );
+  const recienEnfocadoUrlRef = useRef<boolean>(false);
   const [retiroLocal, setRetiroLocal] = useState<boolean>(retiroInicial);
   const [enlaceTexto, setEnlaceTexto] = useState<string>(enlaceMapaInicial);
   const [coordenadas, setCoordenadas] = useState<CoordenadaGeo | null>(coordenadasIniciales);
@@ -111,28 +119,39 @@ export function SelectorUbicacionEntrega({
   }, [negocio, configuracionInicial]);
 
   useEffect(() => {
-    if (typeof clienteRegistrado === "boolean") {
+    const necesitaRegistro = typeof clienteRegistrado !== "boolean";
+    const necesitaStaff = typeof mostrarDetalleRutaStaff !== "boolean";
+    if (!necesitaRegistro) {
       setRegistradoDetectado(clienteRegistrado);
       setVerificandoRegistro(false);
+    }
+    if (!necesitaStaff) {
+      setEsStaffDetectado(mostrarDetalleRutaStaff);
+    }
+    if (!necesitaRegistro && !necesitaStaff) {
       return;
     }
     let activo = true;
-    setVerificandoRegistro(true);
+    if (necesitaRegistro) setVerificandoRegistro(true);
     obtenerEstadoRegaloPrimeraCompraAction(negocio)
       .then((res) => {
-        if (activo) setRegistradoDetectado(Boolean(res.autenticado));
+        if (!activo) return;
+        if (necesitaRegistro) setRegistradoDetectado(Boolean(res.autenticado));
+        if (necesitaStaff) setEsStaffDetectado(Boolean(res.esStaffNegocio));
       })
       .catch(() => {})
       .finally(() => {
-        if (activo) setVerificandoRegistro(false);
+        if (activo && necesitaRegistro) setVerificandoRegistro(false);
       });
     return () => {
       activo = false;
     };
-  }, [negocio, clienteRegistrado]);
+  }, [negocio, clienteRegistrado, mostrarDetalleRutaStaff]);
 
   const esClienteRegistradoEfectivo =
     typeof clienteRegistrado === "boolean" ? clienteRegistrado : registradoDetectado;
+  const esStaffRutaEfectivo =
+    typeof mostrarDetalleRutaStaff === "boolean" ? mostrarDetalleRutaStaff : esStaffDetectado;
 
   // Recalcular si cambian condiciones de los ítems o el estado de registro del cliente
   useEffect(() => {
@@ -425,64 +444,68 @@ export function SelectorUbicacionEntrega({
         </div>
       ) : (
         <>
-          {/* Indicador de Zona de Cobertura según Registro del Cliente */}
+          {/* Indicador compacto de Zona Gratuita (ocupa mínimo espacio vertical) */}
           {esClienteRegistradoEfectivo || config.envioGratisSoloRegistrados === false ? (
             <div
               style={{
                 background: "#F0FDF4",
                 border: "1px solid #BBF7D0",
-                borderRadius: "10px",
-                padding: "9px 12px",
+                borderRadius: "9px",
+                padding: "7px 10px",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "8px",
+                flexDirection: "column",
+                gap: "2px",
               }}
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                }}
+              >
                 <span
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "6px",
+                    gap: "5px",
                     fontSize: "0.78rem",
-                    fontWeight: 700,
+                    fontWeight: 800,
                     color: "#166534",
                   }}
                 >
-                  <CheckCircle2 size={15} color="#16A34A" style={{ flexShrink: 0 }} />
-                  <span>
-                    Beneficio Cliente Registrado · Zona gratuita:{" "}
-                    {config.zonaGratisNombre || "Quito Centro-Norte"}
-                  </span>
+                  <CheckCircle2 size={14} color="#16A34A" style={{ flexShrink: 0 }} />
+                  <span>Zona gratuita</span>
                 </span>
-                <span style={{ fontSize: "0.71rem", color: "#15803D", paddingLeft: "21px" }}>
-                  Envío sin costo dentro del perímetro. Fuera de esta zona se calcula recargo adicional según la distancia.
+                <span
+                  style={{
+                    fontSize: "0.69rem",
+                    fontWeight: 700,
+                    color: "#15803D",
+                    background: "#DCFCE7",
+                    padding: "1px 7px",
+                    borderRadius: "999px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  $0.00
                 </span>
               </div>
-              <strong
-                style={{
-                  fontSize: "0.8rem",
-                  color: "#15803D",
-                  whiteSpace: "nowrap",
-                  background: "#DCFCE7",
-                  padding: "3px 8px",
-                  borderRadius: "999px",
-                }}
-              >
-                GRATIS ($0.00)
-              </strong>
+              <span style={{ fontSize: "0.69rem", color: "#15803D", lineHeight: 1.3 }}>
+                El área en verde en el mapa es gratuita.
+              </span>
             </div>
           ) : (
             <div
               style={{
-                background: "linear-gradient(135deg, #FFFBEB 0%, #FDF2F8 100%)",
+                background: "#FFFBEB",
                 border: "1px solid #FDE68A",
-                borderRadius: "10px",
-                padding: "10px 12px",
+                borderRadius: "9px",
+                padding: "7px 10px",
                 display: "flex",
                 flexDirection: "column",
-                gap: "6px",
+                gap: "5px",
               }}
             >
               <div
@@ -498,44 +521,16 @@ export function SelectorUbicacionEntrega({
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "6px",
-                    fontSize: "0.78rem",
+                    gap: "5px",
+                    fontSize: "0.76rem",
                     fontWeight: 800,
                     color: "#92400E",
                   }}
                 >
-                  <AlertTriangle size={14} color="#D97706" style={{ flexShrink: 0 }} />
-                  <span>
-                    Envío Gratis en {config.zonaGratisNombre || "Centro-Norte"} exclusivo para registrados
-                  </span>
+                  <AlertTriangle size={13} color="#D97706" style={{ flexShrink: 0 }} />
+                  <span>Regístrate para activar la zona gratuita</span>
                 </span>
-                <strong
-                  style={{
-                    fontSize: "0.73rem",
-                    color: "#92400E",
-                    background: "#FEF3C7",
-                    padding: "2px 8px",
-                    borderRadius: "999px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Invitado: ${(config.tarifaBaseNoRegistradoUsd ?? 1).toFixed(2)} + $
-                  {(config.tarifaPorKmNoRegistradoUsd ?? config.tarifaPorKm ?? 0.5).toFixed(2)}/km
-                </strong>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "8px",
-                }}
-              >
-                <span style={{ fontSize: "0.71rem", color: "#78350F", lineHeight: 1.35 }}>
-                  Regístrate gratis o inicia sesión para activar tu zona de entrega gratuita ($0.00).
-                </span>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
                   <a
                     href="/registro?destino=%2F%3Fcheckout%3D1%26obsequio%3D1&obsequio=1"
                     onClick={() => {
@@ -545,16 +540,16 @@ export function SelectorUbicacionEntrega({
                         )}; path=/; max-age=86400`;
                       }
                     }}
-                    title="Crear cuenta gratis para activar zona de envío gratuito"
+                    title="Crear cuenta gratis para activar la zona gratuita"
                     aria-label="Registrarme"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      padding: "4px 10px",
+                      padding: "3px 9px",
                       borderRadius: "999px",
                       background: "#2D4734",
                       color: "#FFFFFF",
-                      fontSize: "0.71rem",
+                      fontSize: "0.69rem",
                       fontWeight: 700,
                       textDecoration: "none",
                     }}
@@ -570,17 +565,17 @@ export function SelectorUbicacionEntrega({
                         )}; path=/; max-age=86400`;
                       }
                     }}
-                    title="Iniciar sesión con mi cuenta para activar envío gratis"
+                    title="Iniciar sesión con mi cuenta para activar la zona gratuita"
                     aria-label="Ingresar"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      padding: "4px 10px",
+                      padding: "3px 9px",
                       borderRadius: "999px",
                       border: "1px solid #D6D3D1",
                       background: "#FFFFFF",
                       color: "#1C1917",
-                      fontSize: "0.71rem",
+                      fontSize: "0.69rem",
                       fontWeight: 700,
                       textDecoration: "none",
                     }}
@@ -589,12 +584,15 @@ export function SelectorUbicacionEntrega({
                   </a>
                 </div>
               </div>
+              <span style={{ fontSize: "0.68rem", color: "#78350F", lineHeight: 1.3 }}>
+                El área en verde en el mapa es gratuita ($0.00) para clientes registrados.
+              </span>
             </div>
           )}
 
-          {/* Campo de link Google Maps / Apple Maps / Waze */}
+          {/* Campo de link Google Maps / Apple Maps / Waze (auto-selecciona al enfocar + botón claro Actualizar) */}
           <div style={{ display: "flex", gap: "6px", alignItems: "stretch" }}>
-            <div style={{ position: "relative", flex: 1 }}>
+            <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
               <Link2
                 size={14}
                 style={{
@@ -609,6 +607,30 @@ export function SelectorUbicacionEntrega({
               <input
                 type="text"
                 value={enlaceTexto}
+                onFocus={(e) => {
+                  recienEnfocadoUrlRef.current = true;
+                  const inputEl = e.currentTarget;
+                  if (inputEl.value) {
+                    inputEl.select();
+                    // Respaldo para navegadores móviles que colocan el cursor tras focus
+                    window.setTimeout(() => {
+                      try {
+                        inputEl.select();
+                      } catch {
+                        // Ignorar si perdió el foco
+                      }
+                    }, 0);
+                  }
+                }}
+                onMouseUp={(e) => {
+                  if (recienEnfocadoUrlRef.current && e.currentTarget.value) {
+                    e.preventDefault();
+                    recienEnfocadoUrlRef.current = false;
+                  }
+                }}
+                onBlur={() => {
+                  recienEnfocadoUrlRef.current = false;
+                }}
                 onChange={(e) => {
                   const val = e.target.value;
                   setEnlaceTexto(val);
@@ -626,7 +648,8 @@ export function SelectorUbicacionEntrega({
                     void manejarResolverEnlace();
                   }
                 }}
-                placeholder="Pega link de Google Maps, Waze o Apple Maps..."
+                placeholder="Pega aquí la dirección de Google Maps"
+                aria-label="Enlace de dirección en Google Maps"
                 style={{
                   width: "100%",
                   padding: "8px 10px 8px 30px",
@@ -644,25 +667,26 @@ export function SelectorUbicacionEntrega({
               type="button"
               disabled={calculando}
               onClick={() => void manejarResolverEnlace()}
-              title="Calcular valor adicional de envío según la ubicación ingresada"
-              aria-label="Calcular envío"
+              title="Actualizar ubicación y envío desde el enlace de Maps"
+              aria-label="Actualizar ubicación desde Maps"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
-                padding: "0 12px",
+                padding: "0 11px",
                 borderRadius: "8px",
                 border: "1px solid #18181B",
                 background: "#18181B",
                 color: "#FFFFFF",
-                fontSize: "0.76rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 cursor: calculando ? "wait" : "pointer",
                 whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
-              {calculando ? <Loader2 size={14} /> : <MapPin size={14} />}
-              <span className="btn-texto-responsive">Calcular</span>
+              {calculando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
+              <span>Actualizar</span>
             </button>
           </div>
 
@@ -1022,6 +1046,51 @@ export function SelectorUbicacionEntrega({
                   </div>
                 )}
 
+              {/* Detalle interno de ruta exclusivo para Operador / Admin / Ventas */}
+              {esStaffRutaEfectivo && (
+                <div
+                  style={{
+                    marginTop: "6px",
+                    padding: "7px 9px",
+                    borderRadius: "8px",
+                    background: "#EFF6FF",
+                    border: "1px solid #BFDBFE",
+                    color: "#1E3A8A",
+                    fontSize: "0.71rem",
+                    lineHeight: 1.45,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "3px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      gap: "6px 10px",
+                      fontWeight: 800,
+                    }}
+                  >
+                    <span>🧭 Ruta real: {cotizacion.distanciaVialKm.toFixed(2)} km</span>
+                    <span>
+                      · Delivery cobrado:{" "}
+                      {cotizacion.costoTotalEnvio === 0
+                        ? "$0.00 (Gratis)"
+                        : `+$${cotizacion.costoTotalEnvio.toFixed(2)} USD`}
+                    </span>
+                    {cotizacion.zonaDetectada?.nombre && (
+                      <span>· Zona: {cotizacion.zonaDetectada.nombre}</span>
+                    )}
+                  </div>
+                  {cotizacion.formulaDetalle && (
+                    <div style={{ color: "#1E40AF", fontSize: "0.69rem" }}>
+                      <strong>Detalle cálculo:</strong> {cotizacion.formulaDetalle}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {!cotizacion.dentroCobertura && (
                 <span style={{ fontSize: "0.72rem", color: "#92400E", lineHeight: 1.35 }}>
                   Ubicación fuera de nuestra cobertura automática. Coordina entrega especial por chat o elige retiro en tienda.
@@ -1351,6 +1420,21 @@ export function SelectorUbicacionEntrega({
                   <span style={{ fontSize: "0.74rem", color: "#64748B" }}>
                     · {cotizacion.detalleDireccion.parroquia}
                     {cotizacion.detalleDireccion.sectorBarrio ? `, ${cotizacion.detalleDireccion.sectorBarrio}` : ""}
+                  </span>
+                )}
+                {esStaffRutaEfectivo && cotizacion && (
+                  <span
+                    style={{
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      color: "#1E3A8A",
+                      background: "#DBEAFE",
+                      padding: "2px 7px",
+                      borderRadius: "999px",
+                    }}
+                  >
+                    {cotizacion.distanciaVialKm.toFixed(2)} km ·{" "}
+                    {cotizacion.zonaDetectada?.nombre || "Fuera de zona"}
                   </span>
                 )}
               </div>

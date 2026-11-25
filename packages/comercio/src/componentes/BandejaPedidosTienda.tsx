@@ -2817,26 +2817,72 @@ export function BandejaPedidosTienda({
                       })}
                     </div>
 
-                    {!esExeq && typeof p.logistica.distanciaVialKm === "number" && (
-                      <div>
-                        <strong>Distancia vial calculada:</strong>{" "}
-                        {p.logistica.distanciaVialKm.toFixed(2)} km
+                    {!esExeq && (
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          background: "#EFF6FF",
+                          border: "1px solid #BFDBFE",
+                          color: "#1E3A8A",
+                          fontSize: "0.75rem",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "3px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "6px 12px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {typeof p.logistica.distanciaVialKm === "number" && (
+                            <span>
+                              🧭 KM reales: {p.logistica.distanciaVialKm.toFixed(2)} km
+                            </span>
+                          )}
+                          <span>
+                            🚚 Delivery cobrado:{" "}
+                            {p.logistica.retiroEnLocal
+                              ? "$0.00 (Retiro en tienda)"
+                              : Number(p.costoEnvio || 0) === 0
+                                ? "$0.00 (Gratis)"
+                                : `+$${Number(p.costoEnvio).toFixed(2)} USD`}
+                          </span>
+                          {p.logistica.zonaDetectada && (
+                            <span>📍 Zona: {p.logistica.zonaDetectada}</span>
+                          )}
+                          {typeof p.logistica.lat === "number" &&
+                            typeof p.logistica.lng === "number" && (
+                              <span style={{ fontWeight: 500, color: "#1E40AF" }}>
+                                GPS: {p.logistica.lat.toFixed(5)}, {p.logistica.lng.toFixed(5)}
+                              </span>
+                            )}
+                        </div>
+                        <div style={{ fontSize: "0.73rem", color: "#1E40AF" }}>
+                          <strong>Detalle de ruta:</strong> {p.logistica.formulaCalculoInterno}
+                        </div>
                       </div>
                     )}
-
-                    <div
-                      style={{
-                        marginTop: "6px",
-                        padding: "7px 9px",
-                        borderRadius: "7px",
-                        background: esExeq ? "#F4F2EE" : "#F2F6F3",
-                        border: `1px solid ${esExeq ? "#DDD8CE" : "#CEDDD3"}`,
-                        color: esExeq ? "#3A3530" : "#2B4A36",
-                        fontSize: "0.75rem",
-                      }}
-                    >
-                      <strong>Registro interno:</strong> {p.logistica.formulaCalculoInterno}
-                    </div>
+                    {esExeq && (
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          padding: "7px 9px",
+                          borderRadius: "7px",
+                          background: "#F4F2EE",
+                          border: "1px solid #DDD8CE",
+                          color: "#3A3530",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        <strong>Registro interno:</strong> {p.logistica.formulaCalculoInterno}
+                      </div>
+                    )}
                   </div>
 
                   {!esExeq && p.logistica.enlaceMapa && (

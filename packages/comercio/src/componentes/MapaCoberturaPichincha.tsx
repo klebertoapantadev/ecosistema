@@ -36,9 +36,13 @@ function cargarLeafletCliente(): Promise<any> {
       style.id = "eco-leaflet-custom-styles";
       style.textContent = `
         .eco-pin-entrega,
-        .eco-pin-taller {
+        .eco-pin-taller,
+        .eco-etiqueta-zona-mapa {
           background: transparent !important;
           border: none !important;
+        }
+        .eco-etiqueta-zona-mapa {
+          pointer-events: none !important;
         }
         .eco-pin-entrega .eco-pin-cuerpo {
           transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.16s ease;
@@ -410,6 +414,48 @@ export function MapaCoberturaPichincha({
       }
 
       poly.addTo(capaZonasRef.current);
+
+      // Etiqueta fija legible dentro del polígono ("Cobertura Gratuita", "Calderón +$3", etc.)
+      if (!modoDibujoPoligono) {
+        try {
+          const centroZona = poly.getBounds().getCenter();
+          const colorZona = zona.color || (zona.modoCobro === "GRATIS" ? "#16A34A" : "#0284C7");
+          const precioTexto =
+            zona.tarifaFija % 1 === 0
+              ? `$${zona.tarifaFija.toFixed(0)}`
+              : `$${zona.tarifaFija.toFixed(2)}`;
+          const textoPill =
+            zona.modoCobro === "GRATIS"
+              ? "Cobertura Gratuita"
+              : zona.modoCobro === "TARIFA_FIJA"
+                ? `${zona.nombre} +${precioTexto}`
+                : `${zona.nombre} (por km)`;
+          const textoEscapado = textoPill
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+          const esGratis = zona.modoCobro === "GRATIS";
+          const bgPill = esGratis
+            ? "rgba(236, 253, 245, 0.92)"
+            : "rgba(255, 255, 255, 0.9)";
+          const fgPill = esGratis ? "#166534" : "#1E293B";
+          const borderPill = esGratis ? "#16A34A" : colorZona;
+
+          L.marker(centroZona, {
+            interactive: false,
+            keyboard: false,
+            zIndexOffset: esGratis ? -60 : -100,
+            icon: L.divIcon({
+              className: "eco-etiqueta-zona-mapa",
+              iconSize: [0, 0],
+              iconAnchor: [0, 0],
+              html: `<div style="transform:translate(-50%,-50%);width:max-content;max-width:165px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 7px;border-radius:999px;background:${bgPill};border:1.25px solid ${borderPill};color:${fgPill};font-size:10px;font-weight:800;letter-spacing:0.01em;box-shadow:0 1px 4px rgba(15,23,42,0.18);pointer-events:none;user-select:none;line-height:1.25;">${textoEscapado}</div>`,
+            }),
+          }).addTo(capaZonasRef.current);
+        } catch {
+          // Ignorar si un polígono tiene coordenadas degeneradas
+        }
+      }
 
       // Mostrar vértices discretos del área actualmente seleccionada cuando no se está redibujando
       if (resaltada && !modoDibujoPoligono) {

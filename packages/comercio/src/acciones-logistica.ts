@@ -5567,6 +5567,8 @@ const URL_IMAGEN_REGALO_BIENVENIDA_TINKAY =
 export interface EstadoRegaloPrimeraCompra {
   autenticado: boolean;
   aplicaRegalo: boolean;
+  /** true cuando el usuario autenticado tiene rol Operador / Admin / Ventas / Taller / SuperAdmin en el negocio */
+  esStaffNegocio?: boolean;
   regalo: {
     sku: string;
     nombre: string;
@@ -5651,17 +5653,24 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
         : ["TRQ", "TRANQ", "TRANQI", "LEGAL", "tranqi"];
 
     let tieneMembresiaNegocio = false;
+    let esStaffNegocio = false;
+    const ROLES_STAFF_RUTA = new Set([
+      "SUPERADMIN",
+      "ADMINISTRADOR",
+      "ADMIN",
+      "OPERADOR",
+      "VENTAS",
+      "TALLER",
+    ]);
     try {
-      const [{ data: mem }, { data: usu }] = await Promise.all([
+      const [{ data: mems }, { data: usu }] = await Promise.all([
         db
           .schema("comun_seguridad")
           .from("seg_membresia")
-          .select("mem_id")
+          .select("mem_id, mem_rol")
           .eq("mem_usuario_id", user.id)
           .in("mem_negocio", aliasNeg)
-          .eq("mem_estado", "ACTIVO")
-          .limit(1)
-          .maybeSingle(),
+          .eq("mem_estado", "ACTIVO"),
         db
           .schema("comun_seguridad")
           .from("seg_usuario")
@@ -5669,7 +5678,14 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
           .eq("usu_id", user.id)
           .maybeSingle(),
       ]);
-      tieneMembresiaNegocio = Boolean(mem?.mem_id || usu?.usu_superadmin_plataforma);
+      const listaMems = Array.isArray(mems) ? mems : [];
+      tieneMembresiaNegocio = Boolean(listaMems.length > 0 || usu?.usu_superadmin_plataforma);
+      esStaffNegocio = Boolean(
+        usu?.usu_superadmin_plataforma ||
+          listaMems.some((m: any) =>
+            ROLES_STAFF_RUTA.has(String(m?.mem_rol || "").trim().toUpperCase())
+          )
+      );
     } catch {
       tieneMembresiaNegocio = true;
     }
@@ -5678,6 +5694,7 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
       return {
         autenticado: false,
         aplicaRegalo: false,
+        esStaffNegocio: false,
         regalo: regaloResuelto,
       };
     }
@@ -5697,6 +5714,7 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
       return {
         autenticado: true,
         aplicaRegalo: Boolean(data.aplica_regalo),
+        esStaffNegocio,
         regalo: {
           sku: skuFinal,
           nombre: String(data.regalo?.nombre || regaloResuelto.nombre),
@@ -5722,6 +5740,7 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
     return {
       autenticado: true,
       aplicaRegalo: (count ?? 0) === 0,
+      esStaffNegocio,
       regalo: regaloResuelto,
     };
   } catch {
