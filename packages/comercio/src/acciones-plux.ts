@@ -19,6 +19,7 @@ import {
 } from "./ride-sri";
 import {
   firmarOrdenRespaldoServidor,
+  generarTokenEdicionTarjetaServidor,
   verificarOrdenRespaldoServidor,
 } from "./token-orden-firmada";
 import { obtenerConfiguracionTiendaCheckoutAction } from "./acciones-tienda-checkout";
@@ -1428,6 +1429,76 @@ export async function confirmarPagoPluxAction(entrada: {
         : "DOMICILIO"
       : undefined;
 
+    let urlEditarTarjetaPlux: string | undefined;
+    let esTarjetaCondolenciasPlux = false;
+    const negPluxNorm = String(negocio || "").trim().toLowerCase();
+    if (!esLinkPagoChat && (negPluxNorm === "tinkay" || negPluxNorm === "margaritas")) {
+      try {
+        const proformaIdTarj = String(detPrevio.proforma_id || ordenFirmada?.id || "").trim();
+        let tokVistaTarj = String(detPrevio.token_aprobacion || "").trim();
+        let textoItemsTarj = itemsResumenNotif.join(" ");
+
+        if (proformaIdTarj) {
+          const dbTarj = clienteDb || supabase;
+          const [{ data: filaPrfTarj }, { data: filaOtaTarj }] = await Promise.all([
+            dbTarj
+              .schema("comun_comercio")
+              .from("com_proforma")
+              .select("prf_token_aprobacion, prf_detalle_proforma")
+              .eq("prf_id", proformaIdTarj)
+              .maybeSingle(),
+            dbTarj
+              .schema("comun_comercio")
+              .from("com_orden_taller")
+              .select("ota_tarjeta_token, ota_tarjeta_tipo, ota_producto_resumen")
+              .eq("ota_proforma_id", proformaIdTarj)
+              .is("ota_eliminado_en", null)
+              .limit(1)
+              .maybeSingle(),
+          ]);
+
+          if (filaOtaTarj?.ota_tarjeta_token) {
+            tokVistaTarj = String(filaOtaTarj.ota_tarjeta_token).trim();
+          } else if (filaPrfTarj?.prf_token_aprobacion) {
+            tokVistaTarj = String(filaPrfTarj.prf_token_aprobacion).trim();
+          } else if (!tokVistaTarj) {
+            tokVistaTarj = proformaIdTarj;
+          }
+
+          if (filaOtaTarj?.ota_tarjeta_tipo === "CONDOLENCIAS_PLANA") {
+            esTarjetaCondolenciasPlux = true;
+          }
+          if (filaOtaTarj?.ota_producto_resumen) {
+            textoItemsTarj += ` ${String(filaOtaTarj.ota_producto_resumen)}`;
+          }
+          const detPrfT = (filaPrfTarj?.prf_detalle_proforma ?? {}) as Record<string, any>;
+          if (
+            String(detPrfT?.tarjeta?.tipo || "").toUpperCase() === "CONDOLENCIAS_PLANA" ||
+            String(detPrfT?.clasificacion_pedido || "").toUpperCase() === "CONDOLENCIAS"
+          ) {
+            esTarjetaCondolenciasPlux = true;
+          }
+        }
+
+        if (!esTarjetaCondolenciasPlux) {
+          esTarjetaCondolenciasPlux = /condol|p[eé]same|funebr|f[uú]nebr|duelo|abanico|exequial|luto/i.test(
+            textoItemsTarj
+          );
+        }
+
+        if (tokVistaTarj) {
+          const tokEd = generarTokenEdicionTarjetaServidor(tokVistaTarj);
+          const baseUrlNeg =
+            negPluxNorm === "tinkay"
+              ? "https://tinkay-web.vercel.app"
+              : "https://margaritas-web.vercel.app";
+          urlEditarTarjetaPlux = `${baseUrlNeg}/tarjeta-editar/${encodeURIComponent(tokEd)}`;
+        }
+      } catch {
+        // No bloquear la confirmación del pago si falla la resolución opcional del enlace de tarjeta
+      }
+    }
+
     await Promise.allSettled([
       notificarClienteCompraConfirmada({
         negocio,
@@ -1444,6 +1515,8 @@ export async function confirmarPagoPluxAction(entrada: {
         claveAccesoSri: facturaEmitida?.clave_acceso ?? null,
         autorizacionPago: autorizacion,
         itemsResumen: itemsResumenNotif,
+        urlEditarTarjeta: urlEditarTarjetaPlux,
+        esTarjetaCondolencias: esTarjetaCondolenciasPlux,
       }),
       notificarStaffNuevoPedido({
         negocio,

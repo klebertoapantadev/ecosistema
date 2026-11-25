@@ -167,6 +167,7 @@ export function ModalCheckoutTinkay() {
     id: string;
     codigoOrden: string;
     tokenAprobacion: string;
+    tokenEdicionTarjeta?: string;
     respaldoFirmado?: string;
     huella: string;
   } | null>(null);
@@ -202,6 +203,7 @@ export function ModalCheckoutTinkay() {
     }>;
     incluyoObsequio?: boolean;
     nombreObsequio?: string;
+    tokenEdicionTarjeta?: string;
     autorizacionPlux?: string | null;
     facturaElectronica?: FacturaElectronicaResumen | null;
     emisorFactura?: ConfiguracionEmisorSri | null;
@@ -805,6 +807,7 @@ export function ModalCheckoutTinkay() {
         id: resultado.id,
         codigoOrden: resultado.codigoOrden,
         tokenAprobacion: resultado.tokenAprobacion,
+        tokenEdicionTarjeta: resultado.tokenEdicionTarjeta,
         respaldoFirmado: resultado.respaldoFirmado,
         huella: huellaActual,
       });
@@ -862,6 +865,7 @@ export function ModalCheckoutTinkay() {
       itemsComprados: snapshotItemsComprados,
       incluyoObsequio: incluyeExtraObsequio,
       nombreObsequio: incluyeExtraObsequio ? datosObsequio.nombre : undefined,
+      tokenEdicionTarjeta: resultado.tokenEdicionTarjeta,
     });
     setCodigoOrdenGenerado(resultado.codigoOrden);
     setPaso('exito');
@@ -1140,6 +1144,55 @@ export function ModalCheckoutTinkay() {
                 </strong>
               </div>
             </div>
+
+            {/* Enlace directo para llenar o actualizar la tarjeta gratis incluida */}
+            {resumenExito?.tokenEdicionTarjeta && (
+              <div
+                style={{
+                  width: '100%',
+                  marginTop: '12px',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: '#FDF8F3',
+                  border: '1px solid #E7D8C9',
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#2D4734' }}>
+                  💌 Tu tarjeta personalizada está incluida gratis
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#57524C', lineHeight: 1.45 }}>
+                  Puedes escribir o actualizar tu mensaje ahora mismo o más tarde desde el enlace que
+                  enviamos a tu correo de confirmación.
+                </div>
+                <a
+                  href={`/tarjeta-editar/${encodeURIComponent(resumenExito.tokenEdicionTarjeta)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Abrir editor de tarjeta dedicatoria"
+                  aria-label="Personalizar tarjeta"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '9px 14px',
+                    borderRadius: '999px',
+                    background: '#C25E85',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    alignSelf: 'flex-start',
+                  }}
+                >
+                  <span>✏️ Llenar o actualizar tarjeta</span>
+                </a>
+              </div>
+            )}
 
             {/* Opción siempre visible para contactar a la tienda vía WhatsApp */}
             <a
@@ -2648,6 +2701,7 @@ export function ModalCheckoutTinkay() {
                               itemsComprados: snapshotItemsPlux,
                               incluyoObsequio: incluyeExtraObsequio,
                               nombreObsequio: incluyeExtraObsequio ? datosObsequio.nombre : undefined,
+                              tokenEdicionTarjeta: ordenPluxPreparada.tokenEdicionTarjeta,
                               autorizacionPlux: pago.autorizacion,
                               facturaElectronica: pago.facturaElectronica || null,
                               emisorFactura: pago.emisorFactura || emisorNegocio,

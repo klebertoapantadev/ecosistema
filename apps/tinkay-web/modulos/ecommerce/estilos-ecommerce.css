@@ -1753,6 +1753,245 @@
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px;
 }
+
+/* Barra de decisión de extras (Ver extras vs No, sin extras) */
+.barra-decision-extras {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-decision-extra {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--linea);
+  background: var(--blanco);
+  color: var(--tinta);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s ease;
+}
+.btn-decision-extra:hover {
+  border-color: var(--rosa);
+}
+.btn-decision-extra.activo {
+  background: #2D4734;
+  border-color: #2D4734;
+  color: #FFFFFF;
+}
+.btn-decision-no-extras.activo {
+  background: #F4F1EB;
+  border-color: #2D4734;
+  color: #2D4734;
+}
+
+/* Estado colapsado cuando el cliente elige "No, sin extras" */
+.barra-extras-cerrados {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: #F6F8F5;
+  border: 1px solid #D8E4DA;
+}
+.btn-reabrir-extras {
+  flex-shrink: 0;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid #2D4734;
+  background: #FFFFFF;
+  color: #2D4734;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-reabrir-extras:hover {
+  background: #2D4734;
+  color: #FFFFFF;
+}
+
+/* Carrusel horizontal deslizable de extras */
+.barra-navegacion-carrusel-extras {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.controles-flechas-carrusel-extras {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.btn-nav-carrusel-extras {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--linea);
+  background: var(--blanco);
+  color: var(--tinta);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-nav-carrusel-extras:hover {
+  border-color: var(--rosa);
+  color: var(--rosa-oscuro);
+}
+.carrusel-extras-pista {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 71, 52, 0.28) transparent;
+}
+.carrusel-extras-pista::-webkit-scrollbar {
+  height: 5px;
+}
+.carrusel-extras-pista::-webkit-scrollbar-thumb {
+  background: rgba(45, 71, 52, 0.25);
+  border-radius: 999px;
+}
+.item-complemento-card-carrusel {
+  flex: 0 0 154px;
+  width: 154px;
+  scroll-snap-align: start;
+}
+
+/* Primer extra: Tarjeta Dedicatoria / Condolencias Gratis */
+.tarjeta-gratis-extra-card {
+  border-color: #2D4734 !important;
+  background: linear-gradient(180deg, #FBF8F3 0%, #FFFFFF 100%) !important;
+  box-shadow: 0 0 0 1px rgba(45, 71, 52, 0.2) !important;
+}
+.miniatura-tarjeta-ejemplo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+.miniatura-tarjeta-ejemplo.es-dedicatoria {
+  background: #E8E3D9;
+}
+.miniatura-tarjeta-ejemplo.es-condolencias {
+  background: #F4F3EE;
+}
+.mini-tarjeta-marco {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  border: 1px solid rgba(45, 71, 52, 0.28);
+  background: rgba(255, 255, 255, 0.58);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+.miniatura-tarjeta-ejemplo.es-condolencias .mini-tarjeta-marco {
+  border-color: rgba(63, 63, 70, 0.35);
+}
+.mini-tarjeta-marca {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #2D4734;
+  letter-spacing: 0.04em;
+}
+.mini-tarjeta-linea-1 {
+  width: 72%;
+  height: 2px;
+  border-radius: 99px;
+  background: rgba(63, 63, 70, 0.35);
+}
+.mini-tarjeta-linea-2 {
+  width: 52%;
+  height: 2px;
+  border-radius: 99px;
+  background: rgba(63, 63, 70, 0.22);
+}
+.mini-tarjeta-sello {
+  font-size: 0.52rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6B655E;
+  margin-top: 1px;
+}
+.precio-comp-gratis {
+  color: #166534 !important;
+  font-size: 0.78rem !important;
+}
+.btn-ver-ejemplo-tarjeta {
+  color: #2D4734 !important;
+  background: rgba(45, 71, 52, 0.11) !important;
+}
+.btn-ver-ejemplo-tarjeta:hover {
+  background: #2D4734 !important;
+  color: #FFFFFF !important;
+}
+.icono-check-gratis {
+  background: #166534 !important;
+  color: #FFFFFF !important;
+  cursor: default !important;
+}
+
+/* Modal de Previsualización Interactiva de Ejemplo de Tarjeta */
+.modal-ejemplo-tarjeta-card {
+  position: relative;
+  width: min(560px, 95vw);
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 20px 18px 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.encabezado-modal-ejemplo-tarjeta {
+  padding-right: 34px;
+}
+.badge-gratis-modal-tarjeta {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #065F46;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.visor-ejemplo-tarjeta-embebido {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #EAE4DA;
+  background: #FBF9F5;
+}
+.acciones-modal-ejemplo-tarjeta {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
 .item-complemento-card {
   position: relative;
   display: flex;

@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import {
+  TarjetaDedicatoriaDigitalInteractiva,
   calcularPrecioPorVolumen,
   capturarYPersistirAtribucionNavegador,
   describirEscalaVolumen,
@@ -71,6 +72,8 @@ export function ModalDetalleProducto() {
 
   const producto = productoSeleccionadoModal;
   const personalizacionRef = useRef<HTMLDivElement | null>(null);
+  const dedicatoriaRef = useRef<HTMLDivElement | null>(null);
+  const carruselExtrasRef = useRef<HTMLDivElement | null>(null);
 
   const [fotoActivaIndex, setFotoActivaIndex] = useState(0);
   const [linkModalCopiado, setLinkModalCopiado] = useState(false);
@@ -126,6 +129,8 @@ export function ModalDetalleProducto() {
       }
 
       setComplementosSeleccionados([]);
+      setRechazoExtras(false);
+      setVerEjemploTarjeta(false);
       setIncluirDedicatoria(false);
       setDedicatoria({ para: '', de: '', mensaje: '' });
 
@@ -238,6 +243,8 @@ export function ModalDetalleProducto() {
 
   // Estado para complementos rápidos seleccionados
   const [complementosSeleccionados, setComplementosSeleccionados] = useState<string[]>([]);
+  const [rechazoExtras, setRechazoExtras] = useState(false);
+  const [verEjemploTarjeta, setVerEjemploTarjeta] = useState(false);
   // Estado para variantes específicas elegidas de complementos (ej. color cinta)
   const [variantesExtrasElegidas, setVariantesExtrasElegidas] = useState<Record<string, VarianteEcommerce>>({});
   // Estado para inspección en foto grande y detalles de un extra
@@ -2876,22 +2883,72 @@ export function ModalDetalleProducto() {
               );
             })()}
 
-            {/* Tarjeta de Dedicatoria Personalizada Opcional (solo para ramos/arreglos retail, nunca en renta ni en eventos bajo proforma) */}
+            {/* Tarjeta de Dedicatoria / Condolencias Opcional (solo para ramos/arreglos retail, nunca en renta ni en eventos bajo proforma) */}
             {!esProductoRenta && !esProductoEvento && (
-              <div className="bloque-dedicatoria-modal">
+              <div ref={dedicatoriaRef} className="bloque-dedicatoria-modal">
                 <div className="encabezado-dedicatoria-toggle">
-                  <label className="etiqueta-check-dedicatoria">
-                    <input
-                      type="checkbox"
-                      checked={incluirDedicatoria}
-                      onChange={(e) => setIncluirDedicatoria(e.target.checked)}
-                    />
-                    <span>
-                      {personalizacionFloralActiva
-                        ? '2. Agregar Tarjeta Dedicatoria Impresa y/o Digital (Gratis)'
-                        : '1. Agregar Tarjeta Dedicatoria Impresa y/o Digital (Gratis)'}
-                    </span>
-                  </label>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                    }}
+                  >
+                    <label className="etiqueta-check-dedicatoria" style={{ flex: 1 }}>
+                      <input
+                        type="checkbox"
+                        checked={incluirDedicatoria}
+                        onChange={(e) => setIncluirDedicatoria(e.target.checked)}
+                      />
+                      <span>
+                        {personalizacionFloralActiva ? '2. ' : '1. '}
+                        {esProductoCondolencias
+                          ? 'Tarjeta de Condolencias Impresa (Gratis · Opcional)'
+                          : 'Tarjeta Dedicatoria Impresa y/o Digital (Gratis · Opcional)'}
+                      </span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setVerEjemploTarjeta(true)}
+                      title={
+                        esProductoCondolencias
+                          ? 'Ver ejemplo de tarjeta de condolencias incluida gratis'
+                          : 'Ver ejemplo de tarjeta dedicatoria incluida gratis'
+                      }
+                      aria-label="Ver ejemplo de tarjeta"
+                      style={{
+                        flexShrink: 0,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '4px 9px',
+                        borderRadius: '999px',
+                        border: '1px solid #D9C9BC',
+                        background: '#FFFFFF',
+                        color: '#2D4734',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <Eye size={12} />
+                      <span>Ver ejemplo</span>
+                    </button>
+                  </div>
+                  <p
+                    style={{
+                      margin: '6px 0 0 28px',
+                      fontSize: '0.73rem',
+                      color: '#5E564F',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <strong>Opcional en la compra:</strong> puedes escribir el mensaje ahora o{' '}
+                    <strong>llenarlo o actualizarlo más tarde</strong> desde el enlace que recibirás
+                    en tu correo de confirmación.
+                  </p>
                 </div>
 
                 {incluirDedicatoria && (
@@ -2899,14 +2956,22 @@ export function ModalDetalleProducto() {
                     <div className="fila-de-para">
                       <input
                         type="text"
-                        placeholder="Para: (ej. Mi amor, Mamá, Dra. Sofia)"
+                        placeholder={
+                          esProductoCondolencias
+                            ? 'Para: (ej. Familia Pérez, En memoria de...)'
+                            : 'Para: (ej. Mi amor, Mamá, Dra. Sofía)'
+                        }
                         value={dedicatoria.para}
                         onChange={(e) => setDedicatoria({ ...dedicatoria, para: e.target.value })}
                         className="input-dedicatoria"
                       />
                       <input
                         type="text"
-                        placeholder="De: (ej. Carlos, Tu admirador)"
+                        placeholder={
+                          esProductoCondolencias
+                            ? 'De: (ej. Familia López, Tus compañeros)'
+                            : 'De: (ej. Carlos, Tu admirador)'
+                        }
                         value={dedicatoria.de}
                         onChange={(e) => setDedicatoria({ ...dedicatoria, de: e.target.value })}
                         className="input-dedicatoria"
@@ -2915,7 +2980,11 @@ export function ModalDetalleProducto() {
 
                     <textarea
                       rows={3}
-                      placeholder="Escribe el mensaje emotivo que irá impreso en papel verjurado fino..."
+                      placeholder={
+                        esProductoCondolencias
+                          ? 'Escribe el mensaje de condolencias que irá impreso en papel verjurado fino...'
+                          : 'Escribe el mensaje emotivo que irá impreso en papel verjurado fino...'
+                      }
                       value={dedicatoria.mensaje}
                       onChange={(e) => setDedicatoria({ ...dedicatoria, mensaje: e.target.value })}
                       className="textarea-dedicatoria"
@@ -2925,7 +2994,16 @@ export function ModalDetalleProducto() {
                     <div className="asistente-frases-rapidas">
                       <span className="etiqueta-frases">Inspiración rápida:</span>
                       <div className="chips-frases">
-                        {FRASES_DEDICATORIAS.amor?.[0] && (
+                        {esProductoCondolencias && FRASES_DEDICATORIAS.condolencias?.[0] && (
+                          <button
+                            type="button"
+                            onClick={() => aplicarFrase(FRASES_DEDICATORIAS.condolencias![0]!)}
+                            className="chip-frase"
+                          >
+                            🕊️ Pésame
+                          </button>
+                        )}
+                        {!esProductoCondolencias && FRASES_DEDICATORIAS.amor?.[0] && (
                           <button
                             type="button"
                             onClick={() => aplicarFrase(FRASES_DEDICATORIAS.amor![0]!)}
@@ -2934,7 +3012,7 @@ export function ModalDetalleProducto() {
                             ❤️ Amor
                           </button>
                         )}
-                        {FRASES_DEDICATORIAS.cumpleanos?.[0] && (
+                        {!esProductoCondolencias && FRASES_DEDICATORIAS.cumpleanos?.[0] && (
                           <button
                             type="button"
                             onClick={() => aplicarFrase(FRASES_DEDICATORIAS.cumpleanos![0]!)}
@@ -2943,7 +3021,7 @@ export function ModalDetalleProducto() {
                             🎂 Cumpleaños
                           </button>
                         )}
-                        {FRASES_DEDICATORIAS.aniversario?.[0] && (
+                        {!esProductoCondolencias && FRASES_DEDICATORIAS.aniversario?.[0] && (
                           <button
                             type="button"
                             onClick={() => aplicarFrase(FRASES_DEDICATORIAS.aniversario![0]!)}
@@ -2952,7 +3030,7 @@ export function ModalDetalleProducto() {
                             💍 Aniversario
                           </button>
                         )}
-                        {FRASES_DEDICATORIAS.condolencias?.[0] && (
+                        {!esProductoCondolencias && FRASES_DEDICATORIAS.condolencias?.[0] && (
                           <button
                             type="button"
                             onClick={() => aplicarFrase(FRASES_DEDICATORIAS.condolencias![0]!)}
@@ -2968,121 +3046,325 @@ export function ModalDetalleProducto() {
               </div>
             )}
 
-            {/* Complementos / Artículos Sugeridos de Cross-Selling */}
-            {!producto.esComplemento && !producto.esExtra && productosComplementos.length > 0 && (
-              <div className="bloque-complementos-modal">
-                <div className="encabezado-seccion-complementos">
-                  <label className="etiqueta-bloque">
-                    {esProductoRenta
-                      ? '¿Deseas agregar otro mobiliario o artículo en renta para tu evento?'
-                      : esProductoEvento
-                      ? '¿Deseas cotizar otros elementos decorativos para tu evento?'
-                      : personalizacionFloralActiva
-                      ? '3. ¿Deseas acompañar tu arreglo con algún detalle?'
-                      : '2. ¿Deseas acompañar tu arreglo con algún detalle?'}
-                  </label>
-                  <span className="subtitulo-seccion-complementos">
-                    {esProductoRenta
-                      ? 'Complementa tu ambientación con otros elementos disponibles en modalidad de renta temporal (24h). Haz clic para ver fotos y detalles.'
-                      : esProductoEvento
-                      ? 'Selecciona otros arreglos, arcos o estructuras de eventos para incluirlos juntos en tu proforma.'
-                      : 'Haz clic en cualquier producto para ver su fotografía ampliada y detalles completos antes de agregarlo.'}
-                  </span>
-                </div>
+            {/* Complementos / Artículos Sugeridos de Cross-Selling (Carrusel deslizable + Tarjeta gratis como primer extra + Opción No, sin extras) */}
+            {!producto.esComplemento &&
+              !producto.esExtra &&
+              (productosComplementos.length > 0 || (!esProductoRenta && !esProductoEvento)) && (
+                <div className="bloque-complementos-modal">
+                  <div className="encabezado-seccion-complementos">
+                    <div className="fila-titulo-extras">
+                      <label className="etiqueta-bloque" style={{ marginBottom: 0 }}>
+                        {esProductoRenta
+                          ? '¿Deseas agregar otro mobiliario o artículo en renta para tu evento?'
+                          : esProductoEvento
+                            ? '¿Deseas cotizar otros elementos decorativos para tu evento?'
+                            : personalizacionFloralActiva
+                              ? '3. ¿Deseas acompañar tu arreglo con algún detalle?'
+                              : '2. ¿Deseas acompañar tu arreglo con algún detalle?'}
+                      </label>
+                    </div>
 
-                <div className="grid-complementos-sugeridos">
-                  {productosComplementos.map((comp) => {
-                    const seleccionado = complementosSeleccionados.includes(comp.id);
-                    const varComp = variantesExtrasElegidas[comp.id] || obtenerVarianteComplemento(comp);
-                    if (!varComp) return null;
-                    const esCompRenta = Boolean(
-                      comp.esRenta ||
-                      comp.tipoOferta?.toUpperCase().includes('RENTA') ||
-                      comp.tipoOferta?.toUpperCase().includes('ALQUILER')
-                    );
-                    return (
-                      <div
-                        key={comp.id}
-                        className={`item-complemento-card ${seleccionado ? 'complemento-elegido' : ''}`}
-                        onClick={() => abrirInspeccionExtra(comp)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            abrirInspeccionExtra(comp);
-                          }
-                        }}
+                    {/* Selector claro: Ver extras en carrusel vs. No, sin extras (cierra todos los extras) */}
+                    <div className="barra-decision-extras" role="group" aria-label="Decisión sobre extras">
+                      <button
+                        type="button"
+                        className={`btn-decision-extra ${!rechazoExtras ? 'activo' : ''}`}
+                        onClick={() => setRechazoExtras(false)}
+                        title="Ver detalles adicionales en carrusel"
+                        aria-label="Ver extras"
                       >
-                        <div className="contenedor-foto-complemento">
-                          <img
-                            src={comp.fotos[0] ?? '/img/slide4_flores_amor.jpg'}
-                            alt={comp.nombre}
-                            className="miniatura-complemento"
-                          />
-                          <span className="badge-lupa-extra">
-                            <Eye size={13} />
-                            <span>Ver foto</span>
+                        <Sparkles size={13} />
+                        <span>
+                          {esProductoRenta || esProductoEvento ? 'Ver adicionales' : 'Ver extras'}
+                          {complementosSeleccionados.length > 0
+                            ? ` (${complementosSeleccionados.length})`
+                            : ''}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`btn-decision-extra btn-decision-no-extras ${rechazoExtras ? 'activo' : ''}`}
+                        onClick={() => {
+                          setRechazoExtras(true);
+                          setComplementosSeleccionados([]);
+                        }}
+                        title="Cerrar sección de extras y continuar solo con tu arreglo"
+                        aria-label="No, sin extras"
+                      >
+                        <X size={13} />
+                        <span>No, sin extras</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {rechazoExtras ? (
+                    <div className="barra-extras-cerrados">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <strong style={{ display: 'block', fontSize: '0.8rem', color: '#2D4734' }}>
+                          ✓ Continuar sin extras adicionales
+                        </strong>
+                        {!esProductoRenta && !esProductoEvento && (
+                          <span style={{ fontSize: '0.73rem', color: '#5E564F', lineHeight: 1.35 }}>
+                            Tu{' '}
+                            <strong>
+                              {esProductoCondolencias
+                                ? 'Tarjeta de Condolencias'
+                                : 'Tarjeta Dedicatoria'}
+                            </strong>{' '}
+                            sigue incluida gratis ($0.00).{' '}
+                            <button
+                              type="button"
+                              onClick={() => setVerEjemploTarjeta(true)}
+                              style={{
+                                border: 'none',
+                                background: 'transparent',
+                                padding: 0,
+                                color: '#C25E85',
+                                fontWeight: 700,
+                                textDecoration: 'underline',
+                                cursor: 'pointer',
+                                fontSize: '0.73rem',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              Ver ejemplo
+                            </button>
                           </span>
-                        </div>
-
-                        <div className="info-comp">
-                          <strong>{comp.nombre}</strong>
-                          <span className="precio-comp">
-                            +${varComp.pvp.toFixed(2)}
-                            {esCompRenta && (
-                              <small style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 500 }}>
-                                Tarifa evento (24h)
-                              </small>
-                            )}
-                          </span>
-                          {varComp.nombre && varComp.nombre !== comp.nombre && (
-                            <small className="variante-elegida-tag" title={varComp.nombre}>
-                              {varComp.nombre.replace(/Cinta condolencias personalizada/gi, '').trim() || varComp.nombre}
-                            </small>
-                          )}
-                        </div>
-
-                        <button
-                          type="button"
-                          className="btn-ver-detalle-comp"
-                          onClick={(e) => abrirInspeccionExtra(comp, e)}
-                          title="Ver foto grande e información"
-                        >
-                          <Eye size={12} />
-                          <span>Ver detalle</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="icono-check-comp"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleComplemento(comp.id);
-                          }}
-                          title={
-                            seleccionado
-                              ? 'Quitar de la selección'
-                              : esCompRenta
-                              ? 'Agregar este artículo en renta'
-                              : 'Agregar este detalle'
-                          }
-                          aria-label={
-                            seleccionado
-                              ? 'Quitar de la selección'
-                              : esCompRenta
-                              ? 'Agregar este artículo en renta'
-                              : 'Agregar este detalle'
-                          }
-                        >
-                          {seleccionado ? <Check size={16} /> : <Plus size={16} />}
-                        </button>
+                        )}
                       </div>
-                    );
-                  })}
+                      <button
+                        type="button"
+                        className="btn-reabrir-extras"
+                        onClick={() => setRechazoExtras(false)}
+                        title="Volver a mostrar el carrusel de extras"
+                        aria-label="Mostrar extras"
+                      >
+                        Ver extras
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="barra-navegacion-carrusel-extras">
+                        <span className="subtitulo-seccion-complementos">
+                          {esProductoRenta
+                            ? 'Desliza para ver otros artículos en renta temporal (24h).'
+                            : esProductoEvento
+                              ? 'Desliza para elegir más elementos para tu proforma.'
+                              : 'Desliza horizontalmente para ver los detalles. Tu tarjeta ya va incluida gratis.'}
+                        </span>
+                        <div className="controles-flechas-carrusel-extras">
+                          <button
+                            type="button"
+                            className="btn-nav-carrusel-extras"
+                            onClick={() =>
+                              carruselExtrasRef.current?.scrollBy({
+                                left: -210,
+                                behavior: 'smooth',
+                              })
+                            }
+                            title="Ver extras anteriores"
+                            aria-label="Extras anteriores"
+                          >
+                            <ChevronLeft size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-nav-carrusel-extras"
+                            onClick={() =>
+                              carruselExtrasRef.current?.scrollBy({
+                                left: 210,
+                                behavior: 'smooth',
+                              })
+                            }
+                            title="Ver más extras"
+                            aria-label="Más extras"
+                          >
+                            <ChevronRight size={15} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div ref={carruselExtrasRef} className="carrusel-extras-pista">
+                        {/* PRIMER EXTRA SIEMPRE GRATUITO: Tarjeta Dedicatoria o de Condolencias con previsualización de ejemplo */}
+                        {!esProductoRenta && !esProductoEvento && (
+                          <div
+                            className="item-complemento-card item-complemento-card-carrusel tarjeta-gratis-extra-card complemento-elegido"
+                            onClick={() => setVerEjemploTarjeta(true)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setVerEjemploTarjeta(true);
+                              }
+                            }}
+                          >
+                            <div
+                              className={`contenedor-foto-complemento miniatura-tarjeta-ejemplo ${
+                                esProductoCondolencias ? 'es-condolencias' : 'es-dedicatoria'
+                              }`}
+                            >
+                              <div className="mini-tarjeta-marco">
+                                <span className="mini-tarjeta-marca">
+                                  {esProductoCondolencias ? '🕊️' : 'Tinkay'}
+                                </span>
+                                <span className="mini-tarjeta-linea-1" />
+                                <span className="mini-tarjeta-linea-2" />
+                                <span className="mini-tarjeta-sello">
+                                  {esProductoCondolencias ? 'Pésame' : 'Dedicatoria'}
+                                </span>
+                              </div>
+                              <span className="badge-lupa-extra">
+                                <Eye size={13} />
+                                <span>Ver ejemplo</span>
+                              </span>
+                            </div>
+
+                            <div className="info-comp">
+                              <strong>
+                                {esProductoCondolencias
+                                  ? 'Tarjeta de Condolencias'
+                                  : 'Tarjeta Dedicatoria'}
+                              </strong>
+                              <span className="precio-comp precio-comp-gratis">
+                                GRATIS · Incluida
+                              </span>
+                              <small className="variante-elegida-tag">
+                                Personalizable ahora o luego
+                              </small>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="btn-ver-detalle-comp btn-ver-ejemplo-tarjeta"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setVerEjemploTarjeta(true);
+                              }}
+                              title="Previsualizar ejemplo de tarjeta incluida"
+                              aria-label="Ver ejemplo"
+                            >
+                              <Eye size={12} />
+                              <span>Ver ejemplo</span>
+                            </button>
+
+                            <span
+                              className="icono-check-comp icono-check-gratis"
+                              title="Incluida gratis siempre con tu arreglo"
+                              aria-label="Incluida gratis"
+                            >
+                              <Check size={15} />
+                            </span>
+                          </div>
+                        )}
+
+                        {productosComplementos.map((comp) => {
+                          const seleccionado = complementosSeleccionados.includes(comp.id);
+                          const varComp =
+                            variantesExtrasElegidas[comp.id] || obtenerVarianteComplemento(comp);
+                          if (!varComp) return null;
+                          const esCompRenta = Boolean(
+                            comp.esRenta ||
+                              comp.tipoOferta?.toUpperCase().includes('RENTA') ||
+                              comp.tipoOferta?.toUpperCase().includes('ALQUILER')
+                          );
+                          return (
+                            <div
+                              key={comp.id}
+                              className={`item-complemento-card item-complemento-card-carrusel ${
+                                seleccionado ? 'complemento-elegido' : ''
+                              }`}
+                              onClick={() => abrirInspeccionExtra(comp)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  abrirInspeccionExtra(comp);
+                                }
+                              }}
+                            >
+                              <div className="contenedor-foto-complemento">
+                                <img
+                                  src={comp.fotos[0] ?? '/img/slide4_flores_amor.jpg'}
+                                  alt={comp.nombre}
+                                  className="miniatura-complemento"
+                                />
+                                <span className="badge-lupa-extra">
+                                  <Eye size={13} />
+                                  <span>Ver foto</span>
+                                </span>
+                              </div>
+
+                              <div className="info-comp">
+                                <strong>{comp.nombre}</strong>
+                                <span className="precio-comp">
+                                  +${varComp.pvp.toFixed(2)}
+                                  {esCompRenta && (
+                                    <small
+                                      style={{
+                                        fontSize: '0.72rem',
+                                        color: '#64748b',
+                                        display: 'block',
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      Tarifa evento (24h)
+                                    </small>
+                                  )}
+                                </span>
+                                {varComp.nombre && varComp.nombre !== comp.nombre && (
+                                  <small className="variante-elegida-tag" title={varComp.nombre}>
+                                    {varComp.nombre
+                                      .replace(/Cinta condolencias personalizada/gi, '')
+                                      .trim() || varComp.nombre}
+                                  </small>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                className="btn-ver-detalle-comp"
+                                onClick={(e) => abrirInspeccionExtra(comp, e)}
+                                title="Ver foto grande e información"
+                              >
+                                <Eye size={12} />
+                                <span>Ver detalle</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                className="icono-check-comp"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleComplemento(comp.id);
+                                }}
+                                title={
+                                  seleccionado
+                                    ? 'Quitar de la selección'
+                                    : esCompRenta
+                                      ? 'Agregar este artículo en renta'
+                                      : 'Agregar este detalle'
+                                }
+                                aria-label={
+                                  seleccionado
+                                    ? 'Quitar de la selección'
+                                    : esCompRenta
+                                      ? 'Agregar este artículo en renta'
+                                      : 'Agregar este detalle'
+                                }
+                              >
+                                {seleccionado ? <Check size={16} /> : <Plus size={16} />}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Botón Principal de Adición */}
             <div className="fila-botones-modal-accion pie-acciones-modal-sticky">
@@ -3527,6 +3809,127 @@ export function ModalDetalleProducto() {
                   </>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Previsualización Interactiva de Ejemplo de Tarjeta (Dedicatoria o Condolencias — Incluida Gratis) */}
+      {verEjemploTarjeta && (
+        <div
+          className="modal-backdrop-preview-extra"
+          onClick={() => setVerEjemploTarjeta(false)}
+        >
+          <div
+            className="modal-ejemplo-tarjeta-card"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={
+              esProductoCondolencias
+                ? 'Ejemplo de Tarjeta de Condolencias Gratis'
+                : 'Ejemplo de Tarjeta Dedicatoria Gratis'
+            }
+          >
+            <button
+              type="button"
+              className="btn-cerrar-preview-extra"
+              onClick={() => setVerEjemploTarjeta(false)}
+              title="Cerrar vista previa de tarjeta"
+              aria-label="Cerrar vista previa"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="encabezado-modal-ejemplo-tarjeta">
+              <span className="badge-gratis-modal-tarjeta">
+                {esProductoCondolencias
+                  ? '🕊️ Tarjeta de Condolencias · Incluida Gratis ($0.00)'
+                  : '💌 Tarjeta Dedicatoria · Incluida Gratis ($0.00)'}
+              </span>
+              <h3 style={{ margin: '6px 0 4px', fontSize: '1.08rem', color: '#1F1C19' }}>
+                {esProductoCondolencias
+                  ? 'Ejemplo de tu Tarjeta de Condolencias'
+                  : 'Ejemplo interactivo de tu Tarjeta Dedicatoria'}
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.78rem', color: '#5E564F', lineHeight: 1.45 }}>
+                {esProductoCondolencias
+                  ? 'Esta tarjeta sobria va incluida sin costo en tu pedido. Puedes redactar tu mensaje ahora o actualizarlo más tarde desde el enlace que llegará a tu correo.'
+                  : 'Toca la tarjeta para abrirla y ver el interior. Va incluida gratis (impresa y versión digital) y podrás personalizar mensaje, firma, foto y música ahora o después de comprar.'}
+              </p>
+            </div>
+
+            <div className="visor-ejemplo-tarjeta-embebido">
+              <TarjetaDedicatoriaDigitalInteractiva
+                token="ejemplo-preview"
+                modoEmbebido
+                datosIniciales={{
+                  ordenId: 'ejemplo-preview',
+                  codigo: 'EJEMPLO',
+                  negocio: 'tinkay',
+                  tipo: esProductoCondolencias ? 'CONDOLENCIAS_PLANA' : 'DIPTICO',
+                  destinatario:
+                    dedicatoria.para.trim() ||
+                    (esProductoCondolencias ? 'Familia González' : 'Mi persona favorita'),
+                  remitente:
+                    dedicatoria.de.trim() ||
+                    (esProductoCondolencias ? 'Familia Martínez' : 'Con todo mi cariño'),
+                  dedicatoria:
+                    dedicatoria.mensaje.trim() ||
+                    (esProductoCondolencias
+                      ? 'Acompañamos a su familia en este momento de profundo dolor. Que el amor y los recuerdos compartidos les brinden paz y fortaleza.'
+                      : 'Que cada flor te recuerde lo especial que eres. Gracias por llenar mis días de luz y alegría.'),
+                }}
+              />
+            </div>
+
+            <div className="acciones-modal-ejemplo-tarjeta">
+              <button
+                type="button"
+                className="btn btn-primario"
+                onClick={() => {
+                  setIncluirDedicatoria(true);
+                  setVerEjemploTarjeta(false);
+                  window.setTimeout(() => {
+                    dedicatoriaRef.current?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'center',
+                    });
+                  }, 120);
+                }}
+                title="Escribir el mensaje de la tarjeta ahora mismo"
+                aria-label="Escribir ahora"
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  minHeight: '42px',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                }}
+              >
+                <span>Escribir ahora</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setVerEjemploTarjeta(false)}
+                title="Dejar pendiente para llenar o actualizar más tarde"
+                aria-label="Llenar más tarde"
+                style={{
+                  flex: 1,
+                  minHeight: '42px',
+                  padding: '9px 14px',
+                  borderRadius: '999px',
+                  border: '1.5px solid #D5CFC4',
+                  background: '#FFFFFF',
+                  color: '#2D4734',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Llenar más tarde
+              </button>
             </div>
           </div>
         </div>

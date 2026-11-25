@@ -1160,6 +1160,10 @@ export interface ParametrosCompraClienteNotif {
   autorizacionPago?: string | null;
   itemsResumen?: string[];
   whatsappTienda?: string;
+  /** Enlace público firmado (/tarjeta-editar/[token]) para llenar o actualizar la tarjeta dedicatoria o de condolencias */
+  urlEditarTarjeta?: string | null;
+  /** true cuando el pedido corresponde a Condolencias / Pésame */
+  esTarjetaCondolencias?: boolean;
 }
 
 /**
@@ -1199,6 +1203,27 @@ export async function notificarClienteCompraConfirmada(
          </div>`
       : "";
 
+    const urlTarjetaLimpia = (params.urlEditarTarjeta || "").trim();
+    const tituloTarjetaMail = params.esTarjetaCondolencias
+      ? "🕊️ Tarjeta de Condolencias Incluida (Gratis)"
+      : "💌 Tarjeta Dedicatoria Incluida (Gratis)";
+    const textoTarjetaMail = params.esTarjetaCondolencias
+      ? "¿Aún no redactaste el mensaje de pésame o deseas actualizarlo? Puedes completar, personalizar o editar tu tarjeta de condolencias desde el siguiente enlace antes de que pase a impresión:"
+      : "¿Aún no escribiste tu dedicatoria o deseas cambiar el mensaje? Puedes llenar, personalizar (mensaje, firma, foto y música) o actualizar tu tarjeta gratis desde el siguiente enlace antes de que pase a impresión:";
+
+    const bloqueTarjetaDedicatoria = urlTarjetaLimpia
+      ? `<div style="margin-top: 14px; padding: 15px 16px; background: #FDF8F3; border: 1px solid #E7D8C9; border-radius: 10px; font-size: 13.5px; color: #3D2E25;">
+           <div style="font-weight: bold; font-size: 14.5px; color: #2D4734; margin-bottom: 6px;">${tituloTarjetaMail}</div>
+           <p style="margin: 0 0 12px; line-height: 1.5; color: #4B423B;">${textoTarjetaMail}</p>
+           <a href="${urlTarjetaLimpia}" style="display: inline-block; background: #C25E85; color: #FFFFFF; padding: 10px 18px; border-radius: 999px; text-decoration: none; font-weight: bold; font-size: 13px;">
+             ✏️ Llenar o Actualizar Tarjeta
+           </a>
+           <div style="margin-top: 8px; font-size: 11.5px; color: #6B655E; word-break: break-all;">
+             Enlace directo: <a href="${urlTarjetaLimpia}" style="color: #2D4734;">${urlTarjetaLimpia}</a>
+           </div>
+         </div>`
+      : "";
+
     const notaEstado = params.esTransferenciaPendiente
       ? `Hemos recibido tu orden <strong>${params.codigoOrden}</strong> junto con tu comprobante adjunto. <strong>El envío se procesará luego de verificar la acreditación del pago.</strong>`
       : `Hemos acreditado tu pago mediante <strong>${params.metodoPago}</strong> y nuestro equipo inició la preparación de tu orden <strong>${params.codigoOrden}</strong>.`;
@@ -1223,6 +1248,7 @@ export async function notificarClienteCompraConfirmada(
           ${itemsHtml}
         </div>
         ${bloqueFactura}
+        ${bloqueTarjetaDedicatoria}
         <div style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;">
           <a href="${urlPortalAbsoluta}" style="display: inline-block; background: #2D4734; color: #FFFFFF; padding: 10px 18px; border-radius: 999px; text-decoration: none; font-weight: bold; font-size: 13px; margin-right: 8px;">
             Ver Mis Compras

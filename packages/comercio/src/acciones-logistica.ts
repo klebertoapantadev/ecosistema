@@ -1047,6 +1047,27 @@ function enriquecerDestinoConAuditoriaInterna(
   };
 }
 
+function construirUrlAbsolutaTarjetaNegocio(negocio: string, tokenEdicion: string): string {
+  const neg = negocio.trim().toLowerCase();
+  const base =
+    neg === "tinkay"
+      ? "https://tinkay-web.vercel.app"
+      : neg === "margaritas"
+        ? "https://margaritas-web.vercel.app"
+        : `https://${neg}-web.vercel.app`;
+  return `${base}/tarjeta-editar/${encodeURIComponent(tokenEdicion)}`;
+}
+
+function detectarItemsCondolencias(
+  items: Array<{ descripcion?: string; producto_nombre?: string; variante_sku?: string }>
+): boolean {
+  const texto = items
+    .map((it) => `${it.producto_nombre || ""} ${it.descripcion || ""} ${it.variante_sku || ""}`)
+    .join(" ")
+    .toLowerCase();
+  return /condol|p[eé]same|funebr|f[uú]nebr|duelo|abanico|exequial|luto/.test(texto);
+}
+
 /**
  * Registra de forma persistente el pedido de la tienda en `comun_comercio`
  * incluyendo el desglose interno completo de logística (kilómetros, fórmula aplicada,
@@ -1055,7 +1076,14 @@ function enriquecerDestinoConAuditoriaInterna(
 export async function registrarPedidoTiendaAction(
   entrada: EntradaPedidoTienda
 ): Promise<
-  | { ok: true; id: string; codigoOrden: string; tokenAprobacion?: string; respaldoFirmado?: string }
+  | {
+      ok: true;
+      id: string;
+      codigoOrden: string;
+      tokenAprobacion?: string;
+      tokenEdicionTarjeta?: string;
+      respaldoFirmado?: string;
+    }
   | { ok: false; error: string }
 > {
   const validacion = esquemaPedidoTienda.safeParse(entrada);
@@ -1471,6 +1499,16 @@ export async function registrarPedidoTiendaAction(
 
   if (!errRpc && resRpc?.ok) {
     const codigoCreado = String(resRpc.codigo_orden);
+    const esFloristeriaNeg = negNorm === "tinkay" || negNorm === "margaritas";
+    const tokVistaTarjetaRpc = String(resRpc.token_aprobacion || resRpc.id || "").trim();
+    const tokenEdicionTarjetaRpc =
+      esFloristeriaNeg && tokVistaTarjetaRpc
+        ? generarTokenEdicionTarjetaServidor(tokVistaTarjetaRpc)
+        : undefined;
+    const urlEditarTarjetaRpc = tokenEdicionTarjetaRpc
+      ? construirUrlAbsolutaTarjetaNegocio(negNorm, tokenEdicionTarjetaRpc)
+      : undefined;
+    const esCondolenciasPedido = detectarItemsCondolencias(itemsEnriquecidos);
     const respaldoFirmado =
       Number(entrada.totalPagar) > 0
         ? firmarOrdenRespaldoServidor({
@@ -1546,6 +1584,8 @@ export async function registrarPedidoTiendaAction(
             fechaEntrega: logisticaPrincipal.fecha_entrega,
             itemsResumen: resumenItemsNotif,
             whatsappTienda: configCheckout.whatsappTienda,
+            urlEditarTarjeta: urlEditarTarjetaRpc,
+            esTarjetaCondolencias: esCondolenciasPedido,
           }),
           notificarStaffNuevoPedido({
             negocio: negNorm,
@@ -1597,6 +1637,7 @@ export async function registrarPedidoTiendaAction(
       id: String(resRpc.id),
       codigoOrden: codigoCreado,
       tokenAprobacion: resRpc.token_aprobacion ? String(resRpc.token_aprobacion) : undefined,
+      tokenEdicionTarjeta: tokenEdicionTarjetaRpc,
       respaldoFirmado,
     };
   }
@@ -1763,6 +1804,19 @@ export async function registrarPedidoTiendaAction(
       dsp_detalle_despacho: payloadCompleto.logistica_entrega,
     });
 
+  const esFloristeriaNegFb = negNorm === "tinkay" || negNorm === "margaritas";
+  const tokVistaTarjetaFb = String(
+    proformaCreada.prf_token_aprobacion || proformaCreada.prf_id || ""
+  ).trim();
+  const tokenEdicionTarjetaFb =
+    esFloristeriaNegFb && tokVistaTarjetaFb
+      ? generarTokenEdicionTarjetaServidor(tokVistaTarjetaFb)
+      : undefined;
+  const urlEditarTarjetaFb = tokenEdicionTarjetaFb
+    ? construirUrlAbsolutaTarjetaNegocio(negNorm, tokenEdicionTarjetaFb)
+    : undefined;
+  const esCondolenciasPedidoFb = detectarItemsCondolencias(itemsEnriquecidos);
+
   if (metodoPagoNorm !== "plux") {
     try {
       const {
@@ -1793,6 +1847,8 @@ export async function registrarPedidoTiendaAction(
           fechaEntrega: logisticaPrincipal.fecha_entrega,
           itemsResumen: resumenItemsNotif,
           whatsappTienda: configCheckout.whatsappTienda,
+          urlEditarTarjeta: urlEditarTarjetaFb,
+          esTarjetaCondolencias: esCondolenciasPedidoFb,
         }),
         notificarStaffNuevoPedido({
           negocio: negNorm,
@@ -1848,6 +1904,7 @@ export async function registrarPedidoTiendaAction(
     tokenAprobacion: proformaCreada.prf_token_aprobacion
       ? String(proformaCreada.prf_token_aprobacion)
       : undefined,
+    tokenEdicionTarjeta: tokenEdicionTarjetaFb,
   };
 }
 
