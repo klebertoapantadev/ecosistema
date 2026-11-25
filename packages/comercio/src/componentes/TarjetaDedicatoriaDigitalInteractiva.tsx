@@ -890,9 +890,11 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                         alt="Tinkay Flores y Eventos"
                         draggable={false}
                         style={{
-                          width: "160%",
-                          maxWidth: "none",
+                          width: "100%",
+                          maxWidth: "100%",
+                          maxHeight: "100%",
                           height: "auto",
+                          objectFit: "contain",
                           mixBlendMode: "multiply",
                           filter: "contrast(1.36) brightness(1.04)",
                           userSelect: "none",
@@ -1067,9 +1069,11 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                         alt="Tinkay Flores y Eventos"
                         draggable={false}
                         style={{
-                          width: "160%",
-                          maxWidth: "none",
+                          width: "100%",
+                          maxWidth: "100%",
+                          maxHeight: "100%",
                           height: "auto",
+                          objectFit: "contain",
                           mixBlendMode: "multiply",
                           filter: "contrast(1.38) brightness(1.05)",
                           userSelect: "none",
