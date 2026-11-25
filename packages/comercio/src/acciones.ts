@@ -5093,34 +5093,65 @@ export async function guardarConfiguracionPasarelaAction(datos: {
   }
 
   try {
-    const { error: errUpsert } = await clienteActivo
+    // 1. Vía principal: RPC transaccional SECURITY DEFINER (evita permission denied por columna psc_credenciales_privadas sin SELECT)
+    const { data: rpcRes, error: rpcErr } = await supabase
       .schema("comun_comercio")
-      .from("com_pasarela_configuracion")
-      .upsert(payloadPayphone, { onConflict: "psc_negocio, psc_pasarela" });
+      .rpc("com_fn_guardar_configuracion_pasarela", {
+        p_negocio: negocio,
+        p_pasarela: "PAYPHONE",
+        p_payload: {
+          nombre_visible: payloadPayphone.psc_nombre_visible,
+          ambiente: datos.ambiente,
+          activo: datos.activo,
+          orden_visual: 2,
+          credenciales_publicas: pub,
+          ...(datos.token && datos.token.trim().length > 0
+            ? { credenciales_privadas: privPayload }
+            : {}),
+          detalle_pasarela: {},
+        },
+      });
 
-    if (errUpsert) {
-      return { ok: false, error: `No se pudo guardar Payphone: ${errUpsert.message}` };
-    }
-
-    if (datos.activo) {
-      await clienteActivo
+    if (!rpcErr && rpcRes?.ok) {
+      // Persistido y sincronizado atómicamente en BDD
+    } else if (rpcRes && rpcRes.ok === false) {
+      return { ok: false, error: rpcRes.error || "No se pudo guardar Payphone." };
+    } else if (
+      rpcErr &&
+      !/com_fn_guardar_configuracion_pasarela|Could not find the function/i.test(rpcErr.message)
+    ) {
+      return { ok: false, error: `No se pudo guardar Payphone: ${rpcErr.message}` };
+    } else {
+      // 2. Respaldo si la migración aún no se aplicó en el entorno
+      const { error: errUpsert } = await clienteActivo
         .schema("comun_comercio")
         .from("com_pasarela_configuracion")
-        .update({ psc_activo: false, psc_actualizado_en: ahoraIso })
+        .upsert(payloadPayphone, { onConflict: "psc_negocio, psc_pasarela" });
+
+      if (errUpsert) {
+        return { ok: false, error: `No se pudo guardar Payphone: ${errUpsert.message}` };
+      }
+
+      if (datos.activo) {
+        await clienteActivo
+          .schema("comun_comercio")
+          .from("com_pasarela_configuracion")
+          .update({ psc_activo: false, psc_actualizado_en: ahoraIso })
+          .eq("psc_negocio", negocio)
+          .eq("psc_pasarela", "PLUX");
+      }
+
+      const { data: filasActivas } = await clienteActivo
+        .schema("comun_comercio")
+        .from("com_pasarela_configuracion")
+        .select("psc_pasarela")
         .eq("psc_negocio", negocio)
-        .eq("psc_pasarela", "PLUX");
+        .eq("psc_activo", true)
+        .is("psc_eliminado_en", null);
+
+      const algunaTarjetaActiva = datos.activo || (filasActivas ?? []).length > 0;
+      await sincronizarInterruptorTarjetaEnCfgNegocio(negocio, algunaTarjetaActiva);
     }
-
-    const { data: filasActivas } = await clienteActivo
-      .schema("comun_comercio")
-      .from("com_pasarela_configuracion")
-      .select("psc_pasarela")
-      .eq("psc_negocio", negocio)
-      .eq("psc_activo", true)
-      .is("psc_eliminado_en", null);
-
-    const algunaTarjetaActiva = datos.activo || (filasActivas ?? []).length > 0;
-    await sincronizarInterruptorTarjetaEnCfgNegocio(negocio, algunaTarjetaActiva);
   } catch (err: any) {
     console.error("Error al guardar pasarela Payphone:", err);
     return { ok: false, error: err?.message || "No se pudo guardar la configuración de Payphone." };
@@ -5343,39 +5374,73 @@ export async function guardarConfiguracionPluxAction(datos: {
     psc_actualizado_en: ahoraIso,
   };
 
-  if (datos.clienteId?.trim() && datos.claveSecreta?.trim()) {
-    payload.psc_credenciales_privadas = {
-      cliente_id: datos.clienteId.trim(),
-      clave_secreta: datos.claveSecreta.trim(),
-    };
+  const credencialesPrivadasPlux: Record<string, string> = {};
+  if (datos.clienteId?.trim()) {
+    credencialesPrivadasPlux.cliente_id = datos.clienteId.trim();
+  }
+  if (datos.claveSecreta?.trim()) {
+    credencialesPrivadasPlux.clave_secreta = datos.claveSecreta.trim();
+  }
+  const tieneCredPrivPlux = Object.keys(credencialesPrivadasPlux).length > 0;
+  if (tieneCredPrivPlux) {
+    payload.psc_credenciales_privadas = credencialesPrivadasPlux;
   }
 
   try {
-    const { error } = await clienteActivo
+    // 1. Vía principal: RPC transaccional SECURITY DEFINER (evita permission denied por columna psc_credenciales_privadas sin SELECT)
+    const { data: rpcRes, error: rpcErr } = await supabase
       .schema("comun_comercio")
-      .from("com_pasarela_configuracion")
-      .upsert(payload, { onConflict: "psc_negocio, psc_pasarela" });
-    if (error) return { ok: false, error: `No se pudo guardar la configuración de PLUX: ${error.message}` };
+      .rpc("com_fn_guardar_configuracion_pasarela", {
+        p_negocio: negocio,
+        p_pasarela: "PLUX",
+        p_payload: {
+          nombre_visible: payload.psc_nombre_visible,
+          ambiente: datos.ambiente,
+          activo: datos.activo,
+          orden_visual: 1,
+          credenciales_publicas: payload.psc_credenciales_publicas,
+          ...(tieneCredPrivPlux ? { credenciales_privadas: credencialesPrivadasPlux } : {}),
+          detalle_pasarela: payload.psc_detalle_pasarela,
+        },
+      });
 
-    if (datos.activo) {
-      await clienteActivo
+    if (!rpcErr && rpcRes?.ok) {
+      // Persistido y sincronizado atómicamente en BDD
+    } else if (rpcRes && rpcRes.ok === false) {
+      return { ok: false, error: rpcRes.error || "No se pudo guardar la configuración de PLUX." };
+    } else if (
+      rpcErr &&
+      !/com_fn_guardar_configuracion_pasarela|Could not find the function/i.test(rpcErr.message)
+    ) {
+      return { ok: false, error: `No se pudo guardar la configuración de PLUX: ${rpcErr.message}` };
+    } else {
+      // 2. Respaldo si la migración aún no se aplicó en el entorno
+      const { error } = await clienteActivo
         .schema("comun_comercio")
         .from("com_pasarela_configuracion")
-        .update({ psc_activo: false, psc_actualizado_en: ahoraIso })
+        .upsert(payload, { onConflict: "psc_negocio, psc_pasarela" });
+      if (error) return { ok: false, error: `No se pudo guardar la configuración de PLUX: ${error.message}` };
+
+      if (datos.activo) {
+        await clienteActivo
+          .schema("comun_comercio")
+          .from("com_pasarela_configuracion")
+          .update({ psc_activo: false, psc_actualizado_en: ahoraIso })
+          .eq("psc_negocio", negocio)
+          .eq("psc_pasarela", "PAYPHONE");
+      }
+
+      const { data: filasActivas } = await clienteActivo
+        .schema("comun_comercio")
+        .from("com_pasarela_configuracion")
+        .select("psc_pasarela")
         .eq("psc_negocio", negocio)
-        .eq("psc_pasarela", "PAYPHONE");
+        .eq("psc_activo", true)
+        .is("psc_eliminado_en", null);
+
+      const algunaTarjetaActiva = datos.activo || (filasActivas ?? []).length > 0;
+      await sincronizarInterruptorTarjetaEnCfgNegocio(negocio, algunaTarjetaActiva);
     }
-
-    const { data: filasActivas } = await clienteActivo
-      .schema("comun_comercio")
-      .from("com_pasarela_configuracion")
-      .select("psc_pasarela")
-      .eq("psc_negocio", negocio)
-      .eq("psc_activo", true)
-      .is("psc_eliminado_en", null);
-
-    const algunaTarjetaActiva = datos.activo || (filasActivas ?? []).length > 0;
-    await sincronizarInterruptorTarjetaEnCfgNegocio(negocio, algunaTarjetaActiva);
   } catch (err: any) {
     return { ok: false, error: err?.message || "Error al guardar la configuración de PLUX." };
   }
