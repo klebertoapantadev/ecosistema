@@ -46,6 +46,13 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(res.reglaAplicada).toBe("ZONA_GRATIS");
     expect(res.costoTotalEnvio).toBe(0);
     expect(res.zonaDetectada?.codigo).toBe("centro_norte_quito");
+
+    // Verificar isodistancia real de 5 km en auto: incluye sectores alcanzables por calles (Quicentro, El Inca)
+    // y excluye áreas sin calles vehiculares (bosque interior Parque Metropolitano) o >5 km en auto (Plaza Foch)
+    expect(puntoEnPoligono({ lat: -0.1763, lng: -78.4793 }, config.zonas[0]!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.1455, lng: -78.4712 }, config.zonas[0]!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.178, lng: -78.46 }, config.zonas[0]!.poligono)).toBe(false);
+    expect(puntoEnPoligono({ lat: -0.2014, lng: -78.4912 }, config.zonas[0]!.poligono)).toBe(false);
   });
 
   it("aplica tarifa fija de zona en Cumbayá ($3.50)", () => {
