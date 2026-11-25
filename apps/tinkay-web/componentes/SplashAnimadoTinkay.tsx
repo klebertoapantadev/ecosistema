@@ -2,20 +2,22 @@
 
 import React, { useEffect, useState } from "react";
 
-const CLAVE_SESION_SPLASH = "tinkay_pwa_splash_v2";
-const DURACION_TOTAL_MS = 2750;
-const INICIO_SALIDA_MS = 2300;
+const CLAVE_SESION_SPLASH = "tinkay_pwa_splash_v3";
+const DURACION_TOTAL_MS = 2600;
+const INICIO_SALIDA_MS = 2150;
 
 /**
  * Pantalla animada de bienvenida para la app instalada (PWA standalone) de Tinkay.
  * Muestra el ícono de la caja de regalo abriéndose con un bouquet de rosas saliendo
- * acompañado del nuevo logotipo Tinkay.
+ * acompañado del logotipo Tinkay.
  *
- * - En app instalada (standalone): se reproduce automáticamente una vez por sesión.
- * - En navegador web: se puede previsualizar agregando `?splash=1` a cualquier URL.
+ * - En app instalada (standalone): se activa ANTES del primer pintado mediante el script
+ *   síncrono de `<head>` (clase `html.tinkay-splash-activo`) para que jamás parpadee
+ *   el portal antes de la animación. Se reproduce una vez por sesión.
+ * - En navegador web: permanece en `display: none` y se desmonta al hidratar (salvo `?splash=1`).
  */
 export function SplashAnimadoTinkay() {
-  const [visible, setVisible] = useState(false);
+  const [montado, setMontado] = useState(true);
   const [saliendo, setSaliendo] = useState(false);
 
   useEffect(() => {
@@ -31,29 +33,46 @@ export function SplashAnimadoTinkay() {
           window.matchMedia("(display-mode: fullscreen)").matches)) ||
       nav.standalone === true;
 
-    if (!esStandalone && !forzarPreview) return;
+    const yaActivoPrePintado = document.documentElement.classList.contains("tinkay-splash-activo");
 
+    let yaMostrado = false;
+    try {
+      yaMostrado = window.sessionStorage.getItem(CLAVE_SESION_SPLASH) === "1";
+    } catch {
+      yaMostrado = false;
+    }
+
+    const debeMostrar = forzarPreview || yaActivoPrePintado || (esStandalone && !yaMostrado);
+
+    if (!debeMostrar) {
+      document.documentElement.classList.remove("tinkay-splash-activo");
+      setMontado(false);
+      return;
+    }
+
+    document.documentElement.classList.add("tinkay-splash-activo");
     if (!forzarPreview) {
       try {
-        if (window.sessionStorage.getItem(CLAVE_SESION_SPLASH) === "1") {
-          return;
-        }
         window.sessionStorage.setItem(CLAVE_SESION_SPLASH, "1");
       } catch {
         // Continuar aunque sessionStorage esté restringido
       }
     }
 
-    setVisible(true);
+    const inicioMs = Number((window as unknown as { __tinkaySplashInicioMs?: number }).__tinkaySplashInicioMs || Date.now());
+    const transcurrido = Math.max(0, Math.min(INICIO_SALIDA_MS - 450, Date.now() - inicioMs));
+    const esperaSalida = Math.max(450, INICIO_SALIDA_MS - transcurrido);
+    const esperaCerrar = Math.max(esperaSalida + 450, DURACION_TOTAL_MS - transcurrido);
 
     const tSalida = window.setTimeout(() => {
       setSaliendo(true);
-    }, INICIO_SALIDA_MS);
+    }, esperaSalida);
 
     const tCerrar = window.setTimeout(() => {
-      setVisible(false);
+      document.documentElement.classList.remove("tinkay-splash-activo");
+      setMontado(false);
       setSaliendo(false);
-    }, DURACION_TOTAL_MS);
+    }, esperaCerrar);
 
     return () => {
       window.clearTimeout(tSalida);
@@ -64,15 +83,19 @@ export function SplashAnimadoTinkay() {
   const cerrarAhora = () => {
     setSaliendo(true);
     window.setTimeout(() => {
-      setVisible(false);
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.remove("tinkay-splash-activo");
+      }
+      setMontado(false);
       setSaliendo(false);
     }, 260);
   };
 
-  if (!visible) return null;
+  if (!montado) return null;
 
   return (
     <div
+      id="tinkay-splash-root"
       role="dialog"
       aria-label="Bienvenida Tinkay"
       onClick={cerrarAhora}
@@ -81,7 +104,6 @@ export function SplashAnimadoTinkay() {
         position: "fixed",
         inset: 0,
         zIndex: 99999,
-        display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",

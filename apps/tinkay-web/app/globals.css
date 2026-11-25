@@ -33,6 +33,14 @@ body {
   color: var(--tinta);
 }
 
+/* Splash animado PWA: visible desde el frame 0 en standalone sin mostrar antes el portal */
+#tinkay-splash-root {
+  display: none;
+}
+html.tinkay-splash-activo #tinkay-splash-root {
+  display: flex;
+}
+
 :focus-visible {
   outline: 2px solid var(--verde);
   outline-offset: 2px;
