@@ -606,7 +606,7 @@ export async function analizarFotoBonchesConAriaAction(
 
     const promptVision =
       "[MODO_OPERATIVO_INVENTARIO] NO saludes, NO vendas ni uses herramientas de catálogo.\n" +
-      "Eres un contador visual experto en floristería ecuatoriana (rosas de exportación estándar Floraroma y orquídeas Cymbidium).\n" +
+      "Eres un contador visual experto en floristería ecuatoriana (rosas seleccionadas estándar Floraroma y orquídeas Cymbidium).\n" +
       "PRIMERO identifica qué aparece en la fotografía: paquetes/bonches de ROSAS, varas de ORQUÍDEA / CYMBIDIUM, o ambos.\n" +
       "A) SI HAY PAQUETES/BONCHES DE ROSAS (~25 tallos envueltos en cartón, papel o caja):\n" +
       "   1. Recorre la foto fila por fila (arriba→abajo, izquierda→derecha) contando CADA paquete completo (NO tallos sueltos).\n" +

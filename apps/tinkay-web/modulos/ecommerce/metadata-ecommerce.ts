@@ -32,7 +32,7 @@ export async function generarMetadataEcommerceTinkay(opciones: {
 }): Promise<Metadata> {
   const tituloBase = 'Tinkay — Flores y Eventos en Quito y Valles';
   const descripcionBase =
-    'Arreglos florales, box de rosas de exportación, bouquets estilo coreano y decoración para eventos y bodas en Quito y Valles.';
+    'Arreglos florales, box de rosas seleccionadas, bouquets estilo coreano y decoración para eventos y bodas en Quito y Valles.';
 
   try {
     if (!opciones.categoriaSlug && !opciones.productoSlug) {

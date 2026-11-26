@@ -96,7 +96,7 @@ function ContenidoPaginaEcommerceTinkay() {
               <div className="icono-circulo-dorado">
                 <Sparkles size={24} />
               </div>
-              <h3>Rosas Ecuatorianas de Exportación</h3>
+              <h3>Rosas Ecuatorianas Seleccionadas</h3>
               <p>
                 Botones gigantes y apertura lenta cultivadas en fincas andinas de altitud, con hidratación
                 nutritiva Chrysal incluida.

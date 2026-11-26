@@ -691,7 +691,7 @@ export function ChatAriaFlotante() {
           {
             producto: prodBox,
             variantePorDefecto: varBoxM,
-            mensajeMotivo: 'Box Floral con rosas de exportación hidratadas.',
+            mensajeMotivo: 'Box Floral con rosas seleccionadas hidratadas.',
           },
           ...(prodCoreano.id !== prodBox.id
             ? [
@@ -760,7 +760,7 @@ export function ChatAriaFlotante() {
           {
             producto: prodCoreano,
             variantePorDefecto: prodCoreano.variantes[1] ?? prodCoreano.variantes[0]!,
-            mensajeMotivo: 'Rosas de exportación con base hidratada.',
+            mensajeMotivo: 'Rosas seleccionadas con base hidratada.',
           },
         ],
         sugerenciaDedicatoria: {

@@ -1069,7 +1069,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         cobertura_texto: "Quito Urbano y Valles",
       },
       beneficios: [
-        "Rosas rojas de exportación seleccionadas grano a grano",
+        "Rosas rojas seleccionadas grano a grano",
         "Empaque rojo pasión de terciopelo y lazo de seda",
         "Caja de bombones artesanales incluida",
         "Tarjeta dedicatoria lacrada con mensaje personalizado",
@@ -1114,7 +1114,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_negocio: "tinkay",
     pro_nombre: "Bouquet Clásico para Florero",
     pro_slug: "tinkay-bouq-florero",
-    pro_descripcion: "Ramos de rosas de exportación seleccionadas de tallo largo, preparadas con follaje fino e hidratación prolongada para lucir en florero.",
+    pro_descripcion: "Ramos de rosas seleccionadas de tallo largo, preparados con follaje natural e hidratación prolongada para lucir en florero.",
     pro_tipo: "FISICO",
     pro_destacado: true,
     pro_categoria_principal_id: "cat-tinkay-001",
@@ -1122,7 +1122,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
     pro_detalle_producto: {
       icono: "Flower2",
       album_fotos_url: "https://photos.app.goo.gl/tinkay-bouq-florero",
-      descripcion_corta: "Rosas de exportación de tallo largo con follaje de hidratación prolongada.",
+      descripcion_corta: "Rosas seleccionadas de tallo largo con follaje natural de hidratación prolongada.",
       etiquetas: ["rosas", "florero", "25 rosas", "50 rosas", "100 rosas"],
       tarifa_iva_predeterminada: 0,
       codigo_impuesto_sri: "IVA_0",
@@ -1210,7 +1210,7 @@ const PRODUCTOS_SEMILLA_TINKAY: ProductoCatalogo[] = [
         cobertura_texto: "Quito Urbano y Valles",
       },
       beneficios: [
-        "Rosas de exportación seleccionadas de tallo largo",
+        "Rosas seleccionadas de tallo largo",
         "Papel coreano plisado y cintas de seda satinada",
         "Tarjeta dedicatoria personalizada gratis",
         "Envío a domicilio sin costo en Quito urbano y valles",

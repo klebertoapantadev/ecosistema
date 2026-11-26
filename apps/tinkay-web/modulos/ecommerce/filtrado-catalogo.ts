@@ -298,7 +298,7 @@ export const CLASIFICACIONES_PRINCIPALES_TINKAY: ClasificacionPrincipalTinkay[] 
     subtitulo: 'Para toda ocasión',
     tituloVitrina: 'Arreglos Florales — Para Toda Ocasión',
     descripcionVitrina:
-      'Bouquets estilo coreano, box florales, ramos para florero, orquídeas y diseños de entrega inmediata preparados con rosas frescas de exportación.',
+      'Bouquets estilo coreano, box florales, ramos para florero, orquídeas y diseños de entrega inmediata preparados con rosas frescas seleccionadas y follaje natural.',
   },
   {
     id: 'grupo-eventos',

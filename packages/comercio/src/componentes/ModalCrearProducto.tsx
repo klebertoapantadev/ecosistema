@@ -1666,7 +1666,7 @@ export function ModalCrearProducto({
                             type="button"
                             onClick={() =>
                               setBeneficiosTexto(
-                                "Rosas de exportación frescas seleccionadas\nTarjeta dedicatoria impresa incluida\nHidratación y empaque de presentación"
+                                "Rosas seleccionadas frescas con follaje natural\nTarjeta dedicatoria impresa incluida\nHidratación y empaque de presentación"
                               )
                             }
                             style={{

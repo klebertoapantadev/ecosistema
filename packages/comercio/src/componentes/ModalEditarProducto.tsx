@@ -3554,7 +3554,7 @@ export function ModalEditarProducto({
                               type="button"
                               onClick={() =>
                                 setBeneficiosTexto(
-                                  "Rosas de exportación seleccionadas de tallo largo\nEnvoltura decorativa de diseño\nTarjeta dedicatoria personalizada incluida"
+                                  "Rosas seleccionadas de tallo largo con follaje natural\nEnvoltura decorativa de diseño\nTarjeta dedicatoria personalizada incluida"
                                 )
                               }
                               title="Insertar sugerencia para arreglo floral"
@@ -4427,7 +4427,7 @@ export function ModalEditarProducto({
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                   <input
                     type="text"
-                    placeholder="Escribir etiqueta y presionar Enter (ej. rosas de exportación)..."
+                    placeholder="Escribir etiqueta y presionar Enter (ej. rosas seleccionadas)..."
                     value={nuevaEtiquetaTexto}
                     onChange={(e) => setNuevaEtiquetaTexto(e.target.value)}
                     onKeyDown={(e) => {

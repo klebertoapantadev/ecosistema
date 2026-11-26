@@ -256,7 +256,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
       id: 'cat-todos',
       slug: 'todos',
       nombre: 'Todo el Catálogo',
-      descripcion: 'Colección floral completa de exportación y detalles para regalar.',
+      descripcion: 'Colección floral completa de rosas seleccionadas y detalles para regalar.',
       tipo: 'COLECCION',
       icono: 'Sparkles',
       orden: 0,
@@ -649,7 +649,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
               ? 'Mobiliario exclusivo en calidad de renta temporal para eventos.'
               : esEventoProd
               ? 'Montaje y decoración personalizada para eventos y celebraciones.'
-              : 'Arreglo floral exclusivo de exportación.'),
+              : 'Arreglo floral exclusivo con flores y follaje natural.'),
           descripcionMasterCorta: descripcionMasterCorta || undefined,
           descripcionLarga: descripcionFinal,
           beneficios: beneficiosFinal,

@@ -1795,7 +1795,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(285px, 100%), 1fr))",
+            gridTemplateColumns:
+              modoVista === "admin"
+                ? "repeat(auto-fill, minmax(min(340px, 100%), 1fr))"
+                : "repeat(auto-fill, minmax(min(285px, 100%), 1fr))",
             gap: "20px",
           }}
         >
@@ -1810,28 +1813,74 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             const currentVar = variantesLista.find((v) => v.var_id === currentVarId) || variantesLista[0];
             const esHonorario = p.pro_tipo === "SERVICIO" || (p.pro_slug && p.pro_slug.includes("honorarios"));
 
+            const normalizarBeneficiosCustom = (raw: unknown): string[] => {
+              if (Array.isArray(raw)) {
+                return raw
+                  .map((b: unknown) => (typeof b === "string" ? b.trim() : ""))
+                  .filter((b: string) => b.length > 0);
+              }
+              if (typeof raw === "string") {
+                return raw
+                  .split("\n")
+                  .map((b) => b.trim())
+                  .filter((b) => b.length > 0);
+              }
+              return [];
+            };
+
+            const obtenerResumenVariante = (v: VarianteCatalogo): string => {
+              const vd = v.var_detalle_variante || {};
+              const custom = normalizarBeneficiosCustom(vd.beneficios_custom);
+              if (custom.length > 0) return custom[0]!;
+              if (typeof vd.receta_bom === "string" && vd.receta_bom.trim()) {
+                return vd.receta_bom.trim();
+              }
+              if (typeof vd.detalle === "string" && vd.detalle.trim()) {
+                return vd.detalle.trim();
+              }
+              if (typeof vd.tallos === "number" && vd.tallos > 0) {
+                return `${vd.tallos} tallos`;
+              }
+              return "";
+            };
+
             // Beneficios / ¿Qué incluye? activos para la variante seleccionada o master
             const beneficiosLista: string[] = (() => {
               const masterBen: string[] = Array.isArray(p.pro_detalle_producto?.beneficios)
-                ? p.pro_detalle_producto.beneficios.filter((b: unknown) => typeof b === "string" && b.trim().length > 0)
+                ? p.pro_detalle_producto.beneficios
+                    .map((b: unknown) => (typeof b === "string" ? b.trim() : ""))
+                    .filter((b: string) => b.length > 0)
                 : [];
 
               if (!currentVar) return masterBen;
 
               const vdet = currentVar.var_detalle_variante || {};
-              const modo = vdet.beneficios_modo || "heredar";
-              const customBen: string[] = Array.isArray(vdet.beneficios_custom)
-                ? vdet.beneficios_custom.filter((b: unknown) => typeof b === "string" && b.trim().length > 0)
-                : [];
+              const modoExplicito = vdet.beneficios_modo;
+              const modo = modoExplicito || "heredar";
+              const customBen = normalizarBeneficiosCustom(vdet.beneficios_custom);
 
               if (modo === "reemplazar" && customBen.length > 0) {
                 return customBen;
               }
               if (modo === "anexar" && customBen.length > 0) {
-                return [...masterBen, ...customBen];
+                return Array.from(new Set([...masterBen, ...customBen]));
+              }
+              if (customBen.length > 0 && (masterBen.length === 0 || !modoExplicito)) {
+                return Array.from(new Set([...masterBen, ...customBen]));
               }
               return masterBen;
             })();
+
+            const currentVarDet = currentVar?.var_detalle_variante || {};
+            const recetaBomActual =
+              typeof currentVarDet.receta_bom === "string" ? currentVarDet.receta_bom.trim() : "";
+            const detalleVarActual =
+              typeof currentVarDet.detalle === "string" ? currentVarDet.detalle.trim() : "";
+            const tallosActual =
+              typeof currentVarDet.tallos === "number" && currentVarDet.tallos > 0
+                ? currentVarDet.tallos
+                : 0;
+            const skuActual = typeof currentVar?.var_sku === "string" ? currentVar.var_sku.trim() : "";
 
             // Recolección de fotos de cada variante y del master para el carrusel
             const fotosDisponibles: Array<{
@@ -2061,6 +2110,302 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   position: "relative",
                 }}
               >
+                {/* Barra Superior Dedicada para Operador (sin tapar ni recortar la foto) */}
+                {modoVista === "admin" && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "6px",
+                      padding: "8px 10px",
+                      background: "#F8F7F4",
+                      borderBottom: "1px solid #EAE6DF",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "5px" }}>
+                      <button
+                        type="button"
+                        onClick={(e) => handleAlternarActivo(p.pro_id, e)}
+                        disabled={isSavingActivo}
+                        className="btn-responsive-accion"
+                        title={estaActivoGeneral ? "Producto activo en catálogo. Clic para desactivar" : "Producto inactivo. Clic para activar"}
+                        aria-label={estaActivoGeneral ? "Desactivar producto" : "Activar producto"}
+                        style={{
+                          background: isSavingActivo
+                            ? "#F4F2EE"
+                            : estaActivoGeneral
+                            ? "#2F4737"
+                            : "#57524C",
+                          border: estaActivoGeneral
+                            ? "1px solid #2F4737"
+                            : "1px solid #57524C",
+                          color: "#FFFFFF",
+                          padding: "4px 8px",
+                          borderRadius: "7px",
+                          fontSize: "0.7rem",
+                          fontWeight: 800,
+                          cursor: isSavingActivo ? "wait" : "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {isSavingActivo ? (
+                          <RefreshCw size={11} className="eco-icono-girando" />
+                        ) : (
+                          <Power size={11} color={estaActivoGeneral ? "#FFFFFF" : "#D5CFC4"} />
+                        )}
+                        <span className="btn-texto-responsive">
+                          {estaActivoGeneral ? "Activo" : "Inactivo"}
+                        </span>
+                      </button>
+
+                      {canalSeleccionado !== "todos" && (() => {
+                        const infoCanalFiltro = CANALES_CATALOGO_OFICIALES.find((c) => c.clave === canalSeleccionado);
+                        const canalesProd = p.canales_visibilidad || p.pro_detalle_producto?.canales_visibilidad || CANALES_POR_DEFECTO;
+                        const estaActivoEnCanal = canalesProd.includes(canalSeleccionado as CanalVisibilidad);
+                        const isSaving = guardandoCanalKey === `${p.pro_id}_${canalSeleccionado}`;
+                        const requiereImgYFalta = !productoTieneAlMenosUnaImagen(p) && CANALES_REQUIEREN_IMAGEN.includes(canalSeleccionado as CanalVisibilidad);
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await handleAlternarCanal(p.pro_id, canalSeleccionado as CanalVisibilidad);
+                            }}
+                            disabled={isSaving}
+                            className="btn-responsive-accion"
+                            title={
+                              requiereImgYFalta
+                                ? `⚠️ Requiere al menos una imagen configurada para activarse en ${infoCanalFiltro?.nombre || canalSeleccionado}`
+                                : estaActivoEnCanal
+                                ? `Desactivar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`
+                                : `Activar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`
+                            }
+                            aria-label={`Alternar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`}
+                            style={{
+                              background: estaActivoEnCanal ? "#E8F1EB" : "#FFFFFF",
+                              border: estaActivoEnCanal ? "1px solid #2F4737" : "1px solid #D5CFC4",
+                              color: estaActivoEnCanal ? "#2B4A36" : "#57524C",
+                              padding: "4px 8px",
+                              borderRadius: "7px",
+                              fontSize: "0.7rem",
+                              fontWeight: 800,
+                              cursor: isSaving ? "wait" : "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {isSaving ? (
+                              <RefreshCw size={11} className="eco-icono-girando" />
+                            ) : estaActivoEnCanal ? (
+                              <CheckCircle2 size={11} color="#2F4737" />
+                            ) : (
+                              <div
+                                style={{
+                                  width: "10px",
+                                  height: "10px",
+                                  borderRadius: "2px",
+                                  border: "1.5px solid #847D74",
+                                }}
+                              />
+                            )}
+                            <span className="btn-texto-responsive">
+                              {estaActivoEnCanal ? "En Canal" : "Oculto"}
+                            </span>
+                          </button>
+                        );
+                      })()}
+
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await handleAlternarDestacado(p.pro_id);
+                        }}
+                        disabled={guardandoDestacadoKey === p.pro_id}
+                        className="btn-responsive-accion"
+                        title={p.pro_destacado ? "Quitar insignia de producto destacado" : "Asignar insignia de producto destacado"}
+                        aria-label={p.pro_destacado ? "Quitar insignia de producto destacado" : "Asignar insignia de producto destacado"}
+                        style={{
+                          background: p.pro_destacado ? "#8F6A2E" : "#FFFFFF",
+                          border: p.pro_destacado ? "1px solid #8F6A2E" : "1px solid #D5CFC4",
+                          color: p.pro_destacado ? "#FFFFFF" : "#57524C",
+                          padding: "4px 8px",
+                          borderRadius: "7px",
+                          fontSize: "0.7rem",
+                          fontWeight: 800,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          cursor: guardandoDestacadoKey === p.pro_id ? "wait" : "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {guardandoDestacadoKey === p.pro_id ? (
+                          <RefreshCw size={10} className="eco-icono-girando" />
+                        ) : (
+                          <Sparkles size={11} color={p.pro_destacado ? "#FFFFFF" : "#8F6A2E"} />
+                        )}
+                        <span className="btn-texto-responsive">
+                          {p.pro_destacado ? "Destacado" : "Destacar"}
+                        </span>
+                      </button>
+
+                      {Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0) > 0 && (
+                        <div
+                          title={`${p.pro_total_me_gusta} Me gusta acumulados de clientes`}
+                          aria-label={`${p.pro_total_me_gusta} Me gusta globales`}
+                          style={{
+                            background: "#FFF1F2",
+                            border: "1px solid #FECDD3",
+                            color: "#BE123C",
+                            padding: "3px 7px",
+                            borderRadius: "999px",
+                            fontSize: "0.69rem",
+                            fontWeight: 800,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          <Heart size={10} fill="currentColor" />
+                          <span>{p.pro_total_me_gusta}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "5px" }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const urlProdPublico = construirEnlaceProductoTienda({
+                            negocio,
+                            slugProducto: p.pro_slug || p.pro_id,
+                            skuVariante: variantesLista.length > 1 ? currentVar?.var_sku : undefined,
+                            baseUrl: URL_TIENDA_POR_NEGOCIO[negocio],
+                          });
+                          copiarLinkPublicoTienda(`prod_${p.pro_id}`, urlProdPublico);
+                        }}
+                        className="btn-responsive-accion"
+                        title={`Copiar link directo en tienda para compartir "${p.pro_nombre}" por WhatsApp o Chat`}
+                        aria-label={`Copiar link en tienda de ${p.pro_nombre}`}
+                        style={{
+                          background:
+                            linkTiendaCopiadoKey === `prod_${p.pro_id}`
+                              ? "#2F4737"
+                              : "#FFFFFF",
+                          border:
+                            linkTiendaCopiadoKey === `prod_${p.pro_id}`
+                              ? "1px solid #2F4737"
+                              : "1px solid #D5CFC4",
+                          color:
+                            linkTiendaCopiadoKey === `prod_${p.pro_id}`
+                              ? "#FFFFFF"
+                              : "#221E1B",
+                          padding: "4px 8px",
+                          borderRadius: "7px",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        {linkTiendaCopiadoKey === `prod_${p.pro_id}` ? (
+                          <>
+                            <CheckCircle2 size={11} color="#FFFFFF" />
+                            <span className="btn-texto-responsive">Copiado</span>
+                          </>
+                        ) : (
+                          <>
+                            <Link2 size={11} color="#2F4737" />
+                            <span className="btn-texto-responsive">Link</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void copiarConfiguracionProducto(p);
+                        }}
+                        className="btn-responsive-accion"
+                        title={`Copiar en texto toda la configuración de "${p.pro_nombre}"`}
+                        aria-label={`Copiar configuración de ${p.pro_nombre}`}
+                        style={{
+                          background:
+                            configCopiadaProdId === p.pro_id ? "#2F4737" : "#FFFFFF",
+                          border:
+                            configCopiadaProdId === p.pro_id
+                              ? "1px solid #2F4737"
+                              : "1px solid #D5CFC4",
+                          color:
+                            configCopiadaProdId === p.pro_id ? "#FFFFFF" : "#221E1B",
+                          padding: "4px 8px",
+                          borderRadius: "7px",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        {configCopiadaProdId === p.pro_id ? (
+                          <>
+                            <CheckCircle2 size={11} color="#FFFFFF" />
+                            <span className="btn-texto-responsive">Copiado</span>
+                          </>
+                        ) : (
+                          <>
+                            <ClipboardCopy size={11} color="#8F6A2E" />
+                            <span className="btn-texto-responsive">Copiar</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setProductoAEditar(p);
+                          setVarianteAEditarId(undefined);
+                          setModalEditarAbierto(true);
+                        }}
+                        className="btn-responsive-accion"
+                        title="Editar datos generales del producto master"
+                        aria-label="Editar producto master"
+                        style={{
+                          background: "#221E1B",
+                          border: "1px solid #221E1B",
+                          color: "#FFFFFF",
+                          padding: "4px 9px",
+                          borderRadius: "7px",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <Pencil size={11} color="#E5D7BC" />
+                        <span className="btn-texto-responsive">Editar</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Carrusel de Imágenes: Portada Master + Fotos de Variantes */}
                 {fotoMostrar && (
                   <div
@@ -2324,7 +2669,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         <div
                           style={{
                             position: "absolute",
-                            bottom: "8px",
+                            bottom: tiempoMostrar || albumUrl ? "36px" : "8px",
                             left: "50%",
                             transform: "translateX(-50%)",
                             display: "flex",
@@ -2382,10 +2727,12 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
                     {tiempoMostrar && (
                       <div
+                        title={tiempoMostrar}
                         style={{
                           position: "absolute",
                           bottom: "8px",
                           left: "8px",
+                          maxWidth: albumUrl ? "56%" : "calc(100% - 16px)",
                           background: "rgba(15, 23, 42, 0.85)",
                           backdropFilter: "blur(4px)",
                           color: "#FFFFFF",
@@ -2399,8 +2746,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           zIndex: 2,
                         }}
                       >
-                        <Clock size={11} color="#C8A25A" />
-                        <span>{tiempoMostrar}</span>
+                        <Clock size={11} color="#C8A25A" style={{ flexShrink: 0 }} />
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {tiempoMostrar}
+                        </span>
                       </div>
                     )}
                     {albumUrl && (
@@ -2412,7 +2761,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           position: "absolute",
                           bottom: "8px",
                           right: "8px",
-                          background: "rgba(255, 255, 255, 0.9)",
+                          background: "rgba(255, 255, 255, 0.92)",
                           color: "#1F1C19",
                           padding: "3px 8px",
                           borderRadius: "6px",
@@ -2420,206 +2769,53 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           fontWeight: 700,
                           textDecoration: "none",
                           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                          whiteSpace: "nowrap",
                           zIndex: 2,
                         }}
                       >
-                        📸 Muestras Reales
+                        📸 Muestras
                       </a>
                     )}
                   </div>
                 )}
 
-                {/* Barra Superior de la Tarjeta: Botón Activar/Desactivar + Check Canal + Destacado + Botón Editar Master */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "12px",
-                    right: "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    zIndex: 4,
-                  }}
-                >
-                  {/* Botón Instantáneo Activar / Desactivar Producto */}
-                  {modoVista === "admin" && (
-                    <button
-                      type="button"
-                      onClick={(e) => handleAlternarActivo(p.pro_id, e)}
-                      disabled={isSavingActivo}
-                      className="btn-responsive-accion"
-                      title={estaActivoGeneral ? "Producto activo en catálogo. Clic para desactivar" : "Producto inactivo. Clic para activar"}
-                      aria-label={estaActivoGeneral ? "Desactivar producto" : "Activar producto"}
-                      style={{
-                        background: isSavingActivo
-                          ? "#F4F2EE"
-                          : estaActivoGeneral
-                          ? "#2F4737"
-                          : "#57524C",
-                        border: estaActivoGeneral
-                          ? "1.5px solid #7EA389"
-                          : "1.5px solid #847D74",
-                        color: "#FFFFFF",
-                        padding: "5px 10px",
-                        borderRadius: "8px",
-                        fontSize: "0.74rem",
-                        fontWeight: 800,
-                        cursor: isSavingActivo ? "wait" : "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                        backdropFilter: "blur(6px)",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {isSavingActivo ? (
-                        <RefreshCw size={12} className="eco-icono-girando" />
-                      ) : estaActivoGeneral ? (
-                        <Power size={12} color="#FFFFFF" />
-                      ) : (
-                        <Power size={12} color="#D5CFC4" />
-                      )}
-                      <span className="btn-texto-responsive">
-                        {estaActivoGeneral ? "🟢 Activo" : "⚪ Inactivo"}
-                      </span>
-                    </button>
-                  )}
-
-                  {/* Check / Switch de Visibilidad en el Canal Seleccionado */}
-                  {canalSeleccionado !== "todos" && modoVista === "admin" && (() => {
-                    const infoCanalFiltro = CANALES_CATALOGO_OFICIALES.find((c) => c.clave === canalSeleccionado);
-                    const canalesProd = p.canales_visibilidad || p.pro_detalle_producto?.canales_visibilidad || CANALES_POR_DEFECTO;
-                    const estaActivoEnCanal = canalesProd.includes(canalSeleccionado as CanalVisibilidad);
-                    const isSaving = guardandoCanalKey === `${p.pro_id}_${canalSeleccionado}`;
-                    const requiereImgYFalta = !productoTieneAlMenosUnaImagen(p) && CANALES_REQUIEREN_IMAGEN.includes(canalSeleccionado as CanalVisibilidad);
-
-                    return (
-                      <button
-                        type="button"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await handleAlternarCanal(p.pro_id, canalSeleccionado as CanalVisibilidad);
-                        }}
-                        disabled={isSaving}
-                        className="btn-responsive-accion"
-                        title={
-                          requiereImgYFalta
-                            ? `⚠️ Requiere al menos una imagen configurada para activarse en ${infoCanalFiltro?.nombre || canalSeleccionado}`
-                            : estaActivoEnCanal
-                            ? `Desactivar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`
-                            : `Activar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`
-                        }
-                        aria-label={`Alternar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`}
+                {/* Badges Flotantes en Vista Cliente (Destacado + Me Gusta) */}
+                {modoVista !== "admin" && (p.pro_destacado || Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0) > 0) && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      right: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      zIndex: 4,
+                    }}
+                  >
+                    {Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0) > 0 && (
+                      <div
+                        title={`${p.pro_total_me_gusta} Me gusta acumulados de clientes`}
+                        aria-label={`${p.pro_total_me_gusta} Me gusta globales`}
                         style={{
-                          background: estaActivoEnCanal
-                            ? "#2F4737"
-                            : "rgba(15, 23, 42, 0.88)",
-                          border: estaActivoEnCanal
-                            ? "1.5px solid #7EA389"
-                            : "1.5px solid rgba(255, 255, 255, 0.35)",
-                          color: "#FFFFFF",
-                          padding: "5px 10px",
-                          borderRadius: "8px",
-                          fontSize: "0.74rem",
+                          background: "rgba(255, 255, 255, 0.94)",
+                          border: "1.5px solid #F9A8D4",
+                          color: "#BE123C",
+                          padding: "3px 8px",
+                          borderRadius: "999px",
+                          fontSize: "0.72rem",
                           fontWeight: 800,
-                          cursor: isSaving ? "wait" : "pointer",
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "5px",
-                          boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                          gap: "4px",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.16)",
                           backdropFilter: "blur(6px)",
-                          transition: "all 0.15s ease",
                         }}
                       >
-                        {isSaving ? (
-                          <RefreshCw size={12} className="eco-icono-girando" />
-                        ) : estaActivoEnCanal ? (
-                          <CheckCircle2 size={13} color="#FFFFFF" />
-                        ) : (
-                          <div
-                            style={{
-                              width: "11px",
-                              height: "11px",
-                              borderRadius: "3px",
-                              border: "2px solid rgba(255,255,255,0.8)",
-                            }}
-                          />
-                        )}
-                        <span className="btn-texto-responsive">
-                          {estaActivoEnCanal ? "Visible en Canal" : "Oculto en Canal"}
-                        </span>
-                      </button>
-                    );
-                  })()}
-
-                  {/* Contador Global de Me gusta (corazones acumulados de todos los clientes) */}
-                  {Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0) > 0 && (
-                    <div
-                      title={`${p.pro_total_me_gusta} Me gusta acumulados de clientes`}
-                      aria-label={`${p.pro_total_me_gusta} Me gusta globales`}
-                      style={{
-                        background: "rgba(255, 255, 255, 0.94)",
-                        border: "1.5px solid #F9A8D4",
-                        color: "#BE123C",
-                        padding: "3px 8px",
-                        borderRadius: "999px",
-                        fontSize: "0.72rem",
-                        fontWeight: 800,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.16)",
-                        backdropFilter: "blur(6px)",
-                      }}
-                    >
-                      <Heart size={11} fill="currentColor" />
-                      <span>{p.pro_total_me_gusta}</span>
-                    </div>
-                  )}
-
-                  {/* Insignia / Switch Rápido de Producto Destacado */}
-                  {modoVista === "admin" ? (
-                    <button
-                      type="button"
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await handleAlternarDestacado(p.pro_id);
-                      }}
-                      disabled={guardandoDestacadoKey === p.pro_id}
-                      className="btn-responsive-accion"
-                      title={p.pro_destacado ? "Quitar insignia de producto destacado" : "Asignar insignia de producto destacado"}
-                      aria-label={p.pro_destacado ? "Quitar insignia de producto destacado" : "Asignar insignia de producto destacado"}
-                      style={{
-                        background: p.pro_destacado
-                          ? "#8F6A2E"
-                          : "rgba(15, 23, 42, 0.78)",
-                        border: p.pro_destacado ? "1.5px solid #E5D7BC" : "1.5px solid rgba(255, 255, 255, 0.35)",
-                        color: "#FFFFFF",
-                        padding: "4px 9px",
-                        borderRadius: "12px",
-                        fontSize: "0.7rem",
-                        fontWeight: 800,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        boxShadow: "0 2px 5px rgba(0,0,0,0.18)",
-                        cursor: guardandoDestacadoKey === p.pro_id ? "wait" : "pointer",
-                        backdropFilter: "blur(6px)",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {guardandoDestacadoKey === p.pro_id ? (
-                        <RefreshCw size={10} className="eco-icono-girando" />
-                      ) : (
-                        <Sparkles size={11} color={p.pro_destacado ? "#FFFFFF" : "#E5D7BC"} />
-                      )}
-                      <span className="btn-texto-responsive">
-                        {p.pro_destacado ? "DESTACADO" : "DESTACAR"}
-                      </span>
-                    </button>
-                  ) : (
-                    p.pro_destacado && (
+                        <Heart size={11} fill="currentColor" />
+                        <span>{p.pro_total_me_gusta}</span>
+                      </div>
+                    )}
+                    {p.pro_destacado && (
                       <div
                         style={{
                           background: "#8F6A2E",
@@ -2637,137 +2833,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         <Sparkles size={10} />
                         DESTACADO
                       </div>
-                    )
-                  )}
-
-                  {modoVista === "admin" && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const urlProdPublico = construirEnlaceProductoTienda({
-                          negocio,
-                          slugProducto: p.pro_slug || p.pro_id,
-                          skuVariante: variantesLista.length > 1 ? currentVar?.var_sku : undefined,
-                          baseUrl: URL_TIENDA_POR_NEGOCIO[negocio],
-                        });
-                        copiarLinkPublicoTienda(`prod_${p.pro_id}`, urlProdPublico);
-                      }}
-                      className="btn-responsive-accion"
-                      title={`Copiar link directo en tienda para compartir "${p.pro_nombre}" por WhatsApp o Chat`}
-                      aria-label={`Copiar link en tienda de ${p.pro_nombre}`}
-                      style={{
-                        background:
-                          linkTiendaCopiadoKey === `prod_${p.pro_id}`
-                            ? "rgba(5, 150, 105, 0.95)"
-                            : "rgba(15, 23, 42, 0.9)",
-                        border:
-                          linkTiendaCopiadoKey === `prod_${p.pro_id}`
-                            ? "1.5px solid #7EA389"
-                            : "1.5px solid rgba(16, 185, 129, 0.45)",
-                        color: "#FFFFFF",
-                        padding: "5px 10px",
-                        borderRadius: "8px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                      }}
-                    >
-                      {linkTiendaCopiadoKey === `prod_${p.pro_id}` ? (
-                        <>
-                          <CheckCircle2 size={12} color="#FFFFFF" />
-                          <span className="btn-texto-responsive">Copiado</span>
-                        </>
-                      ) : (
-                        <>
-                          <Link2 size={12} color="#7EA389" />
-                          <span className="btn-texto-responsive">Link Tienda</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {modoVista === "admin" && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void copiarConfiguracionProducto(p);
-                      }}
-                      className="btn-responsive-accion"
-                      title={`Copiar en texto toda la configuración de "${p.pro_nombre}"`}
-                      aria-label={`Copiar configuración de ${p.pro_nombre}`}
-                      style={{
-                        background:
-                          configCopiadaProdId === p.pro_id
-                            ? "rgba(5, 150, 105, 0.95)"
-                            : "rgba(15, 23, 42, 0.9)",
-                        border:
-                          configCopiadaProdId === p.pro_id
-                            ? "1.5px solid #7EA389"
-                            : "1.5px solid rgba(200, 162, 90, 0.45)",
-                        color: "#FFFFFF",
-                        padding: "5px 10px",
-                        borderRadius: "8px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                      }}
-                    >
-                      {configCopiadaProdId === p.pro_id ? (
-                        <>
-                          <CheckCircle2 size={12} color="#FFFFFF" />
-                          <span className="btn-texto-responsive">Copiado</span>
-                        </>
-                      ) : (
-                        <>
-                          <ClipboardCopy size={12} color="#E5D7BC" />
-                          <span className="btn-texto-responsive">Copiar Config</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {modoVista === "admin" && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setProductoAEditar(p);
-                        setVarianteAEditarId(undefined); // Abre pestaña del Producto Master
-                        setModalEditarAbierto(true);
-                      }}
-                      className="btn-responsive-accion"
-                      title="Editar datos generales del producto master"
-                      aria-label="Editar datos generales del producto master"
-                      style={{
-                        background: "rgba(15, 23, 42, 0.9)",
-                        border: "1.5px solid rgba(56, 189, 248, 0.4)",
-                        color: "#FFFFFF",
-                        padding: "5px 10px",
-                        borderRadius: "8px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                      }}
-                    >
-                      <Pencil size={12} color="#C8A25A" />
-                      <span className="btn-texto-responsive">Editar Master</span>
-                    </button>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 <div
                   style={{
@@ -3050,40 +3118,57 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         )}
                       </div>
                     )
-                  ) : Boolean(p.pro_detalle_producto?.logistica?.delivery_incluido) ? (
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        background: "#F2F6F3",
-                        border: "1px solid #2F4737",
-                        color: "#2B4A36",
-                        padding: "4px 10px",
-                        borderRadius: "8px",
-                        fontSize: "0.72rem",
-                        fontWeight: 800,
-                        marginBottom: "10px",
-                        boxShadow: "0 1px 2px rgba(16, 185, 129, 0.1)",
-                        alignSelf: "flex-start",
-                      }}
-                    >
-                      <Truck size={13} color="#2F4737" />
-                      <span>{p.pro_detalle_producto?.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido"}</span>
-                      {p.pro_detalle_producto?.logistica?.cobertura_texto && (
-                        <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#2F4737", marginLeft: "2px" }}>
-                          • {p.pro_detalle_producto.logistica.cobertura_texto}
-                        </span>
-                      )}
-                    </div>
-                  ) : null}
+                  ) : Boolean(p.pro_detalle_producto?.logistica?.delivery_incluido) ? (() => {
+                    const etiquetaTransp =
+                      p.pro_detalle_producto?.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido";
+                    const coberturaTxt = (p.pro_detalle_producto?.logistica?.cobertura_texto || "").trim();
+                    const mostrarCobertura =
+                      Boolean(coberturaTxt) &&
+                      !etiquetaTransp.toLowerCase().includes(coberturaTxt.toLowerCase());
+                    return (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                          gap: "5px",
+                          background: "#F2F6F3",
+                          border: "1px solid #2F4737",
+                          color: "#2B4A36",
+                          padding: "4px 10px",
+                          borderRadius: "8px",
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          marginBottom: "10px",
+                          boxShadow: "0 1px 2px rgba(16, 185, 129, 0.1)",
+                          alignSelf: "flex-start",
+                          maxWidth: "100%",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        <Truck size={13} color="#2F4737" style={{ flexShrink: 0 }} />
+                        <span>{etiquetaTransp}</span>
+                        {mostrarCobertura && (
+                          <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#2F4737" }}>
+                            • {coberturaTxt}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })() : null}
 
 
-                  {/* Canales de Visibilidad (exclusivo de vista Administrador; riel lineal deslizable) */}
+                  {/* Canales de Visibilidad (exclusivo de vista Administrador; multilínea sin recortes) */}
                   {modoVista === "admin" && (
                   <div
-                    className="catalogo-riel-deslizable"
-                    style={{ gap: "5px", marginBottom: "10px", alignItems: "center", width: "100%", paddingBottom: "2px" }}
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "5px",
+                      marginBottom: "12px",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
                   >
                     {!productoTieneAlMenosUnaImagen(p) && (
                       <span
@@ -3332,8 +3417,316 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     </div>
                   )}
 
-                  {/* Beneficios / ¿Qué incluye? del Producto y Variante */}
-                  {beneficiosLista.length > 0 && (
+                  {/* Selector de Variantes / Tamaños */}
+                  {(modoVista === "admin" ? variantesLista.length >= 1 : variantesLista.length > 1) && (
+                    <div style={{ marginBottom: "12px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "6px",
+                          marginBottom: "6px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "0.71rem",
+                            fontWeight: 800,
+                            color: "#57524C",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.02em",
+                          }}
+                        >
+                          {modoVista === "admin"
+                            ? esFloristeria
+                              ? `Tamaños y variantes (${variantesLista.length})`
+                              : `Variantes (${variantesLista.length})`
+                            : esFloristeria
+                            ? "Tamaño:"
+                            : "Opción:"}
+                        </span>
+                        {modoVista === "admin" && (
+                          <span style={{ fontSize: "0.66rem", color: "#847D74", fontWeight: 600 }}>
+                            Toca para ver • ✏️ editar
+                          </span>
+                        )}
+                      </div>
+
+                      {modoVista === "admin" ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                          {variantesLista.map((v, vIdx) => {
+                            const activa = currentVarId === v.var_id;
+                            const colVar =
+                              PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] ||
+                              PALETA_COLORES_VARIANTES[0]!;
+                            const precioTexto = v.precio_total ? v.precio_total.toFixed(2) : "0.00";
+                            const resumenVar = obtenerResumenVariante(v);
+                            const skuVarItem = typeof v.var_sku === "string" ? v.var_sku.trim() : "";
+
+                            return (
+                              <div
+                                key={v.var_id}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => {
+                                  setVarianteSeleccionadaPorProducto((prev) => ({
+                                    ...prev,
+                                    [p.pro_id]: v.var_id,
+                                  }));
+                                  const fotoVarIdx = fotosDisponibles.findIndex(
+                                    (f) =>
+                                      f.varianteId === v.var_id ||
+                                      (v.var_detalle_variante?.portada_url &&
+                                        f.url === v.var_detalle_variante.portada_url)
+                                  );
+                                  if (fotoVarIdx >= 0) {
+                                    setFotoCarouselIndexPorProducto((prev) => ({
+                                      ...prev,
+                                      [p.pro_id]: fotoVarIdx,
+                                    }));
+                                  } else {
+                                    setFotoCarouselIndexPorProducto((prev) => ({
+                                      ...prev,
+                                      [p.pro_id]: 0,
+                                    }));
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    setVarianteSeleccionadaPorProducto((prev) => ({
+                                      ...prev,
+                                      [p.pro_id]: v.var_id,
+                                    }));
+                                  }
+                                }}
+                                title={`Seleccionar ${v.var_nombre} ($${precioTexto}) para ver sus características`}
+                                aria-label={`Seleccionar variante ${v.var_nombre}`}
+                                style={{
+                                  padding: "7px 9px",
+                                  borderRadius: "9px",
+                                  border: activa
+                                    ? `1.5px solid ${colVar.border}`
+                                    : "1px solid #E6E2DA",
+                                  background: activa ? colVar.bg : "#FFFFFF",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  justifyContent: "space-between",
+                                  gap: "8px",
+                                  transition: "all 0.15s ease",
+                                }}
+                              >
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      flexWrap: "wrap",
+                                      gap: "5px",
+                                      lineHeight: 1.25,
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: "8px",
+                                        height: "8px",
+                                        borderRadius: "50%",
+                                        background: colVar.dot,
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                    <span
+                                      style={{
+                                        fontSize: "0.78rem",
+                                        fontWeight: activa ? 800 : 700,
+                                        color: activa ? colVar.text : "#1F1C19",
+                                        wordBreak: "break-word",
+                                      }}
+                                    >
+                                      {v.var_nombre}
+                                    </span>
+                                    {skuVarItem && (
+                                      <span
+                                        style={{
+                                          fontSize: "0.64rem",
+                                          fontWeight: 700,
+                                          color: "#6E675F",
+                                          background: "rgba(255,255,255,0.8)",
+                                          border: "1px solid #E2DDD4",
+                                          borderRadius: "5px",
+                                          padding: "0px 5px",
+                                        }}
+                                      >
+                                        {skuVarItem}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {resumenVar && (
+                                    <div
+                                      style={{
+                                        marginTop: "3px",
+                                        marginLeft: "13px",
+                                        fontSize: "0.7rem",
+                                        color: "#57524C",
+                                        lineHeight: 1.35,
+                                        wordBreak: "break-word",
+                                      }}
+                                    >
+                                      {resumenVar}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <strong
+                                    style={{
+                                      fontSize: "0.82rem",
+                                      fontWeight: 800,
+                                      color: activa ? colVar.text : "#1F1C19",
+                                      fontVariantNumeric: "tabular-nums",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    ${precioTexto}
+                                  </strong>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setVarianteSeleccionadaPorProducto((prev) => ({
+                                        ...prev,
+                                        [p.pro_id]: v.var_id,
+                                      }));
+                                      setProductoAEditar(p);
+                                      setVarianteAEditarId(v.var_id);
+                                      setModalEditarAbierto(true);
+                                    }}
+                                    title={`Editar variante ${v.var_nombre}`}
+                                    aria-label={`Editar variante ${v.var_nombre}`}
+                                    style={{
+                                      width: "26px",
+                                      height: "26px",
+                                      borderRadius: "7px",
+                                      border: "1px solid #D5CFC4",
+                                      background: "#FFFFFF",
+                                      color: "#221E1B",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      cursor: "pointer",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    <Pencil size={12} color="#8F6A2E" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "6px",
+                            alignItems: "center",
+                          }}
+                        >
+                          {variantesLista.map((v, vIdx) => {
+                            const activa = currentVarId === v.var_id;
+                            const colVar =
+                              PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] ||
+                              PALETA_COLORES_VARIANTES[0]!;
+                            const precioTexto = v.precio_total ? v.precio_total.toFixed(2) : "0.00";
+
+                            return (
+                              <button
+                                key={v.var_id}
+                                type="button"
+                                onClick={() => {
+                                  setVarianteSeleccionadaPorProducto((prev) => ({
+                                    ...prev,
+                                    [p.pro_id]: v.var_id,
+                                  }));
+                                  const fotoVarIdx = fotosDisponibles.findIndex(
+                                    (f) =>
+                                      f.varianteId === v.var_id ||
+                                      (v.var_detalle_variante?.portada_url &&
+                                        f.url === v.var_detalle_variante.portada_url)
+                                  );
+                                  if (fotoVarIdx >= 0) {
+                                    setFotoCarouselIndexPorProducto((prev) => ({
+                                      ...prev,
+                                      [p.pro_id]: fotoVarIdx,
+                                    }));
+                                  } else {
+                                    setFotoCarouselIndexPorProducto((prev) => ({
+                                      ...prev,
+                                      [p.pro_id]: 0,
+                                    }));
+                                  }
+                                }}
+                                title={`Seleccionar ${v.var_nombre} ($${precioTexto})`}
+                                aria-label={`Seleccionar ${v.var_nombre}`}
+                                style={{
+                                  padding: "6px 10px",
+                                  borderRadius: "8px",
+                                  border: activa
+                                    ? `1.5px solid ${colVar.border}`
+                                    : `1px solid ${colVar.border}55`,
+                                  background: activa ? colVar.bg : "#FFFFFF",
+                                  color: activa ? colVar.text : "#57524C",
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  fontSize: "0.76rem",
+                                  fontWeight: activa ? 700 : 600,
+                                  transition: "all 0.15s ease",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: "7px",
+                                    height: "7px",
+                                    borderRadius: "50%",
+                                    background: colVar.dot,
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span>{v.var_nombre}</span>
+                                <strong
+                                  style={{
+                                    color: activa ? colVar.text : "#1F1C19",
+                                    fontVariantNumeric: "tabular-nums",
+                                  }}
+                                >
+                                  ${precioTexto}
+                                </strong>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Beneficios / Características / Receta del Producto y Variante Activa */}
+                  {(beneficiosLista.length > 0 ||
+                    Boolean(recetaBomActual) ||
+                    Boolean(detalleVarActual) ||
+                    (modoVista === "admin" && (tallosActual > 0 || Boolean(skuActual)))) && (
                     <div
                       style={{
                         background: "#F8F7F4",
@@ -3345,7 +3738,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     >
                       <div
                         style={{
-                          fontSize: "0.72rem",
+                          fontSize: "0.71rem",
                           fontWeight: 800,
                           color: "#57524C",
                           textTransform: "uppercase",
@@ -3353,142 +3746,140 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           marginBottom: "6px",
                           display: "flex",
                           alignItems: "center",
-                          gap: "5px",
+                          justifyContent: "space-between",
+                          gap: "6px",
+                          flexWrap: "wrap",
                         }}
                       >
-                        <Sparkles size={12} color="#221E1B" />
-                        <span>
-                          {esFloristeria
-                            ? "🌸 ¿Qué incluye este arreglo?"
-                            : esLegal
-                            ? "⚖️ Alcance y Beneficios del Servicio:"
-                            : "✨ Beneficios y Características:"}
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <Sparkles size={12} color="#221E1B" />
+                          <span>
+                            {esFloristeria
+                              ? "¿Qué incluye este arreglo?"
+                              : esLegal
+                              ? "Alcance y Beneficios:"
+                              : "Características y Beneficios:"}
+                          </span>
                         </span>
+                        {modoVista === "admin" && currentVar && variantesLista.length > 1 && (
+                          <span
+                            style={{
+                              fontSize: "0.66rem",
+                              fontWeight: 700,
+                              color: "#2B4A36",
+                              background: "#E8F1EB",
+                              borderRadius: "5px",
+                              padding: "1px 6px",
+                              textTransform: "none",
+                              letterSpacing: 0,
+                            }}
+                          >
+                            {currentVar.var_nombre}
+                          </span>
+                        )}
                       </div>
+
                       <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                         {beneficiosLista.map((ben: string, bIdx: number) => (
                           <div
                             key={bIdx}
                             style={{
                               fontSize: "0.75rem",
-                              color: "#57524C",
+                              color: "#3A3530",
                               display: "flex",
                               alignItems: "flex-start",
                               gap: "6px",
-                              lineHeight: 1.35,
+                              lineHeight: 1.38,
                             }}
                           >
                             <CheckCircle2 size={13} color="#2F4737" style={{ flexShrink: 0, marginTop: "2px" }} />
-                            <span>{ben}</span>
+                            <span style={{ wordBreak: "break-word" }}>{ben}</span>
                           </div>
                         ))}
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Selector de Variantes / Tamaños en riel lineal deslizable */}
-                  {variantesLista.length > 1 && (
-                    <div style={{ marginBottom: "12px" }}>
-                      <span
-                        style={{
-                          display: "block",
-                          fontSize: "0.7rem",
-                          fontWeight: 700,
-                          color: "#847D74",
-                          marginBottom: "5px",
-                        }}
-                      >
-                        {modoVista === "admin"
-                          ? esFloristeria
-                            ? "Tamaños (toca para editar):"
-                            : "Variantes (toca para editar):"
-                          : esFloristeria
-                          ? "Tamaño:"
-                          : "Opción:"}
-                      </span>
-                      <div
-                        className="catalogo-riel-deslizable"
-                        style={{ gap: "6px", alignItems: "center", paddingBottom: "2px" }}
-                      >
-                        {variantesLista.map((v, vIdx) => {
-                          const activa = currentVarId === v.var_id;
-                          const colVar = PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
-                          const precioTexto = v.precio_total ? v.precio_total.toFixed(2) : "0.00";
-
-                          return (
-                            <button
-                              key={v.var_id}
-                              type="button"
-                              onClick={() => {
-                                setVarianteSeleccionadaPorProducto((prev) => ({
-                                  ...prev,
-                                  [p.pro_id]: v.var_id,
-                                }));
-                                const fotoVarIdx = fotosDisponibles.findIndex(
-                                  (f) => f.varianteId === v.var_id || (v.var_detalle_variante?.portada_url && f.url === v.var_detalle_variante.portada_url)
-                                );
-                                if (fotoVarIdx >= 0) {
-                                  setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: fotoVarIdx }));
-                                } else {
-                                  setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: 0 }));
-                                }
-                                if (modoVista === "admin") {
-                                  setProductoAEditar(p);
-                                  setVarianteAEditarId(v.var_id);
-                                  setModalEditarAbierto(true);
-                                }
-                              }}
-                              title={
-                                modoVista === "admin"
-                                  ? `Editar ${v.var_nombre} ($${precioTexto})`
-                                  : `Seleccionar ${v.var_nombre} ($${precioTexto})`
-                              }
-                              aria-label={
-                                modoVista === "admin"
-                                  ? `Editar ${v.var_nombre}`
-                                  : `Seleccionar ${v.var_nombre}`
-                              }
+                        {detalleVarActual &&
+                          !beneficiosLista.some(
+                            (b) => b.toLowerCase() === detalleVarActual.toLowerCase()
+                          ) && (
+                            <div
                               style={{
-                                padding: "6px 10px",
-                                borderRadius: "8px",
-                                border: activa
-                                  ? `1.5px solid ${colVar.border}`
-                                  : `1px solid ${colVar.border}55`,
-                                background: activa ? colVar.bg : "#FFFFFF",
-                                color: activa ? colVar.text : "#57524C",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
+                                fontSize: "0.75rem",
+                                color: "#3A3530",
+                                display: "flex",
+                                alignItems: "flex-start",
                                 gap: "6px",
-                                fontSize: "0.76rem",
-                                fontWeight: activa ? 700 : 600,
-                                whiteSpace: "nowrap",
-                                flexShrink: 0,
-                                scrollSnapAlign: "start",
-                                transition: "all 0.15s ease",
+                                lineHeight: 1.38,
                               }}
                             >
+                              <CheckCircle2 size={13} color="#2F4737" style={{ flexShrink: 0, marginTop: "2px" }} />
+                              <span style={{ wordBreak: "break-word" }}>{detalleVarActual}</span>
+                            </div>
+                          )}
+
+                        {recetaBomActual && (
+                          <div
+                            style={{
+                              fontSize: "0.74rem",
+                              color: "#2B4A36",
+                              background: "#F2F6F3",
+                              border: "1px solid #D5E4DA",
+                              borderRadius: "7px",
+                              padding: "6px 8px",
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: "6px",
+                              lineHeight: 1.38,
+                              marginTop: beneficiosLista.length > 0 ? "3px" : 0,
+                            }}
+                          >
+                            <Flower2 size={13} color="#2F4737" style={{ flexShrink: 0, marginTop: "2px" }} />
+                            <span style={{ wordBreak: "break-word" }}>
+                              <strong>Composición:</strong> {recetaBomActual}
+                            </span>
+                          </div>
+                        )}
+
+                        {modoVista === "admin" && (tallosActual > 0 || skuActual) && (
+                          <div
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "5px",
+                              marginTop: "4px",
+                            }}
+                          >
+                            {skuActual && (
                               <span
                                 style={{
-                                  width: "7px",
-                                  height: "7px",
-                                  borderRadius: "50%",
-                                  background: colVar.dot,
-                                  flexShrink: 0,
-                                }}
-                              />
-                              <span>{v.var_nombre}</span>
-                              <strong
-                                style={{
-                                  color: activa ? colVar.text : "#1F1C19",
-                                  fontVariantNumeric: "tabular-nums",
+                                  fontSize: "0.66rem",
+                                  fontWeight: 700,
+                                  color: "#57524C",
+                                  background: "#FFFFFF",
+                                  border: "1px solid #E2DDD4",
+                                  borderRadius: "6px",
+                                  padding: "2px 6px",
                                 }}
                               >
-                                ${precioTexto}
-                              </strong>
-                            </button>
-                          );
-                        })}
+                                SKU: {skuActual}
+                              </span>
+                            )}
+                            {tallosActual > 0 && (
+                              <span
+                                style={{
+                                  fontSize: "0.66rem",
+                                  fontWeight: 700,
+                                  color: "#745622",
+                                  background: "#FAF6EE",
+                                  border: "1px solid #E5D7BC",
+                                  borderRadius: "6px",
+                                  padding: "2px 6px",
+                                }}
+                              >
+                                🌹 {tallosActual} tallos
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
