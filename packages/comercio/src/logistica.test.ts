@@ -63,10 +63,10 @@ describe("Motor de logística y cobertura Tinkay", () => {
       distanciaVialKm: 4.5,
     });
     expect(res5.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
-    expect(res5.zonaDetectada?.nombre).toBe("Entrega $0.75");
+    expect(res5.zonaDetectada?.nombre).toBe("Entrega 5km");
     expect(res5.costoTotalEnvio).toBe(0.75);
 
-    // Plaza Foch / La Mariscal (~5.25 km en auto): cae en Entrega $1.50 (6 km) -> $1.50
+    // Plaza Foch / La Mariscal (~5.25 km en auto): cae en Entrega 6km ($1.50)
     const plazaFoch = { lat: -0.2014, lng: -78.4912 };
     const res6 = cotizarEnvioDomicilio({
       config,
@@ -74,10 +74,10 @@ describe("Motor de logística y cobertura Tinkay", () => {
       distanciaVialKm: 5.25,
     });
     expect(res6.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
-    expect(res6.zonaDetectada?.nombre).toBe("Entrega $1.50");
+    expect(res6.zonaDetectada?.nombre).toBe("Entrega 6km");
     expect(res6.costoTotalEnvio).toBe(1.5);
 
-    // Centro Histórico (~8.59 km en auto): cae en Entrega $3.75 (9 km) -> $3.75 exacto
+    // Centro Histórico (~8.59 km en auto): cae en Entrega 9km ($3.75 exacto)
     const centroHistorico = { lat: -0.2201, lng: -78.5123 };
     const res9 = cotizarEnvioDomicilio({
       config,
@@ -85,7 +85,7 @@ describe("Motor de logística y cobertura Tinkay", () => {
       distanciaVialKm: 8.59,
     });
     expect(res9.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
-    expect(res9.zonaDetectada?.nombre).toBe("Entrega $3.75");
+    expect(res9.zonaDetectada?.nombre).toBe("Entrega 9km");
     expect(res9.costoTotalEnvio).toBe(3.75);
 
     // Carcelén (~12.47 km en auto): fuera de 12 km ($6.00), dentro de 13 km ($6.75)

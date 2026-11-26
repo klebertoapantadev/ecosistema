@@ -493,7 +493,9 @@ export function MapaCoberturaPichincha({
           const nombreYaTienePrecio = /\$\s*\d/.test(zona.nombre);
           const textoPill =
             zona.modoCobro === "GRATIS"
-              ? "Cobertura Gratuita"
+              ? /gratuita|gratis/i.test(zona.nombre)
+                ? zona.nombre
+                : "Cobertura Gratuita"
               : zona.modoCobro === "TARIFA_FIJA"
                 ? nombreYaTienePrecio
                   ? zona.nombre

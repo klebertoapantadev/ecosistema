@@ -152,6 +152,10 @@ export function SelectorUbicacionEntrega({
     typeof clienteRegistrado === "boolean" ? clienteRegistrado : registradoDetectado;
   const esStaffRutaEfectivo =
     typeof mostrarDetalleRutaStaff === "boolean" ? mostrarDetalleRutaStaff : esStaffDetectado;
+  // Operadores/Admin/Ventas ven TODAS las áreas de cobertura; clientes ven únicamente el área gratuita.
+  const zonasVisiblesMapa = esStaffRutaEfectivo
+    ? config.zonas
+    : config.zonas.filter((z) => z.modoCobro === "GRATIS");
 
   // Recalcular si cambian condiciones de los ítems o el estado de registro del cliente
   useEffect(() => {
@@ -855,8 +859,12 @@ export function SelectorUbicacionEntrega({
                 origen={{ lat: config.origenLat, lng: config.origenLng }}
                 origenNombre={config.origenNombre}
                 destino={coordenadas}
-                zonas={config.zonas}
-                zonaResaltadaId={cotizacion?.zonaDetectada?.id ?? null}
+                zonas={zonasVisiblesMapa}
+                zonaResaltadaId={
+                  esStaffRutaEfectivo
+                    ? cotizacion?.zonaDetectada?.id ?? null
+                    : zonasVisiblesMapa[0]?.id ?? null
+                }
                 rutaGeometria={cotizacion?.rutaGeometria}
                 secuenciaCentrarDestino={secuenciaCentrarDestino}
                 alturaPx={235}
@@ -1360,11 +1368,13 @@ export function SelectorUbicacionEntrega({
               origen={{ lat: config.origenLat, lng: config.origenLng }}
               origenNombre={config.origenNombre}
               destino={coordenadas}
-              zonas={config.zonas}
+              zonas={zonasVisiblesMapa}
               zonaResaltadaId={
-                cotizacion?.zonaDetectada?.id ??
-                config.zonas.find((z) => z.modoCobro === "GRATIS")?.id ??
-                null
+                esStaffRutaEfectivo
+                  ? cotizacion?.zonaDetectada?.id ??
+                    zonasVisiblesMapa.find((z) => z.modoCobro === "GRATIS")?.id ??
+                    null
+                  : zonasVisiblesMapa[0]?.id ?? null
               }
               rutaGeometria={cotizacion?.rutaGeometria}
               secuenciaCentrarDestino={secuenciaCentrarDestino}

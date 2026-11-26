@@ -155,7 +155,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-centro-norte-quito",
     codigo: "centro_norte_quito",
-    nombre: "Centro-Norte de Quito",
+    nombre: "Cobertura Gratuita 4km",
     provincia: "Pichincha",
     modoCobro: "GRATIS",
     tarifaFija: 0,
@@ -214,7 +214,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-5km",
     codigo: "entrega_5km",
-    nombre: "Entrega $0.75",
+    nombre: "Entrega 5km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 0.75,
@@ -278,7 +278,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-6km",
     codigo: "entrega_6km",
-    nombre: "Entrega $1.50",
+    nombre: "Entrega 6km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 1.5,
@@ -346,7 +346,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-7km",
     codigo: "entrega_7km",
-    nombre: "Entrega $2.25",
+    nombre: "Entrega 7km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 2.25,
@@ -404,7 +404,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-8km",
     codigo: "entrega_8km",
-    nombre: "Entrega $3.00",
+    nombre: "Entrega 8km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 3,
@@ -470,7 +470,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-9km",
     codigo: "entrega_9km",
-    nombre: "Entrega $3.75",
+    nombre: "Entrega 9km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 3.75,
@@ -537,7 +537,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-10km",
     codigo: "entrega_10km",
-    nombre: "Entrega $4.50",
+    nombre: "Entrega 10km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 4.5,
@@ -599,7 +599,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-11km",
     codigo: "entrega_11km",
-    nombre: "Entrega $5.25",
+    nombre: "Entrega 11km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 5.25,
@@ -669,7 +669,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-12km",
     codigo: "entrega_12km",
-    nombre: "Entrega $6.00",
+    nombre: "Entrega 12km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 6,
@@ -739,7 +739,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-13km",
     codigo: "entrega_13km",
-    nombre: "Entrega $6.75",
+    nombre: "Entrega 13km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 6.75,
@@ -806,7 +806,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-14km",
     codigo: "entrega_14km",
-    nombre: "Entrega $7.50",
+    nombre: "Entrega 14km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 7.5,
@@ -873,7 +873,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-15km",
     codigo: "entrega_15km",
-    nombre: "Entrega $8.25",
+    nombre: "Entrega 15km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 8.25,
@@ -939,7 +939,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-16km",
     codigo: "entrega_16km",
-    nombre: "Entrega $9.00",
+    nombre: "Entrega 16km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 9,
@@ -998,7 +998,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-17km",
     codigo: "entrega_17km",
-    nombre: "Entrega $9.75",
+    nombre: "Entrega 17km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 9.75,
@@ -1067,7 +1067,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-18km",
     codigo: "entrega_18km",
-    nombre: "Entrega $10.50",
+    nombre: "Entrega 18km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 10.5,
@@ -1135,7 +1135,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-19km",
     codigo: "entrega_19km",
-    nombre: "Entrega $11.25",
+    nombre: "Entrega 19km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 11.25,
@@ -1201,7 +1201,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-20km",
     codigo: "entrega_20km",
-    nombre: "Entrega $12.00",
+    nombre: "Entrega 20km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 12,
@@ -1262,7 +1262,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-21km",
     codigo: "entrega_21km",
-    nombre: "Entrega $12.75",
+    nombre: "Entrega 21km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 12.75,
@@ -1321,7 +1321,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-22km",
     codigo: "entrega_22km",
-    nombre: "Entrega $13.50",
+    nombre: "Entrega 22km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 13.5,
@@ -1385,7 +1385,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-23km",
     codigo: "entrega_23km",
-    nombre: "Entrega $14.25",
+    nombre: "Entrega 23km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 14.25,
@@ -1459,7 +1459,7 @@ export const ZONAS_PICHINCHA_POR_DEFECTO: ZonaCoberturaLogistica[] = [
   {
     id: "zon-entrega-24km",
     codigo: "entrega_24km",
-    nombre: "Entrega $15.00",
+    nombre: "Entrega 24km",
     provincia: "Pichincha",
     modoCobro: "TARIFA_FIJA",
     tarifaFija: 15,
@@ -1660,7 +1660,7 @@ export function crearConfiguracionLogisticaPorDefecto(
     origenMapaUrl: URL_TIENDA_TINKAY_DEFECTO,
     origenLat: COORDENADAS_TALLER_TINKAY_DEFECTO.lat,
     origenLng: COORDENADAS_TALLER_TINKAY_DEFECTO.lng,
-    zonaGratisNombre: "Centro-Norte de Quito",
+    zonaGratisNombre: "Cobertura Gratuita 4km",
     etiquetaEnvioGratis: esFloristeria
       ? "🌸 Envío Gratis en Centro-Norte de Quito"
       : "🚚 Envío Gratis en Centro-Norte de Quito",
