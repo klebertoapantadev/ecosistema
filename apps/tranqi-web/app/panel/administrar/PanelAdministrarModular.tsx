@@ -13,7 +13,7 @@ import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes
 import { ConfiguracionHorariosAtencionWidget } from "../../../modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
 import { WidgetAsignacionesAgendaInline } from "../../../modulos/agenda/componentes/WidgetsAgendaInline";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, BandejaPedidosTienda, ConsolaTestimoniosClientes, ConsolaEnvioPedidosTaller, ConsolaTallerFloral, ChatEquipoInterno } from "@eco/comercio";
+import { WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, ConsolaDirectorioContactos, BandejaPedidosTienda, ConsolaTestimoniosClientes, ConsolaEnvioPedidosTaller, ConsolaTallerFloral, ChatEquipoInterno } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -50,6 +50,15 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     ruta: "/panel/conversaciones",
     icono: MessageSquare,
     colorIcono: "#DB2777",
+    categoria: "Comercio & Comunicación"
+  },
+  {
+    id: "directorio_contactos",
+    titulo: "Contactos y Listas WhatsApp (Join/Merge)",
+    subtitulo: "Extracción multi-fuente (.vcf/.csv/.xlsx/celular), lista personal a ignorar y múltiples teléfonos WhatsApp",
+    ruta: "/panel/contactos",
+    icono: Users,
+    colorIcono: "#7C3AED",
     categoria: "Comercio & Comunicación"
   },
   {
@@ -1016,6 +1025,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             {(widgetActivo === "consola_chat" || widgetActivo === "conversaciones") && (
               <div style={{ width: "100%" }}>
                 <ConsolaVentasOmnicanal negocio={negocio} />
+              </div>
+            )}
+            {(widgetActivo === "directorio_contactos" || widgetActivo === "contactos") && (
+              <div style={{ width: "100%" }}>
+                <ConsolaDirectorioContactos negocio={negocio} />
               </div>
             )}
 

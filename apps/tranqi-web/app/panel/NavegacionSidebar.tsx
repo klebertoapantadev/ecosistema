@@ -264,7 +264,7 @@ export function NavegacionSidebar({
           const baseNuevos =
             rolKey === "DELIVERY"
               ? ["taller_floral", "confirmacion_entregas", "chat_equipo"]
-              : ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas"];
+              : ["consola_chat", "directorio_contactos", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas"];
           const faltantes = baseNuevos.filter((w) => !listaAdm.includes(w));
           if (faltantes.length > 0) {
             widgetsPorPanel["panel_administrar"] = [...faltantes, ...listaAdm];

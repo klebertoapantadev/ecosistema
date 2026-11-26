@@ -11,7 +11,7 @@ import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/G
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
-import { ConfiguracionPasarelaPayphone, ConfiguracionFacturacionSri, CatalogoProductosComercio, FormularioLogisticaCobertura, ConsolaVentasOmnicanal } from "@eco/comercio";
+import { ConfiguracionPasarelaPayphone, ConfiguracionFacturacionSri, CatalogoProductosComercio, FormularioLogisticaCobertura, ConsolaVentasOmnicanal, ConsolaDirectorioContactos } from "@eco/comercio";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
@@ -148,6 +148,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     soloAdmin: true
   },
   {
+    id: "directorio_contactos",
+    titulo: "Contactos, Join/Merge y Teléfonos WhatsApp",
+    subtitulo: "Extracción de contactos, lista personal a ignorar (Ignorar Total) y gestión de múltiples líneas WhatsApp",
+    icono: MessageSquare,
+    colorIcono: "#7C3AED",
+    categoria: "Servicios de Despacho",
+    soloAdmin: true
+  },
+  {
     id: "tokens_mcp",
     titulo: "Tokens & APIs MCP",
     subtitulo: "Gestión y emisión de tokens de acceso para conectar herramientas MCP con bots y agentes externos",
@@ -174,6 +183,9 @@ const ALIAS_WIDGET: Record<string, string> = {
   consola_chat: "consola_chat",
   "consola-chat": "consola_chat",
   conversaciones: "consola_chat",
+  directorio_contactos: "directorio_contactos",
+  "directorio-contactos": "directorio_contactos",
+  contactos: "directorio_contactos",
   preferencias_notificacion: "notificaciones",
   terminos: "gestion_terminos_consentimientos",
   mcp_tokens: "tokens_mcp",
@@ -441,6 +453,11 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {widgetActivo === "consola_chat" && (
               <div style={{ width: "100%" }}>
                 <ConsolaVentasOmnicanal negocio={negocio} />
+              </div>
+            )}
+            {widgetActivo === "directorio_contactos" && (
+              <div style={{ width: "100%" }}>
+                <ConsolaDirectorioContactos negocio={negocio} />
               </div>
             )}
           </div>

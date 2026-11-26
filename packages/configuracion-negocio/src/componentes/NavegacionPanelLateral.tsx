@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardList,
+  Contact,
   CreditCard,
   FileCheck2,
   Flower2,
@@ -36,6 +37,7 @@ import { useBarraLateralPanel } from "./MarcoPanelLateral";
 export type IconoNavegacionPanel =
   | "resumen"
   | "conversaciones"
+  | "contactos"
   | "chat_equipo"
   | "inventario"
   | "entrega_inmediata"
@@ -68,6 +70,7 @@ export interface ItemNavegacionPanel {
 const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   resumen: LayoutDashboard,
   conversaciones: MessageSquare,
+  contactos: Contact,
   chat_equipo: MessagesSquare,
   inventario: Flower2,
   entrega_inmediata: Zap,

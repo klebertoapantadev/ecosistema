@@ -10,6 +10,7 @@ import {
   generarCodigoRefWhatsapp,
   nombreCanalRealtimeChatEquipo,
   nombreCanalRealtimeOmnicanal,
+  nombreCanalRealtimeOmnicanalPrivado,
   normalizarTelefonoOmnicanal,
   obtenerDefinicionMotivoCierre,
   type CitaRespuestaChatEquipo,
@@ -33,6 +34,19 @@ import {
   type RespuestaRapidaOmnicanal,
 } from "./omnicanal";
 import { obtenerPedidosTiendaAction, type PedidoTiendaRegistrado } from "./acciones-logistica";
+import {
+  type ClasificacionContacto,
+  type ContactoDirectorioRegistro,
+  type ContactoFuenteRegistro,
+  type LineaWhatsappConfig,
+  type OrigenImportacionContacto,
+  type PoliticaIaContacto,
+  type PoliticaPersonalesLinea,
+  type RolLineaWhatsapp,
+  type SemillaCrmContacto,
+  type VisibilidadContacto,
+  type VisibilidadConversacion,
+} from "./contactos-omnicanal";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
 
 function normalizarNegocioComercio(negocio?: string): string {
@@ -43,10 +57,14 @@ async function emitirBroadcastServidorOmnicanal(
   supabase: any,
   negocio: string,
   evento: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  privado = false
 ): Promise<void> {
   try {
-    const canal = supabase.channel(nombreCanalRealtimeOmnicanal(negocio));
+    const nombreCanal = privado
+      ? nombreCanalRealtimeOmnicanalPrivado(negocio)
+      : nombreCanalRealtimeOmnicanal(negocio);
+    const canal = supabase.channel(nombreCanal);
     await Promise.race([
       canal.send({
         type: "broadcast",
@@ -71,6 +89,8 @@ async function despacharPushYCampanaStaffOmnicanal(params: {
   tokenWebhook?: string | null;
   excluirUsuarioId?: string | null;
   soloVentas: boolean;
+  soloAdmins?: boolean;
+  soloUsuarioId?: string | null;
   titulo: string;
   cuerpoPlano: string;
   contenidoHtml: string;
@@ -80,7 +100,7 @@ async function despacharPushYCampanaStaffOmnicanal(params: {
 }): Promise<void> {
   try {
     const esquemaComercio = params.supabase.schema("comun_comercio") as any;
-    const { data: ctx } = await esquemaComercio.rpc("com_fn_push_obtener_contexto_envio_staff", {
+    const argsPush: Record<string, unknown> = {
       p_negocio: params.negocio,
       p_token_webhook: params.tokenWebhook ?? null,
       p_excluir_usuario_id:
@@ -88,7 +108,27 @@ async function despacharPushYCampanaStaffOmnicanal(params: {
           ? params.excluirUsuarioId
           : null,
       p_solo_ventas: params.soloVentas,
-    });
+      p_solo_admins: Boolean(params.soloAdmins),
+      p_solo_usuario_id:
+        params.soloUsuarioId && /^[0-9a-f-]{36}$/i.test(params.soloUsuarioId)
+          ? params.soloUsuarioId
+          : null,
+    };
+    let { data: ctx, error: errPushCtx } = await esquemaComercio.rpc(
+      "com_fn_push_obtener_contexto_envio_staff_v2",
+      argsPush
+    );
+    if (errPushCtx && esFuncionRpcPendienteMigracion(errPushCtx.message)) {
+      // Si la migración 20261126000009 aún no se ha aplicado, NO enviar push si era chat privado
+      if (params.soloAdmins || params.soloUsuarioId) return;
+      const retry = await esquemaComercio.rpc("com_fn_push_obtener_contexto_envio_staff", {
+        p_negocio: params.negocio,
+        p_token_webhook: params.tokenWebhook ?? null,
+        p_excluir_usuario_id: argsPush.p_excluir_usuario_id,
+        p_solo_ventas: params.soloVentas,
+      });
+      ctx = retry.data;
+    }
 
     const miembros: Array<{ usuarioId: string; rol: string }> =
       ctx?.ok && Array.isArray(ctx.miembros) ? ctx.miembros : [];
@@ -204,6 +244,7 @@ export interface DatosTableroOmnicanal {
   etiquetas: EtiquetaOmnicanal[];
   respuestasRapidas: RespuestaRapidaOmnicanal[];
   equipo: MiembroEquipoOmnicanal[];
+  lineasWhatsapp?: LineaWhatsappConfig[];
   usuariosYClientes: ContactoUnificadoOmnicanal[];
   pedidosWeb: PedidoWebConTipoCliente[];
   usandoRespaldoHibrido?: boolean;
@@ -862,6 +903,9 @@ export async function obtenerTableroOmnicanalAction(
               ? rpcTablero.respuestasRapidas
               : RESPUESTAS_RAPIDAS_POR_DEFECTO,
           equipo: Array.isArray(rpcTablero.equipo) ? rpcTablero.equipo : [],
+          lineasWhatsapp: Array.isArray(rpcTablero.lineasWhatsapp)
+            ? (rpcTablero.lineasWhatsapp as LineaWhatsappConfig[])
+            : [],
           usuariosYClientes: contactosEnriquecidos,
           pedidosWeb,
         },
@@ -2464,6 +2508,26 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
 
     const accion = String(rec.accion || "OK");
     const negocio = String(rec.negocio || "tinkay");
+
+    // Decisión 3.1 y anti-bucle: contactos personales IGNORAR_TOTAL o líneas internas se descartan sin almacenar ni emitir broadcast/push
+    if (
+      accion === "IGNORADO_CONTACTO_PERSONAL" ||
+      accion === "IGNORADO_LINEA_INTERNA" ||
+      accion === "LINEA_DESHABILITADA"
+    ) {
+      return { ok: true, status: 200, accion };
+    }
+
+    const visibilidadChat: VisibilidadConversacion =
+      rec.visibilidad === "SOLO_ADMIN" || rec.visibilidad === "SOLO_TITULAR"
+        ? rec.visibilidad
+        : "EQUIPO_VENTAS";
+    const esChatPrivado = visibilidadChat !== "EQUIPO_VENTAS";
+    const titularPrivadoId = rec.titularPrivadoId ? String(rec.titularPrivadoId) : null;
+    const lineaWhatsappNombre = rec.lineaWhatsappNombre ? String(rec.lineaWhatsappNombre) : null;
+    const lineaWhatsappCodigo = rec.lineaWhatsappCodigo ? String(rec.lineaWhatsappCodigo) : null;
+    const lineaWhatsappColor = rec.lineaWhatsappColor ? String(rec.lineaWhatsappColor) : null;
+    const lineaWhatsappId = rec.lineaWhatsappId ? String(rec.lineaWhatsappId) : null;
     const inboundWa: any =
       (entrada.payload as any)?.whatsappInboundMessage ??
       (entrada.payload as any)?.whatsappMessage ??
@@ -2619,12 +2683,13 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       }
     }
 
-    // 4. Emitir actualización instantánea (<50ms) a la Consola de Ventas en Vivo
+    // 4. Emitir actualización instantánea (<50ms) a la Consola de Ventas (o canal privado Admin/Titular sin fuga a Ventas)
     if (
       rec.conversacionId &&
       [
         "INVOCAR_ARIA",
         "SILENCIADO_HUMANO",
+        "SILENCIADO_CONTACTO_PERSONAL",
         "CANAL_SOLO_MONITOREO",
         "FUERA_LISTA_BLANCA",
         "CORTE_BUCLE_DESPEDIDA",
@@ -2645,24 +2710,33 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
         documentoNombre: documentoNombreCliente,
         autorNombre:
           accion === "ECO_MOVIL_REGISTRADO"
-            ? "WhatsApp Móvil Tienda"
+            ? lineaWhatsappNombre || "WhatsApp Móvil Tienda"
             : String(rec.remitenteNombre || "Cliente WhatsApp"),
         remitenteNombre: String(rec.remitenteNombre || "Cliente WhatsApp"),
         remitenteTelefono: rec.remitenteTelefono ? String(rec.remitenteTelefono) : null,
         estadoAtencion: (rec.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+        visibilidad: visibilidadChat,
+        titularPrivadoId,
+        lineaWhatsappId,
+        lineaWhatsappNombre,
+        lineaWhatsappCodigo,
+        lineaWhatsappColor,
         creadoEn: new Date().toISOString(),
       };
       await emitirBroadcastServidorOmnicanal(
         supabase,
         negocio,
         "actividad_chat_web",
-        eventoEntrada as unknown as Record<string, unknown>
+        eventoEntrada as unknown as Record<string, unknown>,
+        esChatPrivado
       );
 
-      if (accion !== "ECO_MOVIL_REGISTRADO") {
+      // Si es eco móvil o contacto personal silenciado, NO enviar Push a Ventas (queda en el celular / canal privado)
+      if (accion !== "ECO_MOVIL_REGISTRADO" && accion !== "SILENCIADO_CONTACTO_PERSONAL") {
         const convIdWa = String(rec.conversacionId);
         const msgIdWa = String(rec.mensajeId || Date.now());
         const remitenteWa = String(rec.remitenteNombre || "Cliente WhatsApp");
+        const etiquetaLinea = lineaWhatsappNombre ? ` (${lineaWhatsappNombre})` : "";
         const resumenWa = contenidoCliente
           .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "Imagen")
           .slice(0, 150);
@@ -2670,10 +2744,12 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
           supabase,
           negocio,
           tokenWebhook: entrada.token,
-          soloVentas: true,
-          titulo: `${remitenteWa} · WhatsApp`,
+          soloVentas: !esChatPrivado,
+          soloAdmins: visibilidadChat === "SOLO_ADMIN",
+          soloUsuarioId: visibilidadChat === "SOLO_TITULAR" ? titularPrivadoId : null,
+          titulo: `${remitenteWa} · WhatsApp${etiquetaLinea}`,
           cuerpoPlano: resumenWa || "Nuevo mensaje recibido",
-          contenidoHtml: `<p><strong>${remitenteWa}:</strong> ${resumenWa || "Nuevo mensaje recibido"}</p>`,
+          contenidoHtml: `<p><strong>${remitenteWa}${etiquetaLinea}:</strong> ${resumenWa || "Nuevo mensaje recibido"}</p>`,
           tag: `wa-conv-${convIdWa}`,
           claveRefBase: `msg-wa-${msgIdWa}`,
           resolverUrlPorRol: () =>
@@ -2732,7 +2808,8 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
             supabase,
             negocio,
             "actividad_chat_web",
-            eventoNotaVoz as unknown as Record<string, unknown>
+            eventoNotaVoz as unknown as Record<string, unknown>,
+            esChatPrivado
           );
         }
       } catch {
@@ -2783,7 +2860,9 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       ""
     );
 
-    const encabezadoUsuario = `[USUARIO ACTUAL: chat_id=${tel} | canal=whatsapp | nombre_corto=${nombreCorto}]`;
+    const encabezadoUsuario = `[USUARIO ACTUAL: chat_id=${tel} | canal=whatsapp${
+      lineaWhatsappNombre ? ` | linea_whatsapp=${lineaWhatsappNombre}` : ""
+    } | nombre_corto=${nombreCorto}]`;
 
     let bloqueInmediata = "";
     try {
@@ -2885,7 +2964,7 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
         remitenteTelefono: tel || null,
         estadoAtencion: (rec.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
         creadoEn: new Date().toISOString(),
-      });
+      }, esChatPrivado);
     }
 
     const promptCompleto =
@@ -2925,7 +3004,8 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
         supabase,
         negocio,
         "actividad_chat_web",
-        eventoBot as unknown as Record<string, unknown>
+        eventoBot as unknown as Record<string, unknown>,
+        esChatPrivado
       );
     }
 
@@ -5138,4 +5218,387 @@ export async function registrarEventoPuenteOmnicanalPublicoAction(entrada: {
     return { ok: false };
   }
 }
+
+// =============================================================================
+// MULTI-LÍNEA WHATSAPP BUSINESS Y DIRECTORIO CONSOLIDADO DE CONTACTOS (PLT-010)
+// =============================================================================
+
+export async function listarLineasWhatsappOmnicanalAction(
+  negocio: string
+): Promise<
+  | {
+      ok: true;
+      esAdmin: boolean;
+      lineas: LineaWhatsappConfig[];
+      equipo: Array<{ usuarioId: string; nombre: string; correo: string; rol: string }>;
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_listar_lineas_whatsapp", {
+      p_negocio: neg,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: esFuncionRpcPendienteMigracion(error.message)
+          ? "Ejecuta primero la migración 20261126000009_omnicanal_multilinea_whatsapp_y_directorio_contactos.sql en Supabase."
+          : error.message,
+      };
+    }
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudieron listar las líneas WhatsApp.") };
+    }
+
+    return {
+      ok: true,
+      esAdmin: Boolean(data.esAdmin),
+      lineas: Array.isArray(data.lineas) ? (data.lineas as LineaWhatsappConfig[]) : [],
+      equipo: Array.isArray(data.equipo) ? data.equipo : [],
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error cargando líneas WhatsApp.",
+    };
+  }
+}
+
+export async function guardarLineaWhatsappOmnicanalAction(entrada: {
+  negocio: string;
+  lineaId?: string | null;
+  codigo?: string | null;
+  nombre: string;
+  rolLinea: RolLineaWhatsapp;
+  numeroE164: string;
+  titularUsuarioId?: string | null;
+  esPrincipal?: boolean;
+  habilitado?: boolean;
+  iaDesconocidosActiva: boolean;
+  iaClientesActiva: boolean;
+  politicaPersonales: PoliticaPersonalesLinea;
+  visibilidadClientes: VisibilidadConversacion;
+  colorBadge?: string;
+  agenteIaId?: string | null;
+  ycloudApiKey?: string | null;
+  ycloudWebhookSecret?: string | null;
+}): Promise<
+  | { ok: true; lineaId: string; codigo: string; numeroE164: string; esPrincipal: boolean }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_guardar_linea_whatsapp", {
+      p_negocio: neg,
+      p_linea_id: entrada.lineaId || null,
+      p_codigo: entrada.codigo || null,
+      p_nombre: entrada.nombre.trim(),
+      p_rol_linea: entrada.rolLinea,
+      p_numero_e164: entrada.numeroE164.trim(),
+      p_titular_usuario_id:
+        entrada.titularUsuarioId && /^[0-9a-f-]{36}$/i.test(entrada.titularUsuarioId)
+          ? entrada.titularUsuarioId
+          : null,
+      p_es_principal: Boolean(entrada.esPrincipal),
+      p_habilitado: entrada.habilitado !== false,
+      p_ia_desconocidos_activa: Boolean(entrada.iaDesconocidosActiva),
+      p_ia_clientes_activa: Boolean(entrada.iaClientesActiva),
+      p_politica_personales: entrada.politicaPersonales,
+      p_visibilidad_clientes: entrada.visibilidadClientes,
+      p_color_badge: entrada.colorBadge || "#16A34A",
+      p_agente_ia_id: entrada.agenteIaId?.trim() || null,
+      p_ycloud_api_key: entrada.ycloudApiKey?.trim() || null,
+      p_ycloud_webhook_secret: entrada.ycloudWebhookSecret?.trim() || null,
+    });
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo guardar la línea WhatsApp.") };
+    }
+
+    return {
+      ok: true,
+      lineaId: String(data.lineaId),
+      codigo: String(data.codigo || ""),
+      numeroE164: String(data.numeroE164 || ""),
+      esPrincipal: Boolean(data.esPrincipal),
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error guardando línea WhatsApp.",
+    };
+  }
+}
+
+export async function eliminarLineaWhatsappOmnicanalAction(
+  negocio: string,
+  lineaId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocioComercio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_eliminar_linea_whatsapp", {
+      p_negocio: neg,
+      p_linea_id: lineaId,
+    });
+
+    if (error) return { ok: false, error: error.message };
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo eliminar la línea WhatsApp.") };
+    }
+    return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error eliminando línea WhatsApp.",
+    };
+  }
+}
+
+export async function listarDirectorioContactosAction(
+  negocio: string
+): Promise<
+  | {
+      ok: true;
+      esAdmin: boolean;
+      usuarioActualId: string | null;
+      contactos: ContactoDirectorioRegistro[];
+      crmSemilla: SemillaCrmContacto[];
+      lineasWhatsapp: LineaWhatsappConfig[];
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_listar_directorio_contactos",
+      { p_negocio: neg }
+    );
+
+    if (error) {
+      return {
+        ok: false,
+        error: esFuncionRpcPendienteMigracion(error.message)
+          ? "Ejecuta primero la migración 20261126000009_omnicanal_multilinea_whatsapp_y_directorio_contactos.sql en Supabase."
+          : error.message,
+      };
+    }
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo cargar el directorio de contactos.") };
+    }
+
+    return {
+      ok: true,
+      esAdmin: Boolean(data.esAdmin),
+      usuarioActualId: data.usuarioActualId ? String(data.usuarioActualId) : null,
+      contactos: Array.isArray(data.contactos)
+        ? (data.contactos as ContactoDirectorioRegistro[])
+        : [],
+      crmSemilla: Array.isArray(data.crmSemilla) ? (data.crmSemilla as SemillaCrmContacto[]) : [],
+      lineasWhatsapp: Array.isArray(data.lineasWhatsapp)
+        ? (data.lineasWhatsapp as LineaWhatsappConfig[])
+        : [],
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error consultando directorio de contactos.",
+    };
+  }
+}
+
+export async function importarContactosDirectorioLoteAction(entrada: {
+  negocio: string;
+  lineaWhatsappId?: string | null;
+  origen: OrigenImportacionContacto;
+  ocultarChatsPersonalesExistentes?: boolean;
+  contactos: Array<{
+    telefonoE164: string;
+    nombreConsolidado: string;
+    correo?: string | null;
+    clasificacion: ClasificacionContacto;
+    politicaIa: PoliticaIaContacto;
+    visibilidad: VisibilidadContacto;
+    detalle?: Record<string, unknown>;
+    fuentes?: ContactoFuenteRegistro[];
+  }>;
+}): Promise<
+  | { ok: true; creados: number; actualizados: number; omitidos: number; hilosProtegidos: number }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    if (!Array.isArray(entrada.contactos) || entrada.contactos.length === 0) {
+      return { ok: false, error: "No hay contactos seleccionados para importar." };
+    }
+
+    // Procesar en bloques de 250 para evitar timeouts en agendas grandes (>1000 contactos)
+    let creados = 0;
+    let actualizados = 0;
+    let omitidos = 0;
+    let hilosProtegidos = 0;
+    const tamanoBloque = 250;
+
+    for (let i = 0; i < entrada.contactos.length; i += tamanoBloque) {
+      const bloque = entrada.contactos.slice(i, i + tamanoBloque);
+      const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_importar_contactos_lote", {
+        p_negocio: neg,
+        p_linea_whatsapp_id:
+          entrada.lineaWhatsappId && /^[0-9a-f-]{36}$/i.test(entrada.lineaWhatsappId)
+            ? entrada.lineaWhatsappId
+            : null,
+        p_origen: entrada.origen,
+        p_contactos: bloque,
+        p_ocultar_chats_personales_existentes: entrada.ocultarChatsPersonalesExistentes !== false,
+      });
+
+      if (error) return { ok: false, error: error.message };
+      if (!data?.ok) {
+        return { ok: false, error: String(data?.error || "Error guardando lote de contactos.") };
+      }
+
+      creados += Number(data.creados || 0);
+      actualizados += Number(data.actualizados || 0);
+      omitidos += Number(data.omitidos || 0);
+      hilosProtegidos += Number(data.hilosProtegidos || 0);
+    }
+
+    return { ok: true, creados, actualizados, omitidos, hilosProtegidos };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error importando lote de contactos.",
+    };
+  }
+}
+
+export async function actualizarContactoDirectorioAction(entrada: {
+  negocio: string;
+  contactoId: string;
+  nombre?: string | null;
+  correo?: string | null;
+  clasificacion?: ClasificacionContacto | null;
+  politicaIa?: PoliticaIaContacto | null;
+  visibilidad?: VisibilidadContacto | null;
+  notas?: string | null;
+  eliminar?: boolean;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_actualizar_contacto_directorio",
+      {
+        p_negocio: neg,
+        p_contacto_id: entrada.contactoId,
+        p_nombre: entrada.nombre ?? null,
+        p_correo: entrada.correo ?? null,
+        p_clasificacion: entrada.clasificacion ?? null,
+        p_politica_ia: entrada.politicaIa ?? null,
+        p_visibilidad: entrada.visibilidad ?? null,
+        p_notas: entrada.notas ?? null,
+        p_eliminar: Boolean(entrada.eliminar),
+      }
+    );
+
+    if (error) return { ok: false, error: error.message };
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo actualizar el contacto.") };
+    }
+    return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error actualizando contacto del directorio.",
+    };
+  }
+}
+
+export async function marcarChatPrivacidadOmnicanalAction(entrada: {
+  negocio: string;
+  conversacionId: string;
+  claveHilo?: string;
+  accion: "MARCAR_PERSONAL" | "PASAR_A_VENTAS" | "ACTIVAR_IA_CLIENTE";
+  politicaPersonal?: PoliticaPersonalesLinea;
+}): Promise<
+  | {
+      ok: true;
+      accion: string;
+      visibilidad: VisibilidadConversacion;
+      ocultoConsola?: boolean;
+      estadoAtencion?: EstadoAtencionOmnicanal;
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_marcar_chat_privacidad", {
+      p_negocio: neg,
+      p_conversacion_id: entrada.conversacionId,
+      p_accion: entrada.accion,
+      p_politica_personal: entrada.politicaPersonal ?? "IGNORAR_TOTAL",
+    });
+
+    if (error) return { ok: false, error: error.message };
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo actualizar la privacidad del chat.") };
+    }
+
+    // Si pasó a Personal (IGNORAR_TOTAL o SOLO_ADMIN), emitir señal de retiro inmediato en navegadores de Ventas
+    if (entrada.accion === "MARCAR_PERSONAL") {
+      await emitirBroadcastServidorOmnicanal(supabase, neg, "intervencion_asesor", {
+        eventoId: `priv-${entrada.conversacionId}-${Date.now()}`,
+        claveHilo: entrada.claveHilo || "",
+        conversacionId: entrada.conversacionId,
+        estadoAtencion: "EN_ATENCION_ASESORA",
+        eliminada: true,
+      });
+    }
+
+    return {
+      ok: true,
+      accion: String(data.accion || entrada.accion),
+      visibilidad: (data.visibilidad as VisibilidadConversacion) || "EQUIPO_VENTAS",
+      ocultoConsola: Boolean(data.ocultoConsola),
+      estadoAtencion: data.estadoAtencion as EstadoAtencionOmnicanal | undefined,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error aplicando regla de privacidad al chat.",
+    };
+  }
+}
+
 

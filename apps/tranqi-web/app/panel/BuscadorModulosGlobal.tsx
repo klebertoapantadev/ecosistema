@@ -193,6 +193,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#DB2777"
   },
   {
+    clave: "directorio_contactos",
+    nombre: "Contactos y Listas WhatsApp (Join/Merge)",
+    detalle: "Extraer contactos .vcf/.csv/Excel/celular, consolidar duplicados, lista personal a ignorar y gestionar múltiples teléfonos WhatsApp",
+    ruta: "/panel/contactos",
+    categoria: "Comercio & Pagos",
+    minNivel: 20,
+    icono: Users,
+    colorIcono: "#7C3AED"
+  },
+  {
     clave: "galeria_inmediata",
     nombre: "Galería de Entrega Inmediata (1 a 2 Horas)",
     detalle: "Publicar arreglos listos en tienda con precio especial y baja automática al venderse",

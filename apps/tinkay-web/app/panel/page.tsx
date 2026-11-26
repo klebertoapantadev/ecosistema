@@ -66,6 +66,16 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     grupo: "operacion",
     etiqueta: "Inbox / HITL",
   },
+  directorio_contactos: {
+    clave: "directorio_contactos",
+    nombre: "Contactos y Listas WhatsApp",
+    descripcion:
+      "Extrae contactos (.vcf, .csv, Excel, celular), consolida con Join/Merge, protege contactos personales (Ignorar Total) y gestiona múltiples celulares WhatsApp.",
+    ruta: "/panel/contactos",
+    icono: Users,
+    grupo: "operacion",
+    etiqueta: "Join/Merge",
+  },
   chat_equipo: {
     clave: "chat_equipo",
     nombre: "Chat Grupal del Equipo",

@@ -41,6 +41,13 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
     grupo: "operacion",
   },
   {
+    clave: "directorio_contactos",
+    nombre: "Contactos y Listas WA",
+    ruta: "/panel/contactos",
+    icono: "contactos",
+    grupo: "operacion",
+  },
+  {
     clave: "chat_equipo",
     nombre: "Chat del Equipo",
     ruta: "/panel/chat-equipo",

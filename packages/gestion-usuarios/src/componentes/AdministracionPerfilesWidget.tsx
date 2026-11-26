@@ -389,7 +389,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "crm_clientes"],
-      panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "pedidos_tienda", "galeria_inmediata", "inventario_rosas"],
+      panel_administrar: ["consola_chat", "directorio_contactos", "chat_equipo", "envio_pedidos_taller", "pedidos_tienda", "galeria_inmediata", "inventario_rosas"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"]
     },
     activo: true
@@ -409,7 +409,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_administrar: ["consola_chat", "directorio_contactos", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -446,7 +446,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["consola_chat", "directorio_contactos", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "configuracion_marketing_meta", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -468,7 +468,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["consola_chat", "directorio_contactos", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "configuracion_marketing_meta", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -701,6 +701,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_administrar",
     activo: true,
     creadoEn: "2026-11-15"
+  },
+  {
+    clave: "directorio_contactos",
+    nombre: "Contactos y Listas WhatsApp (Join/Merge)",
+    descripcion: "Extracción multi-fuente (.vcf, .csv, .xlsx, Android Contact Picker), consolidación Join/Merge, lista personal a ignorar (Ignorar Total) y gestión multi-celular WhatsApp.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/contactos",
+    rutaFisica: "/comercio/componentes/ConsolaDirectorioContactos.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-11-26"
   },
   {
     clave: "galeria_inmediata",
@@ -1301,6 +1312,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#FDF2F8", borderRadius: "8px", border: "1px dashed #F9A8D4", textAlign: "center", fontSize: "0.82rem", color: "#9D174D", fontWeight: 700 }}>
             Inbox en Vivo · IA ARIA vs Humano · Etiquetas · /Atajos · Compras & Usuarios 360°
+          </div>
+        </div>
+      );
+
+    case "directorio_contactos":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #7C3AED", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#6D28D9", marginBottom: "10px" }}>
+            <Users size={18} /> Contactos y Listas WhatsApp (Join/Merge)
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Extracción .vcf / .csv / .xlsx / libreta celular, consolidación Join/Merge, lista personal a ignorar (Ignorar Total) y gestión de múltiples teléfonos WhatsApp.
+          </p>
+          <div style={{ padding: "12px", background: "#FAF5FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#6B21A8", fontWeight: 700 }}>
+            Extracción Multi-Fuente · Join/Merge E.164 · Ignorar Total · Multi-Línea WA
           </div>
         </div>
       );

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import {
   evaluarAutoRespuestaComentarioMeta,
+  GestorLineasWhatsappPanel,
   listarComentariosMetaOmnicanalAction,
   PALABRAS_CLAVE_COMENTARIOS_META_DEFECTO,
   SimuladorChatAriaPanel,
@@ -1483,6 +1484,11 @@ export function FormularioAria({
         </button>
       </div>
     </form>
+
+    {/* ========================================================================
+        TARJETA 2A: MÚLTIPLES TELÉFONOS WHATSAPP (COEXISTENCIA + POLÍTICAS IA/PRIVACIDAD)
+    ======================================================================== */}
+    <GestorLineasWhatsappPanel negocio={codigoNegocio} />
 
     {/* ========================================================================
         TARJETA 2B: CANAL FACEBOOK MESSENGER E INSTAGRAM DIRECT (META GRAPH API)

@@ -48,6 +48,7 @@ import {
   BandejaPedidosTienda,
   ConsolaTestimoniosClientes,
   ConsolaVentasOmnicanal,
+  ConsolaDirectorioContactos,
   ConsolaInventarioRosas,
   ConsolaEntregaInmediata,
   ConsolaConfirmacionEntregas,
@@ -441,6 +442,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Bandeja unificada (reemplazo ManyChat): chats web, intervención humana vs ARIA, etiquetas, /atajos y compras web",
     icono: MessageSquare,
     colorIcono: "#DB2777",
+    categoria: "Comercio & Pagos"
+  },
+  directorio_contactos: {
+    titulo: "Contactos y Listas WhatsApp (Join/Merge)",
+    subtitulo: "Extracción .vcf/.csv/Excel/celular, deduplicación, contactos personales a ignorar y múltiples teléfonos WhatsApp",
+    icono: Users,
+    colorIcono: "#7C3AED",
     categoria: "Comercio & Pagos"
   },
   pedidos_tienda: {
@@ -1053,6 +1061,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "conversaciones":
       case "ventas_omnicanal":
         return <ConsolaVentasOmnicanal negocio={negocio} />;
+      case "directorio_contactos":
+      case "directorio-contactos":
+      case "contactos":
+        return <ConsolaDirectorioContactos negocio={negocio} />;
       case "galeria_inmediata":
       case "entrega_inmediata":
         return <ConsolaEntregaInmediata negocio={negocio} />;

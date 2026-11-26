@@ -257,6 +257,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/conversaciones",
     origen: "Administrar"
   },
+  directorio_contactos: {
+    id: "directorio_contactos",
+    titulo: "Contactos y Listas WhatsApp",
+    subtitulo: "Extracción .vcf/.csv/Excel, Join/Merge, contactos personales a ignorar y múltiples teléfonos WA",
+    icono: Users,
+    href: "/panel/contactos",
+    origen: "Administrar"
+  },
   galeria_inmediata: {
     id: "galeria_inmediata",
     titulo: "Entrega Inmediata (1–2h)",

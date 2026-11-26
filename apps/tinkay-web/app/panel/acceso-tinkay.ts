@@ -60,6 +60,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   SUPERADMIN: [
     "resumen",
     "consola_chat",
+    "directorio_contactos",
     "chat_equipo",
     "envio_pedidos_taller",
     "taller_floral",
@@ -84,6 +85,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   ADMINISTRADOR: [
     "resumen",
     "consola_chat",
+    "directorio_contactos",
     "chat_equipo",
     "envio_pedidos_taller",
     "taller_floral",
@@ -108,6 +110,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   OPERADOR: [
     "resumen",
     "consola_chat",
+    "directorio_contactos",
     "chat_equipo",
     "envio_pedidos_taller",
     "taller_floral",
@@ -124,6 +127,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   // Ventas: concentrado en chats, chat del equipo, envío de órdenes de trabajo, proformas/pedidos, entrega inmediata e inventario
   VENTAS: [
     "consola_chat",
+    "directorio_contactos",
     "chat_equipo",
     "envio_pedidos_taller",
     "pedidos_tienda",

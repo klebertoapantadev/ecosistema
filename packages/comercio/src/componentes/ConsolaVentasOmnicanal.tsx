@@ -26,6 +26,7 @@ import {
   Inbox,
   Link2,
   Loader2,
+  Lock,
   MailWarning,
   MessageCircle,
   MessageSquare,
@@ -42,7 +43,9 @@ import {
   Send,
   Settings2,
   Share2,
+  Shield,
   ShoppingBag,
+  Smartphone,
   Sparkles,
   Star,
   StickyNote,
@@ -74,6 +77,7 @@ import {
   eliminarRespuestaRapidaOmnicanalAction,
   enviarMensajeAsesorOmnicanalAction,
   guardarRespuestaRapidaOmnicanalAction,
+  marcarChatPrivacidadOmnicanalAction,
   obtenerMensajesConversacionAction,
   obtenerTableroOmnicanalAction,
   sincronizarHistorialAriaOmnicanalAction,
@@ -105,6 +109,7 @@ import {
   limpiarVistaPreviaMensajeOmnicanal,
   MOTIVOS_CIERRE_OMNICANAL,
   nombreCanalRealtimeOmnicanal,
+  nombreCanalRealtimeOmnicanalPrivado,
   normalizarTelefonoOmnicanal,
   OPCIONES_RECORDATORIO_RAPIDO_OMNICANAL,
   resolverConversacionPorContextoReenvio,
@@ -168,6 +173,7 @@ type FiltroBandejaIzquierda =
   | "escalados"
   | "ia_activa"
   | "recordatorios"
+  | "privados"
   | "cerrados";
 
 function formatearTiempoCorto(iso?: string | null): string {
@@ -953,6 +959,8 @@ export function ConsolaVentasOmnicanal({
   const [conversacionAEliminar, setConversacionAEliminar] =
     useState<ConversacionOmnicanal | null>(null);
   const [eliminandoConversacion, setEliminandoConversacion] = useState<boolean>(false);
+  const [actualizandoPrivacidad, setActualizandoPrivacidad] = useState<boolean>(false);
+  const [lineaWhatsappFiltroId, setLineaWhatsappFiltroId] = useState<string>("");
   const esAdminAplicacion = Boolean(tablero.esAdminAplicacion);
   const [modalFichaClienteContexto, setModalFichaClienteContexto] = useState<{
     conversacion?: ConversacionOmnicanal | null;
@@ -1620,6 +1628,18 @@ export function ConsolaVentasOmnicanal({
 
     canalLiveRef.current = canalLive;
 
+    // Canal Realtime privado (solo Admin/Titular) para hilos SOLO_ADMIN / SOLO_TITULAR sin fuga al canal de Ventas
+    const canalPrivado = esAdminAplicacion
+      ? supabase
+          .channel(nombreCanalRealtimeOmnicanalPrivado(negNorm), {
+            config: { broadcast: { self: false } },
+          })
+          .on("broadcast", { event: "actividad_chat_web" }, () => {
+            programarSincronizacionSuave();
+          })
+          .subscribe()
+      : null;
+
     const canalPg = supabase
       .channel(`omnicanal-pg-${negNorm}`)
       .on(
@@ -1687,9 +1707,10 @@ export function ConsolaVentasOmnicanal({
       liveConectadoRef.current = false;
       canalLiveRef.current = null;
       void supabase.removeChannel(canalLive);
+      if (canalPrivado) void supabase.removeChannel(canalPrivado);
       void supabase.removeChannel(canalPg);
     };
-  }, [negNorm, pestana, recargarTablero, cargarMensajesConversacion]);
+  }, [negNorm, pestana, esAdminAplicacion, recargarTablero, cargarMensajesConversacion]);
 
   const metricas = useMemo(
     () =>
@@ -1736,9 +1757,17 @@ export function ConsolaVentasOmnicanal({
       if (filtroIzquierdo === "escalados" && c.estadoAtencion !== "ESCALADO_HUMANO") return false;
       if (filtroIzquierdo === "ia_activa" && c.estadoAtencion !== "BOT_ACTIVO") return false;
       if (filtroIzquierdo === "recordatorios" && !c.recordatorioEn) return false;
+      if (
+        filtroIzquierdo === "privados" &&
+        c.visibilidad !== "SOLO_ADMIN" &&
+        c.visibilidad !== "SOLO_TITULAR"
+      ) {
+        return false;
+      }
 
       if (etiquetaFiltroId && !(c.etiquetasIds ?? []).includes(etiquetaFiltroId)) return false;
       if (vendedorFiltroId && c.asesoraAsignadaId !== vendedorFiltroId) return false;
+      if (lineaWhatsappFiltroId && c.lineaWhatsappId !== lineaWhatsappFiltroId) return false;
       if (soloNoLeidos && (c.noLeidosAsesora || 0) === 0) return false;
       if (canalFiltro !== "todos" && (c.canal || "web") !== canalFiltro) return false;
 
@@ -1749,6 +1778,7 @@ export function ConsolaVentasOmnicanal({
           c.remitenteTelefono,
           c.ultimoMensajeTexto,
           c.asesoraNombre,
+          c.lineaWhatsappNombre,
         ]
           .filter(Boolean)
           .join(" ")
@@ -1765,6 +1795,7 @@ export function ConsolaVentasOmnicanal({
     estadoAperturaFiltro,
     etiquetaFiltroId,
     vendedorFiltroId,
+    lineaWhatsappFiltroId,
     soloNoLeidos,
     canalFiltro,
     busquedaInbox,
@@ -2418,6 +2449,78 @@ export function ConsolaVentasOmnicanal({
     } finally {
       setProcesandoAudioMsgId(null);
     }
+  };
+
+  const handleCambiarPrivacidadChat = async (
+    accion: "MARCAR_PERSONAL" | "PASAR_A_VENTAS" | "ACTIVAR_IA_CLIENTE"
+  ) => {
+    if (!conversacionActiva || conversacionActiva.id.startsWith("rt-")) return;
+    setActualizandoPrivacidad(true);
+    setErrorMsg(null);
+    const res = await marcarChatPrivacidadOmnicanalAction({
+      negocio: negNorm,
+      conversacionId: conversacionActiva.id,
+      claveHilo: conversacionActiva.claveHilo,
+      accion,
+      politicaPersonal: "IGNORAR_TOTAL",
+    });
+    setActualizandoPrivacidad(false);
+
+    if (!res.ok) {
+      setErrorMsg(res.error);
+      return;
+    }
+
+    if (accion === "MARCAR_PERSONAL") {
+      if (res.ocultoConsola) {
+        setTablero((prev) => ({
+          ...prev,
+          conversaciones: prev.conversaciones.filter((c) => c.id !== conversacionActiva.id),
+        }));
+        setConversacionActivaId(null);
+        setMensajesActivos([]);
+        setMensajeInfo(
+          "🔒 Contacto marcado como Personal (Ignorar Total): futuros mensajes solo aparecerán en tu celular."
+        );
+      } else {
+        setTablero((prev) => ({
+          ...prev,
+          conversaciones: prev.conversaciones.map((c) =>
+            c.id === conversacionActiva.id
+              ? {
+                  ...c,
+                  visibilidad: res.visibilidad,
+                  iaBloqueadaPermanente: true,
+                  estadoAtencion: "EN_ATENCION_ASESORA",
+                  contactoClasificacion: "PERSONAL",
+                }
+              : c
+          ),
+        }));
+        setMensajeInfo("🔒 Chat marcado como Personal (oculto a Ventas y sin IA).");
+      }
+      return;
+    }
+
+    setTablero((prev) => ({
+      ...prev,
+      conversaciones: prev.conversaciones.map((c) =>
+        c.id === conversacionActiva.id
+          ? {
+              ...c,
+              visibilidad: "EQUIPO_VENTAS",
+              iaBloqueadaPermanente: false,
+              contactoClasificacion: "CLIENTE",
+              estadoAtencion: res.estadoAtencion || c.estadoAtencion,
+            }
+          : c
+      ),
+    }));
+    setMensajeInfo(
+      accion === "ACTIVAR_IA_CLIENTE"
+        ? "⚡ Contacto clasificado como Cliente con IA Automática activada."
+        : "💼 Chat liberado como Cliente para el equipo de Ventas."
+    );
   };
 
   const handleCambiarEstado = async (nuevoEstado: EstadoAtencionOmnicanal) => {
@@ -3851,6 +3954,18 @@ export function ConsolaVentasOmnicanal({
                       <option value="recordatorios">
                         Recordatorios ({metricas.conRecordatorio})
                       </option>
+                      {esAdminAplicacion && (
+                        <option value="privados">
+                          🔒 Privados (
+                          {
+                            tablero.conversaciones.filter(
+                              (c) =>
+                                c.visibilidad === "SOLO_ADMIN" || c.visibilidad === "SOLO_TITULAR"
+                            ).length
+                          }
+                          )
+                        </option>
+                      )}
                       <option value="cerrados">
                         Cerrados ({metricas.totalConversaciones - metricas.conversacionesAbiertas})
                       </option>
@@ -3858,6 +3973,32 @@ export function ConsolaVentasOmnicanal({
                         Todos ({metricas.totalConversaciones})
                       </option>
                     </SelectConBuscador>
+
+                    {/* Selector de Línea WhatsApp cuando hay múltiples celulares conectados */}
+                    {(tablero.lineasWhatsapp?.length ?? 0) > 1 && (
+                      <select
+                        value={lineaWhatsappFiltroId}
+                        onChange={(e) => setLineaWhatsappFiltroId(e.target.value)}
+                        aria-label="Filtrar por teléfono WhatsApp"
+                        title="Filtrar conversaciones por celular WhatsApp conectado"
+                        style={{
+                          padding: "5px 8px",
+                          borderRadius: "8px",
+                          border: lineaWhatsappFiltroId ? "1px solid #1D4ED8" : "1px solid #D5CFC4",
+                          fontSize: "0.74rem",
+                          fontWeight: 600,
+                          background: lineaWhatsappFiltroId ? "#EEF4FF" : "#FFFFFF",
+                          color: lineaWhatsappFiltroId ? "#1D4ED8" : "#221E1B",
+                        }}
+                      >
+                        <option value="">📱 Todas las líneas</option>
+                        {(tablero.lineasWhatsapp ?? []).map((lw) => (
+                          <option key={lw.id} value={lw.id}>
+                            {lw.nombre} ({lw.iaDesconocidosActiva ? "Auto" : "Manual"})
+                          </option>
+                        ))}
+                      </select>
+                    )}
 
                     {/* Toggle No Leído */}
                     <button
@@ -4139,18 +4280,64 @@ export function ConsolaVentasOmnicanal({
                                 minWidth: 0,
                               }}
                             >
-                              <strong
-                                style={{
-                                  fontSize: "0.83rem",
-                                  fontWeight: tieneNoLeidos ? 800 : 600,
-                                  color: "#221E1B",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {grupo.nombreMostrado}
-                              </strong>
+                                <strong
+                                  style={{
+                                    fontSize: "0.83rem",
+                                    fontWeight: tieneNoLeidos ? 800 : 600,
+                                    color: "#221E1B",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {grupo.nombreMostrado}
+                                </strong>
+                                {(conv.visibilidad === "SOLO_ADMIN" ||
+                                  conv.visibilidad === "SOLO_TITULAR") && (
+                                  <span
+                                    title="Conversación privada (oculta a Ventas)"
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      padding: "1px 5px",
+                                      borderRadius: "999px",
+                                      background: "#F3E8FF",
+                                      color: "#6B21A8",
+                                      fontSize: "0.63rem",
+                                      fontWeight: 700,
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    <Lock size={9} />
+                                  </span>
+                                )}
+                                {conv.canal === "whatsapp" &&
+                                  conv.lineaWhatsappNombre &&
+                                  ((tablero.lineasWhatsapp?.length ?? 0) > 1 ||
+                                    conv.lineaWhatsappRol !== "VENTAS") && (
+                                    <span
+                                      title={`Teléfono WhatsApp: ${conv.lineaWhatsappNombre} (${conv.lineaWhatsappNumero || ""})`}
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "3px",
+                                        padding: "1px 6px",
+                                        borderRadius: "999px",
+                                        background: `${conv.lineaWhatsappColor || "#16A34A"}18`,
+                                        color: conv.lineaWhatsappColor || "#16A34A",
+                                        fontSize: "0.63rem",
+                                        fontWeight: 700,
+                                        flexShrink: 0,
+                                        maxWidth: "100px",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      <Smartphone size={9} />
+                                      <span>{conv.lineaWhatsappNombre}</span>
+                                    </span>
+                                  )}
                               {grupo.calificacionEstrellas != null &&
                                 grupo.calificacionEstrellas > 0 && (
                                   <span
@@ -5467,6 +5654,63 @@ export function ConsolaVentasOmnicanal({
                             <Play size={13} />
                             <span className="btn-texto-responsive">Activar IA</span>
                           </button>
+                        )}
+
+                        {/* 5B. PRIVACIDAD WHATSAPP: MARCAR PERSONAL (IGNORAR) / PASAR A VENTAS */}
+                        {esAdminAplicacion && conversacionActiva.canal === "whatsapp" && (
+                          conversacionActiva.visibilidad === "SOLO_ADMIN" ||
+                          conversacionActiva.visibilidad === "SOLO_TITULAR" ||
+                          conversacionActiva.iaBloqueadaPermanente ? (
+                            <button
+                              type="button"
+                              className="btn-responsive-accion"
+                              disabled={actualizandoPrivacidad}
+                              onClick={() => void handleCambiarPrivacidadChat("PASAR_A_VENTAS")}
+                              title="Clasificar como Cliente y mostrar este chat al equipo de Ventas"
+                              aria-label="Pasar a Ventas"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "6px 9px",
+                                borderRadius: "8px",
+                                border: "1px solid #1D4ED8",
+                                background: "#EEF4FF",
+                                color: "#1D4ED8",
+                                fontSize: "0.73rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                              }}
+                            >
+                              <Shield size={13} />
+                              <span className="btn-texto-responsive">Pasar a Ventas</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn-responsive-accion"
+                              disabled={actualizandoPrivacidad}
+                              onClick={() => void handleCambiarPrivacidadChat("MARCAR_PERSONAL")}
+                              title="Marcar contacto como Personal (Ignorar Total: sin IA y solo visible en tu celular)"
+                              aria-label="Marcar Personal"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "6px 9px",
+                                borderRadius: "8px",
+                                border: "1px solid #DDD6FE",
+                                background: "#FAF5FF",
+                                color: "#6B21A8",
+                                fontSize: "0.73rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                              }}
+                            >
+                              <Lock size={13} />
+                              <span className="btn-texto-responsive">Marcar Personal</span>
+                            </button>
+                          )
                         )}
 
                         {/* 6. MOSTRAR / PLEGAR PANEL DERECHO */}

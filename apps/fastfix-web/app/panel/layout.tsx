@@ -32,6 +32,13 @@ const CATALOGO_NAV_FASTFIX: ItemNavegacionPanel[] = [
     grupo: "operacion",
   },
   {
+    clave: "directorio_contactos",
+    nombre: "Contactos y Listas WA",
+    ruta: "/panel/contactos",
+    icono: "contactos",
+    grupo: "operacion",
+  },
+  {
     clave: "pedidos_tienda",
     nombre: "Órdenes y Despachos",
     ruta: "/panel/pedidos",
@@ -138,6 +145,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   }
   if (clavesVisibles.has("pedidos_tienda") || clavesVisibles.has("gestion_usuarios")) {
     clavesVisibles.add("consola_chat");
+    clavesVisibles.add("directorio_contactos");
   }
   if (esSuperAdmin) {
     CATALOGO_NAV_FASTFIX.forEach((item) => clavesVisibles.add(item.clave));

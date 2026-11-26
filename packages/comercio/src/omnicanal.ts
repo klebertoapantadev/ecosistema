@@ -318,6 +318,17 @@ export interface ConversacionOmnicanal {
   cierre?: DatosCierreConversacion | null;
   fichaCliente?: FichaClienteOmnicanal | null;
   puenteOmnicanal?: PuenteOmnicanalCliente | null;
+  lineaWhatsappId?: string | null;
+  lineaWhatsappCodigo?: string | null;
+  lineaWhatsappNombre?: string | null;
+  lineaWhatsappRol?: string | null;
+  lineaWhatsappColor?: string | null;
+  lineaWhatsappNumero?: string | null;
+  visibilidad?: "EQUIPO_VENTAS" | "SOLO_ADMIN" | "SOLO_TITULAR";
+  titularPrivadoId?: string | null;
+  iaBloqueadaPermanente?: boolean;
+  contactoClasificacion?: string | null;
+  contactoPoliticaIa?: string | null;
 }
 
 export interface MensajeOmnicanal {
@@ -578,6 +589,10 @@ export function nombreCanalRealtimeOmnicanal(negocio: string): string {
   return `eco-omnicanal-live-${(negocio || "tinkay").trim().toLowerCase()}`;
 }
 
+export function nombreCanalRealtimeOmnicanalPrivado(negocio: string): string {
+  return `eco-omnicanal-privado-${(negocio || "tinkay").trim().toLowerCase()}`;
+}
+
 export function nombreCanalRealtimeChatEquipo(negocio: string): string {
   return `eco-chat-equipo-${(negocio || "tinkay").trim().toLowerCase()}`;
 }
@@ -605,6 +620,12 @@ export interface EventoBroadcastChatWeb {
   remitenteCorreo?: string | null;
   remitenteTelefono?: string | null;
   estadoAtencion?: EstadoAtencionOmnicanal;
+  visibilidad?: "EQUIPO_VENTAS" | "SOLO_ADMIN" | "SOLO_TITULAR";
+  titularPrivadoId?: string | null;
+  lineaWhatsappId?: string | null;
+  lineaWhatsappNombre?: string | null;
+  lineaWhatsappCodigo?: string | null;
+  lineaWhatsappColor?: string | null;
   creadoEn: string;
 }
 
