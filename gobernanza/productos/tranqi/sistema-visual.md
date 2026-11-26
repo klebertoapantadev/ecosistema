@@ -342,7 +342,9 @@ El logotipo sigue en minúscula, porque es imagen. En texto el nombre se escribe
 siempre «Tranqi», también dentro de la frase («Quiero estar Tranqi»): lo
 confirmó negocio en las observaciones de la página web del 19-nov-2026. En los
 titulares de la landing va además en violeta (`.marca`). Aplicado en la landing
-(TRQ-033); el resto de pantallas se corrige cuando se toquen. Los nombres de
+(TRQ-033) y, desde TRQ-036, en el nombre de la app instalada (`manifest.ts`,
+título y `appleWebApp` de `layout.tsx`) y en el saludo del inicio del cliente;
+el resto de pantallas se corrige cuando se toquen. Los nombres de
 plan del catálogo («TRANQI +3 Familiar») no cambian aquí: son datos.
 
 ## 14. Subvistas del panel: en la URL y con «Volver»

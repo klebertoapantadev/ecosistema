@@ -333,7 +333,7 @@ export function LandingTranqi() {
             <img src={`${FOTOS}/app-cafe.jpg`} alt="Persona usando la app de Tranqi" />
             <img src={`${FOTOS}/familia.jpg`} alt="" />
           </div>
-          <p className="remate">Desde una consulta cotidiana hasta una situación legal más compleja, Tranqi te conecta con profesionales que pueden orientarte.</p>
+          <p className="remate">Desde una consulta cotidiana hasta una situación legal más compleja, <b className="marca">Tranqi</b> te conecta con profesionales que pueden orientarte.</p>
         </div>
       </section>
 
