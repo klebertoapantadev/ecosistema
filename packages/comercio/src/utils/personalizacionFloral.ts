@@ -193,6 +193,59 @@ export const COLORES_ROSAS_PERSONALIZACION: readonly OpcionColorRosaPersonalizac
   { clave: "verde", etiqueta: "Verde", colorHex: "#16A34A" },
 ] as const;
 
+export const COLORES_ORQUIDEAS_PERSONALIZACION: readonly OpcionColorRosaPersonalizacion[] = [
+  { clave: "blanco", etiqueta: "Blanco", colorHex: "#FAF8F5", bordeHex: "#CBD5E1" },
+  { clave: "beige", etiqueta: "Beige", colorHex: "#D6C5A3", bordeHex: "#B59E76" },
+  { clave: "verde", etiqueta: "Verde", colorHex: "#16A34A" },
+  { clave: "amarilla", etiqueta: "Amarilla", colorHex: "#EAB308" },
+  { clave: "lila", etiqueta: "Lila", colorHex: "#A855F7" },
+] as const;
+
+export function normalizarClaveColorOrquideaPersonalizacion(valor: unknown): string {
+  const limpio = normalizarTextoBusqueda(String(valor ?? "")).replace(/^orquidea[_\s-]+/i, "");
+  if (!limpio) return "";
+  if (limpio.includes("blanc") || limpio.includes("white")) return "blanco";
+  if (
+    limpio.includes("beige") ||
+    limpio.includes("crema") ||
+    limpio.includes("champagne") ||
+    limpio.includes("bronce") ||
+    limpio.includes("naranj")
+  ) {
+    return "beige";
+  }
+  if (limpio.includes("verd") || limpio.includes("green") || limpio.includes("limon")) {
+    return "verde";
+  }
+  if (limpio.includes("amarill") || limpio.includes("yellow") || limpio.includes("dorad")) {
+    return "amarilla";
+  }
+  if (
+    limpio.includes("lila") ||
+    limpio.includes("lavand") ||
+    limpio.includes("morad") ||
+    limpio.includes("purpl") ||
+    limpio.includes("rosa") ||
+    limpio.includes("fucsia") ||
+    limpio.includes("vino") ||
+    limpio.includes("bicolor")
+  ) {
+    return "lila";
+  }
+  return "";
+}
+
+export function normalizarClaveOfertaInventario(valor: unknown): string {
+  const raw = normalizarTextoBusqueda(String(valor ?? ""));
+  if (!raw) return "";
+  if (raw === "girasol" || raw === "girasoles") return "girasol";
+  if (raw.startsWith("orquidea_") || raw.startsWith("orquidea ")) {
+    const colOrq = normalizarClaveColorOrquideaPersonalizacion(raw);
+    return colOrq ? `orquidea_${colOrq}` : "";
+  }
+  return normalizarClaveColorRosaPersonalizacion(raw);
+}
+
 export interface InventarioColoresTienda {
   /** true cuando el negocio ya registró al menos un corte o stock de rosas en inventario */
   tieneInventarioRegistrado: boolean;
@@ -200,24 +253,31 @@ export interface InventarioColoresTienda {
   fechaUltimoCorte?: string | null;
   /** Claves canónicas de colores de rosas con stock actual > 0 en el taller */
   coloresEnStock: string[];
-  /** Claves de colores de orquídeas con stock actual > 0 en el taller */
+  /** Cantidad de unidades/flores de girasoles disponibles en el último inventario */
+  girasolesEnStock?: number;
+  /** Claves de colores de orquídeas con stock actual > 0 en el taller (blanco, beige, verde, amarilla, lila) */
   orquideasEnStock?: string[];
+  /** Número de unidades/flores de orquídeas disponibles por color (ej. { blanco: 9, verde: 6 }) */
+  orquideasUnidadesPorColor?: Record<string, number>;
   /** Categorías de color activas registradas en el catálogo de variedades del inventario */
   coloresCatalogo?: string[];
   /** Overrides opcionales de etiqueta/color configurados en el inventario del negocio */
   categoriasColores?: Record<string, { etiqueta?: string; colorHex?: string }>;
-  /** true cuando el inventario tiene activada la oferta por colores */
+  /** true cuando el inventario tiene activada la oferta por colores / flores */
   ofertaColoresActiva?: boolean;
-  /** Porcentaje de descuento configurable en inventario (por defecto 10%) */
+  /** Porcentaje de descuento por defecto configurable en inventario (10% por defecto) */
   porcentajeDescuentoOferta?: number;
-  /** Claves canónicas de colores marcados en oferta desde el inventario */
+  /** Claves canónicas en oferta desde el inventario (colores de rosas, "girasol", "orquidea_<color>") */
   coloresEnOferta?: string[];
+  /** Mapa individual de porcentaje de descuento por cada color o flor (ej. { rojo: 10, naranja: 7, girasol: 12, orquidea_blanco: 15 }) */
+  descuentosPorColor?: Record<string, number>;
 }
 
 export interface ConfiguracionOfertaColoresInventario {
   activo: boolean;
   porcentajeDescuento: number;
   colores: string[];
+  descuentosPorColor?: Record<string, number>;
   actualizadoEn?: string | null;
   actualizadoPor?: string | null;
 }
@@ -379,9 +439,13 @@ export interface SeleccionPersonalizacionFloral {
   requiereConfirmacionColor?: boolean;
   /** Colores elegidos que pertenecen a la oferta activa del inventario */
   coloresEnOferta?: string[];
-  /** Porcentaje de descuento aplicado en el producto por elegir colores en oferta (ej. 10) */
+  /** Porcentaje de descuento aplicado en el producto por elegir colores/flores en oferta (ej. 10) */
   descuentoColorOfertaPct?: number;
   cantidadOrquideas: number;
+  /** Clave del color de orquídea elegido cuando el arreglo incluye orquídeas (blanco, beige, verde, amarilla, lila) */
+  colorOrquidea?: string | null;
+  /** Etiqueta legible del color de orquídea elegido */
+  colorOrquideaEtiqueta?: string;
   /** Tipo de envoltorio elegido o configurado para el arreglo: "base" o "papel_envoltorio". */
   tipoEnvoltorio?: TipoEnvoltorioSeleccionado | null;
   tipoEnvoltorioEtiqueta?: string;
@@ -645,6 +709,115 @@ export function obtenerColoresRosasHabilitados(
  * - Ordena primero los colores con stock inmediato en tienda y luego los de bajo confirmación.
  * - Nunca incluye "Surtido / Mix" (multicolor), ya que cada producto define cuántos colores se combinan.
  */
+function construirMapaDescuentosOferta(
+  inventario?: InventarioColoresTienda | null
+): Map<string, number> {
+  const mapa = new Map<string, number>();
+  if (!inventario?.ofertaColoresActiva) return mapa;
+
+  const pctDefectoRaw = Number(inventario.porcentajeDescuentoOferta ?? 10);
+  const pctDefecto =
+    Number.isFinite(pctDefectoRaw) && pctDefectoRaw > 0
+      ? Math.round(Math.min(80, Math.max(0, pctDefectoRaw)) * 100) / 100
+      : 0;
+
+  if (inventario.descuentosPorColor && typeof inventario.descuentosPorColor === "object") {
+    for (const [k, rawVal] of Object.entries(inventario.descuentosPorColor)) {
+      const clave = normalizarClaveOfertaInventario(k);
+      const pct = Number(rawVal);
+      if (!clave || !Number.isFinite(pct) || pct <= 0) continue;
+      mapa.set(clave, Math.round(Math.min(80, Math.max(0, pct)) * 100) / 100);
+    }
+  }
+
+  for (const rawClave of inventario.coloresEnOferta ?? []) {
+    const clave = normalizarClaveOfertaInventario(rawClave);
+    if (!clave || mapa.has(clave) || pctDefecto <= 0) continue;
+    mapa.set(clave, pctDefecto);
+  }
+
+  return mapa;
+}
+
+export interface EstadoGirasolesInventario {
+  disponibleEnInventario: boolean;
+  unidadesEnStock: number;
+  bajoConfirmacion: boolean;
+  enOferta: boolean;
+  porcentajeDescuentoOferta: number;
+}
+
+export interface OpcionColorOrquideaConDisponibilidad extends OpcionColorRosaPersonalizacion {
+  disponibleEnInventario: boolean;
+  unidadesEnStock: number;
+  bajoConfirmacion: boolean;
+  enOferta: boolean;
+  porcentajeDescuentoOferta: number;
+}
+
+export function obtenerEstadoGirasolesInventario(
+  inventario?: InventarioColoresTienda | null
+): EstadoGirasolesInventario {
+  const inventarioActivo = Boolean(inventario?.tieneInventarioRegistrado);
+  const unidades = Math.max(0, Math.round(Number(inventario?.girasolesEnStock ?? 0) || 0));
+  const disponible = !inventarioActivo || unidades > 0;
+  const mapaDesc = construirMapaDescuentosOferta(inventario);
+  const pct = mapaDesc.get("girasol") ?? 0;
+  const enOferta = disponible && pct > 0;
+  return {
+    disponibleEnInventario: disponible,
+    unidadesEnStock: unidades,
+    bajoConfirmacion: !disponible,
+    enOferta,
+    porcentajeDescuentoOferta: enOferta ? pct : 0,
+  };
+}
+
+export function obtenerColoresOrquideasConInventario(
+  inventario?: InventarioColoresTienda | null
+): OpcionColorOrquideaConDisponibilidad[] {
+  const inventarioActivo = Boolean(inventario?.tieneInventarioRegistrado);
+  const stockSet = new Set(
+    (inventario?.orquideasEnStock ?? [])
+      .map((c) => normalizarClaveColorOrquideaPersonalizacion(c))
+      .filter(Boolean)
+  );
+  const unidadesMapa = new Map<string, number>();
+  if (inventario?.orquideasUnidadesPorColor && typeof inventario.orquideasUnidadesPorColor === "object") {
+    for (const [k, v] of Object.entries(inventario.orquideasUnidadesPorColor)) {
+      const cl = normalizarClaveColorOrquideaPersonalizacion(k);
+      const num = Math.max(0, Math.round(Number(v) || 0));
+      if (cl && num > 0) {
+        unidadesMapa.set(cl, (unidadesMapa.get(cl) ?? 0) + num);
+        stockSet.add(cl);
+      }
+    }
+  }
+  const mapaDesc = construirMapaDescuentosOferta(inventario);
+
+  const enriquecidos: OpcionColorOrquideaConDisponibilidad[] = COLORES_ORQUIDEAS_PERSONALIZACION.map(
+    (col) => {
+      const unidades = unidadesMapa.get(col.clave) ?? (stockSet.has(col.clave) ? 1 : 0);
+      const disponible = !inventarioActivo || unidades > 0 || stockSet.has(col.clave);
+      const pct = mapaDesc.get(`orquidea_${col.clave}`) ?? 0;
+      const enOferta = disponible && pct > 0;
+      return {
+        ...col,
+        disponibleEnInventario: disponible,
+        unidadesEnStock: unidades,
+        bajoConfirmacion: !disponible,
+        enOferta,
+        porcentajeDescuentoOferta: enOferta ? pct : 0,
+      };
+    }
+  );
+
+  const enOfertaList = enriquecidos.filter((c) => c.disponibleEnInventario && c.enOferta);
+  const enStockRegular = enriquecidos.filter((c) => c.disponibleEnInventario && !c.enOferta);
+  const bajoConf = enriquecidos.filter((c) => !c.disponibleEnInventario);
+  return [...enOfertaList, ...enStockRegular, ...bajoConf];
+}
+
 export function obtenerColoresRosasConInventario(
   config: ConfiguracionPersonalizacionFloral,
   inventario?: InventarioColoresTienda | null
@@ -668,7 +841,7 @@ export function obtenerColoresRosasConInventario(
   ];
   for (const rawClave of clavesExtraInventario) {
     const clave = normalizarClaveColorRosaPersonalizacion(rawClave);
-    if (!clave || mapaBase.has(clave)) continue;
+    if (!clave || clave === "girasol" || mapaBase.has(clave)) continue;
     const ov = overrides[clave];
     mapaBase.set(clave, {
       clave,
@@ -697,29 +870,18 @@ export function obtenerColoresRosasConInventario(
       .map((c) => normalizarClaveColorRosaPersonalizacion(c))
       .filter(Boolean)
   );
-  const pctOfertaRaw = Number(inventario?.porcentajeDescuentoOferta ?? 10);
-  const pctOfertaValido =
-    Number.isFinite(pctOfertaRaw) && pctOfertaRaw > 0
-      ? Math.round(Math.min(80, Math.max(0, pctOfertaRaw)) * 100) / 100
-      : 0;
-  const ofertaSet = new Set(
-    (inventario?.coloresEnOferta ?? [])
-      .map((c) => normalizarClaveColorRosaPersonalizacion(c))
-      .filter(Boolean)
-  );
-  const ofertaActiva = Boolean(
-    inventario?.ofertaColoresActiva && pctOfertaValido > 0 && ofertaSet.size > 0
-  );
+  const mapaDesc = construirMapaDescuentosOferta(inventario);
 
   const enriquecidos: OpcionColorRosaConDisponibilidad[] = listaBase.map((col) => {
     const disponible = !inventarioActivo || stockSet.has(col.clave);
-    const esOferta = ofertaActiva && disponible && ofertaSet.has(col.clave);
+    const pctColor = mapaDesc.get(col.clave) ?? 0;
+    const esOferta = disponible && pctColor > 0;
     return {
       ...col,
       disponibleEnInventario: disponible,
       bajoConfirmacion: !disponible,
       enOferta: esOferta,
-      porcentajeDescuentoOferta: esOferta ? pctOfertaValido : 0,
+      porcentajeDescuentoOferta: esOferta ? pctColor : 0,
     };
   });
 
@@ -759,8 +921,13 @@ export function calcularDescuentoColorOferta(params: {
   cantidad?: number;
   mismosColoresFoto?: boolean;
   requiereColoresRosas?: boolean;
+  modoFlores?: ModoFlorPersonalizacion;
   coloresElegidos: string[];
   coloresConInventario: readonly OpcionColorRosaConDisponibilidad[];
+  estadoGirasoles?: EstadoGirasolesInventario | null;
+  cantidadOrquideas?: number;
+  colorOrquideaElegido?: string | null;
+  orquideasConInventario?: readonly OpcionColorOrquideaConDisponibilidad[];
 }): ResultadoDescuentoColorOferta {
   const pvpOrig = Math.max(0, Number(Number(params.pvpUnitarioBase || 0).toFixed(2)));
   const ivaPct = Math.max(0, Number(params.tarifaIvaPorcentaje || 0));
@@ -783,58 +950,91 @@ export function calcularDescuentoColorOferta(params: {
     subtotalLineaFinal: subtotalOrig,
   };
 
-  if (params.mismosColoresFoto || params.requiereColoresRosas === false) {
-    return sinDescuento;
-  }
+  const componentesPorcentaje: number[] = [];
+  const etiquetasOfertaElegidas: string[] = [];
+  let tieneMezclaConColorRegular = false;
 
-  const elegidos = (params.coloresElegidos || [])
-    .map((c) => String(c || "").trim())
-    .filter((c) => Boolean(c) && !esEtiquetaColorExcluida(c));
+  // 1. Evaluar colores de rosas elegidos (cada color puede tener su propio %)
+  if (!params.mismosColoresFoto && params.requiereColoresRosas !== false) {
+    const elegidos = (params.coloresElegidos || [])
+      .map((c) => String(c || "").trim())
+      .filter((c) => Boolean(c) && !esEtiquetaColorExcluida(c));
 
-  if (elegidos.length === 0) {
-    return sinDescuento;
-  }
+    if (elegidos.length > 0) {
+      const mapaOfertaPorNorm = new Map<string, OpcionColorRosaConDisponibilidad>();
+      for (const op of params.coloresConInventario || []) {
+        if (op.enOferta && op.porcentajeDescuentoOferta > 0) {
+          mapaOfertaPorNorm.set(normalizarTextoBusqueda(op.etiqueta), op);
+          mapaOfertaPorNorm.set(normalizarTextoBusqueda(op.clave), op);
+        }
+      }
 
-  const mapaOfertaPorNorm = new Map<string, OpcionColorRosaConDisponibilidad>();
-  for (const op of params.coloresConInventario || []) {
-    if (op.enOferta && op.porcentajeDescuentoOferta > 0) {
-      mapaOfertaPorNorm.set(normalizarTextoBusqueda(op.etiqueta), op);
-      mapaOfertaPorNorm.set(normalizarTextoBusqueda(op.clave), op);
-    }
-  }
+      const coloresRosasOferta: string[] = [];
+      const pctsRosas: number[] = [];
+      for (const col of elegidos) {
+        const match = mapaOfertaPorNorm.get(normalizarTextoBusqueda(col));
+        if (match) {
+          coloresRosasOferta.push(col);
+          pctsRosas.push(match.porcentajeDescuentoOferta);
+        }
+      }
 
-  if (mapaOfertaPorNorm.size === 0) {
-    return sinDescuento;
-  }
-
-  const coloresOfertaElegidos: string[] = [];
-  let pctAplicable = 0;
-
-  for (const col of elegidos) {
-    const match = mapaOfertaPorNorm.get(normalizarTextoBusqueda(col));
-    if (match) {
-      coloresOfertaElegidos.push(col);
-      if (pctAplicable <= 0) {
-        pctAplicable = match.porcentajeDescuentoOferta;
+      if (coloresRosasOferta.length > 0 && coloresRosasOferta.length < elegidos.length) {
+        tieneMezclaConColorRegular = true;
+      } else if (coloresRosasOferta.length === elegidos.length && pctsRosas.length > 0) {
+        const promedioRosas =
+          pctsRosas.reduce((acc, v) => acc + v, 0) / pctsRosas.length;
+        componentesPorcentaje.push(promedioRosas);
+        etiquetasOfertaElegidas.push(...coloresRosasOferta);
       }
     }
   }
 
-  if (coloresOfertaElegidos.length === 0) {
-    return sinDescuento;
+  // 2. Evaluar oferta de Girasoles (cuando el arreglo es Solo Girasoles o Girasoles y Rosas)
+  const incluyeGirasoles =
+    params.modoFlores === "solo_girasoles" || params.modoFlores === "girasoles_y_rosas";
+  if (
+    incluyeGirasoles &&
+    params.estadoGirasoles?.enOferta &&
+    params.estadoGirasoles.porcentajeDescuentoOferta > 0
+  ) {
+    componentesPorcentaje.push(params.estadoGirasoles.porcentajeDescuentoOferta);
+    etiquetasOfertaElegidas.push("Girasoles");
   }
 
-  if (coloresOfertaElegidos.length < elegidos.length) {
+  // 3. Evaluar oferta de Orquídeas (cuando el arreglo incluye orquídeas y se elige un color en oferta)
+  const incluyeOrquideas =
+    params.modoFlores === "solo_orquideas" || Math.round(Number(params.cantidadOrquideas || 0)) > 0;
+  if (incluyeOrquideas && params.colorOrquideaElegido && params.orquideasConInventario?.length) {
+    const claveOrq = normalizarClaveColorOrquideaPersonalizacion(params.colorOrquideaElegido);
+    const matchOrq = params.orquideasConInventario.find(
+      (o) =>
+        o.enOferta &&
+        o.porcentajeDescuentoOferta > 0 &&
+        (o.clave === claveOrq ||
+          normalizarTextoBusqueda(o.etiqueta) === normalizarTextoBusqueda(params.colorOrquideaElegido || ""))
+    );
+    if (matchOrq) {
+      componentesPorcentaje.push(matchOrq.porcentajeDescuentoOferta);
+      etiquetasOfertaElegidas.push(`Orquídea ${matchOrq.etiqueta}`);
+    }
+  }
+
+  if (componentesPorcentaje.length === 0) {
     return {
       ...sinDescuento,
-      coloresOfertaElegidos,
-      tieneMezclaConColorRegular: true,
+      tieneMezclaConColorRegular,
     };
   }
 
-  const pctClamped = Math.round(Math.min(80, Math.max(0, pctAplicable)) * 100) / 100;
+  const promedioFinal =
+    componentesPorcentaje.reduce((acc, v) => acc + v, 0) / componentesPorcentaje.length;
+  const pctClamped = Math.round(Math.min(80, Math.max(0, promedioFinal)) * 10) / 10;
   if (pctClamped <= 0) {
-    return sinDescuento;
+    return {
+      ...sinDescuento,
+      tieneMezclaConColorRegular,
+    };
   }
 
   const pvpFinal = Number((pvpOrig * (1 - pctClamped / 100)).toFixed(2));
@@ -847,8 +1047,8 @@ export function calcularDescuentoColorOferta(params: {
   return {
     aplicaDescuento: ahorroUnit > 0 || pctClamped > 0,
     porcentajeDescuento: pctClamped,
-    coloresOfertaElegidos,
-    tieneMezclaConColorRegular: false,
+    coloresOfertaElegidos: Array.from(new Set(etiquetasOfertaElegidas)),
+    tieneMezclaConColorRegular,
     pvpUnitarioOriginal: pvpOrig,
     pvpUnitarioFinal: pvpFinal,
     baseImponibleUnitariaFinal: baseFinal,
@@ -896,7 +1096,14 @@ export function formatearResumenPersonalizacionFloral(
     partes.push(`Mismos colores de la foto${sufijoFoto}`);
     const orq = Math.max(0, Math.round(Number(seleccion.cantidadOrquideas || 0)));
     if (orq > 0) {
-      partes.push(`+ ${orq} ${orq === 1 ? "orquídea" : "orquídeas"}`);
+      const colOrqTxt = seleccion.colorOrquideaEtiqueta?.trim()
+        ? ` (${seleccion.colorOrquideaEtiqueta.trim()})`
+        : "";
+      partes.push(`+ ${orq} ${orq === 1 ? "orquídea" : "orquídeas"}${colOrqTxt}`);
+    }
+    const pctOfertaFoto = Number(seleccion.descuentoColorOfertaPct || 0);
+    if (Number.isFinite(pctOfertaFoto) && pctOfertaFoto > 0) {
+      partes.push(`Oferta -${pctOfertaFoto}%`);
     }
     const notas = seleccion.indicacionesAdicionales?.trim();
     if (notas) {
@@ -922,13 +1129,16 @@ export function formatearResumenPersonalizacionFloral(
         : "Girasoles y Rosas"
     );
   } else if (seleccion.modoFlores === "solo_orquideas") {
-    partes.push("Orquídeas");
+    const colOrqTxt = seleccion.colorOrquideaEtiqueta?.trim()
+      ? ` (${seleccion.colorOrquideaEtiqueta.trim()})`
+      : "";
+    partes.push(`Orquídeas${colOrqTxt}`);
   } else {
     partes.push(coloresLimpios.length > 0 ? `Rosas (${coloresLimpios.join(", ")})` : "Rosas");
   }
 
   if (coloresBajoConfLimpios.length > 0) {
-    partes.push(`Bajo confirmación con tienda (${coloresBajoConfLimpios.join(", ")})`);
+    partes.push(`Bajo confirmación o reserva 1 día (${coloresBajoConfLimpios.join(", ")})`);
   }
 
   const pctOferta = Number(seleccion.descuentoColorOfertaPct || 0);
@@ -937,8 +1147,11 @@ export function formatearResumenPersonalizacionFloral(
   }
 
   const orq = Math.max(0, Math.round(Number(seleccion.cantidadOrquideas || 0)));
-  if (orq > 0) {
-    partes.push(`+ ${orq} ${orq === 1 ? "orquídea" : "orquídeas"}`);
+  if (orq > 0 && seleccion.modoFlores !== "solo_orquideas") {
+    const colOrqTxt = seleccion.colorOrquideaEtiqueta?.trim()
+      ? ` (${seleccion.colorOrquideaEtiqueta.trim()})`
+      : "";
+    partes.push(`+ ${orq} ${orq === 1 ? "orquídea" : "orquídeas"}${colOrqTxt}`);
   }
 
   const etiquetaBase =
@@ -994,7 +1207,35 @@ export function validarSeleccionPersonalizacionFloral(
       ? Math.round(seleccion.fotoReferenciaIndice)
       : undefined;
 
+  const colorOrqClave =
+    cantidadOrquideas > 0 || modoValido === "solo_orquideas"
+      ? normalizarClaveColorOrquideaPersonalizacion(seleccion.colorOrquidea)
+      : "";
+  const colorOrqDef = colorOrqClave
+    ? COLORES_ORQUIDEAS_PERSONALIZACION.find((c) => c.clave === colorOrqClave)
+    : undefined;
+  const colorOrquideaEtiqueta =
+    colorOrqDef?.etiqueta || seleccion.colorOrquideaEtiqueta?.trim() || undefined;
+
   if (seleccion.mismosColoresFoto) {
+    const pctFotoRaw = Number(seleccion.descuentoColorOfertaPct || 0);
+    const permiteOfertaEnFoto =
+      modoValido === "solo_girasoles" ||
+      modoValido === "girasoles_y_rosas" ||
+      modoValido === "solo_orquideas" ||
+      cantidadOrquideas > 0;
+    const coloresEnOfertaFoto =
+      permiteOfertaEnFoto && Array.isArray(seleccion.coloresEnOferta)
+        ? seleccion.coloresEnOferta.map((c) => String(c || "").trim()).filter(Boolean)
+        : [];
+    const descuentoColorOfertaPctFoto =
+      permiteOfertaEnFoto && Number.isFinite(pctFotoRaw) && pctFotoRaw > 0
+        ? Math.round(Math.min(80, pctFotoRaw) * 100) / 100
+        : undefined;
+    const coloresBajoConfFoto = Array.isArray(seleccion.coloresBajoConfirmacion)
+      ? seleccion.coloresBajoConfirmacion.map((c) => String(c || "").trim()).filter(Boolean)
+      : [];
+
     const baseFoto: Omit<SeleccionPersonalizacionFloral, "resumenTexto"> = {
       mismosColoresFoto: true,
       fotoReferenciaUrl,
@@ -1002,7 +1243,13 @@ export function validarSeleccionPersonalizacionFloral(
       fotoReferenciaTotal,
       modoFlores: modoValido,
       coloresRosas: [],
+      coloresBajoConfirmacion: coloresBajoConfFoto.length > 0 ? coloresBajoConfFoto : undefined,
+      requiereConfirmacionColor: coloresBajoConfFoto.length > 0 ? true : undefined,
+      coloresEnOferta: coloresEnOfertaFoto.length > 0 ? coloresEnOfertaFoto : undefined,
+      descuentoColorOfertaPct: descuentoColorOfertaPctFoto,
       cantidadOrquideas,
+      colorOrquidea: colorOrqClave || null,
+      colorOrquideaEtiqueta,
       colorBasePapel: null,
       colorBasePapelEtiqueta: undefined,
       indicacionesAdicionales: indicacionesAdicionales || undefined,
@@ -1028,31 +1275,46 @@ export function validarSeleccionPersonalizacionFloral(
     : [];
 
   const setColoresNorm = new Set(coloresLimpios.map((c) => normalizarTextoBusqueda(c)));
-  const coloresBajoConfirmacion = requiereRosas
-    ? Array.from(
-        new Set(
-          (seleccion.coloresBajoConfirmacion || [])
-            .map((c) => String(c || "").trim())
-            .filter((c) => Boolean(c) && setColoresNorm.has(normalizarTextoBusqueda(c)))
-        )
-      )
-    : [];
+  const coloresBajoConfirmacion = Array.from(
+    new Set(
+      (seleccion.coloresBajoConfirmacion || [])
+        .map((c) => String(c || "").trim())
+        .filter((c) => {
+          if (!c) return false;
+          const norm = normalizarTextoBusqueda(c);
+          if (norm.includes("girasol") || norm.includes("orquidea")) return true;
+          return requiereRosas && setColoresNorm.has(norm);
+        })
+    )
+  );
 
-  const coloresEnOferta = requiereRosas
-    ? Array.from(
-        new Set(
-          (seleccion.coloresEnOferta || [])
-            .map((c) => String(c || "").trim())
-            .filter((c) => Boolean(c) && setColoresNorm.has(normalizarTextoBusqueda(c)))
-        )
-      )
-    : [];
+  const coloresEnOferta = Array.from(
+    new Set(
+      (seleccion.coloresEnOferta || [])
+        .map((c) => String(c || "").trim())
+        .filter((c) => {
+          if (!c) return false;
+          const norm = normalizarTextoBusqueda(c);
+          if (norm.includes("girasol") || norm.includes("orquidea")) return true;
+          return requiereRosas && setColoresNorm.has(norm);
+        })
+    )
+  );
+
+  const tieneOfertaNoRosa = coloresEnOferta.some((c) => {
+    const n = normalizarTextoBusqueda(c);
+    return n.includes("girasol") || n.includes("orquidea");
+  });
+  const todasRosasEnOferta =
+    requiereRosas &&
+    coloresLimpios.length > 0 &&
+    coloresLimpios.every((c) =>
+      coloresEnOferta.some((o) => normalizarTextoBusqueda(o) === normalizarTextoBusqueda(c))
+    );
 
   const pctOfertaNum = Number(seleccion.descuentoColorOfertaPct || 0);
   const descuentoColorOfertaPct =
-    requiereRosas &&
-    coloresLimpios.length > 0 &&
-    coloresEnOferta.length === coloresLimpios.length &&
+    (todasRosasEnOferta || tieneOfertaNoRosa) &&
     Number.isFinite(pctOfertaNum) &&
     pctOfertaNum > 0
       ? Math.round(Math.min(80, pctOfertaNum) * 100) / 100
@@ -1117,6 +1379,8 @@ export function validarSeleccionPersonalizacionFloral(
     coloresEnOferta: coloresEnOferta.length > 0 ? coloresEnOferta : undefined,
     descuentoColorOfertaPct,
     cantidadOrquideas,
+    colorOrquidea: colorOrqClave || null,
+    colorOrquideaEtiqueta,
     tipoEnvoltorio: tipoEnvoltorioFinal,
     tipoEnvoltorioEtiqueta: tipoEnvoltorioEtiqueta || undefined,
     colorBasePapel,

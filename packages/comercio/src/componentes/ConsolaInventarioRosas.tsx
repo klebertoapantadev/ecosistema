@@ -38,6 +38,7 @@ import {
   HORAS_LIMITE_ALERTA_INVENTARIO_ROSAS,
   evaluarVigenciaInventarioRosas,
   normalizarClaveColorRosaPersonalizacion,
+  normalizarClaveOfertaInventario,
 } from "../utils/personalizacionFloral";
 import {
   CATALOGO_SEMILLA_VARIEDADES_ROSAS,
@@ -45,6 +46,7 @@ import {
   calcularResumenColoresDesdeItems,
   consolidarVariedadesDesdeFotos,
   convertirConteoColoresAItemsVariedad,
+  normalizarColorOrquideaClave,
   obtenerVariedadDefectoPorColor,
   obtenerVariedadesPorColor,
   type ItemConteoVariedad,
@@ -85,8 +87,10 @@ function formatearTextoConsolidadoVariedades(
   return cons.resumenVariedades
     .map((v) =>
       v.tipoFlor === "orquidea"
-        ? `${v.cantidad} vara(s) ${v.variedadNombre}${v.numeroFlores ? ` (${v.numeroFlores} flores)` : ""}`
-        : `${v.cantidad} ${v.variedadNombre}`
+        ? `${v.numeroFlores ?? v.cantidad} ${v.variedadNombre}${v.cantidad > 0 ? ` (${v.cantidad} vara${v.cantidad === 1 ? "" : "s"})` : ""}`
+        : v.tipoFlor === "girasol"
+          ? `${v.cantidad} Girasoles`
+          : `${v.cantidad} ${v.variedadNombre}`
     )
     .join(", ");
 }
@@ -158,14 +162,22 @@ export function ConsolaInventarioRosas({
   const [inlineCantidad, setInlineCantidad] = useState<number>(1);
   const [inlineNumeroFlores, setInlineNumeroFlores] = useState<number>(9);
 
-  // Configuración de colores en oferta y % de descuento aplicable en la tienda (10% por defecto)
+  // Configuración de colores/flores en oferta y % de descuento individual por clave (10% por defecto)
   const [ofertaActiva, setOfertaActiva] = useState<boolean>(false);
   const [ofertaPorcentaje, setOfertaPorcentaje] = useState<number>(10);
-  const [coloresOferta, setColoresOferta] = useState<string[]>([]);
+  const [descuentosOfertaPorClave, setDescuentosOfertaPorClave] = useState<Record<string, number>>({});
   const [cargandoOferta, setCargandoOferta] = useState<boolean>(false);
   const [guardandoOferta, setGuardandoOferta] = useState<boolean>(false);
   const [mensajeOfertaOk, setMensajeOfertaOk] = useState<string | null>(null);
   const [errorOfertaMsg, setErrorOfertaMsg] = useState<string | null>(null);
+
+  const clavesOfertaActivas = useMemo(
+    () =>
+      Object.entries(descuentosOfertaPorClave)
+        .filter(([, pct]) => Number.isFinite(pct) && pct > 0)
+        .map(([k]) => k),
+    [descuentosOfertaPorClave]
+  );
 
   // Alerta manual al equipo si han pasado > 15 horas sin inventario
   const [enviandoAlertaEquipo, setEnviandoAlertaEquipo] = useState<boolean>(false);
@@ -177,20 +189,30 @@ export function ConsolaInventarioRosas({
     try {
       const res = await obtenerColoresInventarioTiendaAction(negNorm);
       if (res.ok) {
-        setOfertaActiva(Boolean(res.ofertaColoresActiva));
-        setOfertaPorcentaje(
+        const pctDef =
           Number.isFinite(Number(res.porcentajeDescuentoOferta)) &&
-            Number(res.porcentajeDescuentoOferta) > 0
+          Number(res.porcentajeDescuentoOferta) > 0
             ? Number(res.porcentajeDescuentoOferta)
-            : 10
-        );
-        setColoresOferta(
-          Array.isArray(res.coloresEnOferta)
-            ? res.coloresEnOferta
-                .map((c) => normalizarClaveColorRosaPersonalizacion(c))
-                .filter(Boolean)
-            : []
-        );
+            : 10;
+        setOfertaActiva(Boolean(res.ofertaColoresActiva));
+        setOfertaPorcentaje(pctDef);
+        const mapa: Record<string, number> = {};
+        if (res.descuentosPorColor && typeof res.descuentosPorColor === "object") {
+          for (const [k, v] of Object.entries(res.descuentosPorColor)) {
+            const cl = normalizarClaveOfertaInventario(k);
+            const num = Number(v);
+            if (cl && Number.isFinite(num) && num > 0) {
+              mapa[cl] = Math.round(Math.min(80, Math.max(1, num)) * 100) / 100;
+            }
+          }
+        }
+        for (const rawCl of res.coloresEnOferta || []) {
+          const cl = normalizarClaveOfertaInventario(rawCl);
+          if (cl && !mapa[cl]) {
+            mapa[cl] = pctDef;
+          }
+        }
+        setDescuentosOfertaPorClave(mapa);
       }
     } finally {
       setCargandoOferta(false);
@@ -303,6 +325,8 @@ export function ConsolaInventarioRosas({
     const mapa = new Map<string, number>();
     const raw = ultimoCorte?.resumenColores ?? {};
     for (const [k, v] of Object.entries(raw)) {
+      const kLow = k.trim().toLowerCase();
+      if (kLow === "girasol" || kLow === "girasoles" || kLow.startsWith("orquidea_")) continue;
       const clave = normalizarClaveColorRosaPersonalizacion(k);
       const cant = Math.max(0, Math.round(Number(v) || 0));
       if (!clave || cant <= 0) continue;
@@ -311,16 +335,103 @@ export function ConsolaInventarioRosas({
     return mapa;
   }, [ultimoCorte?.resumenColores]);
 
+  const stockGirasolesUltimoCorte = useMemo(() => {
+    if (consolidadoUltimoCorte && consolidadoUltimoCorte.totalGirasoles > 0) {
+      return consolidadoUltimoCorte.totalGirasoles;
+    }
+    const raw = ultimoCorte?.resumenColores ?? {};
+    return Math.max(0, Math.round(Number(raw.girasol ?? raw.girasoles ?? 0) || 0));
+  }, [consolidadoUltimoCorte, ultimoCorte?.resumenColores]);
+
+  const stockOrquideasPorColorUltimoCorte = useMemo(() => {
+    const mapa = new Map<string, number>();
+    if (consolidadoUltimoCorte) {
+      for (const item of consolidadoUltimoCorte.resumenVariedades) {
+        if (item.tipoFlor !== "orquidea") continue;
+        const cl = normalizarColorOrquideaClave(item.colorClave);
+        const unid = Math.max(0, Math.round(Number(item.numeroFlores ?? item.cantidad) || 0));
+        if (cl && unid > 0) {
+          mapa.set(cl, (mapa.get(cl) ?? 0) + unid);
+        }
+      }
+    }
+    if (mapa.size === 0) {
+      const raw = ultimoCorte?.resumenColores ?? {};
+      for (const [k, v] of Object.entries(raw)) {
+        const kLow = k.trim().toLowerCase();
+        if (!kLow.startsWith("orquidea_")) continue;
+        const cl = normalizarColorOrquideaClave(kLow.slice(9));
+        const unid = Math.max(0, Math.round(Number(v) || 0));
+        if (cl && unid > 0) {
+          mapa.set(cl, (mapa.get(cl) ?? 0) + unid);
+        }
+      }
+    }
+    return mapa;
+  }, [consolidadoUltimoCorte, ultimoCorte?.resumenColores]);
+
+  const obtenerEtiquetaClaveOferta = useCallback(
+    (clave: string): string => {
+      if (clave === "girasol") return "Girasoles";
+      if (clave.startsWith("orquidea_")) {
+        const cOrq = normalizarColorOrquideaClave(clave.slice(9));
+        const defOrq = COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === cOrq);
+        return defOrq?.etiqueta || `Orquídea ${cOrq}`;
+      }
+      return categoriasColores.find((c) => c.clave === clave)?.etiqueta || clave;
+    },
+    [categoriasColores]
+  );
+
+  const obtenerColorHexClaveOferta = useCallback(
+    (clave: string): string => {
+      if (clave === "girasol") return "#EAB308";
+      if (clave.startsWith("orquidea_")) {
+        const cOrq = normalizarColorOrquideaClave(clave.slice(9));
+        return COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === cOrq)?.colorHex || "#A855F7";
+      }
+      return categoriasColores.find((c) => c.clave === clave)?.colorHex || "#94A3B8";
+    },
+    [categoriasColores]
+  );
+
   const toggleColorOferta = (claveRaw: string) => {
-    const clave = normalizarClaveColorRosaPersonalizacion(claveRaw);
+    const clave = normalizarClaveOfertaInventario(claveRaw);
     if (!clave) return;
     setMensajeOfertaOk(null);
     setErrorOfertaMsg(null);
-    setColoresOferta((prev) => {
-      const existe = prev.includes(clave);
-      const next = existe ? prev.filter((c) => c !== clave) : [...prev, clave];
-      if (!existe && !ofertaActiva) {
-        setOfertaActiva(true);
+    setDescuentosOfertaPorClave((prev) => {
+      const copia = { ...prev };
+      if (copia[clave] && copia[clave] > 0) {
+        delete copia[clave];
+      } else {
+        copia[clave] = Math.round(Math.min(80, Math.max(1, Number(ofertaPorcentaje) || 10)) * 100) / 100;
+        if (!ofertaActiva) {
+          setOfertaActiva(true);
+        }
+      }
+      return copia;
+    });
+  };
+
+  const actualizarPorcentajeOfertaClave = (clave: string, valor: number) => {
+    const pct = Math.round(Math.min(80, Math.max(1, Number(valor) || 1)) * 100) / 100;
+    setMensajeOfertaOk(null);
+    setErrorOfertaMsg(null);
+    setDescuentosOfertaPorClave((prev) => ({
+      ...prev,
+      [clave]: pct,
+    }));
+  };
+
+  const aplicarPorcentajeDefectoATodos = (pctBase?: number) => {
+    const pct = Math.round(Math.min(80, Math.max(1, Number(pctBase ?? ofertaPorcentaje) || 10)) * 100) / 100;
+    setMensajeOfertaOk(null);
+    setErrorOfertaMsg(null);
+    setDescuentosOfertaPorClave((prev) => {
+      const next: Record<string, number> = {};
+      for (const k of Object.keys(prev)) {
+        next[k] = pct;
       }
       return next;
     });
@@ -330,12 +441,24 @@ export function ConsolaInventarioRosas({
     setGuardandoOferta(true);
     setMensajeOfertaOk(null);
     setErrorOfertaMsg(null);
-    const pctClamped = Math.round(Math.min(80, Math.max(1, Number(ofertaPorcentaje) || 10)) * 100) / 100;
+    const pctClamped =
+      Math.round(Math.min(80, Math.max(1, Number(ofertaPorcentaje) || 10)) * 100) / 100;
+    const descuentosLimpios: Record<string, number> = {};
+    for (const [k, v] of Object.entries(descuentosOfertaPorClave)) {
+      const cl = normalizarClaveOfertaInventario(k);
+      const num = Math.round(Math.min(80, Math.max(0, Number(v) || 0)) * 100) / 100;
+      if (cl && num > 0) {
+        descuentosLimpios[cl] = num;
+      }
+    }
+    const listaClaves = Object.keys(descuentosLimpios);
+
     const res = await guardarColoresOfertaInventarioAction({
       negocio: negNorm,
-      activo: ofertaActiva && coloresOferta.length > 0,
+      activo: ofertaActiva && listaClaves.length > 0,
       porcentajeDescuento: pctClamped,
-      colores: coloresOferta,
+      colores: listaClaves,
+      descuentosPorColor: descuentosLimpios,
     });
     setGuardandoOferta(false);
     if (!res.ok) {
@@ -344,11 +467,12 @@ export function ConsolaInventarioRosas({
     }
     setOfertaActiva(res.oferta.activo);
     setOfertaPorcentaje(res.oferta.porcentajeDescuento);
-    setColoresOferta(res.oferta.colores);
+    setDescuentosOfertaPorClave(res.oferta.descuentosPorColor || descuentosLimpios);
+    const totalAct = Object.keys(res.oferta.descuentosPorColor || descuentosLimpios).length;
     setMensajeOfertaOk(
       res.oferta.activo
-        ? `Oferta activada: -${res.oferta.porcentajeDescuento}% en ${res.oferta.colores.length} color(es) seleccionado(s) en la tienda.`
-        : "Oferta por colores desactivada en la tienda."
+        ? `Oferta guardada para ${totalAct} color(es)/flor(es) con su descuento individual en tienda.`
+        : "Ofertas desactivadas en la tienda."
     );
   };
 
@@ -571,14 +695,15 @@ export function ConsolaInventarioRosas({
   };
 
   const handleCambiarColorOrquideaItem = (fotoId: string, itemId: string, nuevoColor: string) => {
-    const def = COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === nuevoColor);
+    const claveNorm = normalizarColorOrquideaClave(nuevoColor);
+    const def = COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === claveNorm);
     actualizarItemsDeFoto(fotoId, (items) =>
       items.map((it) =>
         it.id === itemId
           ? {
               ...it,
-              colorClave: nuevoColor,
-              variedadNombre: def?.etiqueta ?? `Cymbidium ${nuevoColor}`,
+              colorClave: claveNorm,
+              variedadNombre: def?.etiqueta ?? `Orquídea ${claveNorm}`,
             }
           : it
       )
@@ -596,9 +721,22 @@ export function ConsolaInventarioRosas({
     cantidad: number,
     numeroFlores: number
   ): ItemConteoVariedad => {
+    if (tipo === "girasol") {
+      return {
+        id: `man-gir-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        tipoFlor: "girasol",
+        colorClave: "girasol",
+        variedadNombre: "Girasoles",
+        cantidad: Math.max(1, Math.round(cantidad || 1)),
+        origen: "manual",
+      };
+    }
+
     if (tipo === "orquidea") {
+      const claveNorm = normalizarColorOrquideaClave(color);
       const defOrq =
-        COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === color) ?? COLORES_ORQUIDEA_CYMBIDIUM[0]!;
+        COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === claveNorm) ??
+        COLORES_ORQUIDEA_CYMBIDIUM[0]!;
       return {
         id: `man-orq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         tipoFlor: "orquidea",
@@ -666,7 +804,13 @@ export function ConsolaInventarioRosas({
     });
 
     setManualCantidad(1);
-    setMensajeExito(`Agregado manualmente: ${nuevoItem.cantidad} ${nuevoItem.variedadNombre}.`);
+    setMensajeExito(
+      nuevoItem.tipoFlor === "orquidea"
+        ? `Agregado manualmente: ${nuevoItem.numeroFlores ?? nuevoItem.cantidad} ${nuevoItem.variedadNombre}.`
+        : nuevoItem.tipoFlor === "girasol"
+          ? `Agregado manualmente: ${nuevoItem.cantidad} Girasoles.`
+          : `Agregado manualmente: ${nuevoItem.cantidad} ${nuevoItem.variedadNombre}.`
+    );
   };
 
   const handleAgregarItemEnFoto = (fotoId: string) => {
@@ -723,7 +867,7 @@ export function ConsolaInventarioRosas({
     setObservaciones("");
     setMostrarPanelManual(false);
     setMensajeExito(
-      `Inventario publicado: ${formatearFechaCorteInventario(res.corte.fechaCorte)} (${consolidadoEnCurso.totalPaquetes} paq. rosas${consolidadoEnCurso.totalVarasOrquidea > 0 ? `, ${consolidadoEnCurso.totalVarasOrquidea} vara(s) / ${consolidadoEnCurso.totalFloresOrquidea} flores Cymbidium` : ""}).`
+      `Inventario publicado: ${formatearFechaCorteInventario(res.corte.fechaCorte)} (${consolidadoEnCurso.totalPaquetes} paq. rosas${consolidadoEnCurso.totalGirasoles > 0 ? `, ${consolidadoEnCurso.totalGirasoles} girasoles` : ""}${consolidadoEnCurso.totalFloresOrquidea > 0 ? `, ${consolidadoEnCurso.totalFloresOrquidea} orquídeas` : ""}).`
     );
 
     try {
@@ -778,22 +922,40 @@ export function ConsolaInventarioRosas({
               >
                 {cons.totalPaquetes > 0 ? cons.totalPaquetes : c.totalPaquetes} paq.
               </span>
-              {cons.totalVarasOrquidea > 0 && (
+              {cons.totalGirasoles > 0 && (
                 <span
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
                     padding: "2px 8px",
                     borderRadius: "999px",
-                    background: "#FAF6EE",
-                    border: "1px solid #E5D7BC",
-                    color: "#745622",
+                    background: "#FEFCE8",
+                    border: "1px solid #FDE047",
+                    color: "#854D0E",
                     fontWeight: 600,
                     fontSize: "0.71rem",
                     width: "fit-content",
                   }}
                 >
-                  {cons.totalVarasOrquidea} vara(s) · {cons.totalFloresOrquidea} flores
+                  🌻 {cons.totalGirasoles} girasoles
+                </span>
+              )}
+              {cons.totalFloresOrquidea > 0 && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                    background: "#FAF5FF",
+                    border: "1px solid #E9D5FF",
+                    color: "#6B21A8",
+                    fontWeight: 600,
+                    fontSize: "0.71rem",
+                    width: "fit-content",
+                  }}
+                >
+                  🌺 {cons.totalFloresOrquidea} orquídeas
                 </span>
               )}
             </div>
@@ -1090,20 +1252,34 @@ export function ConsolaInventarioRosas({
                     paq.
                   </div>
                 )}
-                {consolidadoUltimoCorte && consolidadoUltimoCorte.totalVarasOrquidea > 0 && (
+                {consolidadoUltimoCorte && consolidadoUltimoCorte.totalGirasoles > 0 && (
                   <div
                     style={{
                       padding: "4px 10px",
                       borderRadius: "999px",
-                      background: "#FAF6EE",
-                      border: "1px solid #E5D7BC",
-                      color: "#745622",
+                      background: "#FEFCE8",
+                      border: "1px solid #FDE047",
+                      color: "#854D0E",
                       fontSize: "0.76rem",
                       fontWeight: 600,
                     }}
                   >
-                    Orquídeas: {consolidadoUltimoCorte.totalVarasOrquidea} vara(s) ·{" "}
-                    {consolidadoUltimoCorte.totalFloresOrquidea} flores
+                    🌻 Girasoles: {consolidadoUltimoCorte.totalGirasoles} unid.
+                  </div>
+                )}
+                {consolidadoUltimoCorte && consolidadoUltimoCorte.totalFloresOrquidea > 0 && (
+                  <div
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      background: "#FAF5FF",
+                      border: "1px solid #E9D5FF",
+                      color: "#6B21A8",
+                      fontSize: "0.76rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    🌺 Orquídeas: {consolidadoUltimoCorte.totalFloresOrquidea} unid.
                   </div>
                 )}
                 <button
@@ -1138,7 +1314,9 @@ export function ConsolaInventarioRosas({
                   const colInfo =
                     item.tipoFlor === "orquidea"
                       ? COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === item.colorClave)
-                      : categoriasColores.find((c) => c.clave === item.colorClave);
+                      : item.tipoFlor === "girasol"
+                        ? { colorHex: "#EAB308" }
+                        : categoriasColores.find((c) => c.clave === item.colorClave);
                   return (
                     <span
                       key={`${item.tipoFlor}-${item.colorClave}-${item.variedadNombre}-${idx}`}
@@ -1148,8 +1326,18 @@ export function ConsolaInventarioRosas({
                         gap: "5px",
                         padding: "3px 9px",
                         borderRadius: "999px",
-                        background: "#F8F7F4",
-                        border: "1px solid #E6E2DA",
+                        background:
+                          item.tipoFlor === "girasol"
+                            ? "#FEFCE8"
+                            : item.tipoFlor === "orquidea"
+                              ? "#FAF5FF"
+                              : "#F8F7F4",
+                        border:
+                          item.tipoFlor === "girasol"
+                            ? "1px solid #FDE047"
+                            : item.tipoFlor === "orquidea"
+                              ? "1px solid #E9D5FF"
+                              : "1px solid #E6E2DA",
                         color: "#2E2A26",
                         fontSize: "0.74rem",
                         fontWeight: 500,
@@ -1174,12 +1362,15 @@ export function ConsolaInventarioRosas({
                             height: "8px",
                             borderRadius: "50%",
                             background: colInfo?.colorHex ?? "#847D74",
+                            border: "1px solid rgba(0,0,0,0.18)",
                           }}
                         />
                       )}
                       {item.tipoFlor === "orquidea"
-                        ? `${item.cantidad} vara(s) ${item.variedadNombre} (${item.numeroFlores ?? 0} flores)`
-                        : `${item.cantidad} ${item.variedadNombre}`}
+                        ? `${item.numeroFlores ?? item.cantidad} ${item.variedadNombre}`
+                        : item.tipoFlor === "girasol"
+                          ? `${item.cantidad} Girasoles`
+                          : `${item.cantidad} ${item.variedadNombre}`}
                     </span>
                   );
                 })}
@@ -1191,17 +1382,19 @@ export function ConsolaInventarioRosas({
             )}
           </div>
 
-          {/* PANEL DE COLORES EN OFERTA Y % DE DESCUENTO PARA LA TIENDA */}
+          {/* PANEL DE COLORES Y FLORES EN OFERTA CON % INDIVIDUAL POR COLOR/FLOR */}
           <div
             style={{
               padding: "14px 16px",
               borderRadius: "12px",
               background: "#FFFFFF",
-              border: ofertaActiva && coloresOferta.length > 0 ? "1.5px solid #FBCFE8" : "1px solid #E6E2DA",
-              borderLeft: ofertaActiva && coloresOferta.length > 0 ? "3px solid #BE185D" : "3px solid #D5CFC4",
+              border: ofertaActiva && clavesOfertaActivas.length > 0 ? "1.5px solid #FBCFE8" : "1px solid #E6E2DA",
+              borderLeft: ofertaActiva && clavesOfertaActivas.length > 0 ? "3px solid #BE185D" : "3px solid #D5CFC4",
               display: "flex",
               flexDirection: "column",
-              gap: "11px",
+              gap: "12px",
+              boxSizing: "border-box",
+              maxWidth: "100%",
             }}
           >
             <div
@@ -1213,7 +1406,7 @@ export function ConsolaInventarioRosas({
                 flexWrap: "wrap",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "9px", minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "9px", minWidth: 0, flex: "1 1 220px" }}>
                 <div
                   style={{
                     width: "32px",
@@ -1230,12 +1423,12 @@ export function ConsolaInventarioRosas({
                 >
                   <Tag size={15} />
                 </div>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <strong style={{ display: "block", fontSize: "0.86rem", color: "#1F1C19" }}>
-                    Colores en Oferta en Tienda
+                    Colores y Flores en Oferta en Tienda
                   </strong>
-                  <span style={{ fontSize: "0.73rem", color: "#6E6861" }}>
-                    Cuando el cliente elija colores marcados en oferta, se aplicará automáticamente el descuento en la venta del arreglo.
+                  <span style={{ fontSize: "0.73rem", color: "#6E6861", lineHeight: 1.38 }}>
+                    Define un porcentaje de descuento por cada color de rosa, girasoles u orquídeas. Al elegirlos en la tienda, el descuento se aplica automáticamente.
                   </span>
                 </div>
               </div>
@@ -1253,6 +1446,7 @@ export function ConsolaInventarioRosas({
                   fontSize: "0.75rem",
                   fontWeight: 700,
                   cursor: "pointer",
+                  flexShrink: 0,
                 }}
               >
                 <input
@@ -1268,7 +1462,7 @@ export function ConsolaInventarioRosas({
               </label>
             </div>
 
-            {/* Porcentaje de descuento configurable (por defecto 10%) */}
+            {/* Porcentaje por defecto + acción rápida Aplicar a todos + Guardar */}
             <div
               style={{
                 display: "flex",
@@ -1282,19 +1476,19 @@ export function ConsolaInventarioRosas({
                 border: "1px solid #ECE7DF",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "7px", flexWrap: "wrap" }}>
                 <span
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "5px",
-                    fontSize: "0.76rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     color: "#221E1B",
                   }}
                 >
                   <Percent size={13} color="#BE185D" />
-                  <span>Descuento en venta:</span>
+                  <span>% base al marcar:</span>
                 </span>
                 {[5, 10, 15, 20].map((preset) => {
                   const sel = ofertaPorcentaje === preset;
@@ -1343,9 +1537,9 @@ export function ConsolaInventarioRosas({
                       setOfertaPorcentaje(Number.isFinite(val) ? Math.max(1, Math.min(80, val)) : 10);
                       setMensajeOfertaOk(null);
                     }}
-                    aria-label="Porcentaje de descuento por colores en oferta"
+                    aria-label="Porcentaje base para nuevos colores en oferta"
                     style={{
-                      width: "56px",
+                      width: "52px",
                       padding: "4px 6px",
                       borderRadius: "7px",
                       border: "1px solid #D5CFC4",
@@ -1357,13 +1551,34 @@ export function ConsolaInventarioRosas({
                   />
                   <span>%</span>
                 </label>
+
+                {clavesOfertaActivas.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => aplicarPorcentajeDefectoATodos(ofertaPorcentaje)}
+                    title={`Aplicar ${ofertaPorcentaje}% a todos los colores y flores seleccionados`}
+                    aria-label="Aplicar a todos"
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: "8px",
+                      border: "1px solid #D5CFC4",
+                      background: "#FFFFFF",
+                      color: "#3F3A35",
+                      fontSize: "0.72rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Aplicar {ofertaPorcentaje}% a todos
+                  </button>
+                )}
               </div>
 
               <button
                 type="button"
                 onClick={() => void handleGuardarOfertaColores()}
                 disabled={guardandoOferta || cargandoOferta}
-                title="Guardar configuración de colores en oferta para la tienda web"
+                title="Guardar configuración de colores y flores en oferta para la tienda web"
                 aria-label="Guardar oferta"
                 style={{
                   display: "inline-flex",
@@ -1385,41 +1600,139 @@ export function ConsolaInventarioRosas({
               </button>
             </div>
 
-            {/* Selector de colores en oferta (priorizando colores con stock en el último corte) */}
-            <div>
-              <span
-                style={{
-                  display: "block",
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  color: "#57524C",
-                  marginBottom: "6px",
-                }}
-              >
-                Selecciona los colores que salen en oferta (-{ofertaPorcentaje}%):
-              </span>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
-                {[...categoriasColores]
-                  .sort((a, b) => {
-                    const sa = stockPorColorUltimoCorte.get(a.clave) ?? 0;
-                    const sb = stockPorColorUltimoCorte.get(b.clave) ?? 0;
-                    if ((sa > 0) !== (sb > 0)) return sa > 0 ? -1 : 1;
-                    return 0;
-                  })
-                  .map((col) => {
-                    const claveNorm = normalizarClaveColorRosaPersonalizacion(col.clave);
-                    const enStockCant = stockPorColorUltimoCorte.get(claveNorm) ?? 0;
-                    const seleccionado = coloresOferta.includes(claveNorm);
+            {/* 1. Rosas por color */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    color: "#57524C",
+                    marginBottom: "6px",
+                  }}
+                >
+                  🌹 Rosas en oferta (toca para activar y ajusta el % abajo):
+                </span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+                  {[...categoriasColores]
+                    .sort((a, b) => {
+                      const sa = stockPorColorUltimoCorte.get(a.clave) ?? 0;
+                      const sb = stockPorColorUltimoCorte.get(b.clave) ?? 0;
+                      if ((sa > 0) !== (sb > 0)) return sa > 0 ? -1 : 1;
+                      return 0;
+                    })
+                    .map((col) => {
+                      const claveNorm = normalizarClaveColorRosaPersonalizacion(col.clave);
+                      const enStockCant = stockPorColorUltimoCorte.get(claveNorm) ?? 0;
+                      const pctIndiv = descuentosOfertaPorClave[claveNorm] ?? 0;
+                      const seleccionado = pctIndiv > 0;
+                      return (
+                        <button
+                          key={col.clave}
+                          type="button"
+                          onClick={() => toggleColorOferta(claveNorm)}
+                          aria-pressed={seleccionado}
+                          title={
+                            enStockCant > 0
+                              ? `${col.etiqueta} (${enStockCant} paq. en inventario) — clic para ${seleccionado ? "quitar de" : "marcar en"} oferta`
+                              : `${col.etiqueta} (sin stock en el último corte)`
+                          }
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "6px 11px",
+                            borderRadius: "999px",
+                            border: seleccionado
+                              ? "2px solid #9D174D"
+                              : enStockCant > 0
+                                ? "1px solid #CEDDD3"
+                                : "1px dashed #D5CFC4",
+                            background: seleccionado
+                              ? "#BE185D"
+                              : enStockCant > 0
+                                ? "#FFFFFF"
+                                : "#FAF8F5",
+                            color: seleccionado ? "#FFFFFF" : enStockCant > 0 ? "#1F1C19" : "#847D74",
+                            fontSize: "0.75rem",
+                            fontWeight: seleccionado ? 700 : 600,
+                            cursor: "pointer",
+                            opacity: !seleccionado && ultimoCorte && enStockCant === 0 ? 0.72 : 1,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: "11px",
+                              height: "11px",
+                              borderRadius: "999px",
+                              background: col.colorHex,
+                              border: seleccionado ? "1.5px solid #FFFFFF" : "1px solid rgba(0,0,0,0.2)",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span>{col.etiqueta}</span>
+                          {enStockCant > 0 && (
+                            <span
+                              style={{
+                                fontSize: "0.68rem",
+                                color: seleccionado ? "#FCE7F3" : "#2B4A36",
+                                fontWeight: 700,
+                              }}
+                            >
+                              ({enStockCant} paq.)
+                            </span>
+                          )}
+                          {seleccionado && (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "2px",
+                                padding: "1px 6px",
+                                borderRadius: "999px",
+                                background: "#FFFFFF",
+                                color: "#9D174D",
+                                fontSize: "0.65rem",
+                                fontWeight: 800,
+                              }}
+                            >
+                              -{pctIndiv}%
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* 2. Girasoles y 3. Orquídeas (5 colores) en oferta */}
+              <div>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    color: "#57524C",
+                    marginBottom: "6px",
+                  }}
+                >
+                  🌻 Girasoles y 🌺 Orquídeas en oferta:
+                </span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+                  {/* Chip Girasoles */}
+                  {(() => {
+                    const pctGir = descuentosOfertaPorClave.girasol ?? 0;
+                    const selGir = pctGir > 0;
                     return (
                       <button
-                        key={col.clave}
                         type="button"
-                        onClick={() => toggleColorOferta(claveNorm)}
-                        aria-pressed={seleccionado}
+                        onClick={() => toggleColorOferta("girasol")}
+                        aria-pressed={selGir}
                         title={
-                          enStockCant > 0
-                            ? `${col.etiqueta} (${enStockCant} paq. en inventario) — clic para ${seleccionado ? "quitar de" : "marcar en"} oferta`
-                            : `${col.etiqueta} (sin stock en el último corte)`
+                          stockGirasolesUltimoCorte > 0
+                            ? `Girasoles (${stockGirasolesUltimoCorte} unid. en inventario)`
+                            : "Girasoles (sin stock registrado en el último corte)"
                         }
                         style={{
                           display: "inline-flex",
@@ -1427,21 +1740,92 @@ export function ConsolaInventarioRosas({
                           gap: "6px",
                           padding: "6px 11px",
                           borderRadius: "999px",
-                          border: seleccionado
-                            ? "2px solid #BE185D"
-                            : enStockCant > 0
-                              ? "1px solid #CEDDD3"
+                          border: selGir
+                            ? "2px solid #9D174D"
+                            : stockGirasolesUltimoCorte > 0
+                              ? "1px solid #FDE047"
                               : "1px dashed #D5CFC4",
-                          background: seleccionado
-                            ? "#FDF2F8"
-                            : enStockCant > 0
-                              ? "#FFFFFF"
+                          background: selGir
+                            ? "#BE185D"
+                            : stockGirasolesUltimoCorte > 0
+                              ? "#FEFCE8"
                               : "#FAF8F5",
-                          color: seleccionado ? "#831843" : enStockCant > 0 ? "#1F1C19" : "#847D74",
+                          color: selGir ? "#FFFFFF" : stockGirasolesUltimoCorte > 0 ? "#854D0E" : "#847D74",
                           fontSize: "0.75rem",
-                          fontWeight: seleccionado ? 700 : 600,
+                          fontWeight: selGir ? 700 : 600,
                           cursor: "pointer",
-                          opacity: !seleccionado && ultimoCorte && enStockCant === 0 ? 0.72 : 1,
+                          opacity: !selGir && ultimoCorte && stockGirasolesUltimoCorte === 0 ? 0.78 : 1,
+                        }}
+                      >
+                        <span>🌻</span>
+                        <span>Girasoles</span>
+                        {stockGirasolesUltimoCorte > 0 && (
+                          <span
+                            style={{
+                              fontSize: "0.68rem",
+                              color: selGir ? "#FCE7F3" : "#854D0E",
+                              fontWeight: 700,
+                            }}
+                          >
+                            ({stockGirasolesUltimoCorte} unid.)
+                          </span>
+                        )}
+                        {selGir && (
+                          <span
+                            style={{
+                              padding: "1px 6px",
+                              borderRadius: "999px",
+                              background: "#FFFFFF",
+                              color: "#9D174D",
+                              fontSize: "0.65rem",
+                              fontWeight: 800,
+                            }}
+                          >
+                            -{pctGir}%
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })()}
+
+                  {/* Chips de las 5 orquídeas: Blanco, Beige, Verde, Amarilla, Lila */}
+                  {COLORES_ORQUIDEA_CYMBIDIUM.map((orq) => {
+                    const claveOrq = `orquidea_${orq.clave}`;
+                    const stockOrq = stockOrquideasPorColorUltimoCorte.get(orq.clave) ?? 0;
+                    const pctOrq = descuentosOfertaPorClave[claveOrq] ?? 0;
+                    const selOrq = pctOrq > 0;
+                    return (
+                      <button
+                        key={claveOrq}
+                        type="button"
+                        onClick={() => toggleColorOferta(claveOrq)}
+                        aria-pressed={selOrq}
+                        title={
+                          stockOrq > 0
+                            ? `${orq.etiqueta} (${stockOrq} orquídeas en inventario)`
+                            : `${orq.etiqueta} (sin stock registrado en el último corte)`
+                        }
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "6px 11px",
+                          borderRadius: "999px",
+                          border: selOrq
+                            ? "2px solid #9D174D"
+                            : stockOrq > 0
+                              ? "1px solid #D8B4FE"
+                              : "1px dashed #D5CFC4",
+                          background: selOrq
+                            ? "#BE185D"
+                            : stockOrq > 0
+                              ? "#FAF5FF"
+                              : "#FAF8F5",
+                          color: selOrq ? "#FFFFFF" : stockOrq > 0 ? "#581C87" : "#847D74",
+                          fontSize: "0.75rem",
+                          fontWeight: selOrq ? 700 : 600,
+                          cursor: "pointer",
+                          opacity: !selOrq && ultimoCorte && stockOrq === 0 ? 0.78 : 1,
                         }}
                       >
                         <span
@@ -1449,66 +1833,189 @@ export function ConsolaInventarioRosas({
                             width: "11px",
                             height: "11px",
                             borderRadius: "999px",
-                            background: col.colorHex,
-                            border: "1px solid rgba(0,0,0,0.2)",
+                            background: orq.colorHex,
+                            border: selOrq ? "1.5px solid #FFFFFF" : "1px solid rgba(0,0,0,0.22)",
                             flexShrink: 0,
                           }}
                         />
-                        <span>{col.etiqueta}</span>
-                        {enStockCant > 0 && (
-                          <span style={{ fontSize: "0.68rem", color: "#2B4A36", fontWeight: 700 }}>
-                            ({enStockCant} paq.)
-                          </span>
-                        )}
-                        {seleccionado && (
+                        <span>{orq.etiqueta}</span>
+                        {stockOrq > 0 && (
                           <span
                             style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "2px",
+                              fontSize: "0.68rem",
+                              color: selOrq ? "#FCE7F3" : "#6B21A8",
+                              fontWeight: 700,
+                            }}
+                          >
+                            ({stockOrq} unid.)
+                          </span>
+                        )}
+                        {selOrq && (
+                          <span
+                            style={{
                               padding: "1px 6px",
                               borderRadius: "999px",
-                              background: "#BE185D",
-                              color: "#FFFFFF",
+                              background: "#FFFFFF",
+                              color: "#9D174D",
                               fontSize: "0.65rem",
                               fontWeight: 800,
                             }}
                           >
-                            <Check size={10} />-{ofertaPorcentaje}%
+                            -{pctOrq}%
                           </span>
                         )}
                       </button>
                     );
                   })}
+                </div>
               </div>
-              {ofertaActiva && coloresOferta.length > 0 && (
+
+              {/* Editor individual de % de descuento por cada color o flor seleccionado */}
+              {clavesOfertaActivas.length > 0 && (
                 <div
                   style={{
-                    marginTop: "8px",
-                    fontSize: "0.73rem",
-                    color: "#9D174D",
+                    padding: "10px 12px",
+                    borderRadius: "10px",
                     background: "#FDF2F8",
                     border: "1px solid #FBCFE8",
-                    borderRadius: "8px",
-                    padding: "6px 10px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
                   }}
                 >
-                  🔥 Cuando el cliente seleccione{" "}
+                  <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#9D174D" }}>
+                    Porcentaje de descuento por cada color / flor seleccionado:
+                  </span>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(min(210px, 100%), 1fr))",
+                      gap: "8px",
+                    }}
+                  >
+                    {clavesOfertaActivas.map((clave) => {
+                      const pctActual = descuentosOfertaPorClave[clave] ?? ofertaPorcentaje;
+                      const etiqueta = obtenerEtiquetaClaveOferta(clave);
+                      const hex = obtenerColorHexClaveOferta(clave);
+                      return (
+                        <div
+                          key={`desc-${clave}`}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "8px",
+                            padding: "6px 9px",
+                            borderRadius: "9px",
+                            background: "#FFFFFF",
+                            border: "1px solid #F9A8D4",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                            {clave === "girasol" ? (
+                              <span style={{ fontSize: "0.82rem" }}>🌻</span>
+                            ) : (
+                              <span
+                                style={{
+                                  width: "11px",
+                                  height: "11px",
+                                  borderRadius: "999px",
+                                  background: hex,
+                                  border: "1px solid rgba(0,0,0,0.22)",
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                fontWeight: 700,
+                                color: "#1F1C19",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {etiqueta}
+                            </span>
+                          </div>
+
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                            <input
+                              type="number"
+                              min={1}
+                              max={80}
+                              step={1}
+                              value={pctActual}
+                              onChange={(e) =>
+                                actualizarPorcentajeOfertaClave(clave, Number(e.target.value))
+                              }
+                              aria-label={`Descuento porcentaje para ${etiqueta}`}
+                              style={{
+                                width: "52px",
+                                padding: "3px 5px",
+                                borderRadius: "6px",
+                                border: "1px solid #D5CFC4",
+                                background: "#FAF8F5",
+                                fontSize: "0.78rem",
+                                fontWeight: 800,
+                                color: "#9D174D",
+                                textAlign: "center",
+                              }}
+                            />
+                            <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#9D174D" }}>%</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleColorOferta(clave)}
+                              title={`Quitar ${etiqueta} de la oferta`}
+                              aria-label={`Quitar ${etiqueta}`}
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                                color: "#9D174D",
+                                cursor: "pointer",
+                                padding: "2px",
+                                display: "inline-flex",
+                              }}
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {ofertaActiva && clavesOfertaActivas.length > 0 && (
+                <div
+                  style={{
+                    fontSize: "0.73rem",
+                    color: "#2B4A36",
+                    background: "#F0FDF4",
+                    border: "1px solid #BBF7D0",
+                    borderRadius: "8px",
+                    padding: "6px 10px",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  🔥 En tienda aplicará automáticamente:{" "}
                   <strong>
-                    {coloresOferta
-                      .map((cl) => categoriasColores.find((c) => c.clave === cl)?.etiqueta || cl)
+                    {clavesOfertaActivas
+                      .map((cl) => `${obtenerEtiquetaClaveOferta(cl)} (-${descuentosOfertaPorClave[cl]}%)`)
                       .join(", ")}
                   </strong>{" "}
-                  en la tienda, se aplicará automáticamente <strong>{ofertaPorcentaje}% de descuento</strong> en la venta del arreglo (siempre que conste con stock en inventario).
+                  (siempre que conste con stock en el inventario vigente).
                 </div>
               )}
               {mensajeOfertaOk && (
-                <div style={{ marginTop: "7px", fontSize: "0.75rem", fontWeight: 700, color: "#2B4A36" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#2B4A36" }}>
                   ✓ {mensajeOfertaOk}
                 </div>
               )}
               {errorOfertaMsg && (
-                <div style={{ marginTop: "7px", fontSize: "0.75rem", fontWeight: 700, color: "#991B1B" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#991B1B" }}>
                   ⚠️ {errorOfertaMsg}
                 </div>
               )}
@@ -1657,7 +2164,7 @@ export function ConsolaInventarioRosas({
             >
               <div>
                 <h2 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 600, color: "#1F1C19" }}>
-                  Nuevo Conteo Fotográfico de Rosas y Orquídeas Cymbidium (ARIA)
+                  Nuevo Conteo de Rosas, Girasoles y Orquídeas (ARIA)
                 </h2>
               </div>
 
@@ -1769,14 +2276,15 @@ export function ConsolaInventarioRosas({
                   }}
                 >
                   <strong style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19" }}>
-                    Agregar Paquetes u Orquídeas sin Fotografía
+                    Agregar Rosas, Girasoles u Orquídeas Manualmente
                   </strong>
-                  <div style={{ display: "flex", gap: "6px" }}>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                     <button
                       type="button"
                       onClick={() => {
                         setManualTipoFlor("rosa");
                         setManualColor("rojo");
+                        setManualCantidad(1);
                       }}
                       style={{
                         padding: "5px 10px",
@@ -1789,26 +2297,48 @@ export function ConsolaInventarioRosas({
                         cursor: "pointer",
                       }}
                     >
-                      Rosa (Paquetes)
+                      🌹 Rosas (Paq.)
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        setManualTipoFlor("orquidea");
-                        setManualColor("amarillo");
+                        setManualTipoFlor("girasol");
+                        setManualColor("girasol");
+                        setManualCantidad(10);
                       }}
                       style={{
                         padding: "5px 10px",
                         borderRadius: "7px",
-                        border: manualTipoFlor === "orquidea" ? "1px solid #221E1B" : "1px solid #D5CFC4",
-                        background: manualTipoFlor === "orquidea" ? "#221E1B" : "#FFFFFF",
-                        color: manualTipoFlor === "orquidea" ? "#FAF8F5" : "#57524C",
+                        border: manualTipoFlor === "girasol" ? "1px solid #854D0E" : "1px solid #D5CFC4",
+                        background: manualTipoFlor === "girasol" ? "#854D0E" : "#FFFFFF",
+                        color: manualTipoFlor === "girasol" ? "#FEFCE8" : "#57524C",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         cursor: "pointer",
                       }}
                     >
-                      Orquídea / Cymbidium
+                      🌻 Girasoles
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setManualTipoFlor("orquidea");
+                        setManualColor("blanco");
+                        setManualCantidad(1);
+                        setManualNumeroFlores(9);
+                      }}
+                      style={{
+                        padding: "5px 10px",
+                        borderRadius: "7px",
+                        border: manualTipoFlor === "orquidea" ? "1px solid #6B21A8" : "1px solid #D5CFC4",
+                        background: manualTipoFlor === "orquidea" ? "#6B21A8" : "#FFFFFF",
+                        color: manualTipoFlor === "orquidea" ? "#FAF5FF" : "#57524C",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      🌺 Orquídeas
                     </button>
                   </div>
                 </div>
@@ -1816,35 +2346,37 @@ export function ConsolaInventarioRosas({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
                     gap: "10px",
                     alignItems: "end",
                   }}
                 >
-                  <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
-                    Color
-                    <select
-                      value={manualColor}
-                      onChange={(e) => setManualColor(e.target.value)}
-                      style={{
-                        padding: "7px 10px",
-                        borderRadius: "8px",
-                        border: "1px solid #D5CFC4",
-                        background: "#FFFFFF",
-                        fontSize: "0.8rem",
-                        color: "#1F1C19",
-                      }}
-                    >
-                      {(manualTipoFlor === "orquidea"
-                        ? COLORES_ORQUIDEA_CYMBIDIUM
-                        : categoriasColores
-                      ).map((c) => (
-                        <option key={c.clave} value={c.clave}>
-                          {c.etiqueta}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  {manualTipoFlor !== "girasol" && (
+                    <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
+                      Color
+                      <select
+                        value={manualColor}
+                        onChange={(e) => setManualColor(e.target.value)}
+                        style={{
+                          padding: "7px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #D5CFC4",
+                          background: "#FFFFFF",
+                          fontSize: "0.8rem",
+                          color: "#1F1C19",
+                        }}
+                      >
+                        {(manualTipoFlor === "orquidea"
+                          ? COLORES_ORQUIDEA_CYMBIDIUM
+                          : categoriasColores
+                        ).map((c) => (
+                          <option key={c.clave} value={c.clave}>
+                            {c.etiqueta}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
 
                   {manualTipoFlor === "rosa" && (
                     <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
@@ -1870,36 +2402,57 @@ export function ConsolaInventarioRosas({
                     </label>
                   )}
 
-                  <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
-                    {manualTipoFlor === "orquidea" ? "Varas" : "Paquetes (Bonches)"}
-                    <input
-                      type="number"
-                      min={1}
-                      max={500}
-                      value={manualCantidad}
-                      onChange={(e) => setManualCantidad(Math.max(1, Number(e.target.value) || 1))}
-                      style={{
-                        padding: "7px 10px",
-                        borderRadius: "8px",
-                        border: "1px solid #D5CFC4",
-                        background: "#FFFFFF",
-                        fontSize: "0.81rem",
-                        color: "#1F1C19",
-                      }}
-                    />
-                  </label>
-
-                  {manualTipoFlor === "orquidea" && (
+                  {manualTipoFlor === "orquidea" ? (
+                    <>
+                      <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 700, color: "#6B21A8" }}>
+                        Nº de Orquídeas (flores)
+                        <input
+                          type="number"
+                          min={1}
+                          max={500}
+                          value={manualNumeroFlores}
+                          onChange={(e) =>
+                            setManualNumeroFlores(Math.max(1, Number(e.target.value) || 1))
+                          }
+                          style={{
+                            padding: "7px 10px",
+                            borderRadius: "8px",
+                            border: "1.5px solid #C084FC",
+                            background: "#FFFFFF",
+                            fontSize: "0.81rem",
+                            fontWeight: 700,
+                            color: "#581C87",
+                          }}
+                        />
+                      </label>
+                      <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
+                        Varas (opcional)
+                        <input
+                          type="number"
+                          min={1}
+                          max={200}
+                          value={manualCantidad}
+                          onChange={(e) => setManualCantidad(Math.max(1, Number(e.target.value) || 1))}
+                          style={{
+                            padding: "7px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #D5CFC4",
+                            background: "#FFFFFF",
+                            fontSize: "0.81rem",
+                            color: "#1F1C19",
+                          }}
+                        />
+                      </label>
+                    </>
+                  ) : (
                     <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
-                      Nº Flores / Campanas
+                      {manualTipoFlor === "girasol" ? "Nº de Girasoles (unidades)" : "Paquetes (Bonches)"}
                       <input
                         type="number"
                         min={1}
-                        max={200}
-                        value={manualNumeroFlores}
-                        onChange={(e) =>
-                          setManualNumeroFlores(Math.max(1, Number(e.target.value) || 1))
-                        }
+                        max={500}
+                        value={manualCantidad}
+                        onChange={(e) => setManualCantidad(Math.max(1, Number(e.target.value) || 1))}
                         style={{
                           padding: "7px 10px",
                           borderRadius: "8px",
@@ -1950,14 +2503,14 @@ export function ConsolaInventarioRosas({
                           "ia"
                         );
                   const subtotalRosas = items
-                    .filter((it) => it.tipoFlor !== "orquidea")
+                    .filter((it) => it.tipoFlor !== "orquidea" && it.tipoFlor !== "girasol")
                     .reduce((acc, it) => acc + (Number(it.cantidad) || 0), 0);
-                  const subtotalOrqVaras = items
-                    .filter((it) => it.tipoFlor === "orquidea")
+                  const subtotalGirasoles = items
+                    .filter((it) => it.tipoFlor === "girasol")
                     .reduce((acc, it) => acc + (Number(it.cantidad) || 0), 0);
                   const subtotalOrqFlores = items
                     .filter((it) => it.tipoFlor === "orquidea")
-                    .reduce((acc, it) => acc + (Number(it.numeroFlores) || 0), 0);
+                    .reduce((acc, it) => acc + (Number(it.numeroFlores ?? it.cantidad) || 0), 0);
 
                   return (
                     <div
@@ -2048,16 +2601,16 @@ export function ConsolaInventarioRosas({
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                             <strong style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19" }}>
                               {foto.esManual || !foto.imagenUrl
-                                ? "Paquetes Manuales (Sin Foto)"
+                                ? "Conteo Manual (Sin Foto)"
                                 : `Foto #${idx + 1}`}
                               {" — "}
-                              {subtotalRosas > 0 ? `${subtotalRosas} paq.` : ""}
-                              {subtotalRosas > 0 && subtotalOrqVaras > 0 ? " + " : ""}
-                              {subtotalOrqVaras > 0
-                                ? `${subtotalOrqVaras} vara(s) (${subtotalOrqFlores} flores)`
-                                : subtotalRosas === 0
-                                  ? "0"
-                                  : ""}
+                              {[
+                                subtotalRosas > 0 ? `${subtotalRosas} paq. rosas` : "",
+                                subtotalGirasoles > 0 ? `${subtotalGirasoles} girasoles` : "",
+                                subtotalOrqFlores > 0 ? `${subtotalOrqFlores} orquídeas` : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" · ") || "0"}
                             </strong>
                             <span
                               style={{
@@ -2138,12 +2691,18 @@ export function ConsolaInventarioRosas({
                           >
                             {items.map((item) => {
                               const esOrq = item.tipoFlor === "orquidea";
+                              const esGir = item.tipoFlor === "girasol";
                               const colDef = esOrq
-                                ? COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === item.colorClave)
-                                : categoriasColores.find((c) => c.clave === item.colorClave);
-                              const opcionesVariedad = esOrq
-                                ? []
-                                : obtenerVariedadesPorColor(catalogoVariedades, item.colorClave);
+                                ? COLORES_ORQUIDEA_CYMBIDIUM.find(
+                                    (c) => c.clave === normalizarColorOrquideaClave(item.colorClave)
+                                  )
+                                : esGir
+                                  ? { etiqueta: "Girasoles", colorHex: "#EAB308" }
+                                  : categoriasColores.find((c) => c.clave === item.colorClave);
+                              const opcionesVariedad =
+                                esOrq || esGir
+                                  ? []
+                                  : obtenerVariedadesPorColor(catalogoVariedades, item.colorClave);
 
                               return (
                                 <div
@@ -2222,12 +2781,12 @@ export function ConsolaInventarioRosas({
                                               flexShrink: 0,
                                             }}
                                           />
-                                          {esOrq ? "Orquídea Cymbidium" : colDef?.etiqueta ?? item.colorClave}
+                                          {esOrq ? "Orquídea" : esGir ? "🌻 Girasoles" : colDef?.etiqueta ?? item.colorClave}
                                         </span>
 
                                         {esOrq ? (
                                           <select
-                                            value={item.colorClave}
+                                            value={normalizarColorOrquideaClave(item.colorClave)}
                                             onChange={(e) =>
                                               handleCambiarColorOrquideaItem(
                                                 foto.id,
@@ -2252,6 +2811,10 @@ export function ConsolaInventarioRosas({
                                               </option>
                                             ))}
                                           </select>
+                                        ) : esGir ? (
+                                          <strong style={{ fontSize: "0.79rem", color: "#854D0E" }}>
+                                            Girasoles (Unidades)
+                                          </strong>
                                         ) : (
                                           <select
                                             value={item.variedadId ?? ""}
@@ -2316,7 +2879,7 @@ export function ConsolaInventarioRosas({
                                   >
                                     <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                       <span style={{ fontSize: "0.72rem", color: "#6E6861", fontWeight: 500 }}>
-                                        {esOrq ? "Varas:" : "Paq.:"}
+                                        {esOrq ? "Varas:" : esGir ? "Unid.:" : "Paq.:"}
                                       </span>
                                       <button
                                         type="button"
@@ -2383,8 +2946,8 @@ export function ConsolaInventarioRosas({
 
                                     {esOrq && (
                                       <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                        <span style={{ fontSize: "0.72rem", color: "#745622", fontWeight: 600 }}>
-                                          Flores:
+                                        <span style={{ fontSize: "0.72rem", color: "#6B21A8", fontWeight: 700 }}>
+                                          Nº Orq.:
                                         </span>
                                         <button
                                           type="button"
@@ -2488,7 +3051,9 @@ export function ConsolaInventarioRosas({
                               onChange={(e) => {
                                 const t = e.target.value as TipoFlorInventario;
                                 setInlineTipoFlor(t);
-                                setInlineColor(t === "orquidea" ? "amarillo" : "rojo");
+                                setInlineColor(
+                                  t === "orquidea" ? "blanco" : t === "girasol" ? "girasol" : "rojo"
+                                );
                               }}
                               style={{
                                 padding: "6px 8px",
@@ -2497,29 +3062,32 @@ export function ConsolaInventarioRosas({
                                 fontSize: "0.78rem",
                               }}
                             >
-                              <option value="rosa">Rosa</option>
-                              <option value="orquidea">Orquídea Cymbidium</option>
+                              <option value="rosa">🌹 Rosa (Paq.)</option>
+                              <option value="girasol">🌻 Girasoles (Unid.)</option>
+                              <option value="orquidea">🌺 Orquídea</option>
                             </select>
 
-                            <select
-                              value={inlineColor}
-                              onChange={(e) => setInlineColor(e.target.value)}
-                              style={{
-                                padding: "6px 8px",
-                                borderRadius: "7px",
-                                border: "1px solid #D5CFC4",
-                                fontSize: "0.78rem",
-                              }}
-                            >
-                              {(inlineTipoFlor === "orquidea"
-                                ? COLORES_ORQUIDEA_CYMBIDIUM
-                                : categoriasColores
-                              ).map((c) => (
-                                <option key={c.clave} value={c.clave}>
-                                  {c.etiqueta}
-                                </option>
-                              ))}
-                            </select>
+                            {inlineTipoFlor !== "girasol" && (
+                              <select
+                                value={inlineColor}
+                                onChange={(e) => setInlineColor(e.target.value)}
+                                style={{
+                                  padding: "6px 8px",
+                                  borderRadius: "7px",
+                                  border: "1px solid #D5CFC4",
+                                  fontSize: "0.78rem",
+                                }}
+                              >
+                                {(inlineTipoFlor === "orquidea"
+                                  ? COLORES_ORQUIDEA_CYMBIDIUM
+                                  : categoriasColores
+                                ).map((c) => (
+                                  <option key={c.clave} value={c.clave}>
+                                    {c.etiqueta}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
 
                             {inlineTipoFlor === "rosa" && (
                               <select
@@ -2540,35 +3108,54 @@ export function ConsolaInventarioRosas({
                               </select>
                             )}
 
-                            <input
-                              type="number"
-                              min={1}
-                              value={inlineCantidad}
-                              onChange={(e) =>
-                                setInlineCantidad(Math.max(1, Number(e.target.value) || 1))
-                              }
-                              title={inlineTipoFlor === "orquidea" ? "Varas" : "Paquetes"}
-                              style={{
-                                width: "62px",
-                                padding: "6px 8px",
-                                borderRadius: "7px",
-                                border: "1px solid #D5CFC4",
-                                fontSize: "0.78rem",
-                              }}
-                            />
-
-                            {inlineTipoFlor === "orquidea" && (
+                            {inlineTipoFlor === "orquidea" ? (
+                              <>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={inlineNumeroFlores}
+                                  onChange={(e) =>
+                                    setInlineNumeroFlores(Math.max(1, Number(e.target.value) || 1))
+                                  }
+                                  placeholder="Nº Orq."
+                                  title="Número de orquídeas (flores)"
+                                  style={{
+                                    width: "76px",
+                                    padding: "6px 8px",
+                                    borderRadius: "7px",
+                                    border: "1.5px solid #C084FC",
+                                    fontSize: "0.78rem",
+                                  }}
+                                />
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={inlineCantidad}
+                                  onChange={(e) =>
+                                    setInlineCantidad(Math.max(1, Number(e.target.value) || 1))
+                                  }
+                                  placeholder="Varas"
+                                  title="Varas"
+                                  style={{
+                                    width: "60px",
+                                    padding: "6px 8px",
+                                    borderRadius: "7px",
+                                    border: "1px solid #D5CFC4",
+                                    fontSize: "0.78rem",
+                                  }}
+                                />
+                              </>
+                            ) : (
                               <input
                                 type="number"
                                 min={1}
-                                value={inlineNumeroFlores}
+                                value={inlineCantidad}
                                 onChange={(e) =>
-                                  setInlineNumeroFlores(Math.max(1, Number(e.target.value) || 1))
+                                  setInlineCantidad(Math.max(1, Number(e.target.value) || 1))
                                 }
-                                placeholder="Flores"
-                                title="Número de flores"
+                                title={inlineTipoFlor === "girasol" ? "Nº de Girasoles" : "Paquetes"}
                                 style={{
-                                  width: "70px",
+                                  width: "66px",
                                   padding: "6px 8px",
                                   borderRadius: "7px",
                                   border: "1px solid #D5CFC4",
@@ -2621,8 +3208,11 @@ export function ConsolaInventarioRosas({
                       <span style={{ color: "#2F4737" }}>
                         {consolidadoEnCurso.totalPaquetes} paq. rosas
                       </span>
-                      {consolidadoEnCurso.totalVarasOrquidea > 0
-                        ? ` · ${consolidadoEnCurso.totalVarasOrquidea} vara(s) / ${consolidadoEnCurso.totalFloresOrquidea} flores Cymbidium`
+                      {consolidadoEnCurso.totalGirasoles > 0
+                        ? ` · 🌻 ${consolidadoEnCurso.totalGirasoles} girasoles`
+                        : ""}
+                      {consolidadoEnCurso.totalFloresOrquidea > 0
+                        ? ` · 🌺 ${consolidadoEnCurso.totalFloresOrquidea} orquídeas`
                         : ""}
                     </strong>
 
@@ -2656,8 +3246,10 @@ export function ConsolaInventarioRosas({
                             />
                           )}
                           {v.tipoFlor === "orquidea"
-                            ? `${v.cantidad} vara(s) ${v.variedadNombre} (${v.numeroFlores ?? 0} flores)`
-                            : `${v.cantidad} ${v.variedadNombre}`}
+                            ? `🌺 ${v.numeroFlores ?? v.cantidad} ${v.variedadNombre}`
+                            : v.tipoFlor === "girasol"
+                              ? `🌻 ${v.cantidad} Girasoles`
+                              : `${v.cantidad} ${v.variedadNombre}`}
                         </span>
                       ))}
                     </div>
@@ -2774,8 +3366,10 @@ export function ConsolaInventarioRosas({
                               ? itemsFoto
                                   .map((it) =>
                                     it.tipoFlor === "orquidea"
-                                      ? `${it.cantidad} vara(s) ${it.variedadNombre} (${it.numeroFlores ?? 0} fl.)`
-                                      : `${it.cantidad} ${it.variedadNombre}`
+                                      ? `${it.numeroFlores ?? it.cantidad} ${it.variedadNombre}`
+                                      : it.tipoFlor === "girasol"
+                                        ? `${it.cantidad} Girasoles`
+                                        : `${it.cantidad} ${it.variedadNombre}`
                                   )
                                   .join(", ")
                               : formatearResumenInventarioTexto(f.conteoColores)}

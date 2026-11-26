@@ -11,7 +11,9 @@ import {
   formatearResumenPersonalizacionFloral,
   inferirTipoEnvoltorioPorColeccion,
   modoRequiereColoresRosas,
+  obtenerColoresOrquideasConInventario,
   obtenerColoresRosasConInventario,
+  obtenerEstadoGirasolesInventario,
   obtenerEtiquetaTipoEnvoltorio,
   obtenerModosFlorDisponibles,
   obtenerOpcionesColorEnvoltorio,
@@ -174,6 +176,7 @@ export function ModalDetalleProducto() {
       setModoFloresSel(modosDisp[0]?.id ?? 'solo_rosas');
       setColoresRosasSel([]);
       setCantidadOrquideasSel(cfgPers.orquideasMin);
+      setColorOrquideaSel(null);
       setColorBasePapelSel(null);
       setIndicacionesAdicionales('');
       setErrorPersonalizacion(null);
@@ -244,6 +247,7 @@ export function ModalDetalleProducto() {
   const [modoFloresSel, setModoFloresSel] = useState<ModoFlorPersonalizacion>('solo_rosas');
   const [coloresRosasSel, setColoresRosasSel] = useState<string[]>([]);
   const [cantidadOrquideasSel, setCantidadOrquideasSel] = useState<number>(0);
+  const [colorOrquideaSel, setColorOrquideaSel] = useState<string | null>(null);
   const [colorBasePapelSel, setColorBasePapelSel] = useState<ColorBasePapelId | null>(null);
   const [indicacionesAdicionales, setIndicacionesAdicionales] = useState('');
   const [errorPersonalizacion, setErrorPersonalizacion] = useState<string | null>(null);
@@ -683,15 +687,58 @@ export function ModalDetalleProducto() {
     return obtenerColoresRosasConInventario(configPersonalizacionFloral, inventarioColores);
   }, [configPersonalizacionFloral, inventarioColores]);
 
+  const estadoGirasolesInventario = React.useMemo(
+    () => obtenerEstadoGirasolesInventario(inventarioColores),
+    [inventarioColores]
+  );
+
+  const orquideasConInventario = React.useMemo(
+    () => obtenerColoresOrquideasConInventario(inventarioColores),
+    [inventarioColores]
+  );
+
   const coloresElegidosBajoConfirmacion = React.useMemo(() => {
-    if (mismosColoresFoto || coloresRosasSel.length === 0) return [];
-    const setBajoConf = new Set(
-      coloresConInventario
-        .filter((c) => c.bajoConfirmacion)
-        .map((c) => c.etiqueta.trim().toLowerCase())
-    );
-    return coloresRosasSel.filter((et) => setBajoConf.has(et.trim().toLowerCase()));
-  }, [mismosColoresFoto, coloresRosasSel, coloresConInventario]);
+    const lista: string[] = [];
+    if (!mismosColoresFoto && coloresRosasSel.length > 0) {
+      const setBajoConf = new Set(
+        coloresConInventario
+          .filter((c) => c.bajoConfirmacion)
+          .map((c) => c.etiqueta.trim().toLowerCase())
+      );
+      for (const et of coloresRosasSel) {
+        if (setBajoConf.has(et.trim().toLowerCase())) {
+          lista.push(et);
+        }
+      }
+    }
+    const usaGirasoles =
+      modoFloresSel === 'solo_girasoles' || modoFloresSel === 'girasoles_y_rosas';
+    if (usaGirasoles && estadoGirasolesInventario.bajoConfirmacion) {
+      lista.push('Girasoles');
+    }
+    if ((cantidadOrquideasSel > 0 || modoFloresSel === 'solo_orquideas') && colorOrquideaSel) {
+      const orqMatch = orquideasConInventario.find((o) => o.clave === colorOrquideaSel);
+      if (
+        orqMatch &&
+        (orqMatch.bajoConfirmacion ||
+          (Boolean(inventarioColores?.tieneInventarioRegistrado) &&
+            cantidadOrquideasSel > orqMatch.unidadesEnStock))
+      ) {
+        lista.push(`Orquídea ${orqMatch.etiqueta}`);
+      }
+    }
+    return Array.from(new Set(lista));
+  }, [
+    mismosColoresFoto,
+    coloresRosasSel,
+    coloresConInventario,
+    modoFloresSel,
+    estadoGirasolesInventario.bajoConfirmacion,
+    cantidadOrquideasSel,
+    colorOrquideaSel,
+    orquideasConInventario,
+    inventarioColores?.tieneInventarioRegistrado,
+  ]);
 
   const personalizacionFloralActiva = Boolean(
     configPersonalizacionFloral?.habilitada &&
@@ -714,8 +761,13 @@ export function ModalDetalleProducto() {
       cantidad: cantidadModal,
       mismosColoresFoto,
       requiereColoresRosas: pideRosas,
+      modoFlores: modoFloresSel,
       coloresElegidos: coloresRosasSel,
       coloresConInventario,
+      estadoGirasoles: estadoGirasolesInventario,
+      cantidadOrquideas: cantidadOrquideasSel,
+      colorOrquideaElegido: colorOrquideaSel,
+      orquideasConInventario,
     });
   }, [
     personalizacionFloralActiva,
@@ -727,6 +779,10 @@ export function ModalDetalleProducto() {
     cantidadModal,
     coloresRosasSel,
     coloresConInventario,
+    estadoGirasolesInventario,
+    cantidadOrquideasSel,
+    colorOrquideaSel,
+    orquideasConInventario,
   ]);
 
   const toggleColorRosaCliente = (etiquetaColor: string) => {
@@ -820,6 +876,7 @@ export function ModalDetalleProducto() {
           ? descuentoColorOferta.porcentajeDescuento
           : undefined,
         cantidadOrquideas: cantidadOrquideasSel,
+        colorOrquidea: colorOrquideaSel,
         tipoEnvoltorio:
           configPersonalizacionFloral.mostrarColorBase &&
           configPersonalizacionFloral.tipoEnvoltorio !== 'no_aplica'
@@ -2399,6 +2456,7 @@ export function ModalDetalleProducto() {
                   ? descuentoColorOferta.porcentajeDescuento
                   : undefined,
                 cantidadOrquideas: cantidadOrquideasSel,
+                colorOrquidea: colorOrquideaSel,
                 tipoEnvoltorio: tipoEnvEfectivo,
                 tipoEnvoltorioEtiqueta: tipoEnvEfectivo ? rotuloTipoEnv : undefined,
                 colorBasePapel: tipoEnvEfectivo ? colorBasePapelSel : null,
@@ -2703,11 +2761,78 @@ export function ModalDetalleProducto() {
                                       : '🌹 '}
                                     {modo.etiqueta}
                                   </span>
+                                  {(modo.id === 'solo_girasoles' ||
+                                    modo.id === 'girasoles_y_rosas') &&
+                                    estadoGirasolesInventario.enOferta && (
+                                      <span
+                                        style={{
+                                          fontSize: '0.65rem',
+                                          fontWeight: 800,
+                                          padding: '1px 6px',
+                                          borderRadius: '999px',
+                                          background: activo ? '#FFFFFF' : '#DCFCE7',
+                                          color: '#15803D',
+                                          border: activo ? 'none' : '1px solid #86EFAC',
+                                        }}
+                                      >
+                                        -{estadoGirasolesInventario.porcentajeDescuentoOferta}%
+                                      </span>
+                                    )}
                                 </button>
                               );
                             })}
                           </div>
                         </div>
+                      )}
+
+                      {/* Aviso de oferta / confirmación en Girasoles (Solo Girasoles o Girasoles y Rosas) */}
+                      {(modoFloresSel === 'solo_girasoles' ||
+                        modoFloresSel === 'girasoles_y_rosas') && (
+                        <>
+                          {estadoGirasolesInventario.enOferta && (
+                            <div
+                              role="status"
+                              style={{
+                                padding: '8px 11px',
+                                borderRadius: '10px',
+                                background: '#ECFDF5',
+                                border: '1.5px solid #10B981',
+                                color: '#065F46',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              🌻 <strong>¡Girasoles en oferta (-{estadoGirasolesInventario.porcentajeDescuentoOferta}%)!</strong>{' '}
+                              {descuentoColorOferta.aplicaDescuento
+                                ? `Descuento automático de -${descuentoColorOferta.porcentajeDescuento}% aplicado (ahorras $${descuentoColorOferta.ahorroTotalLinea.toFixed(2)}).`
+                                : 'Descuento automático disponible en tu arreglo con girasoles.'}
+                            </div>
+                          )}
+                          {estadoGirasolesInventario.bajoConfirmacion && (
+                            <div
+                              role="status"
+                              style={{
+                                padding: '9px 11px',
+                                borderRadius: '10px',
+                                background: '#FFFBEB',
+                                border: '1.5px solid #F59E0B',
+                                color: '#78350F',
+                                fontSize: '0.74rem',
+                                lineHeight: 1.4,
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '7px',
+                              }}
+                            >
+                              <AlertTriangle size={15} color="#D97706" style={{ flexShrink: 0, marginTop: '1px' }} />
+                              <span>
+                                <strong>Girasoles — Bajo confirmación o para reservas (1 día):</strong>{' '}
+                                no constan en inventario para entrega inmediata hoy; verifica disponibilidad o reserva con 1 día de anticipación con la tienda.
+                              </span>
+                            </div>
+                          )}
+                        </>
                       )}
 
                       {/* Selector de Colores de Rosas */}
@@ -2735,41 +2860,84 @@ export function ModalDetalleProducto() {
                             </span>
                             <span
                               style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
                                 fontSize: '0.7rem',
                                 fontWeight: 700,
-                                color: coloresRosasSel.length > 0 ? '#2F4737' : '#BE185D',
+                                color: coloresRosasSel.length > 0 ? '#BE185D' : '#71717A',
                               }}
                             >
-                              {coloresRosasSel.length}/{configPersonalizacionFloral.maxColoresRosas}
+                              {coloresRosasSel.length > 0 ? (
+                                <>
+                                  <span
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px',
+                                      padding: '1.5px 7px',
+                                      borderRadius: '999px',
+                                      background: '#FDF2F8',
+                                      border: '1px solid #FBCFE8',
+                                      color: '#9D174D',
+                                    }}
+                                  >
+                                    <Check size={11} strokeWidth={3} />
+                                    <span>{coloresRosasSel.join(', ')}</span>
+                                  </span>
+                                  <span>
+                                    {coloresRosasSel.length}/{configPersonalizacionFloral.maxColoresRosas}
+                                  </span>
+                                </>
+                              ) : (
+                                <span>
+                                  {coloresRosasSel.length}/{configPersonalizacionFloral.maxColoresRosas}
+                                </span>
+                              )}
                             </span>
                           </div>
 
-                          {/* Aviso compacto si existen colores en oferta hoy en inventario */}
+                          {/* Aviso compacto si existen colores en oferta hoy en inventario (soporta % por color) */}
                           {(() => {
                             const coloresOfertaDisp = coloresEnStockUI.filter((c) => c.enOferta);
                             if (coloresOfertaDisp.length === 0) return null;
-                            const pct = coloresOfertaDisp[0]!.porcentajeDescuentoOferta;
+                            const pctsUnicos = Array.from(
+                              new Set(coloresOfertaDisp.map((c) => c.porcentajeDescuentoOferta))
+                            );
+                            const todosIguales = pctsUnicos.length === 1;
                             return (
                               <div
                                 style={{
                                   marginBottom: '8px',
                                   padding: '7px 10px',
                                   borderRadius: '10px',
-                                  background: '#ECFDF5',
-                                  border: '1px solid #A7F3D0',
-                                  color: '#065F46',
-                                  fontSize: '0.73rem',
+                                  background: '#F0FDF4',
+                                  border: '1px solid #BBF7D0',
+                                  color: '#166534',
+                                  fontSize: '0.72rem',
                                   lineHeight: 1.38,
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '6px',
                                 }}
                               >
-                                <Tag size={13} color="#059669" style={{ flexShrink: 0 }} />
+                                <Tag size={13} color="#15803D" style={{ flexShrink: 0 }} />
                                 <span>
-                                  <strong>Colores en oferta (-{pct}%):</strong> elige{' '}
-                                  {coloresOfertaDisp.map((c) => c.etiqueta).join(', ')} y recibe{' '}
-                                  <strong>{pct}% de descuento automático</strong> en tu arreglo.
+                                  {todosIguales ? (
+                                    <>
+                                      <strong>Colores en oferta (-{pctsUnicos[0]}%):</strong> elige{' '}
+                                      {coloresOfertaDisp.map((c) => c.etiqueta).join(', ')} y recibe{' '}
+                                      <strong>{pctsUnicos[0]}% de descuento automático</strong> en tu arreglo.
+                                    </>
+                                  ) : (
+                                    <>
+                                      <strong>Colores en oferta:</strong> elige{' '}
+                                      {coloresOfertaDisp
+                                        .map((c) => `${c.etiqueta} (-${c.porcentajeDescuentoOferta}%)`)
+                                        .join(', ')}{' '}
+                                      y recibe <strong>descuento automático</strong> en tu arreglo.
+                                    </>
+                                  )}
                                 </span>
                               </div>
                             );
@@ -2777,7 +2945,7 @@ export function ModalDetalleProducto() {
 
                           {/* Colores disponibles hoy en el inventario del taller */}
                           {coloresEnStockUI.length > 0 && (
-                            <div style={{ marginBottom: coloresBajoConfUI.length > 0 ? '9px' : 0 }}>
+                            <div style={{ marginBottom: coloresBajoConfUI.length > 0 ? '10px' : 0 }}>
                               {inventarioActivo && (
                                 <span
                                   style={{
@@ -2787,7 +2955,7 @@ export function ModalDetalleProducto() {
                                     fontSize: '0.69rem',
                                     fontWeight: 700,
                                     color: '#166534',
-                                    marginBottom: '5px',
+                                    marginBottom: '6px',
                                   }}
                                 >
                                   <span
@@ -2825,27 +2993,17 @@ export function ModalDetalleProducto() {
                                         padding: '6px 11px',
                                         borderRadius: '999px',
                                         border: activo
-                                          ? col.enOferta
-                                            ? '2px solid #059669'
-                                            : '2px solid #BE185D'
-                                          : col.enOferta
-                                          ? '1.5px solid #34D399'
-                                          : '1px solid #E4DDD4',
-                                        background: activo
-                                          ? col.enOferta
-                                            ? '#ECFDF5'
-                                            : '#FDF2F8'
-                                          : col.enOferta
-                                          ? '#F0FDF4'
-                                          : '#FFFFFF',
-                                        color: activo
-                                          ? col.enOferta
-                                            ? '#065F46'
-                                            : '#831843'
-                                          : '#27272A',
+                                          ? '2px solid #9D174D'
+                                          : '1px solid #DFD7CD',
+                                        background: activo ? '#BE185D' : '#FFFFFF',
+                                        color: activo ? '#FFFFFF' : '#27272A',
                                         fontSize: '0.76rem',
-                                        fontWeight: activo ? 800 : 600,
+                                        fontWeight: activo ? 700 : 600,
                                         cursor: 'pointer',
+                                        boxShadow: activo
+                                          ? '0 3px 10px rgba(190, 24, 93, 0.28)'
+                                          : 'none',
+                                        transition: 'background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease',
                                       }}
                                     >
                                       <span
@@ -2854,7 +3012,10 @@ export function ModalDetalleProducto() {
                                           height: '13px',
                                           borderRadius: '999px',
                                           background: col.colorHex,
-                                          border: `1px solid ${col.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                          border: activo
+                                            ? '2px solid #FFFFFF'
+                                            : `1px solid ${col.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                          boxShadow: activo ? '0 0 0 1px rgba(0,0,0,0.15)' : 'none',
                                           flexShrink: 0,
                                         }}
                                       />
@@ -2864,17 +3025,21 @@ export function ModalDetalleProducto() {
                                           style={{
                                             fontSize: '0.65rem',
                                             fontWeight: 800,
-                                            color: '#FFFFFF',
-                                            background: '#059669',
+                                            color: activo ? '#047857' : '#15803D',
+                                            background: activo ? '#FFFFFF' : '#DCFCE7',
+                                            border: activo
+                                              ? '1px solid rgba(255,255,255,0.6)'
+                                              : '1px solid #86EFAC',
                                             padding: '1px 6px',
                                             borderRadius: '999px',
+                                            lineHeight: 1.25,
                                           }}
                                         >
                                           -{col.porcentajeDescuentoOferta}%
                                         </span>
                                       )}
                                       {activo && (
-                                        <Check size={12} color={col.enOferta ? '#059669' : '#BE185D'} />
+                                        <Check size={13} strokeWidth={3} color="#FFFFFF" />
                                       )}
                                     </button>
                                   );
@@ -2925,7 +3090,7 @@ export function ModalDetalleProducto() {
                             </div>
                           )}
 
-                          {/* Colores no presentes en el inventario actual -> Bajo confirmación */}
+                          {/* Colores no presentes en el inventario actual -> Bajo confirmación o reservas (1 día) */}
                           {coloresBajoConfUI.length > 0 && (
                             <div>
                               <span
@@ -2936,11 +3101,11 @@ export function ModalDetalleProducto() {
                                   fontSize: '0.69rem',
                                   fontWeight: 700,
                                   color: '#92400E',
-                                  marginBottom: '5px',
+                                  marginBottom: '6px',
                                 }}
                               >
                                 <Clock size={11} color="#D97706" />
-                                <span>Bajo confirmación (pedido con anticipación)</span>
+                                <span>Bajo confirmación o para reservas (1 día)</span>
                               </span>
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
                                 {coloresBajoConfUI.map((col) => {
@@ -2951,7 +3116,7 @@ export function ModalDetalleProducto() {
                                       type="button"
                                       onClick={() => toggleColorRosaCliente(col.etiqueta)}
                                       aria-pressed={activo}
-                                      title={`Color ${col.etiqueta} bajo confirmación: no disponible para entrega inmediata, verificar con tienda`}
+                                      title={`Color ${col.etiqueta} — bajo confirmación o para reservas (1 día de anticipación)`}
                                       style={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -2959,13 +3124,17 @@ export function ModalDetalleProducto() {
                                         padding: '6px 11px',
                                         borderRadius: '999px',
                                         border: activo
-                                          ? '2px solid #D97706'
-                                          : '1px dashed #F59E0B',
-                                        background: activo ? '#FFFBEB' : '#FFFDF7',
-                                        color: activo ? '#92400E' : '#57524C',
+                                          ? '2px solid #92400E'
+                                          : '1px dashed #D6C2A3',
+                                        background: activo ? '#B45309' : '#FAF8F5',
+                                        color: activo ? '#FFFFFF' : '#57524C',
                                         fontSize: '0.76rem',
-                                        fontWeight: activo ? 800 : 600,
+                                        fontWeight: activo ? 700 : 600,
                                         cursor: 'pointer',
+                                        boxShadow: activo
+                                          ? '0 3px 10px rgba(180, 83, 9, 0.28)'
+                                          : 'none',
+                                        transition: 'background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease',
                                       }}
                                     >
                                       <span
@@ -2974,24 +3143,19 @@ export function ModalDetalleProducto() {
                                           height: '13px',
                                           borderRadius: '999px',
                                           background: col.colorHex,
-                                          border: `1px solid ${col.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                          border: activo
+                                            ? '2px solid #FFFFFF'
+                                            : `1px solid ${col.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                          boxShadow: activo ? '0 0 0 1px rgba(0,0,0,0.15)' : 'none',
                                           flexShrink: 0,
                                         }}
                                       />
                                       <span>{col.etiqueta}</span>
-                                      <span
-                                        style={{
-                                          fontSize: '0.64rem',
-                                          fontWeight: 700,
-                                          color: '#B45309',
-                                          background: '#FEF3C7',
-                                          padding: '1px 5px',
-                                          borderRadius: '999px',
-                                        }}
-                                      >
-                                        Bajo conf.
-                                      </span>
-                                      {activo && <Check size={12} color="#B45309" />}
+                                      {activo ? (
+                                        <Check size={13} strokeWidth={3} color="#FFFFFF" />
+                                      ) : (
+                                        <Clock size={11} color="#B45309" style={{ opacity: 0.85 }} />
+                                      )}
                                     </button>
                                   );
                                 })}
@@ -3025,12 +3189,13 @@ export function ModalDetalleProducto() {
                                 />
                                 <div>
                                   <strong style={{ display: 'block', color: '#92400E', marginBottom: '2px' }}>
-                                    Bajo confirmación ({coloresElegidosBajoConfirmacion.join(', ')})
+                                    Bajo confirmación o para reservas (1 día) —{' '}
+                                    {coloresElegidosBajoConfirmacion.join(', ')}
                                   </strong>
                                   <span>
-                                    Este color no está en nuestro inventario actual, por lo que{' '}
-                                    <strong>no está listo para entrega inmediata</strong>. Con
-                                    anticipación podemos pedirlo a nuestros proveedores;{' '}
+                                    Este color no está en inventario para{' '}
+                                    <strong>entrega inmediata hoy</strong>. Podemos pedirlo a
+                                    proveedores para <strong>reservas con 1 día de anticipación</strong>;{' '}
                                     <strong>verifica disponibilidad y fecha con la tienda</strong>.
                                   </span>
                                 </div>
@@ -3171,117 +3336,300 @@ export function ModalDetalleProducto() {
                     </>
                   )}
 
-                  {/* Orquídeas (desde orquideasMin hasta orquideasMax) */}
-                  {configPersonalizacionFloral.orquideasMax > 0 && (
+                  {/* Orquídeas (cantidad + selector de los 5 colores desde inventario con oferta) */}
+                  {(configPersonalizacionFloral.orquideasMax > 0 ||
+                    modoFloresSel === 'solo_orquideas') && (
                     <div
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
+                        flexDirection: 'column',
                         gap: '10px',
-                        flexWrap: 'wrap',
-                        padding: '9px 11px',
-                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        borderRadius: '11px',
                         background: '#FAF5FF',
                         border: '1px solid #E9D5FF',
                       }}
                     >
-                      <div>
-                        <strong
-                          style={{
-                            display: 'block',
-                            fontSize: '0.78rem',
-                            color: '#581C87',
-                          }}
-                        >
-                          🌺 Cantidad de Orquídeas ({configPersonalizacionFloral.orquideasMin} a{' '}
-                          {configPersonalizacionFloral.orquideasMax})
-                        </strong>
-                        <span style={{ fontSize: '0.71rem', color: '#6B21A8' }}>
-                          {cantidadOrquideasSel === 0
-                            ? '0 orquídeas (sin orquídeas)'
-                            : `${cantidadOrquideasSel} ${
-                                cantidadOrquideasSel === 1 ? 'orquídea' : 'orquídeas'
-                              } en tu combinación`}
-                        </span>
-                      </div>
-
                       <div
                         style={{
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
-                          border: '1px solid #D8B4FE',
-                          borderRadius: '999px',
-                          background: '#FFFFFF',
-                          overflow: 'hidden',
+                          justifyContent: 'space-between',
+                          gap: '10px',
+                          flexWrap: 'wrap',
                         }}
                       >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCantidadOrquideasSel((prev) =>
-                              Math.max(configPersonalizacionFloral.orquideasMin, prev - 1)
-                            )
-                          }
-                          disabled={cantidadOrquideasSel <= configPersonalizacionFloral.orquideasMin}
-                          aria-label="Disminuir orquídeas"
+                        <div>
+                          <strong
+                            style={{
+                              display: 'block',
+                              fontSize: '0.78rem',
+                              color: '#581C87',
+                            }}
+                          >
+                            🌺 Cantidad de Orquídeas ({configPersonalizacionFloral.orquideasMin} a{' '}
+                            {configPersonalizacionFloral.orquideasMax})
+                          </strong>
+                          <span style={{ fontSize: '0.71rem', color: '#6B21A8' }}>
+                            {cantidadOrquideasSel === 0
+                              ? '0 orquídeas (sin orquídeas)'
+                              : `${cantidadOrquideasSel} ${
+                                  cantidadOrquideasSel === 1 ? 'orquídea' : 'orquídeas'
+                                } en tu combinación`}
+                          </span>
+                        </div>
+
+                        <div
                           style={{
-                            border: 'none',
-                            background: 'transparent',
-                            minWidth: '34px',
-                            minHeight: '34px',
-                            cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#581C87',
-                            opacity:
-                              cantidadOrquideasSel <= configPersonalizacionFloral.orquideasMin
-                                ? 0.4
-                                : 1,
+                            border: '1px solid #D8B4FE',
+                            borderRadius: '999px',
+                            background: '#FFFFFF',
+                            overflow: 'hidden',
                           }}
                         >
-                          <Minus size={14} />
-                        </button>
-                        <span
-                          style={{
-                            minWidth: '28px',
-                            textAlign: 'center',
-                            fontWeight: 800,
-                            fontSize: '0.84rem',
-                            color: '#581C87',
-                          }}
-                        >
-                          {cantidadOrquideasSel}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCantidadOrquideasSel((prev) =>
-                              Math.min(configPersonalizacionFloral.orquideasMax, prev + 1)
-                            )
-                          }
-                          disabled={cantidadOrquideasSel >= configPersonalizacionFloral.orquideasMax}
-                          aria-label="Aumentar orquídeas"
-                          style={{
-                            border: 'none',
-                            background: 'transparent',
-                            minWidth: '34px',
-                            minHeight: '34px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#581C87',
-                            opacity:
-                              cantidadOrquideasSel >= configPersonalizacionFloral.orquideasMax
-                                ? 0.4
-                                : 1,
-                          }}
-                        >
-                          <Plus size={14} />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCantidadOrquideasSel((prev) =>
+                                Math.max(configPersonalizacionFloral.orquideasMin, prev - 1)
+                              )
+                            }
+                            disabled={cantidadOrquideasSel <= configPersonalizacionFloral.orquideasMin}
+                            aria-label="Disminuir orquídeas"
+                            style={{
+                              border: 'none',
+                              background: 'transparent',
+                              minWidth: '34px',
+                              minHeight: '34px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#581C87',
+                              opacity:
+                                cantidadOrquideasSel <= configPersonalizacionFloral.orquideasMin
+                                  ? 0.4
+                                  : 1,
+                            }}
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span
+                            style={{
+                              minWidth: '28px',
+                              textAlign: 'center',
+                              fontWeight: 800,
+                              fontSize: '0.84rem',
+                              color: '#581C87',
+                            }}
+                          >
+                            {cantidadOrquideasSel}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCantidadOrquideasSel((prev) =>
+                                Math.min(configPersonalizacionFloral.orquideasMax, prev + 1)
+                              )
+                            }
+                            disabled={cantidadOrquideasSel >= configPersonalizacionFloral.orquideasMax}
+                            aria-label="Aumentar orquídeas"
+                            style={{
+                              border: 'none',
+                              background: 'transparent',
+                              minWidth: '34px',
+                              minHeight: '34px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#581C87',
+                              opacity:
+                                cantidadOrquideasSel >= configPersonalizacionFloral.orquideasMax
+                                  ? 0.4
+                                  : 1,
+                            }}
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Selector de color de orquídea (Blanco, Beige, Verde, Amarilla, Lila) */}
+                      {(cantidadOrquideasSel > 0 || modoFloresSel === 'solo_orquideas') && (() => {
+                        const orqStock = inventarioActivo
+                          ? orquideasConInventario.filter((o) => o.disponibleEnInventario)
+                          : orquideasConInventario;
+                        const orqBajoConf = inventarioActivo
+                          ? orquideasConInventario.filter((o) => o.bajoConfirmacion)
+                          : [];
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#581C87' }}>
+                              Color de orquídea:
+                            </span>
+                            {orqStock.length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {orqStock.map((orq) => {
+                                  const activo = colorOrquideaSel === orq.clave;
+                                  return (
+                                    <button
+                                      key={`orq-col-${orq.clave}`}
+                                      type="button"
+                                      onClick={() =>
+                                        setColorOrquideaSel((prev) =>
+                                          prev === orq.clave ? null : orq.clave
+                                        )
+                                      }
+                                      aria-pressed={activo}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '5px',
+                                        padding: '5px 10px',
+                                        borderRadius: '999px',
+                                        border: activo
+                                          ? '2px solid #9D174D'
+                                          : '1px solid #D8B4FE',
+                                        background: activo ? '#BE185D' : '#FFFFFF',
+                                        color: activo ? '#FFFFFF' : '#27272A',
+                                        fontSize: '0.74rem',
+                                        fontWeight: activo ? 700 : 600,
+                                        cursor: 'pointer',
+                                        boxShadow: activo
+                                          ? '0 2px 8px rgba(190, 24, 93, 0.25)'
+                                          : 'none',
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          width: '12px',
+                                          height: '12px',
+                                          borderRadius: '999px',
+                                          background: orq.colorHex,
+                                          border: activo
+                                            ? '2px solid #FFFFFF'
+                                            : `1px solid ${orq.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                      <span>{orq.etiqueta}</span>
+                                      {orq.enOferta && (
+                                        <span
+                                          style={{
+                                            fontSize: '0.64rem',
+                                            fontWeight: 800,
+                                            padding: '1px 5px',
+                                            borderRadius: '999px',
+                                            background: activo ? '#FFFFFF' : '#DCFCE7',
+                                            color: activo ? '#047857' : '#15803D',
+                                            border: activo ? 'none' : '1px solid #86EFAC',
+                                          }}
+                                        >
+                                          -{orq.porcentajeDescuentoOferta}%
+                                        </span>
+                                      )}
+                                      {activo && <Check size={12} strokeWidth={3} color="#FFFFFF" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {orqBajoConf.length > 0 && (
+                              <div>
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '0.67rem',
+                                    fontWeight: 700,
+                                    color: '#92400E',
+                                    marginBottom: '5px',
+                                  }}
+                                >
+                                  <Clock size={10} color="#D97706" />
+                                  <span>Bajo confirmación o para reservas (1 día)</span>
+                                </span>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                  {orqBajoConf.map((orq) => {
+                                    const activo = colorOrquideaSel === orq.clave;
+                                    return (
+                                      <button
+                                        key={`orq-bc-${orq.clave}`}
+                                        type="button"
+                                        onClick={() =>
+                                          setColorOrquideaSel((prev) =>
+                                            prev === orq.clave ? null : orq.clave
+                                          )
+                                        }
+                                        aria-pressed={activo}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '5px',
+                                          padding: '5px 10px',
+                                          borderRadius: '999px',
+                                          border: activo
+                                            ? '2px solid #92400E'
+                                            : '1px dashed #D6C2A3',
+                                          background: activo ? '#B45309' : '#FAF8F5',
+                                          color: activo ? '#FFFFFF' : '#57524C',
+                                          fontSize: '0.74rem',
+                                          fontWeight: activo ? 700 : 600,
+                                          cursor: 'pointer',
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            width: '12px',
+                                            height: '12px',
+                                            borderRadius: '999px',
+                                            background: orq.colorHex,
+                                            border: activo
+                                              ? '2px solid #FFFFFF'
+                                              : `1px solid ${orq.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                            flexShrink: 0,
+                                          }}
+                                        />
+                                        <span>{orq.etiqueta}</span>
+                                        {activo ? (
+                                          <Check size={12} strokeWidth={3} color="#FFFFFF" />
+                                        ) : (
+                                          <Clock size={10} color="#B45309" />
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {descuentoColorOferta.aplicaDescuento &&
+                              !pideColoresRosas &&
+                              modoFloresSel !== 'solo_girasoles' && (
+                                <div
+                                  role="status"
+                                  style={{
+                                    padding: '7px 10px',
+                                    borderRadius: '9px',
+                                    background: '#ECFDF5',
+                                    border: '1.5px solid #10B981',
+                                    color: '#065F46',
+                                    fontSize: '0.73rem',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  🎉 <strong>¡Descuento de -{descuentoColorOferta.porcentajeDescuento}% aplicado!</strong>{' '}
+                                  Ahorras <strong>${descuentoColorOferta.ahorroTotalLinea.toFixed(2)}</strong> ({descuentoColorOferta.coloresOfertaElegidos.join(', ')}).
+                                </div>
+                              )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 

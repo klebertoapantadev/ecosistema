@@ -62,12 +62,17 @@ describe("operaciones-taller y pdf-informe-iess", () => {
     );
 
     const extraidoOrq = extraerConteoJsonDesdeRespuestaAria(
-      '{"orquideas": [{"color": "amarillo", "variedad": "Cymbidium Amarillo", "varas": 1, "numero_flores": 9}], "nota": "1 vara Cymbidium amarillo con 9 flores"}'
+      '{"girasoles": 14, "orquideas": [{"color": "amarillo", "variedad": "Orquídea Amarilla", "varas": 1, "numero_orquideas": 9}], "nota": "14 girasoles y 1 vara orquídea amarilla con 9 flores"}'
     );
-    expect(extraidoOrq.variedadesDetectadas).toHaveLength(1);
+    expect(extraidoOrq.variedadesDetectadas).toHaveLength(2);
     expect(extraidoOrq.variedadesDetectadas?.[0]).toMatchObject({
+      tipoFlor: "girasol",
+      colorClave: "girasol",
+      cantidad: 14,
+    });
+    expect(extraidoOrq.variedadesDetectadas?.[1]).toMatchObject({
       tipoFlor: "orquidea",
-      colorClave: "amarillo",
+      colorClave: "amarilla",
       cantidad: 1,
       numeroFlores: 9,
     });

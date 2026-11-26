@@ -320,8 +320,8 @@ export function DrawerCarritoFloristeria() {
                             >
                               <AlertTriangle size={12} color="#D97706" style={{ flexShrink: 0 }} />
                               <span>
-                                Color bajo confirmación — no listo para entrega inmediata, verificar
-                                con tienda
+                                Bajo confirmación o para reservas (1 día) — verificar
+                                disponibilidad con tienda
                               </span>
                             </span>
                           )}

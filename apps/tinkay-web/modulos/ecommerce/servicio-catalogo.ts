@@ -834,6 +834,40 @@ export const cargarColoresInventarioTinkay = cache(
       if (!data || data.ok !== true) {
         return null;
       }
+      const pctDef =
+        Number.isFinite(Number(data.porcentajeDescuentoOferta)) &&
+        Number(data.porcentajeDescuentoOferta) > 0
+          ? Number(data.porcentajeDescuentoOferta)
+          : 10;
+      const coloresOfertaLista = Array.isArray(data.coloresEnOferta)
+        ? data.coloresEnOferta.map((c: unknown) => String(c || '').trim()).filter(Boolean)
+        : [];
+      const descuentosPorColor: Record<string, number> = {};
+      if (data.descuentosPorColor && typeof data.descuentosPorColor === 'object') {
+        for (const [k, v] of Object.entries(data.descuentosPorColor as Record<string, unknown>)) {
+          const num = Number(v);
+          if (k && Number.isFinite(num) && num > 0) {
+            descuentosPorColor[k.trim().toLowerCase()] = num;
+          }
+        }
+      }
+      for (const cl of coloresOfertaLista) {
+        const k = cl.toLowerCase();
+        if (!descuentosPorColor[k]) {
+          descuentosPorColor[k] = pctDef;
+        }
+      }
+      const orquideasUnidadesPorColor: Record<string, number> = {};
+      if (data.orquideasUnidadesPorColor && typeof data.orquideasUnidadesPorColor === 'object') {
+        for (const [k, v] of Object.entries(
+          data.orquideasUnidadesPorColor as Record<string, unknown>
+        )) {
+          const num = Math.max(0, Math.round(Number(v) || 0));
+          if (k && num > 0) {
+            orquideasUnidadesPorColor[k.trim().toLowerCase()] = num;
+          }
+        }
+      }
       return {
         tieneInventarioRegistrado: Boolean(data.tieneInventarioRegistrado),
         fechaUltimoCorte:
@@ -841,9 +875,11 @@ export const cargarColoresInventarioTinkay = cache(
         coloresEnStock: Array.isArray(data.coloresEnStock)
           ? data.coloresEnStock.map((c: unknown) => String(c || '').trim()).filter(Boolean)
           : [],
+        girasolesEnStock: Math.max(0, Math.round(Number(data.girasolesEnStock ?? 0) || 0)),
         orquideasEnStock: Array.isArray(data.orquideasEnStock)
           ? data.orquideasEnStock.map((c: unknown) => String(c || '').trim()).filter(Boolean)
           : [],
+        orquideasUnidadesPorColor,
         coloresCatalogo: Array.isArray(data.coloresCatalogo)
           ? data.coloresCatalogo.map((c: unknown) => String(c || '').trim()).filter(Boolean)
           : [],
@@ -855,14 +891,9 @@ export const cargarColoresInventarioTinkay = cache(
               >)
             : {},
         ofertaColoresActiva: Boolean(data.ofertaColoresActiva),
-        porcentajeDescuentoOferta:
-          Number.isFinite(Number(data.porcentajeDescuentoOferta)) &&
-          Number(data.porcentajeDescuentoOferta) > 0
-            ? Number(data.porcentajeDescuentoOferta)
-            : 10,
-        coloresEnOferta: Array.isArray(data.coloresEnOferta)
-          ? data.coloresEnOferta.map((c: unknown) => String(c || '').trim()).filter(Boolean)
-          : [],
+        porcentajeDescuentoOferta: pctDef,
+        coloresEnOferta: coloresOfertaLista,
+        descuentosPorColor,
       };
     } catch (error) {
       console.warn('No se pudo cargar el inventario de colores de Tinkay:', error);

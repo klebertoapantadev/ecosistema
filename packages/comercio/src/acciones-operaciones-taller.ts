@@ -175,12 +175,15 @@ export async function obtenerColoresInventarioTiendaAction(negocio: string): Pro
   tieneInventarioRegistrado: boolean;
   fechaUltimoCorte: string | null;
   coloresEnStock: string[];
+  girasolesEnStock: number;
   orquideasEnStock: string[];
+  orquideasUnidadesPorColor: Record<string, number>;
   coloresCatalogo: string[];
   categoriasColores: Record<string, { etiqueta?: string; colorHex?: string }>;
   ofertaColoresActiva: boolean;
   porcentajeDescuentoOferta: number;
   coloresEnOferta: string[];
+  descuentosPorColor: Record<string, number>;
   error?: string;
 }> {
   try {
@@ -195,6 +198,42 @@ export async function obtenerColoresInventarioTiendaAction(negocio: string): Pro
     );
 
     if (!error && data?.ok) {
+      const pctDef =
+        Number.isFinite(Number(data.porcentajeDescuentoOferta)) &&
+        Number(data.porcentajeDescuentoOferta) > 0
+          ? Number(data.porcentajeDescuentoOferta)
+          : 10;
+      const coloresOfertaLista = Array.isArray(data.coloresEnOferta)
+        ? data.coloresEnOferta.map((c: unknown) => String(c || "").trim()).filter(Boolean)
+        : [];
+      const descuentosPorColor: Record<string, number> = {};
+      if (data.descuentosPorColor && typeof data.descuentosPorColor === "object") {
+        for (const [k, v] of Object.entries(data.descuentosPorColor as Record<string, unknown>)) {
+          const num = Number(v);
+          if (k && Number.isFinite(num) && num > 0) {
+            descuentosPorColor[k.trim().toLowerCase()] = Math.round(Math.min(80, num) * 100) / 100;
+          }
+        }
+      }
+      for (const cl of coloresOfertaLista) {
+        const k = cl.toLowerCase();
+        if (!descuentosPorColor[k]) {
+          descuentosPorColor[k] = pctDef;
+        }
+      }
+
+      const orquideasUnidadesPorColor: Record<string, number> = {};
+      if (data.orquideasUnidadesPorColor && typeof data.orquideasUnidadesPorColor === "object") {
+        for (const [k, v] of Object.entries(
+          data.orquideasUnidadesPorColor as Record<string, unknown>
+        )) {
+          const num = Math.max(0, Math.round(Number(v) || 0));
+          if (k && num > 0) {
+            orquideasUnidadesPorColor[k.trim().toLowerCase()] = num;
+          }
+        }
+      }
+
       return {
         ok: true,
         tieneInventarioRegistrado: Boolean(data.tieneInventarioRegistrado),
@@ -202,9 +241,11 @@ export async function obtenerColoresInventarioTiendaAction(negocio: string): Pro
         coloresEnStock: Array.isArray(data.coloresEnStock)
           ? data.coloresEnStock.map((c: unknown) => String(c || "").trim()).filter(Boolean)
           : [],
+        girasolesEnStock: Math.max(0, Math.round(Number(data.girasolesEnStock ?? 0) || 0)),
         orquideasEnStock: Array.isArray(data.orquideasEnStock)
           ? data.orquideasEnStock.map((c: unknown) => String(c || "").trim()).filter(Boolean)
           : [],
+        orquideasUnidadesPorColor,
         coloresCatalogo: Array.isArray(data.coloresCatalogo)
           ? data.coloresCatalogo.map((c: unknown) => String(c || "").trim()).filter(Boolean)
           : [],
@@ -213,14 +254,9 @@ export async function obtenerColoresInventarioTiendaAction(negocio: string): Pro
             ? (data.categoriasColores as Record<string, { etiqueta?: string; colorHex?: string }>)
             : {},
         ofertaColoresActiva: Boolean(data.ofertaColoresActiva),
-        porcentajeDescuentoOferta:
-          Number.isFinite(Number(data.porcentajeDescuentoOferta)) &&
-          Number(data.porcentajeDescuentoOferta) > 0
-            ? Number(data.porcentajeDescuentoOferta)
-            : 10,
-        coloresEnOferta: Array.isArray(data.coloresEnOferta)
-          ? data.coloresEnOferta.map((c: unknown) => String(c || "").trim()).filter(Boolean)
-          : [],
+        porcentajeDescuentoOferta: pctDef,
+        coloresEnOferta: coloresOfertaLista,
+        descuentosPorColor,
       };
     }
 
@@ -229,12 +265,15 @@ export async function obtenerColoresInventarioTiendaAction(negocio: string): Pro
       tieneInventarioRegistrado: false,
       fechaUltimoCorte: null,
       coloresEnStock: [],
+      girasolesEnStock: 0,
       orquideasEnStock: [],
+      orquideasUnidadesPorColor: {},
       coloresCatalogo: [],
       categoriasColores: {},
       ofertaColoresActiva: false,
       porcentajeDescuentoOferta: 10,
       coloresEnOferta: [],
+      descuentosPorColor: {},
       error: error?.message || String(data?.error || "No se pudo consultar el inventario de colores"),
     };
   } catch (err) {
@@ -243,12 +282,15 @@ export async function obtenerColoresInventarioTiendaAction(negocio: string): Pro
       tieneInventarioRegistrado: false,
       fechaUltimoCorte: null,
       coloresEnStock: [],
+      girasolesEnStock: 0,
       orquideasEnStock: [],
+      orquideasUnidadesPorColor: {},
       coloresCatalogo: [],
       categoriasColores: {},
       ofertaColoresActiva: false,
       porcentajeDescuentoOferta: 10,
       coloresEnOferta: [],
+      descuentosPorColor: {},
       error: err instanceof Error ? err.message : "Error al consultar el inventario de colores",
     };
   }
@@ -259,6 +301,7 @@ export async function guardarColoresOfertaInventarioAction(entrada: {
   activo: boolean;
   porcentajeDescuento: number;
   colores: string[];
+  descuentosPorColor?: Record<string, number>;
 }): Promise<
   | {
       ok: true;
@@ -266,6 +309,7 @@ export async function guardarColoresOfertaInventarioAction(entrada: {
         activo: boolean;
         porcentajeDescuento: number;
         colores: string[];
+        descuentosPorColor: Record<string, number>;
         actualizadoEn: string | null;
         actualizadoPor: string | null;
       };
@@ -277,19 +321,39 @@ export async function guardarColoresOfertaInventarioAction(entrada: {
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
 
-    const pctSeguro = Math.round(Math.min(80, Math.max(1, Number(entrada.porcentajeDescuento) || 10)) * 100) / 100;
+    const pctSeguro =
+      Math.round(Math.min(80, Math.max(1, Number(entrada.porcentajeDescuento) || 10)) * 100) / 100;
+    const descuentosLimpios: Record<string, number> = {};
+    if (entrada.descuentosPorColor && typeof entrada.descuentosPorColor === "object") {
+      for (const [k, v] of Object.entries(entrada.descuentosPorColor)) {
+        const clave = String(k || "").trim().toLowerCase();
+        const pct = Math.round(Math.min(80, Math.max(0, Number(v) || 0)) * 100) / 100;
+        if (clave && pct > 0) {
+          descuentosLimpios[clave] = pct;
+        }
+      }
+    }
     const coloresSeguros = Array.from(
-      new Set((entrada.colores || []).map((c) => String(c || "").trim().toLowerCase()).filter(Boolean))
+      new Set([
+        ...Object.keys(descuentosLimpios),
+        ...(entrada.colores || []).map((c) => String(c || "").trim().toLowerCase()).filter(Boolean),
+      ])
     );
+    for (const cl of coloresSeguros) {
+      if (!descuentosLimpios[cl]) {
+        descuentosLimpios[cl] = pctSeguro;
+      }
+    }
 
     const { data, error } = await invocarRpcComercio(
       supabase,
-      "com_fn_guardar_colores_oferta_inventario",
+      "com_fn_guardar_ofertas_inventario",
       {
         p_negocio: neg,
         p_activo: Boolean(entrada.activo),
         p_porcentaje_descuento: pctSeguro,
         p_colores: coloresSeguros,
+        p_descuentos_por_color: descuentosLimpios,
       }
     );
 
@@ -302,6 +366,15 @@ export async function guardarColoresOfertaInventarioAction(entrada: {
 
     revalidarRutasTienda(neg);
     const of = (data.oferta ?? {}) as Record<string, unknown>;
+    const descRet: Record<string, number> = {};
+    if (of.descuentosPorColor && typeof of.descuentosPorColor === "object") {
+      for (const [k, v] of Object.entries(of.descuentosPorColor as Record<string, unknown>)) {
+        const num = Number(v);
+        if (k && Number.isFinite(num) && num > 0) {
+          descRet[k.trim().toLowerCase()] = num;
+        }
+      }
+    }
     return {
       ok: true,
       oferta: {
@@ -310,6 +383,7 @@ export async function guardarColoresOfertaInventarioAction(entrada: {
         colores: Array.isArray(of.colores)
           ? of.colores.map((c: unknown) => String(c || "").trim()).filter(Boolean)
           : coloresSeguros,
+        descuentosPorColor: Object.keys(descRet).length > 0 ? descRet : descuentosLimpios,
         actualizadoEn: typeof of.actualizadoEn === "string" ? of.actualizadoEn : null,
         actualizadoPor: typeof of.actualizadoPor === "string" ? of.actualizadoPor : null,
       },
@@ -948,17 +1022,19 @@ export async function analizarFotoBonchesConAriaAction(
 
     const promptVision =
       "[MODO_OPERATIVO_INVENTARIO] NO saludes, NO vendas ni uses herramientas de catálogo.\n" +
-      "Eres un contador visual experto en floristería ecuatoriana (rosas seleccionadas estándar Floraroma y orquídeas Cymbidium).\n" +
-      "PRIMERO identifica qué aparece en la fotografía: paquetes/bonches de ROSAS, varas de ORQUÍDEA / CYMBIDIUM, o ambos.\n" +
+      "Eres un contador visual experto en floristería ecuatoriana (rosas estándar Floraroma, girasoles y orquídeas).\n" +
+      "PRIMERO identifica qué aparece en la fotografía: paquetes/bonches de ROSAS, GIRASOLES, ORQUÍDEAS o una combinación.\n" +
       "A) SI HAY PAQUETES/BONCHES DE ROSAS (~25 tallos envueltos en cartón, papel o caja):\n" +
-      "   1. Recorre la foto fila por fila (arriba→abajo, izquierda→derecha) contando CADA paquete completo (NO tallos sueltos).\n" +
+      "   1. Recorre la foto fila por fila contando CADA paquete completo (NO tallos sueltos).\n" +
       "   2. Usa ÚNICAMENTE estas 11 claves de color exactas:\n" +
       `      rojo (${defectoTexto("rojo")}), blanco (${defectoTexto("blanco")}), rosado (${defectoTexto("rosado")}), fucsia (${defectoTexto("fucsia")}), amarillo (${defectoTexto("amarillo")}), durazno (${defectoTexto("durazno")}), naranja (${defectoTexto("naranja")}), lavanda (${defectoTexto("lavanda")}), novedad (${defectoTexto("novedad")}), tinturado (${defectoTexto("tinturado")}), verde (${defectoTexto("verde")}).\n` +
       "   3. Si reconoces una variedad exacta (ej. Explorer, Freedom, Mondial, Vendela, Frutteto, Pink Floyd, Kahala, Brighton, Cool Water), indícala en variedad; si no, déjala vacía.\n" +
-      "B) SI HAY ORQUÍDEAS / CYMBIDIUM (varas con varias flores/campanas en celofán o florero):\n" +
-      "   1. Identifica su color (amarillo, blanco, verde, rosado, vino, crema, naranja, bicolor).\n" +
-      "   2. Cuenta cuántas VARAS hay (`varas`) y con mucha precisión cuántas FLORES/CAMPANAS individuales tiene en total (`numero_flores`).\n" +
-      'Responde ÚNICAMENTE con un objeto JSON válido sin texto extra ni markdown: {"colores": {"rojo": 0}, "variedades": [{"tipo": "rosa", "color": "rojo", "variedad": "", "cantidad": 0}], "orquideas": [{"color": "amarillo", "variedad": "Cymbidium Amarillo", "varas": 1, "numero_flores": 9}], "nota": "resumen breve en 1 línea"}. Omite arreglos vacíos o valores 0.';
+      "B) SI HAY GIRASOLES:\n" +
+      "   1. Cuenta con precisión el número individual de GIRASOLES (flores/unidades visibles) y colócalo en `girasoles`.\n" +
+      "C) SI HAY ORQUÍDEAS:\n" +
+      "   1. Clasifica su color usando ÚNICAMENTE estas 5 claves: blanco, beige, verde, amarilla, lila.\n" +
+      "   2. Cuenta cuántas flores/orquídeas individuales hay en total (`numero_orquideas`) y cuántas varas (`varas`).\n" +
+      'Responde ÚNICAMENTE con un objeto JSON válido sin texto extra ni markdown: {"colores": {"rojo": 0}, "girasoles": 0, "variedades": [{"tipo": "rosa", "color": "rojo", "variedad": "", "cantidad": 0}], "orquideas": [{"color": "blanco", "variedad": "Orquídea Blanca", "varas": 1, "numero_orquideas": 9}], "nota": "resumen breve en 1 línea"}. Omite arreglos vacíos o valores 0.';
 
     const respuesta = await invocarAgentePorNegocio(neg, promptVision, {
       imageUrls: [urlLimpia],
@@ -973,16 +1049,33 @@ export async function analizarFotoBonchesConAriaAction(
 
     if (extraido.variedadesDetectadas && extraido.variedadesDetectadas.length > 0) {
       for (const det of extraido.variedadesDetectadas) {
+        if (det.tipoFlor === "girasol") {
+          const claveUnica = "girasol::girasol::girasoles";
+          const prev = mapaItems.get(claveUnica);
+          if (prev) {
+            prev.cantidad += det.cantidad;
+          } else {
+            mapaItems.set(claveUnica, {
+              id: `ia-gir-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              tipoFlor: "girasol",
+              colorClave: "girasol",
+              variedadNombre: "Girasoles",
+              cantidad: Math.max(1, det.cantidad),
+              origen: "ia",
+            });
+          }
+          continue;
+        }
         const esOrq = det.tipoFlor === "orquidea";
         if (esOrq) {
           const nombreOrq =
             det.variedad?.trim() ||
-            `Cymbidium ${det.colorClave.charAt(0).toUpperCase()}${det.colorClave.slice(1)}`;
+            `Orquídea ${det.colorClave.charAt(0).toUpperCase()}${det.colorClave.slice(1)}`;
           const claveUnica = `orquidea::${det.colorClave}::${nombreOrq.toLowerCase()}`;
           const prev = mapaItems.get(claveUnica);
           if (prev) {
             prev.cantidad += det.cantidad;
-            prev.numeroFlores = (prev.numeroFlores ?? 0) + (det.numeroFlores ?? 0);
+            prev.numeroFlores = (prev.numeroFlores ?? 0) + (det.numeroFlores ?? det.cantidad);
           } else {
             mapaItems.set(claveUnica, {
               id: `ia-orq-${det.colorClave}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -990,7 +1083,7 @@ export async function analizarFotoBonchesConAriaAction(
               colorClave: det.colorClave,
               variedadNombre: nombreOrq,
               cantidad: Math.max(1, det.cantidad),
-              numeroFlores: det.numeroFlores ?? 8,
+              numeroFlores: det.numeroFlores ?? Math.max(1, det.cantidad),
               origen: "ia",
             });
           }

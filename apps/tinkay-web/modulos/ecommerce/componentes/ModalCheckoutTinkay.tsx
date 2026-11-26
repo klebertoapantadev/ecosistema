@@ -1728,8 +1728,8 @@ export function ModalCheckoutTinkay() {
                                       padding: '3px 7px',
                                     }}
                                   >
-                                    ⚠️ Color bajo confirmación: no aplica entrega inmediata,
-                                    verificar disponibilidad con la tienda.
+                                    ⚠️ Bajo confirmación o para reservas (1 día): no aplica entrega
+                                    inmediata hoy, verificar disponibilidad con la tienda.
                                   </small>
                                 )}
                                 {it.dedicatoria?.mensaje && (

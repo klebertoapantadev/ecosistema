@@ -261,7 +261,15 @@ export function formatearResumenInventarioTexto(resumenColores?: Record<string, 
   for (const [k, v] of Object.entries(resumenColores)) {
     const cant = Number(v) || 0;
     if (cant > 0 && !COLORES_ROSAS_ESTANDAR.some((d) => d.clave === k)) {
-      partes.push(`${cant} ${k}`);
+      const kLow = k.toLowerCase();
+      if (kLow === "girasol" || kLow === "girasoles") {
+        partes.push(`${cant} girasoles`);
+      } else if (kLow.startsWith("orquidea_")) {
+        const colOrq = kLow.slice(9);
+        partes.push(`${cant} orquídeas ${colOrq}`);
+      } else {
+        partes.push(`${cant} ${k}`);
+      }
     }
   }
 
@@ -269,31 +277,41 @@ export function formatearResumenInventarioTexto(resumenColores?: Record<string, 
 }
 
 /**
- * Extrae el conteo por colores desde la respuesta del agente ARIA (JSON puro,
- * bloque ```json ... ``` o lenguaje natural tipo "10 rojos, 5 blancos, 2 rosados").
+ * Normaliza el color de orquídea a las 5 categorías operativas oficiales:
+ * blanco, beige, verde, amarilla, lila.
  */
 export function normalizarColorOrquideaCymbidium(texto: string): string {
   const t = String(texto || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/^orquidea[_\s-]+/i, "")
     .trim();
-  if (t.includes("amarill") || t.includes("yellow") || t.includes("dorad")) return "amarillo";
   if (t.includes("blanc") || t.includes("white")) return "blanco";
+  if (t.includes("beige") || t.includes("crema") || t.includes("champagne") || t.includes("naranj") || t.includes("bronce"))
+    return "beige";
   if (t.includes("verd") || t.includes("green") || t.includes("limon")) return "verde";
-  if (t.includes("rosa") || t.includes("pink") || t.includes("fucsia")) return "rosado";
-  if (t.includes("vino") || t.includes("burdeo") || t.includes("roj") || t.includes("morad") || t.includes("burgundy"))
-    return "vino";
-  if (t.includes("crema") || t.includes("champagne") || t.includes("beige")) return "crema";
-  if (t.includes("naranj") || t.includes("bronce") || t.includes("durazn") || t.includes("orange"))
-    return "naranja";
-  return "bicolor";
+  if (t.includes("amarill") || t.includes("yellow") || t.includes("dorad")) return "amarilla";
+  if (
+    t.includes("lila") ||
+    t.includes("lavand") ||
+    t.includes("morad") ||
+    t.includes("purpl") ||
+    t.includes("rosa") ||
+    t.includes("pink") ||
+    t.includes("fucsia") ||
+    t.includes("vino") ||
+    t.includes("burdeo") ||
+    t.includes("bicolor")
+  )
+    return "lila";
+  return "blanco";
 }
 
 export function extraerConteoJsonDesdeRespuestaAria(texto: string): {
   conteoColores: Record<string, number>;
   variedadesDetectadas?: Array<{
-    tipoFlor?: "rosa" | "orquidea";
+    tipoFlor?: "rosa" | "girasol" | "orquidea";
     colorClave: string;
     variedad?: string;
     cantidad: number;
@@ -314,36 +332,55 @@ export function extraerConteoJsonDesdeRespuestaAria(texto: string): {
       const parsed = JSON.parse(bloqueJson) as Record<string, unknown>;
       const conteo: Record<string, number> = {};
       const variedadesDetectadas: Array<{
-        tipoFlor?: "rosa" | "orquidea";
+        tipoFlor?: "rosa" | "girasol" | "orquidea";
         colorClave: string;
         variedad?: string;
         cantidad: number;
         numeroFlores?: number;
       }> = [];
 
+      const girasolesDirectos = Math.max(
+        0,
+        Math.round(Number(parsed.girasoles ?? parsed.girasol ?? 0) || 0)
+      );
+      if (girasolesDirectos > 0) {
+        variedadesDetectadas.push({
+          tipoFlor: "girasol",
+          colorClave: "girasol",
+          variedad: "Girasoles",
+          cantidad: girasolesDirectos,
+        });
+        conteo.girasol = (conteo.girasol ?? 0) + girasolesDirectos;
+      }
+
       if (Array.isArray(parsed.orquideas)) {
         for (const row of parsed.orquideas) {
           if (!row || typeof row !== "object") continue;
           const r = row as Record<string, unknown>;
-          const varas = Math.max(1, Math.round(Number(r.varas ?? r.cantidad ?? r.tallos ?? 1) || 1));
+          const varas = Math.max(1, Math.round(Number(r.varas ?? r.tallos ?? 1) || 1));
           const numeroFlores = Math.max(
             0,
-            Math.round(Number(r.numero_flores ?? r.flores ?? r.campanas ?? r.blooms ?? 0) || 0)
+            Math.round(
+              Number(
+                r.numero_orquideas ?? r.numero_flores ?? r.flores ?? r.campanas ?? r.cantidad ?? r.blooms ?? 0
+              ) || 0
+            )
           );
           if (varas <= 0 && numeroFlores <= 0) continue;
           const colorClave = normalizarColorOrquideaCymbidium(String(r.color ?? r.colorClave ?? ""));
           const variedad =
             typeof r.variedad === "string" && r.variedad.trim()
               ? r.variedad.trim()
-              : `Cymbidium ${colorClave.charAt(0).toUpperCase()}${colorClave.slice(1)}`;
+              : `Orquídea ${colorClave.charAt(0).toUpperCase()}${colorClave.slice(1)}`;
+          const numOrq = numeroFlores > 0 ? numeroFlores : varas;
           variedadesDetectadas.push({
             tipoFlor: "orquidea",
             colorClave,
             variedad,
             cantidad: varas,
-            numeroFlores: numeroFlores > 0 ? numeroFlores : undefined,
+            numeroFlores: numOrq,
           });
-          conteo[`orquidea_${colorClave}`] = (conteo[`orquidea_${colorClave}`] ?? 0) + varas;
+          conteo[`orquidea_${colorClave}`] = (conteo[`orquidea_${colorClave}`] ?? 0) + numOrq;
         }
       }
 
@@ -353,26 +390,41 @@ export function extraerConteoJsonDesdeRespuestaAria(texto: string): {
           const r = row as Record<string, unknown>;
           const tipoRaw = String(r.tipo ?? r.tipoFlor ?? r.tipo_flor ?? "").toLowerCase();
           const esOrq = tipoRaw.includes("orquid") || tipoRaw.includes("cymbidium");
+          const esGir =
+            tipoRaw.includes("girasol") ||
+            String(r.color ?? r.variedad ?? "").toLowerCase().includes("girasol");
           const cant = Math.round(Number(r.cantidad ?? r.paquetes ?? r.varas ?? r.count) || 0);
           const numeroFlores = Math.max(
             0,
-            Math.round(Number(r.numero_flores ?? r.flores ?? r.campanas ?? 0) || 0)
+            Math.round(Number(r.numero_orquideas ?? r.numero_flores ?? r.flores ?? r.campanas ?? 0) || 0)
           );
           if (cant <= 0 && numeroFlores <= 0) continue;
+          if (esGir) {
+            const unidadesGir = Math.max(1, cant || numeroFlores);
+            variedadesDetectadas.push({
+              tipoFlor: "girasol",
+              colorClave: "girasol",
+              variedad: "Girasoles",
+              cantidad: unidadesGir,
+            });
+            conteo.girasol = (conteo.girasol ?? 0) + unidadesGir;
+            continue;
+          }
           const colorClave = esOrq
             ? normalizarColorOrquideaCymbidium(String(r.color ?? r.colorClave ?? r.color_clave ?? ""))
             : normalizarClaveColorRosa(String(r.color ?? r.colorClave ?? r.color_clave ?? ""));
           const variedad =
             typeof r.variedad === "string" && r.variedad.trim() ? r.variedad.trim() : undefined;
+          const numOrq = esOrq ? (numeroFlores > 0 ? numeroFlores : Math.max(1, cant)) : undefined;
           variedadesDetectadas.push({
             tipoFlor: esOrq ? "orquidea" : "rosa",
             colorClave,
             variedad,
             cantidad: Math.max(1, cant),
-            numeroFlores: esOrq && numeroFlores > 0 ? numeroFlores : undefined,
+            numeroFlores: numOrq,
           });
           const claveConteo = esOrq ? `orquidea_${colorClave}` : colorClave;
-          conteo[claveConteo] = (conteo[claveConteo] ?? 0) + Math.max(1, cant);
+          conteo[claveConteo] = (conteo[claveConteo] ?? 0) + (esOrq ? numOrq ?? 1 : Math.max(1, cant));
         }
       }
 
@@ -391,11 +443,18 @@ export function extraerConteoJsonDesdeRespuestaAria(texto: string): {
             k === "total" ||
             k === "total_paquetes" ||
             k === "variedades" ||
-            k === "orquideas"
+            k === "orquideas" ||
+            k === "girasoles"
           )
             continue;
           const n = Math.round(Number(v) || 0);
           if (n > 0) {
+            if (k.toLowerCase() === "girasol" || k.toLowerCase() === "girasoles") {
+              if (!conteo.girasol) {
+                conteo.girasol = n;
+              }
+              continue;
+            }
             const clave = normalizarClaveColorRosa(k);
             if (variedadesDetectadas.length === 0) {
               conteo[clave] = (conteo[clave] ?? 0) + n;

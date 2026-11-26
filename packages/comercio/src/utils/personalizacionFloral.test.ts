@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  COLORES_ORQUIDEAS_PERSONALIZACION,
   COLORES_ROSAS_PERSONALIZACION,
   OPCIONES_COLOR_BASE,
   OPCIONES_COLOR_PAPEL,
@@ -10,7 +11,9 @@ import {
   inferirTipoEnvoltorioPorColeccion,
   inferirTipoEnvoltorioPorNombre,
   normalizarConfiguracionPersonalizacionFloral,
+  obtenerColoresOrquideasConInventario,
   obtenerColoresRosasConInventario,
+  obtenerEstadoGirasolesInventario,
   obtenerModosFlorDisponibles,
   obtenerOpcionesColorEnvoltorio,
   resolverPersonalizacionFloralEfectiva,
@@ -353,7 +356,7 @@ describe("personalizacionFloral", () => {
       expect(validacionVerde.seleccionFinal.requiereConfirmacionColor).toBe(true);
       expect(validacionVerde.seleccionFinal.coloresBajoConfirmacion).toEqual(["Verde"]);
       expect(validacionVerde.seleccionFinal.resumenTexto).toContain(
-        "Bajo confirmación con tienda (Verde)"
+        "Bajo confirmación o reserva 1 día (Verde)"
       );
     }
 
@@ -461,5 +464,99 @@ describe("personalizacionFloral", () => {
     const sinCorte = evaluarVigenciaInventarioRosas(null, 15, ahora);
     expect(sinCorte.requiereAlerta).toBe(true);
     expect(sinCorte.horasDesdeUltimoCorte).toBeNull();
+  });
+
+  it("soporta porcentaje de descuento individual por color, girasoles y los 5 colores de orquídeas", () => {
+    expect(COLORES_ORQUIDEAS_PERSONALIZACION.map((c) => c.clave)).toEqual([
+      "blanco",
+      "beige",
+      "verde",
+      "amarilla",
+      "lila",
+    ]);
+
+    const inv = {
+      tieneInventarioRegistrado: true,
+      coloresEnStock: ["rojo", "naranja", "blanco"],
+      girasolesEnStock: 18,
+      orquideasEnStock: ["blanco", "verde"],
+      orquideasUnidadesPorColor: { blanco: 9, verde: 6 },
+      ofertaColoresActiva: true,
+      porcentajeDescuentoOferta: 10,
+      coloresEnOferta: ["rojo", "naranja", "girasol", "orquidea_blanco"],
+      descuentosPorColor: {
+        rojo: 10,
+        naranja: 6,
+        girasol: 12,
+        orquidea_blanco: 15,
+      },
+    };
+
+    const cfg = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      maxColoresRosas: 2,
+      permiteSoloRosas: true,
+      permiteSoloGirasoles: true,
+      permiteGirasolesYRosas: true,
+      orquideasMin: 0,
+      orquideasMax: 5,
+    });
+
+    const coloresRosas = obtenerColoresRosasConInventario(cfg, inv);
+    expect(coloresRosas.find((c) => c.clave === "rojo")?.porcentajeDescuentoOferta).toBe(10);
+    expect(coloresRosas.find((c) => c.clave === "naranja")?.porcentajeDescuentoOferta).toBe(6);
+
+    // 1) Promedio exacto al combinar 2 colores en oferta con distinto % (10% y 6% => 8%)
+    const descComboRosas = calcularDescuentoColorOferta({
+      pvpUnitarioBase: 100,
+      coloresElegidos: ["Rojo", "Naranja"],
+      coloresConInventario: coloresRosas,
+    });
+    expect(descComboRosas.aplicaDescuento).toBe(true);
+    expect(descComboRosas.porcentajeDescuento).toBe(8);
+    expect(descComboRosas.pvpUnitarioFinal).toBe(92);
+
+    // 2) Oferta en Girasoles (12%)
+    const estadoGir = obtenerEstadoGirasolesInventario(inv);
+    expect(estadoGir.disponibleEnInventario).toBe(true);
+    expect(estadoGir.unidadesEnStock).toBe(18);
+    expect(estadoGir.enOferta).toBe(true);
+    expect(estadoGir.porcentajeDescuentoOferta).toBe(12);
+
+    const descSoloGir = calcularDescuentoColorOferta({
+      pvpUnitarioBase: 50,
+      modoFlores: "solo_girasoles",
+      requiereColoresRosas: false,
+      coloresElegidos: [],
+      coloresConInventario: coloresRosas,
+      estadoGirasoles: estadoGir,
+    });
+    expect(descSoloGir.aplicaDescuento).toBe(true);
+    expect(descSoloGir.porcentajeDescuento).toBe(12);
+    expect(descSoloGir.pvpUnitarioFinal).toBe(44);
+
+    // 3) Orquídeas: 5 colores, unidades exactas y descuento por color (Blanco 15%, Lila bajo confirmación)
+    const orqInv = obtenerColoresOrquideasConInventario(inv);
+    const orqBlanca = orqInv.find((o) => o.clave === "blanco");
+    const orqLila = orqInv.find((o) => o.clave === "lila");
+    expect(orqBlanca?.unidadesEnStock).toBe(9);
+    expect(orqBlanca?.enOferta).toBe(true);
+    expect(orqBlanca?.porcentajeDescuentoOferta).toBe(15);
+    expect(orqLila?.bajoConfirmacion).toBe(true);
+    expect(orqLila?.enOferta).toBe(false);
+
+    const descOrq = calcularDescuentoColorOferta({
+      pvpUnitarioBase: 100,
+      modoFlores: "solo_orquideas",
+      requiereColoresRosas: false,
+      coloresElegidos: [],
+      coloresConInventario: coloresRosas,
+      cantidadOrquideas: 2,
+      colorOrquideaElegido: "blanco",
+      orquideasConInventario: orqInv,
+    });
+    expect(descOrq.aplicaDescuento).toBe(true);
+    expect(descOrq.porcentajeDescuento).toBe(15);
+    expect(descOrq.pvpUnitarioFinal).toBe(85);
   });
 });

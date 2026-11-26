@@ -12,26 +12,86 @@ export interface VariedadRosaCatalogo {
   esPersonalizada?: boolean;
 }
 
-export type TipoFlorInventario = "rosa" | "orquidea";
+export type TipoFlorInventario = "rosa" | "girasol" | "orquidea";
 
 export interface DefinicionColorOrquidea {
   clave: string;
   etiqueta: string;
+  nombreCorto: string;
   colorHex: string;
   fondoHex: string;
   textoHex: string;
 }
 
 export const COLORES_ORQUIDEA_CYMBIDIUM: DefinicionColorOrquidea[] = [
-  { clave: "amarillo", etiqueta: "Cymbidium Amarillo", colorHex: "#EAB308", fondoHex: "#FEFCE8", textoHex: "#854D0E" },
-  { clave: "blanco", etiqueta: "Cymbidium Blanco", colorHex: "#CBD5E1", fondoHex: "#F8FAFC", textoHex: "#334155" },
-  { clave: "verde", etiqueta: "Cymbidium Verde", colorHex: "#16A34A", fondoHex: "#F0FDF4", textoHex: "#166534" },
-  { clave: "rosado", etiqueta: "Cymbidium Rosado", colorHex: "#F472B6", fondoHex: "#FDF2F8", textoHex: "#9D174D" },
-  { clave: "vino", etiqueta: "Cymbidium Vino / Burdeos", colorHex: "#881337", fondoHex: "#FFF1F2", textoHex: "#881337" },
-  { clave: "crema", etiqueta: "Cymbidium Crema / Champagne", colorHex: "#D6C5A3", fondoHex: "#FFFBEB", textoHex: "#78350F" },
-  { clave: "naranja", etiqueta: "Cymbidium Naranja / Bronce", colorHex: "#EA580C", fondoHex: "#FFEDD5", textoHex: "#9A3412" },
-  { clave: "bicolor", etiqueta: "Cymbidium Bicolor", colorHex: "#8B5CF6", fondoHex: "#F5F3FF", textoHex: "#5B21B6" },
+  {
+    clave: "blanco",
+    etiqueta: "Orquídea Blanca",
+    nombreCorto: "Blanco",
+    colorHex: "#F8FAFC",
+    fondoHex: "#F8FAFC",
+    textoHex: "#334155",
+  },
+  {
+    clave: "beige",
+    etiqueta: "Orquídea Beige",
+    nombreCorto: "Beige",
+    colorHex: "#D6C5A3",
+    fondoHex: "#FFFBEB",
+    textoHex: "#78350F",
+  },
+  {
+    clave: "verde",
+    etiqueta: "Orquídea Verde",
+    nombreCorto: "Verde",
+    colorHex: "#16A34A",
+    fondoHex: "#F0FDF4",
+    textoHex: "#166534",
+  },
+  {
+    clave: "amarilla",
+    etiqueta: "Orquídea Amarilla",
+    nombreCorto: "Amarilla",
+    colorHex: "#EAB308",
+    fondoHex: "#FEFCE8",
+    textoHex: "#854D0E",
+  },
+  {
+    clave: "lila",
+    etiqueta: "Orquídea Lila",
+    nombreCorto: "Lila",
+    colorHex: "#A855F7",
+    fondoHex: "#FAF5FF",
+    textoHex: "#6B21A8",
+  },
 ];
+
+export function normalizarColorOrquideaClave(texto: string): string {
+  const t = String(texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/^orquidea[_\s-]+/i, "")
+    .trim();
+  if (t.includes("blanc") || t.includes("white")) return "blanco";
+  if (t.includes("beige") || t.includes("crema") || t.includes("champagne") || t.includes("bronce") || t.includes("naranj"))
+    return "beige";
+  if (t.includes("verd") || t.includes("green") || t.includes("limon")) return "verde";
+  if (t.includes("amarill") || t.includes("yellow") || t.includes("dorad")) return "amarilla";
+  if (
+    t.includes("lila") ||
+    t.includes("lavand") ||
+    t.includes("morad") ||
+    t.includes("purpl") ||
+    t.includes("rosa") ||
+    t.includes("fucsia") ||
+    t.includes("vino") ||
+    t.includes("burdeo") ||
+    t.includes("bicolor")
+  )
+    return "lila";
+  return "blanco";
+}
 
 export interface ItemConteoVariedad {
   id: string;
@@ -653,15 +713,44 @@ export function convertirConteoColoresAItemsVariedad(
   origen: "ia" | "manual" = "ia"
 ): ItemConteoVariedad[] {
   const items: ItemConteoVariedad[] = [];
-  for (const [colorClave, rawCant] of Object.entries(conteoColores || {})) {
+  for (const [colorClaveRaw, rawCant] of Object.entries(conteoColores || {})) {
     const cantidad = Math.max(0, Math.round(Number(rawCant) || 0));
     if (cantidad <= 0) continue;
-    const def = obtenerVariedadDefectoPorColor(catalogo, colorClave);
+    const colorLimpio = String(colorClaveRaw || "").trim().toLowerCase();
+    if (colorLimpio === "girasol" || colorLimpio === "girasoles") {
+      items.push({
+        id: `item-girasol-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        tipoFlor: "girasol",
+        colorClave: "girasol",
+        variedadNombre: "Girasoles",
+        cantidad,
+        origen,
+      });
+      continue;
+    }
+    if (colorLimpio.startsWith("orquidea_")) {
+      const claveOrq = normalizarColorOrquideaClave(colorLimpio.slice(9));
+      const defOrq =
+        COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === claveOrq) ??
+        COLORES_ORQUIDEA_CYMBIDIUM[0]!;
+      items.push({
+        id: `item-orq-${claveOrq}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        tipoFlor: "orquidea",
+        colorClave: claveOrq,
+        variedadNombre: defOrq.etiqueta,
+        cantidad: 1,
+        numeroFlores: cantidad,
+        origen,
+      });
+      continue;
+    }
+    const def = obtenerVariedadDefectoPorColor(catalogo, colorLimpio);
     items.push({
-      id: `item-${colorClave}-${def?.id ?? "def"}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      colorClave,
+      id: `item-${colorLimpio}-${def?.id ?? "def"}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      tipoFlor: "rosa",
+      colorClave: colorLimpio,
       variedadId: def?.id,
-      variedadNombre: def?.nombre ?? colorClave,
+      variedadNombre: def?.nombre ?? colorLimpio,
       imagenUrl: def?.imagenUrl,
       cantidad,
       origen,
@@ -675,10 +764,18 @@ export function calcularResumenColoresDesdeItems(
 ): Record<string, number> {
   const resumen: Record<string, number> = {};
   for (const item of items) {
+    if (item.tipoFlor === "orquidea") {
+      const flores = Math.max(0, Math.round(Number(item.numeroFlores) || 0));
+      const varas = Math.max(0, Math.round(Number(item.cantidad) || 0));
+      const unidades = flores > 0 ? flores : varas;
+      if (unidades <= 0) continue;
+      const claveOrq = normalizarColorOrquideaClave(item.colorClave);
+      resumen[`orquidea_${claveOrq}`] = (resumen[`orquidea_${claveOrq}`] ?? 0) + unidades;
+      continue;
+    }
     const n = Math.max(0, Math.round(Number(item.cantidad) || 0));
     if (n <= 0) continue;
-    const clave =
-      item.tipoFlor === "orquidea" ? `orquidea_${item.colorClave}` : item.colorClave;
+    const clave = item.tipoFlor === "girasol" ? "girasol" : item.colorClave;
     resumen[clave] = (resumen[clave] ?? 0) + n;
   }
   return resumen;
@@ -694,12 +791,14 @@ export function consolidarVariedadesDesdeFotos(
   resumenVariedades: ResumenVariedadConsolidado[];
   resumenColores: Record<string, number>;
   totalPaquetes: number;
+  totalGirasoles: number;
   totalVarasOrquidea: number;
   totalFloresOrquidea: number;
 } {
   const mapaVariedad = new Map<string, ResumenVariedadConsolidado>();
   const resumenColores: Record<string, number> = {};
   let totalPaquetes = 0;
+  let totalGirasoles = 0;
   let totalVarasOrquidea = 0;
   let totalFloresOrquidea = 0;
 
@@ -710,52 +809,88 @@ export function consolidarVariedadesDesdeFotos(
         : convertirConteoColoresAItemsVariedad(foto.conteoColores || {}, catalogo, "ia");
 
     for (const item of items) {
-      const tipo: TipoFlorInventario = item.tipoFlor === "orquidea" ? "orquidea" : "rosa";
+      const tipo: TipoFlorInventario =
+        item.tipoFlor === "orquidea"
+          ? "orquidea"
+          : item.tipoFlor === "girasol" || item.colorClave === "girasol"
+            ? "girasol"
+            : "rosa";
       const cant = Math.max(0, Math.round(Number(item.cantidad) || 0));
       const flores = Math.max(0, Math.round(Number(item.numeroFlores) || 0));
       if (cant <= 0 && flores <= 0) continue;
 
-      const key = `${tipo}::${item.colorClave}::${normalizarNombreVariedadComparacion(item.variedadNombre)}`;
+      const colorNormalizado =
+        tipo === "orquidea"
+          ? normalizarColorOrquideaClave(item.colorClave)
+          : tipo === "girasol"
+            ? "girasol"
+            : item.colorClave;
+
+      const defOrq =
+        tipo === "orquidea"
+          ? COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === colorNormalizado)
+          : null;
+      const nombreNormalizado =
+        tipo === "girasol"
+          ? "Girasoles"
+          : tipo === "orquidea"
+            ? defOrq?.etiqueta || item.variedadNombre || `Orquídea ${colorNormalizado}`
+            : item.variedadNombre;
+
+      const key = `${tipo}::${colorNormalizado}::${normalizarNombreVariedadComparacion(nombreNormalizado)}`;
       const existente = mapaVariedad.get(key);
       if (existente) {
         existente.cantidad += cant;
         if (tipo === "orquidea") {
-          existente.numeroFlores = (existente.numeroFlores ?? 0) + flores;
+          existente.numeroFlores = (existente.numeroFlores ?? 0) + (flores > 0 ? flores : cant);
         }
       } else {
         const ref =
           tipo === "rosa"
-            ? resolverVariedadDesdeCatalogo(catalogo, item.colorClave, item.variedadNombre)
+            ? resolverVariedadDesdeCatalogo(catalogo, colorNormalizado, item.variedadNombre)
             : null;
         mapaVariedad.set(key, {
           tipoFlor: tipo,
-          colorClave: item.colorClave,
-          variedadNombre: item.variedadNombre || ref?.nombre || item.colorClave,
+          colorClave: colorNormalizado,
+          variedadNombre: nombreNormalizado || ref?.nombre || colorNormalizado,
           imagenUrl: item.imagenUrl || ref?.imagenUrl,
           cantidad: cant,
-          numeroFlores: tipo === "orquidea" ? flores : undefined,
+          numeroFlores: tipo === "orquidea" ? (flores > 0 ? flores : cant) : undefined,
         });
       }
 
       if (tipo === "orquidea") {
-        const claveOrq = `orquidea_${item.colorClave}`;
-        resumenColores[claveOrq] = (resumenColores[claveOrq] ?? 0) + Math.max(1, cant);
+        const claveOrq = `orquidea_${colorNormalizado}`;
+        const unidadesOrq = flores > 0 ? flores : Math.max(1, cant);
+        resumenColores[claveOrq] = (resumenColores[claveOrq] ?? 0) + unidadesOrq;
         totalVarasOrquidea += cant;
-        totalFloresOrquidea += flores;
+        totalFloresOrquidea += unidadesOrq;
+      } else if (tipo === "girasol") {
+        resumenColores.girasol = (resumenColores.girasol ?? 0) + cant;
+        totalGirasoles += cant;
       } else {
-        resumenColores[item.colorClave] = (resumenColores[item.colorClave] ?? 0) + cant;
+        resumenColores[colorNormalizado] = (resumenColores[colorNormalizado] ?? 0) + cant;
         totalPaquetes += cant;
       }
     }
   }
 
+  const ordenTipo: Record<TipoFlorInventario, number> = {
+    rosa: 0,
+    girasol: 1,
+    orquidea: 2,
+  };
+
   return {
     resumenVariedades: Array.from(mapaVariedad.values()).sort((a, b) => {
-      if (a.tipoFlor !== b.tipoFlor) return a.tipoFlor === "rosa" ? -1 : 1;
-      return b.cantidad - a.cantidad;
+      if (a.tipoFlor !== b.tipoFlor) return ordenTipo[a.tipoFlor] - ordenTipo[b.tipoFlor];
+      const valA = a.tipoFlor === "orquidea" ? a.numeroFlores ?? a.cantidad : a.cantidad;
+      const valB = b.tipoFlor === "orquidea" ? b.numeroFlores ?? b.cantidad : b.cantidad;
+      return valB - valA;
     }),
     resumenColores,
     totalPaquetes,
+    totalGirasoles,
     totalVarasOrquidea,
     totalFloresOrquidea,
   };
