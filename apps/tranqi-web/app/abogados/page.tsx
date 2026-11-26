@@ -1,90 +1,7 @@
-"use client";
-
-import React, { useState } from "react";
 import Link from "next/link";
-import {
-  Check,
-  Send,
-  Loader2,
-  AlertCircle,
-  ArrowRight,
-  ArrowLeft
-} from "lucide-react";
-import { validarCorreoEstructurado } from "@eco/primitivas";
+import { Check, ArrowRight, ArrowLeft } from "lucide-react";
 
 export default function PaginaRedAbogados() {
-  const [nombre, setNombre] = useState("");
-  const [correo, setCorreo] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [mensaje, setMensaje] = useState("");
-  const [errorCorreo, setErrorCorreo] = useState<string | null>(null);
-  const [sugerenciaCorreo, setSugerenciaCorreo] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  const [enviado, setEnviado] = useState(false);
-  const [errorForm, setErrorForm] = useState<string | null>(null);
-
-  const validarEmail = (val: string) => {
-    setCorreo(val);
-    if (!val.trim()) {
-      setErrorCorreo(null);
-      setSugerenciaCorreo(null);
-      return;
-    }
-    const res = validarCorreoEstructurado(val);
-    if (!res.esValido) {
-      setErrorCorreo(res.error || "Formato de correo no válido.");
-      setSugerenciaCorreo(res.sugerencia || null);
-    } else {
-      setErrorCorreo(null);
-      setSugerenciaCorreo(null);
-    }
-  };
-
-  const handleEnviarConsulta = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorForm(null);
-
-    if (!nombre.trim() || !correo.trim()) {
-      setErrorForm("Por favor completa tu nombre y correo electrónico.");
-      return;
-    }
-
-    const val = validarCorreoEstructurado(correo);
-    if (!val.esValido) {
-      setErrorForm(val.error || "El correo electrónico no es válido.");
-      setErrorCorreo(val.error || null);
-      setSugerenciaCorreo(val.sugerencia || null);
-      return;
-    }
-
-    setEnviando(true);
-    try {
-      const res = await fetch("/api/empresas/contacto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          empresa: "Abogado(a) Independiente",
-          nombreContacto: nombre.trim(),
-          cargo: "Postulante Red Nacional",
-          correo: correo.trim().toLowerCase(),
-          telefono: telefono.trim() || "No especificado",
-          interes: "Red Nacional de Abogados (somostranqi)",
-          mensaje: mensaje.trim() || "Solicitud de contacto e información de activación en la Red Nacional de Abogados."
-        })
-      });
-
-      if (!res.ok) {
-        throw new Error("No se pudo enviar el formulario. Intenta nuevamente.");
-      }
-
-      setEnviado(true);
-    } catch (err: unknown) {
-      setErrorForm(err instanceof Error ? err.message : "Error al procesar el envío.");
-    } finally {
-      setEnviando(false);
-    }
-  };
-
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#ffffff", color: "#333333", fontFamily: "var(--fuente-sans, 'Poppins', 'Inter', sans-serif)", overflowX: "hidden" }}>
       {/* ═════════════════════════════════════════════════════════════ */}
@@ -166,7 +83,7 @@ export default function PaginaRedAbogados() {
               App
             </a>
             <a
-              href="#formulario"
+              href="#unete"
               style={{
                 color: "#5100bb",
                 textDecoration: "none",
@@ -745,10 +662,11 @@ export default function PaginaRedAbogados() {
       </section>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 5: FORMULARIO Y REGISTRO (Screenshot 3 verde esmeralda) */}
+      {/* SECCIÓN 5: CIERRE — una sola vía de ingreso a la red (TRQ-035) */}
+      {/* Verde principal del brandbook (lámina «Paleta de Color»).       */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
-        id="formulario"
+        id="unete"
         style={{
           padding: "50px 24px 90px",
           backgroundColor: "#ffffff"
@@ -756,352 +674,107 @@ export default function PaginaRedAbogados() {
       >
         <div
           style={{
+            width: "100%",
             maxWidth: "1180px",
+            boxSizing: "border-box",
             margin: "0 auto",
-            backgroundColor: "#085e54",
+            backgroundColor: "#0e6648",
             borderRadius: "24px",
             overflow: "hidden",
-            boxShadow: "0 18px 45px rgba(8, 94, 84, 0.25)",
+            boxShadow: "0 18px 45px rgba(14, 102, 72, 0.22)",
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+            alignItems: "center",
+            gap: "28px 48px",
+            padding: "clamp(32px, 5vw, 56px) clamp(24px, 5vw, 56px)",
             color: "#ffffff"
           }}
         >
-          {/* Columna Izquierda: Información de activación y botón de registro obligatorio */}
-          <div
-            style={{
-              padding: "48px 40px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between"
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  fontSize: "clamp(1.9rem, 3.5vw, 2.6rem)",
-                  fontWeight: 800,
-                  color: "#ffffff",
-                  lineHeight: 1.18,
-                  margin: "0 0 16px 0"
-                }}
-              >
-                Forma parte de la Red Nacional de Abogados Tranqi.
-              </h2>
-
-              <h4
-                style={{
-                  fontSize: "1.2rem",
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  margin: "0 0 8px 0"
-                }}
-              >
-                Lo legal para todos, empieza contigo.
-              </h4>
-
-              <p
-                style={{
-                  fontSize: "0.95rem",
-                  color: "rgba(255, 255, 255, 0.9)",
-                  margin: "0 0 32px 0",
-                  lineHeight: 1.5
-                }}
-              >
-                Déjanos tus datos y un asesor de Tranqi se pondrá en contacto para activar tu perfil.
-              </p>
-
-              {/* Checklist idéntico a Screenshot 3 */}
-              <div style={{ display: "grid", gap: "14px", marginBottom: "36px" }}>
-                {[
-                  "Da seguimiento a cada trámite en curso",
-                  "Activación en pocos días",
-                  "Soporte durante todo el proceso"
-                ].map((item, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "1rem", fontWeight: 600 }}>
-                    <div
-                      style={{
-                        width: "22px",
-                        height: "22px",
-                        borderRadius: "5px",
-                        border: "2px solid #ffffff",
-                        display: "grid",
-                        placeItems: "center",
-                        flexShrink: 0
-                      }}
-                    >
-                      <Check size={15} strokeWidth={3} />
-                    </div>
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* BOTÓN OBLIGATORIO DE REGISTRO COMO ABOGADO (el existente) */}
-            <div style={{ paddingTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.2)" }}>
-              <a
-                href="/registro?intencion=abogado&destino=/panel/solicitud-socio"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "10px",
-                  width: "100%",
-                  backgroundColor: "#fee400",
-                  color: "#000000",
-                  fontSize: "1rem",
-                  fontWeight: 800,
-                  padding: "15px 28px",
-                  borderRadius: "12px",
-                  textDecoration: "none",
-                  textAlign: "center",
-                  boxShadow: "0 4px 14px rgba(0, 0, 0, 0.2)"
-                }}
-              >
-                Quiero ser parte de la red <ArrowRight size={18} />
-              </a>
-            </div>
-          </div>
-
-          {/* Columna Derecha: Foto de la abogada con formulario original */}
-          <div
-            style={{
-              position: "relative",
-              minHeight: "440px",
-              backgroundImage: "url('/assets/abogados/chica1c.webp')",
-              backgroundSize: "cover",
-              backgroundPosition: "center right",
-              display: "flex",
-              alignItems: "flex-end"
-            }}
-          >
-            {/* Gradiente sutil inferior */}
-            <div
+          {/* Columna izquierda: el mensaje */}
+          <div>
+            <h2
               style={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(to top, rgba(8, 94, 84, 0.95) 0%, rgba(8, 94, 84, 0.25) 50%, transparent 100%)"
-              }}
-            />
-
-            {/* Formulario de Contacto integrado */}
-            <div
-              style={{
-                position: "relative",
-                zIndex: 10,
-                width: "100%",
-                padding: "24px 30px",
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                backdropFilter: "blur(8px)",
-                color: "#333333"
+                fontSize: "clamp(1.9rem, 3.5vw, 2.6rem)",
+                fontWeight: 800,
+                color: "#ffffff",
+                lineHeight: 1.18,
+                margin: "0 0 16px 0"
               }}
             >
-              {enviado ? (
-                <div style={{ textAlign: "center", padding: "16px 10px" }}>
+              Forma parte de la Red Nacional de Abogados Tranqi.
+            </h2>
+
+            <h4
+              style={{
+                fontSize: "1.2rem",
+                fontWeight: 700,
+                color: "#ffffff",
+                margin: "0 0 8px 0"
+              }}
+            >
+              Lo legal para todos, empieza contigo.
+            </h4>
+
+            <p
+              style={{
+                fontSize: "0.95rem",
+                color: "rgba(255, 255, 255, 0.9)",
+                margin: 0,
+                lineHeight: 1.5
+              }}
+            >
+              Regístrate y completa tu solicitud: nuestro equipo valida tu perfil y te activa dentro de la red.
+            </p>
+          </div>
+
+          {/* Columna derecha: checklist y el único botón de registro */}
+          <div>
+            <div style={{ display: "grid", gap: "14px", marginBottom: "28px" }}>
+              {[
+                "Da seguimiento a cada trámite en curso",
+                "Activación en pocos días",
+                "Soporte durante todo el proceso"
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "1rem", fontWeight: 600 }}>
                   <div
                     style={{
-                      width: "44px",
-                      height: "44px",
-                      borderRadius: "50%",
-                      backgroundColor: "#085e54",
-                      color: "#ffffff",
+                      width: "22px",
+                      height: "22px",
+                      borderRadius: "5px",
+                      border: "2px solid #ffffff",
                       display: "grid",
                       placeItems: "center",
-                      margin: "0 auto 10px"
+                      flexShrink: 0
                     }}
                   >
-                    <Check size={22} strokeWidth={3} />
+                    <Check size={15} strokeWidth={3} />
                   </div>
-                  <h4 style={{ fontSize: "1.15rem", fontWeight: 700, margin: "0 0 6px 0", color: "#085e54" }}>
-                    ¡Información Enviada!
-                  </h4>
-                  <p style={{ fontSize: "0.88rem", color: "#666666", margin: "0 0 14px 0" }}>
-                    Un asesor de Tranqi se comunicará contigo para asistirte en la activación.
-                  </p>
-                  <a
-                    href="/registro?intencion=abogado&destino=/panel/solicitud-socio"
-                    style={{
-                      display: "inline-block",
-                      backgroundColor: "#fee400",
-                      color: "#000000",
-                      fontSize: "0.85rem",
-                      fontWeight: 700,
-                      padding: "8px 20px",
-                      borderRadius: "999px",
-                      textDecoration: "none"
-                    }}
-                  >
-                    Completar Registro Ahora
-                  </a>
+                  <span>{item}</span>
                 </div>
-              ) : (
-                <form onSubmit={handleEnviarConsulta}>
-                  <div style={{ marginBottom: "10px" }}>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#085e54", textTransform: "uppercase" }}>
-                      O solicita que un asesor te contacte:
-                    </span>
-                  </div>
-
-                  {errorForm && (
-                    <div
-                      style={{
-                        padding: "6px 10px",
-                        backgroundColor: "#fee2e2",
-                        border: "1px solid #f87171",
-                        borderRadius: "6px",
-                        color: "#b91c1c",
-                        fontSize: "0.78rem",
-                        marginBottom: "10px"
-                      }}
-                    >
-                      {errorForm}
-                    </div>
-                  )}
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "8px" }}>
-                    <input
-                      type="text"
-                      required
-                      value={nombre}
-                      onChange={(e) => setNombre(e.target.value)}
-                      placeholder="Name"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "6px",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #cccccc",
-                        color: "#333333",
-                        fontSize: "0.85rem",
-                        outline: "none"
-                      }}
-                    />
-
-                    <div>
-                      <input
-                        type="email"
-                        required
-                        value={correo}
-                        onChange={(e) => validarEmail(e.target.value)}
-                        onBlur={() => validarEmail(correo)}
-                        placeholder="Email Address"
-                        style={{
-                          width: "100%",
-                          padding: "8px 12px",
-                          borderRadius: "6px",
-                          backgroundColor: "#ffffff",
-                          border: errorCorreo ? "1.5px solid #ef4444" : "1px solid #cccccc",
-                          color: "#333333",
-                          fontSize: "0.85rem",
-                          outline: "none"
-                        }}
-                      />
-                      {errorCorreo && (
-                        <div style={{ marginTop: "4px", fontSize: "0.72rem", color: "#dc2626" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <AlertCircle size={12} style={{ flexShrink: 0 }} />
-                            <span>{errorCorreo}</span>
-                          </div>
-                          {sugerenciaCorreo && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCorreo(sugerenciaCorreo);
-                                validarEmail(sugerenciaCorreo);
-                              }}
-                              style={{
-                                display: "block",
-                                marginTop: "2px",
-                                background: "#fef3c7",
-                                color: "#92400e",
-                                border: "1px solid #f59e0b",
-                                borderRadius: "4px",
-                                padding: "2px 6px",
-                                fontSize: "0.72rem",
-                                cursor: "pointer",
-                                fontWeight: 700
-                              }}
-                            >
-                              Corregir a {sugerenciaCorreo}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: "8px" }}>
-                    <input
-                      type="tel"
-                      value={telefono}
-                      onChange={(e) => setTelefono(e.target.value)}
-                      placeholder="Teléfono / WhatsApp"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "6px",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #cccccc",
-                        color: "#333333",
-                        fontSize: "0.85rem",
-                        outline: "none"
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ marginBottom: "10px" }}>
-                    <textarea
-                      rows={2}
-                      value={mensaje}
-                      onChange={(e) => setMensaje(e.target.value)}
-                      placeholder="Message"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "6px",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #cccccc",
-                        color: "#333333",
-                        fontSize: "0.85rem",
-                        outline: "none",
-                        resize: "none"
-                      }}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={enviando}
-                    style={{
-                      width: "100%",
-                      padding: "10px 16px",
-                      borderRadius: "6px",
-                      backgroundColor: "#5100bb",
-                      border: "none",
-                      color: "#ffffff",
-                      fontSize: "0.9rem",
-                      fontWeight: 700,
-                      cursor: enviando ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px"
-                    }}
-                  >
-                    {enviando ? (
-                      <>
-                        <Loader2 size={16} className="anim-girar" /> Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={15} /> Enviar
-                      </>
-                    )}
-                  </button>
-                </form>
-              )}
+              ))}
             </div>
+
+            <a
+              href="/registro?intencion=abogado&destino=/panel/solicitud-socio"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                width: "100%",
+                backgroundColor: "#fee400",
+                color: "#000000",
+                fontSize: "1rem",
+                fontWeight: 800,
+                padding: "15px 28px",
+                borderRadius: "12px",
+                textDecoration: "none",
+                textAlign: "center",
+                boxShadow: "0 4px 14px rgba(0, 0, 0, 0.2)"
+              }}
+            >
+              Quiero ser parte de la red <ArrowRight size={18} />
+            </a>
           </div>
         </div>
       </section>

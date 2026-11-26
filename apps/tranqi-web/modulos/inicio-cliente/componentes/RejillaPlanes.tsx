@@ -34,6 +34,12 @@ const DURACION_DIAPO_MS = 12000;
 const TONOS_PLAN = ["80, 0, 186", "5, 135, 110", "47, 79, 176"];
 const MAX_DIAPOS = 5;
 
+// TRQ-035 (26-nov-2026): negocio pidió que «Productos y Servicios» muestre solo
+// los planes mientras se termina de cargar el resto del catálogo, para no
+// confundir al cliente. Las consultas y trámites siguen activos en el catálogo
+// (agenda, agentes); aquí solo se ocultan. Para volver a mostrarlos: `false`.
+const CATALOGO_SOLO_PLANES = true;
+
 function esPlan(p: ProductoCatalogo) {
   return p.pro_tipo === "SUSCRIPCION";
 }
@@ -559,7 +565,11 @@ function Catalogo({
       <header>
         <div>
           <h2 id="t-catalogo">Productos y Servicios</h2>
-          <p>Todos nuestros planes, consultas jurídicas y trámites legales presentados de forma individual.</p>
+          <p>
+            {CATALOGO_SOLO_PLANES
+              ? "Elige el plan de protección jurídica que va contigo y con tu familia."
+              : "Todos nuestros planes, consultas jurídicas y trámites legales presentados de forma individual."}
+          </p>
         </div>
         {categorias.length > 1 && (
           <div className="ini-filtros" ref={grupo} role="group" aria-label="Filtrar por categoría">
@@ -721,6 +731,7 @@ export function RejillaPlanes({ negocio = "tranqi", modoVista = "solo-carrusel" 
 
   const mostrarCarrusel = modoVista === "solo-carrusel" || modoVista === "completo";
   const mostrarCatalogoIndividual = modoVista === "solo-catalogo" || modoVista === "completo";
+  const enCatalogo = CATALOGO_SOLO_PLANES ? planes : paraPersonas;
 
   return (
     <div className="ini-planes">
@@ -728,9 +739,9 @@ export function RejillaPlanes({ negocio = "tranqi", modoVista = "solo-carrusel" 
         <Destacados diapos={diapos} alContratarPlan={abrirPago} alContratarServicio={contratarServicio} />
       )}
 
-      {mostrarCatalogoIndividual && paraPersonas.length > 0 && (
+      {mostrarCatalogoIndividual && enCatalogo.length > 0 && (
         <Catalogo
-          productos={paraPersonas}
+          productos={enCatalogo}
           alContratarDirecto={(p, v) => abrirPago(p, v)}
         />
       )}

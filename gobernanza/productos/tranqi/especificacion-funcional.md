@@ -54,7 +54,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ABG-003`** | **Abogado** | **Firma Electrónica Avanzada PAdES en Navegador (Zero-Custody `.p12`/`.pfx`)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ABG-004`** | **Abogado** | **Agenda Profesional, Contacto WhatsApp del Cliente, Salas de Videollamada Automáticas Daily.co (`tranqi.daily.co`) con Rotación por Cambio de Hora, Confirmación (hasta 1h antes), Tracking en Línea de Tiempo, Ejecución de Cita y Sincronización Automática de Calendarios (.ics + Agenda Institucional Tranqi)** | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-ABG-005`** | **Abogado** | **Verificación Inteligente de Identidad y Carnet Profesional con Aria (IA) en Registro Simplificado de Abogados** | ✅ Implementado | **100%** | **Jesus Navarrete (IA) / Kleber Toapanta** |
-| **`TRQ-ABG-006`** | **Abogado** | **Portal Informativo de la Red Nacional de Abogados (/abogados): Beneficios, Modelo Operativo, Validación de Correo y Botón de Registro** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TRQ-ABG-006`** | **Abogado** | **Portal Informativo de la Red Nacional de Abogados (/abogados): Beneficios, Modelo Operativo y Botón de Registro (única vía desde TRQ-035)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-001`** | **Operador/Admin** | **Gestión de Red Profesional, Invitación Individual/Masiva por Correo (`/abogados`), Conversión de Usuarios en Abogados, Cobertura y Disponibilidad** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -1087,7 +1087,7 @@ Vista dedicada e informativa que replica íntegramente la estructura, propuesta 
 4. **App Móvil de Gestión Legal:**
    - Visualización de la herramienta de despacho virtual en el smartphone (agenda, pagos, seguimiento de trámites en curso).
 5. **Lámina de Activación y Soporte (Cierre):**
-   - Réplica fiel del contenedor verde esmeralda con el checklist de activación rápida y soporte integral.
-   - **Botón Obligatorio de Registro:** Conexión directa al flujo de auto-registro y solicitud de socio (`/registro?intencion=abogado&destino=/panel/solicitud-socio`).
-   - Formulario de contacto asistido con **validación estricta de correo electrónico** (`validarCorreoEstructurado` de `@eco/primitivas`), detección de typos comunes (`@gmailc.om`, `.con`) y sugerencia de corrección con un solo clic.
+   - Contenedor en el verde principal del brandbook (`#0E6648`) con el checklist de activación rápida y soporte integral.
+   - **Botón Obligatorio de Registro:** Conexión directa al flujo de auto-registro y solicitud de socio (`/registro?intencion=abogado&destino=/panel/solicitud-socio`). Es la **única vía** de ingreso que ofrece el bloque.
+   - *Retirado en TRQ-035 (26-nov-2026), por observación de negocio:* la foto y el formulario «O solicita que un asesor te contacte» (con `validarCorreoEstructurado`). Juntos daban a entender que había dos formas de entrar a la red.
 
