@@ -170,6 +170,348 @@ export async function obtenerInventarioRosasAction(negocio: string): Promise<
   }
 }
 
+export async function obtenerColoresInventarioTiendaAction(negocio: string): Promise<{
+  ok: boolean;
+  tieneInventarioRegistrado: boolean;
+  fechaUltimoCorte: string | null;
+  coloresEnStock: string[];
+  orquideasEnStock: string[];
+  coloresCatalogo: string[];
+  categoriasColores: Record<string, { etiqueta?: string; colorHex?: string }>;
+  ofertaColoresActiva: boolean;
+  porcentajeDescuentoOferta: number;
+  coloresEnOferta: string[];
+  error?: string;
+}> {
+  try {
+    const neg = normalizarNegocio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_obtener_colores_inventario_tienda",
+      { p_negocio: neg }
+    );
+
+    if (!error && data?.ok) {
+      return {
+        ok: true,
+        tieneInventarioRegistrado: Boolean(data.tieneInventarioRegistrado),
+        fechaUltimoCorte: typeof data.fechaUltimoCorte === "string" ? data.fechaUltimoCorte : null,
+        coloresEnStock: Array.isArray(data.coloresEnStock)
+          ? data.coloresEnStock.map((c: unknown) => String(c || "").trim()).filter(Boolean)
+          : [],
+        orquideasEnStock: Array.isArray(data.orquideasEnStock)
+          ? data.orquideasEnStock.map((c: unknown) => String(c || "").trim()).filter(Boolean)
+          : [],
+        coloresCatalogo: Array.isArray(data.coloresCatalogo)
+          ? data.coloresCatalogo.map((c: unknown) => String(c || "").trim()).filter(Boolean)
+          : [],
+        categoriasColores:
+          data.categoriasColores && typeof data.categoriasColores === "object"
+            ? (data.categoriasColores as Record<string, { etiqueta?: string; colorHex?: string }>)
+            : {},
+        ofertaColoresActiva: Boolean(data.ofertaColoresActiva),
+        porcentajeDescuentoOferta:
+          Number.isFinite(Number(data.porcentajeDescuentoOferta)) &&
+          Number(data.porcentajeDescuentoOferta) > 0
+            ? Number(data.porcentajeDescuentoOferta)
+            : 10,
+        coloresEnOferta: Array.isArray(data.coloresEnOferta)
+          ? data.coloresEnOferta.map((c: unknown) => String(c || "").trim()).filter(Boolean)
+          : [],
+      };
+    }
+
+    return {
+      ok: false,
+      tieneInventarioRegistrado: false,
+      fechaUltimoCorte: null,
+      coloresEnStock: [],
+      orquideasEnStock: [],
+      coloresCatalogo: [],
+      categoriasColores: {},
+      ofertaColoresActiva: false,
+      porcentajeDescuentoOferta: 10,
+      coloresEnOferta: [],
+      error: error?.message || String(data?.error || "No se pudo consultar el inventario de colores"),
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      tieneInventarioRegistrado: false,
+      fechaUltimoCorte: null,
+      coloresEnStock: [],
+      orquideasEnStock: [],
+      coloresCatalogo: [],
+      categoriasColores: {},
+      ofertaColoresActiva: false,
+      porcentajeDescuentoOferta: 10,
+      coloresEnOferta: [],
+      error: err instanceof Error ? err.message : "Error al consultar el inventario de colores",
+    };
+  }
+}
+
+export async function guardarColoresOfertaInventarioAction(entrada: {
+  negocio: string;
+  activo: boolean;
+  porcentajeDescuento: number;
+  colores: string[];
+}): Promise<
+  | {
+      ok: true;
+      oferta: {
+        activo: boolean;
+        porcentajeDescuento: number;
+        colores: string[];
+        actualizadoEn: string | null;
+        actualizadoPor: string | null;
+      };
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const pctSeguro = Math.round(Math.min(80, Math.max(1, Number(entrada.porcentajeDescuento) || 10)) * 100) / 100;
+    const coloresSeguros = Array.from(
+      new Set((entrada.colores || []).map((c) => String(c || "").trim().toLowerCase()).filter(Boolean))
+    );
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_guardar_colores_oferta_inventario",
+      {
+        p_negocio: neg,
+        p_activo: Boolean(entrada.activo),
+        p_porcentaje_descuento: pctSeguro,
+        p_colores: coloresSeguros,
+      }
+    );
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo guardar la oferta de colores") };
+    }
+
+    revalidarRutasTienda(neg);
+    const of = (data.oferta ?? {}) as Record<string, unknown>;
+    return {
+      ok: true,
+      oferta: {
+        activo: Boolean(of.activo),
+        porcentajeDescuento: Number(of.porcentajeDescuento) || pctSeguro,
+        colores: Array.isArray(of.colores)
+          ? of.colores.map((c: unknown) => String(c || "").trim()).filter(Boolean)
+          : coloresSeguros,
+        actualizadoEn: typeof of.actualizadoEn === "string" ? of.actualizadoEn : null,
+        actualizadoPor: typeof of.actualizadoPor === "string" ? of.actualizadoPor : null,
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al guardar colores en oferta",
+    };
+  }
+}
+
+export interface ResultadoAlertaInventarioRosas {
+  ok: boolean;
+  requiereAlerta: boolean;
+  alertaEmitida: boolean;
+  pushEnviados: number;
+  horasLimite: number;
+  horasDesdeUltimoCorte: number | null;
+  fechaUltimoCorte: string | null;
+  titulo?: string;
+  cuerpo?: string;
+  error?: string;
+}
+
+async function ejecutarVerificacionAlertaInventario(params: {
+  supabase: any;
+  negocio: string;
+  horasLimite?: number;
+  cooldownHoras?: number;
+  forzar?: boolean;
+}): Promise<ResultadoAlertaInventarioRosas> {
+  const neg = normalizarNegocio(params.negocio);
+  const horasLimite = Math.max(1, Number(params.horasLimite ?? 15) || 15);
+  const cooldownHoras = Math.max(0.5, Number(params.cooldownHoras ?? 6) || 6);
+
+  const { data, error } = await invocarRpcComercio(
+    params.supabase,
+    "com_fn_verificar_y_alertar_inventario_rosas",
+    {
+      p_negocio: neg,
+      p_horas_limite: horasLimite,
+      p_cooldown_horas: cooldownHoras,
+      p_forzar: Boolean(params.forzar),
+    }
+  );
+
+  if (error || !data?.ok) {
+    return {
+      ok: false,
+      requiereAlerta: false,
+      alertaEmitida: false,
+      pushEnviados: 0,
+      horasLimite,
+      horasDesdeUltimoCorte: null,
+      fechaUltimoCorte: null,
+      error: error?.message || String(data?.error || "No se pudo verificar el estado del inventario"),
+    };
+  }
+
+  let pushEnviados = 0;
+  const alertaEmitida = Boolean(data.alertaEmitida);
+  const titulo = String(data.titulo || `🌹 Inventario de rosas pendiente (+${horasLimite}h)`);
+  const cuerpo = String(
+    data.cuerpoPlano ||
+      "Actualiza el inventario de rosas para mantener disponibles los colores en la tienda."
+  );
+
+  if (alertaEmitida) {
+    const vapidPub = String(
+      data.vapidPublicKey ||
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+        process.env.VAPID_PUBLIC_KEY ||
+        ""
+    ).trim();
+    const vapidPriv = String(
+      data.vapidPrivateKey || process.env.VAPID_PRIVATE_KEY || ""
+    ).trim();
+    const suscripciones: Array<{
+      notId?: string;
+      url?: string;
+      endpoint: string;
+      p256dh: string;
+      auth: string;
+    }> = Array.isArray(data.suscripciones) ? data.suscripciones : [];
+
+    if (vapidPub && vapidPriv && suscripciones.length > 0) {
+      try {
+        const { enviarNotificacionWebPushNativa } = await import(
+          "@eco/notificaciones/web-push-nativo"
+        );
+        const resultados = await Promise.allSettled(
+          suscripciones.map(async (sub) => {
+            const resPush = await enviarNotificacionWebPushNativa(
+              {
+                endpoint: sub.endpoint,
+                p256dh: sub.p256dh,
+                auth: sub.auth,
+              },
+              {
+                title: titulo,
+                body: cuerpo.slice(0, 170),
+                url: sub.url || "/panel/inventario-rosas",
+                notId: sub.notId,
+                negocio: neg,
+                tag: `inventario-rosas-15h-${neg}`,
+                icon: "/icons/icon-192.png",
+                badge: "/icons/icon-192.png",
+                renotify: true,
+              },
+              {
+                publicKey: vapidPub,
+                privateKey: vapidPriv,
+              }
+            );
+            if (resPush.suscripcionExpirada) {
+              await invocarRpcComercio(params.supabase, "com_fn_push_desactivar_suscripcion", {
+                p_negocio: neg,
+                p_endpoint: sub.endpoint,
+              }).catch(() => {});
+            }
+            return resPush.ok;
+          })
+        );
+        pushEnviados = resultados.filter(
+          (r) => r.status === "fulfilled" && r.value === true
+        ).length;
+      } catch {
+        // No interrumpir si falla el despacho Push opcional
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    requiereAlerta: Boolean(data.requiereAlerta),
+    alertaEmitida,
+    pushEnviados,
+    horasLimite: Number(data.horasLimite) || horasLimite,
+    horasDesdeUltimoCorte:
+      data.horasDesdeUltimoCorte !== null && data.horasDesdeUltimoCorte !== undefined
+        ? Number(data.horasDesdeUltimoCorte)
+        : null,
+    fechaUltimoCorte: typeof data.fechaUltimoCorte === "string" ? data.fechaUltimoCorte : null,
+    titulo,
+    cuerpo,
+  };
+}
+
+export async function verificarYAlertarInventarioRosasAction(
+  negocio: string,
+  opciones?: { horasLimite?: number; cooldownHoras?: number; forzar?: boolean }
+): Promise<ResultadoAlertaInventarioRosas> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    return await ejecutarVerificacionAlertaInventario({
+      supabase,
+      negocio,
+      horasLimite: opciones?.horasLimite ?? 15,
+      cooldownHoras: opciones?.cooldownHoras ?? 6,
+      forzar: opciones?.forzar ?? false,
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      requiereAlerta: false,
+      alertaEmitida: false,
+      pushEnviados: 0,
+      horasLimite: opciones?.horasLimite ?? 15,
+      horasDesdeUltimoCorte: null,
+      fechaUltimoCorte: null,
+      error: err instanceof Error ? err.message : "Error al verificar alerta de inventario",
+    };
+  }
+}
+
+export async function ejecutarCronAlertaInventarioRosas(
+  negocios: string[] = ["tinkay", "margaritas"],
+  horasLimite = 15
+): Promise<{
+  ok: boolean;
+  resultados: Record<string, ResultadoAlertaInventarioRosas>;
+}> {
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = crearClienteAdmin() ?? (await crearClienteServidor());
+  const resultados: Record<string, ResultadoAlertaInventarioRosas> = {};
+  let okGlobal = true;
+  for (const neg of negocios) {
+    const r = await ejecutarVerificacionAlertaInventario({
+      supabase,
+      negocio: neg,
+      horasLimite,
+      cooldownHoras: 6,
+      forzar: false,
+    });
+    resultados[neg] = r;
+    if (!r.ok) okGlobal = false;
+  }
+  return { ok: okGlobal, resultados };
+}
+
 async function asegurarCatalogoVariedadesInicializado(
   supabase: any,
   neg: string

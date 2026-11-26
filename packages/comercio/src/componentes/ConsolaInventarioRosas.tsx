@@ -5,28 +5,40 @@ import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   AlertTriangle,
+  Bell,
   BookOpen,
   Bot,
   Camera,
+  Check,
   CheckCircle2,
   Clock,
   Flower2,
   Loader2,
   Minus,
+  Percent,
   Plus,
   RefreshCw,
   Save,
   Sparkles,
+  Tag,
   Trash2,
   Upload,
   X,
 } from "lucide-react";
 import {
   analizarFotoBonchesConAriaAction,
+  guardarColoresOfertaInventarioAction,
   guardarCorteInventarioRosasAction,
   listarVariedadesRosaAction,
+  obtenerColoresInventarioTiendaAction,
   obtenerInventarioRosasAction,
+  verificarYAlertarInventarioRosasAction,
 } from "../acciones-operaciones-taller";
+import {
+  HORAS_LIMITE_ALERTA_INVENTARIO_ROSAS,
+  evaluarVigenciaInventarioRosas,
+  normalizarClaveColorRosaPersonalizacion,
+} from "../utils/personalizacionFloral";
 import {
   CATALOGO_SEMILLA_VARIEDADES_ROSAS,
   COLORES_ORQUIDEA_CYMBIDIUM,
@@ -146,6 +158,44 @@ export function ConsolaInventarioRosas({
   const [inlineCantidad, setInlineCantidad] = useState<number>(1);
   const [inlineNumeroFlores, setInlineNumeroFlores] = useState<number>(9);
 
+  // Configuración de colores en oferta y % de descuento aplicable en la tienda (10% por defecto)
+  const [ofertaActiva, setOfertaActiva] = useState<boolean>(false);
+  const [ofertaPorcentaje, setOfertaPorcentaje] = useState<number>(10);
+  const [coloresOferta, setColoresOferta] = useState<string[]>([]);
+  const [cargandoOferta, setCargandoOferta] = useState<boolean>(false);
+  const [guardandoOferta, setGuardandoOferta] = useState<boolean>(false);
+  const [mensajeOfertaOk, setMensajeOfertaOk] = useState<string | null>(null);
+  const [errorOfertaMsg, setErrorOfertaMsg] = useState<string | null>(null);
+
+  // Alerta manual al equipo si han pasado > 15 horas sin inventario
+  const [enviandoAlertaEquipo, setEnviandoAlertaEquipo] = useState<boolean>(false);
+  const [mensajeAlertaEquipo, setMensajeAlertaEquipo] = useState<string | null>(null);
+
+  const cargarConfigOferta = useCallback(async () => {
+    setCargandoOferta(true);
+    try {
+      const res = await obtenerColoresInventarioTiendaAction(negNorm);
+      if (res.ok) {
+        setOfertaActiva(Boolean(res.ofertaColoresActiva));
+        setOfertaPorcentaje(
+          Number.isFinite(Number(res.porcentajeDescuentoOferta)) &&
+            Number(res.porcentajeDescuentoOferta) > 0
+            ? Number(res.porcentajeDescuentoOferta)
+            : 10
+        );
+        setColoresOferta(
+          Array.isArray(res.coloresEnOferta)
+            ? res.coloresEnOferta
+                .map((c) => normalizarClaveColorRosaPersonalizacion(c))
+                .filter(Boolean)
+            : []
+        );
+      }
+    } finally {
+      setCargandoOferta(false);
+    }
+  }, [negNorm]);
+
   const cargarCatalogo = useCallback(async () => {
     const res = await listarVariedadesRosaAction(negNorm);
     if (res.ok && res.items.length > 0) {
@@ -180,7 +230,8 @@ export function ConsolaInventarioRosas({
 
   useEffect(() => {
     void cargarCatalogo();
-  }, [cargarCatalogo]);
+    void cargarConfigOferta();
+  }, [cargarCatalogo, cargarConfigOferta]);
 
   useEffect(() => {
     if (!ultimoCorteInicial && historialInicial.length === 0) {
@@ -237,6 +288,91 @@ export function ConsolaInventarioRosas({
         : null,
     [ultimoCorte, catalogoVariedades]
   );
+
+  const vigenciaInventario = useMemo(
+    () =>
+      evaluarVigenciaInventarioRosas(
+        ultimoCorte?.fechaCorte ?? null,
+        HORAS_LIMITE_ALERTA_INVENTARIO_ROSAS
+      ),
+    [ultimoCorte?.fechaCorte]
+  );
+
+  const stockPorColorUltimoCorte = useMemo(() => {
+    const mapa = new Map<string, number>();
+    const raw = ultimoCorte?.resumenColores ?? {};
+    for (const [k, v] of Object.entries(raw)) {
+      const clave = normalizarClaveColorRosaPersonalizacion(k);
+      const cant = Math.max(0, Math.round(Number(v) || 0));
+      if (!clave || cant <= 0) continue;
+      mapa.set(clave, (mapa.get(clave) ?? 0) + cant);
+    }
+    return mapa;
+  }, [ultimoCorte?.resumenColores]);
+
+  const toggleColorOferta = (claveRaw: string) => {
+    const clave = normalizarClaveColorRosaPersonalizacion(claveRaw);
+    if (!clave) return;
+    setMensajeOfertaOk(null);
+    setErrorOfertaMsg(null);
+    setColoresOferta((prev) => {
+      const existe = prev.includes(clave);
+      const next = existe ? prev.filter((c) => c !== clave) : [...prev, clave];
+      if (!existe && !ofertaActiva) {
+        setOfertaActiva(true);
+      }
+      return next;
+    });
+  };
+
+  const handleGuardarOfertaColores = async () => {
+    setGuardandoOferta(true);
+    setMensajeOfertaOk(null);
+    setErrorOfertaMsg(null);
+    const pctClamped = Math.round(Math.min(80, Math.max(1, Number(ofertaPorcentaje) || 10)) * 100) / 100;
+    const res = await guardarColoresOfertaInventarioAction({
+      negocio: negNorm,
+      activo: ofertaActiva && coloresOferta.length > 0,
+      porcentajeDescuento: pctClamped,
+      colores: coloresOferta,
+    });
+    setGuardandoOferta(false);
+    if (!res.ok) {
+      setErrorOfertaMsg(res.error);
+      return;
+    }
+    setOfertaActiva(res.oferta.activo);
+    setOfertaPorcentaje(res.oferta.porcentajeDescuento);
+    setColoresOferta(res.oferta.colores);
+    setMensajeOfertaOk(
+      res.oferta.activo
+        ? `Oferta activada: -${res.oferta.porcentajeDescuento}% en ${res.oferta.colores.length} color(es) seleccionado(s) en la tienda.`
+        : "Oferta por colores desactivada en la tienda."
+    );
+  };
+
+  const handleAlertarEquipoAhora = async () => {
+    setEnviandoAlertaEquipo(true);
+    setMensajeAlertaEquipo(null);
+    const res = await verificarYAlertarInventarioRosasAction(negNorm, {
+      horasLimite: HORAS_LIMITE_ALERTA_INVENTARIO_ROSAS,
+      cooldownHoras: 0.5,
+      forzar: true,
+    });
+    setEnviandoAlertaEquipo(false);
+    if (!res.ok) {
+      setMensajeAlertaEquipo(res.error || "No se pudo enviar la alerta al equipo.");
+      return;
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("eco:refrescar-notificaciones"));
+    }
+    setMensajeAlertaEquipo(
+      res.pushEnviados > 0
+        ? `Alerta enviada al equipo (campana + ${res.pushEnviados} notificación push).`
+        : "Alerta registrada en la campana del equipo."
+    );
+  };
 
   const analizarFotoIndividualConIa = async (fotoId: string, urlPublica: string) => {
     setAnalizandoFotoIds((prev) => ({ ...prev, [fotoId]: true }));
@@ -593,6 +729,7 @@ export function ConsolaInventarioRosas({
         cacheKey,
         JSON.stringify({ ultimoCorte: res.corte, historial: nuevoHistorial })
       );
+      window.dispatchEvent(new CustomEvent("eco:inventario-rosas-actualizado"));
     } catch {
       // Ignorar
     }
@@ -768,6 +905,69 @@ export function ConsolaInventarioRosas({
         />
       ) : (
         <>
+          {/* ALERTA AUTOMÁTICA SI HAN PASADO > 15 HORAS SIN INVENTARIO */}
+          {vigenciaInventario.requiereAlerta && (
+            <div
+              role="alert"
+              style={{
+                padding: "12px 15px",
+                borderRadius: "12px",
+                background: "#FFFBEB",
+                border: "1.5px solid #F59E0B",
+                color: "#78350F",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", flex: 1, minWidth: "220px" }}>
+                <AlertTriangle size={18} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <strong style={{ fontSize: "0.85rem", color: "#92400E" }}>
+                    {vigenciaInventario.horasDesdeUltimoCorte === null
+                      ? "Inventario de rosas pendiente (sin registro previo)"
+                      : `Han pasado ${vigenciaInventario.horasDesdeUltimoCorte}h desde el último inventario (límite ${vigenciaInventario.horasLimite}h)`}
+                  </strong>
+                  <span style={{ fontSize: "0.76rem", color: "#78350F", lineHeight: 1.4 }}>
+                    Registra un nuevo conteo de bonches hoy para que la tienda muestre los colores disponibles en tiempo real.
+                  </span>
+                  {mensajeAlertaEquipo && (
+                    <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#2B4A36", marginTop: "2px" }}>
+                      ✓ {mensajeAlertaEquipo}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void handleAlertarEquipoAhora()}
+                disabled={enviandoAlertaEquipo}
+                title="Enviar notificación Push y alerta en campana a todo el equipo"
+                aria-label="Notificar equipo"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "7px 12px",
+                  borderRadius: "9px",
+                  border: "1px solid #D97706",
+                  background: "#FFFFFF",
+                  color: "#92400E",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+                  cursor: enviandoAlertaEquipo ? "wait" : "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {enviandoAlertaEquipo ? <Loader2 size={14} /> : <Bell size={14} />}
+                <span>Notificar equipo</span>
+              </button>
+            </div>
+          )}
+
           {/* CABECERA SOBRIA DEL ÚLTIMO INVENTARIO REALIZADO */}
           <div
             style={{
@@ -959,6 +1159,330 @@ export function ConsolaInventarioRosas({
                 </span>
               </div>
             )}
+          </div>
+
+          {/* PANEL DE COLORES EN OFERTA Y % DE DESCUENTO PARA LA TIENDA */}
+          <div
+            style={{
+              padding: "14px 16px",
+              borderRadius: "12px",
+              background: "#FFFFFF",
+              border: ofertaActiva && coloresOferta.length > 0 ? "1.5px solid #FBCFE8" : "1px solid #E6E2DA",
+              borderLeft: ofertaActiva && coloresOferta.length > 0 ? "3px solid #BE185D" : "3px solid #D5CFC4",
+              display: "flex",
+              flexDirection: "column",
+              gap: "11px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "9px", minWidth: 0 }}>
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "8px",
+                    background: ofertaActiva ? "#FDF2F8" : "#F6F4F0",
+                    border: ofertaActiva ? "1px solid #FBCFE8" : "1px solid #E6E2DA",
+                    color: ofertaActiva ? "#BE185D" : "#57524C",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Tag size={15} />
+                </div>
+                <div>
+                  <strong style={{ display: "block", fontSize: "0.86rem", color: "#1F1C19" }}>
+                    Colores en Oferta en Tienda
+                  </strong>
+                  <span style={{ fontSize: "0.73rem", color: "#6E6861" }}>
+                    Cuando el cliente elija colores marcados en oferta, se aplicará automáticamente el descuento en la venta del arreglo.
+                  </span>
+                </div>
+              </div>
+
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  padding: "5px 11px",
+                  borderRadius: "999px",
+                  background: ofertaActiva ? "#FDF2F8" : "#F4F2EE",
+                  border: ofertaActiva ? "1px solid #FBCFE8" : "1px solid #D5CFC4",
+                  color: ofertaActiva ? "#9D174D" : "#57524C",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={ofertaActiva}
+                  onChange={(e) => {
+                    setOfertaActiva(e.target.checked);
+                    setMensajeOfertaOk(null);
+                    setErrorOfertaMsg(null);
+                  }}
+                />
+                <span>{ofertaActiva ? "Oferta activa" : "Oferta inactiva"}</span>
+              </label>
+            </div>
+
+            {/* Porcentaje de descuento configurable (por defecto 10%) */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                flexWrap: "wrap",
+                padding: "9px 11px",
+                borderRadius: "10px",
+                background: "#FAF8F5",
+                border: "1px solid #ECE7DF",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    color: "#221E1B",
+                  }}
+                >
+                  <Percent size={13} color="#BE185D" />
+                  <span>Descuento en venta:</span>
+                </span>
+                {[5, 10, 15, 20].map((preset) => {
+                  const sel = ofertaPorcentaje === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => {
+                        setOfertaPorcentaje(preset);
+                        setMensajeOfertaOk(null);
+                      }}
+                      style={{
+                        padding: "4px 9px",
+                        borderRadius: "999px",
+                        border: sel ? "1.5px solid #BE185D" : "1px solid #D5CFC4",
+                        background: sel ? "#FDF2F8" : "#FFFFFF",
+                        color: sel ? "#9D174D" : "#57524C",
+                        fontSize: "0.73rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {preset}%
+                    </button>
+                  );
+                })}
+                <label
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "0.73rem",
+                    fontWeight: 700,
+                    color: "#57524C",
+                  }}
+                >
+                  <span>Otro:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={80}
+                    step={1}
+                    value={ofertaPorcentaje}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setOfertaPorcentaje(Number.isFinite(val) ? Math.max(1, Math.min(80, val)) : 10);
+                      setMensajeOfertaOk(null);
+                    }}
+                    aria-label="Porcentaje de descuento por colores en oferta"
+                    style={{
+                      width: "56px",
+                      padding: "4px 6px",
+                      borderRadius: "7px",
+                      border: "1px solid #D5CFC4",
+                      background: "#FFFFFF",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      textAlign: "center",
+                    }}
+                  />
+                  <span>%</span>
+                </label>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void handleGuardarOfertaColores()}
+                disabled={guardandoOferta || cargandoOferta}
+                title="Guardar configuración de colores en oferta para la tienda web"
+                aria-label="Guardar oferta"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "7px 14px",
+                  borderRadius: "9px",
+                  border: "none",
+                  background: "#2F4737",
+                  color: "#FFFFFF",
+                  fontSize: "0.77rem",
+                  fontWeight: 700,
+                  cursor: guardandoOferta ? "wait" : "pointer",
+                  opacity: guardandoOferta ? 0.7 : 1,
+                }}
+              >
+                {guardandoOferta ? <Loader2 size={14} /> : <Save size={14} />}
+                <span>Guardar oferta</span>
+              </button>
+            </div>
+
+            {/* Selector de colores en oferta (priorizando colores con stock en el último corte) */}
+            <div>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  color: "#57524C",
+                  marginBottom: "6px",
+                }}
+              >
+                Selecciona los colores que salen en oferta (-{ofertaPorcentaje}%):
+              </span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+                {[...categoriasColores]
+                  .sort((a, b) => {
+                    const sa = stockPorColorUltimoCorte.get(a.clave) ?? 0;
+                    const sb = stockPorColorUltimoCorte.get(b.clave) ?? 0;
+                    if ((sa > 0) !== (sb > 0)) return sa > 0 ? -1 : 1;
+                    return 0;
+                  })
+                  .map((col) => {
+                    const claveNorm = normalizarClaveColorRosaPersonalizacion(col.clave);
+                    const enStockCant = stockPorColorUltimoCorte.get(claveNorm) ?? 0;
+                    const seleccionado = coloresOferta.includes(claveNorm);
+                    return (
+                      <button
+                        key={col.clave}
+                        type="button"
+                        onClick={() => toggleColorOferta(claveNorm)}
+                        aria-pressed={seleccionado}
+                        title={
+                          enStockCant > 0
+                            ? `${col.etiqueta} (${enStockCant} paq. en inventario) — clic para ${seleccionado ? "quitar de" : "marcar en"} oferta`
+                            : `${col.etiqueta} (sin stock en el último corte)`
+                        }
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "6px 11px",
+                          borderRadius: "999px",
+                          border: seleccionado
+                            ? "2px solid #BE185D"
+                            : enStockCant > 0
+                              ? "1px solid #CEDDD3"
+                              : "1px dashed #D5CFC4",
+                          background: seleccionado
+                            ? "#FDF2F8"
+                            : enStockCant > 0
+                              ? "#FFFFFF"
+                              : "#FAF8F5",
+                          color: seleccionado ? "#831843" : enStockCant > 0 ? "#1F1C19" : "#847D74",
+                          fontSize: "0.75rem",
+                          fontWeight: seleccionado ? 700 : 600,
+                          cursor: "pointer",
+                          opacity: !seleccionado && ultimoCorte && enStockCant === 0 ? 0.72 : 1,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "11px",
+                            height: "11px",
+                            borderRadius: "999px",
+                            background: col.colorHex,
+                            border: "1px solid rgba(0,0,0,0.2)",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span>{col.etiqueta}</span>
+                        {enStockCant > 0 && (
+                          <span style={{ fontSize: "0.68rem", color: "#2B4A36", fontWeight: 700 }}>
+                            ({enStockCant} paq.)
+                          </span>
+                        )}
+                        {seleccionado && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "2px",
+                              padding: "1px 6px",
+                              borderRadius: "999px",
+                              background: "#BE185D",
+                              color: "#FFFFFF",
+                              fontSize: "0.65rem",
+                              fontWeight: 800,
+                            }}
+                          >
+                            <Check size={10} />-{ofertaPorcentaje}%
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+              </div>
+              {ofertaActiva && coloresOferta.length > 0 && (
+                <div
+                  style={{
+                    marginTop: "8px",
+                    fontSize: "0.73rem",
+                    color: "#9D174D",
+                    background: "#FDF2F8",
+                    border: "1px solid #FBCFE8",
+                    borderRadius: "8px",
+                    padding: "6px 10px",
+                  }}
+                >
+                  🔥 Cuando el cliente seleccione{" "}
+                  <strong>
+                    {coloresOferta
+                      .map((cl) => categoriasColores.find((c) => c.clave === cl)?.etiqueta || cl)
+                      .join(", ")}
+                  </strong>{" "}
+                  en la tienda, se aplicará automáticamente <strong>{ofertaPorcentaje}% de descuento</strong> en la venta del arreglo (siempre que conste con stock en inventario).
+                </div>
+              )}
+              {mensajeOfertaOk && (
+                <div style={{ marginTop: "7px", fontSize: "0.75rem", fontWeight: 700, color: "#2B4A36" }}>
+                  ✓ {mensajeOfertaOk}
+                </div>
+              )}
+              {errorOfertaMsg && (
+                <div style={{ marginTop: "7px", fontSize: "0.75rem", fontWeight: 700, color: "#991B1B" }}>
+                  ⚠️ {errorOfertaMsg}
+                </div>
+              )}
+            </div>
           </div>
 
           {migracionPendiente && (

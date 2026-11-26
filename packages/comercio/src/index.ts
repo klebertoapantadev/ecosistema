@@ -70,6 +70,7 @@ export * from "./pdf-informe-iess";
 export * from "./acciones-operaciones-taller";
 export * from "./utils/evidenciaImagenGps";
 export * from "./componentes/ConsolaInventarioRosas";
+export * from "./componentes/AlertaInventarioRosasBanner";
 export * from "./componentes/ConsolaEntregaInmediata";
 export * from "./componentes/ConsolaConfirmacionEntregas";
 export * from "./componentes/InsigniaClasificacionPedido";

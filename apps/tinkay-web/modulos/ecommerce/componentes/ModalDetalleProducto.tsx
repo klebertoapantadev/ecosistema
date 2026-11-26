@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import {
   TarjetaDedicatoriaDigitalInteractiva,
+  calcularDescuentoColorOferta,
   calcularPrecioPorVolumen,
   capturarYPersistirAtribucionNavegador,
   describirEscalaVolumen,
@@ -10,7 +11,7 @@ import {
   formatearResumenPersonalizacionFloral,
   inferirTipoEnvoltorioPorColeccion,
   modoRequiereColoresRosas,
-  obtenerColoresRosasHabilitados,
+  obtenerColoresRosasConInventario,
   obtenerEtiquetaTipoEnvoltorio,
   obtenerModosFlorDisponibles,
   obtenerOpcionesColorEnvoltorio,
@@ -50,6 +51,11 @@ import {
   Heart,
   Palette,
   Camera,
+  Images,
+  ExternalLink,
+  AlertTriangle,
+  Clock,
+  Tag,
 } from 'lucide-react';
 
 export function ModalDetalleProducto() {
@@ -65,6 +71,7 @@ export function ModalDetalleProducto() {
     productos,
     obtenerEnlaceProducto,
     configTiendaCheckout,
+    inventarioColores,
     esFavorito,
     obtenerMeGustaProducto,
     toggleFavorito,
@@ -671,6 +678,21 @@ export function ModalDetalleProducto() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [varianteSeleccionada.sku, configPersonalizacionFloral]);
 
+  const coloresConInventario = React.useMemo(() => {
+    if (!configPersonalizacionFloral) return [];
+    return obtenerColoresRosasConInventario(configPersonalizacionFloral, inventarioColores);
+  }, [configPersonalizacionFloral, inventarioColores]);
+
+  const coloresElegidosBajoConfirmacion = React.useMemo(() => {
+    if (mismosColoresFoto || coloresRosasSel.length === 0) return [];
+    const setBajoConf = new Set(
+      coloresConInventario
+        .filter((c) => c.bajoConfirmacion)
+        .map((c) => c.etiqueta.trim().toLowerCase())
+    );
+    return coloresRosasSel.filter((et) => setBajoConf.has(et.trim().toLowerCase()));
+  }, [mismosColoresFoto, coloresRosasSel, coloresConInventario]);
+
   const personalizacionFloralActiva = Boolean(
     configPersonalizacionFloral?.habilitada &&
       !esProductoRenta &&
@@ -678,6 +700,34 @@ export function ModalDetalleProducto() {
       !producto?.esExtra &&
       !producto?.esComplemento
   );
+
+  const descuentoColorOferta = React.useMemo(() => {
+    const pideRosas = Boolean(
+      personalizacionFloralActiva &&
+        configPersonalizacionFloral &&
+        !mismosColoresFoto &&
+        modoRequiereColoresRosas(modoFloresSel, configPersonalizacionFloral)
+    );
+    return calcularDescuentoColorOferta({
+      pvpUnitarioBase: calculoVolumenIndividual.pvpUnitarioFinal,
+      tarifaIvaPorcentaje: varianteSeleccionada.tarifaIva,
+      cantidad: cantidadModal,
+      mismosColoresFoto,
+      requiereColoresRosas: pideRosas,
+      coloresElegidos: coloresRosasSel,
+      coloresConInventario,
+    });
+  }, [
+    personalizacionFloralActiva,
+    configPersonalizacionFloral,
+    mismosColoresFoto,
+    modoFloresSel,
+    calculoVolumenIndividual.pvpUnitarioFinal,
+    varianteSeleccionada.tarifaIva,
+    cantidadModal,
+    coloresRosasSel,
+    coloresConInventario,
+  ]);
 
   const toggleColorRosaCliente = (etiquetaColor: string) => {
     if (!configPersonalizacionFloral) return;
@@ -762,6 +812,13 @@ export function ModalDetalleProducto() {
         fotoReferenciaTotal: listaFotosVis.length,
         modoFlores: modoFloresSel,
         coloresRosas: coloresRosasSel,
+        coloresBajoConfirmacion: coloresElegidosBajoConfirmacion,
+        coloresEnOferta: descuentoColorOferta.aplicaDescuento
+          ? descuentoColorOferta.coloresOfertaElegidos
+          : [],
+        descuentoColorOfertaPct: descuentoColorOferta.aplicaDescuento
+          ? descuentoColorOferta.porcentajeDescuento
+          : undefined,
         cantidadOrquideas: cantidadOrquideasSel,
         tipoEnvoltorio:
           configPersonalizacionFloral.mostrarColorBase &&
@@ -982,6 +1039,13 @@ export function ModalDetalleProducto() {
   };
 
   const descripcionProducto = (producto.descripcionLarga || producto.descripcionCorta || '').trim();
+  const urlAlbumEjemplos = (() => {
+    const candidato =
+      varianteSeleccionada?.albumFotosUrl?.trim() ||
+      producto.albumFotosUrl?.trim() ||
+      '';
+    return /^https?:\/\//i.test(candidato) ? candidato : '';
+  })();
   const beneficiosMostrados =
     varianteSeleccionada.beneficiosCustom && varianteSeleccionada.beneficiosCustom.length > 0
       ? varianteSeleccionada.beneficiosCustom
@@ -1095,6 +1159,59 @@ export function ModalDetalleProducto() {
                   );
                 })}
               </div>
+            )}
+
+            {/* Enlace al Álbum de Google Photos con más ejemplos reales del taller */}
+            {urlAlbumEjemplos && (
+              <a
+                href={urlAlbumEjemplos}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Abrir álbum en Google Photos para ver más ejemplos reales de este arreglo"
+                aria-label="Ver más ejemplos en Google Photos"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  padding: '10px 13px',
+                  borderRadius: '13px',
+                  background: '#FFFFFF',
+                  border: '1.5px solid #E5DFD5',
+                  color: '#1F1C19',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 8px rgba(31, 28, 25, 0.05)',
+                  transition: 'border-color 0.15s ease, background 0.15s ease',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                  <span
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '10px',
+                      background: '#FDF2F8',
+                      border: '1px solid #FBCFE8',
+                      color: '#BE185D',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Images size={17} />
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
+                    <strong style={{ fontSize: '0.82rem', color: '#1F1C19', lineHeight: 1.25 }}>
+                      Ver más ejemplos en Google Photos
+                    </strong>
+                    <span style={{ fontSize: '0.71rem', color: '#57524C', lineHeight: 1.3 }}>
+                      Fotos reales de arreglos y combinaciones entregadas
+                    </span>
+                  </div>
+                </div>
+                <ExternalLink size={16} color="#BE185D" style={{ flexShrink: 0 }} />
+              </a>
             )}
 
             {/* Descripción y Beneficios del Producto */}
@@ -1229,21 +1346,37 @@ export function ModalDetalleProducto() {
                     (resumenFinancieroCombo.coincideExactoConSetBase &&
                       resumenFinancieroCombo.pvpSet <= resumenFinancieroCombo.sumaPersonalizadaFinal));
 
+                const factorOfertaColor = descuentoColorOferta.aplicaDescuento
+                  ? 1 - descuentoColorOferta.porcentajeDescuento / 100
+                  : 1;
+
                 const precioCabecera = esComboActivo
                   ? usarPrecioSet
-                    ? resumenFinancieroCombo.pvpSet
+                    ? Number((resumenFinancieroCombo.pvpSet * factorOfertaColor).toFixed(2))
                     : resumenFinancieroCombo.sumaPersonalizadaFinal
+                  : descuentoColorOferta.aplicaDescuento
+                  ? descuentoColorOferta.pvpUnitarioFinal
                   : calculoVolumenIndividual.pvpUnitarioFinal;
 
                 const precioTachadoCabecera = esComboActivo
                   ? usarPrecioSet
-                    ? resumenFinancieroCombo.sumaSetNominal > resumenFinancieroCombo.pvpSet
+                    ? descuentoColorOferta.aplicaDescuento
+                      ? Math.max(
+                          resumenFinancieroCombo.sumaSetNominal,
+                          resumenFinancieroCombo.pvpSet
+                        )
+                      : resumenFinancieroCombo.sumaSetNominal > resumenFinancieroCombo.pvpSet
                       ? resumenFinancieroCombo.sumaSetNominal
                       : varianteSeleccionada.precioComparacion
                     : resumenFinancieroCombo.sumaPersonalizadaNominal >
                       resumenFinancieroCombo.sumaPersonalizadaFinal
                     ? resumenFinancieroCombo.sumaPersonalizadaNominal
                     : undefined
+                  : descuentoColorOferta.aplicaDescuento
+                  ? Math.max(
+                      calculoVolumenIndividual.pvpUnitarioNominal,
+                      varianteSeleccionada.precioComparacion ?? 0
+                    )
                   : calculoVolumenIndividual.tieneDescuentoVolumen
                   ? calculoVolumenIndividual.pvpUnitarioNominal
                   : varianteSeleccionada.precioComparacion;
@@ -1254,6 +1387,10 @@ export function ModalDetalleProducto() {
                         ((precioTachadoCabecera - precioCabecera) / precioTachadoCabecera) * 100
                       )
                     : 0;
+
+                const subtotalMultiCabecera = descuentoColorOferta.aplicaDescuento
+                  ? descuentoColorOferta.subtotalLineaFinal
+                  : calculoVolumenIndividual.subtotalLineaFinal;
 
                 return (
                   <div className="fila-precio-modal" style={{ flexWrap: 'wrap', rowGap: '6px' }}>
@@ -1271,7 +1408,7 @@ export function ModalDetalleProducto() {
                           marginLeft: '6px',
                         }}
                       >
-                        c/u × {cantidadModal} = ${calculoVolumenIndividual.subtotalLineaFinal.toFixed(2)}
+                        c/u × {cantidadModal} = ${subtotalMultiCabecera.toFixed(2)}
                       </span>
                     )}
                     {precioTachadoCabecera && precioTachadoCabecera > precioCabecera && (
@@ -1292,7 +1429,11 @@ export function ModalDetalleProducto() {
                         {pctDescuentoCabecera > 0 && (
                           <span
                             style={{
-                              background: esComboActivo ? '#7C3AED' : '#E11D48',
+                              background: descuentoColorOferta.aplicaDescuento
+                                ? '#059669'
+                                : esComboActivo
+                                ? '#7C3AED'
+                                : '#E11D48',
                               color: '#FFFFFF',
                               fontSize: '0.76rem',
                               fontWeight: 700,
@@ -1302,12 +1443,16 @@ export function ModalDetalleProducto() {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '4px',
-                              boxShadow: esComboActivo
+                              boxShadow: descuentoColorOferta.aplicaDescuento
+                                ? '0 2px 6px rgba(5, 150, 105, 0.32)'
+                                : esComboActivo
                                 ? '0 2px 6px rgba(124, 58, 237, 0.3)'
                                 : '0 2px 6px rgba(225, 29, 72, 0.35)',
                             }}
                           >
-                            {esComboActivo
+                            {descuentoColorOferta.aplicaDescuento
+                              ? `🔥 Oferta color -${descuentoColorOferta.porcentajeDescuento}%`
+                              : esComboActivo
                               ? usarPrecioSet
                                 ? `🎁 Set -${pctDescuentoCabecera}% OFF`
                                 : `🏷️ Volumen -${pctDescuentoCabecera}% OFF`
@@ -2217,7 +2362,14 @@ export function ModalDetalleProducto() {
             {/* Personalización Floral Obligatoria al Comprar (Colores, Combinación de Flores, Orquídeas, Base/Papel e Indicaciones) */}
             {personalizacionFloralActiva && configPersonalizacionFloral && (() => {
               const modosFlor = obtenerModosFlorDisponibles(configPersonalizacionFloral);
-              const coloresHabilitados = obtenerColoresRosasHabilitados(configPersonalizacionFloral);
+              const coloresHabilitados = coloresConInventario;
+              const inventarioActivo = Boolean(inventarioColores?.tieneInventarioRegistrado);
+              const coloresEnStockUI = inventarioActivo
+                ? coloresHabilitados.filter((c) => c.disponibleEnInventario)
+                : coloresHabilitados;
+              const coloresBajoConfUI = inventarioActivo
+                ? coloresHabilitados.filter((c) => c.bajoConfirmacion)
+                : [];
               const pideColoresRosas =
                 !mismosColoresFoto &&
                 modoRequiereColoresRosas(modoFloresSel, configPersonalizacionFloral);
@@ -2239,6 +2391,13 @@ export function ModalDetalleProducto() {
                 fotoReferenciaTotal: fotos.length,
                 modoFlores: modoFloresSel,
                 coloresRosas: coloresRosasSel,
+                coloresBajoConfirmacion: coloresElegidosBajoConfirmacion,
+                coloresEnOferta: descuentoColorOferta.aplicaDescuento
+                  ? descuentoColorOferta.coloresOfertaElegidos
+                  : [],
+                descuentoColorOfertaPct: descuentoColorOferta.aplicaDescuento
+                  ? descuentoColorOferta.porcentajeDescuento
+                  : undefined,
                 cantidadOrquideas: cantidadOrquideasSel,
                 tipoEnvoltorio: tipoEnvEfectivo,
                 tipoEnvoltorioEtiqueta: tipoEnvEfectivo ? rotuloTipoEnv : undefined,
@@ -2315,6 +2474,34 @@ export function ModalDetalleProducto() {
                       ✨ <strong>Colores y decoración según la ocasión.</strong>{' '}
                       Elige tu combinación ideal o solicita los mismos colores de la foto.
                     </p>
+                    {urlAlbumEjemplos && (
+                      <a
+                        href={urlAlbumEjemplos}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Abrir galería de Google Photos con más ejemplos reales de colores y diseños"
+                        aria-label="Ver más ejemplos en Google Photos"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          alignSelf: 'flex-start',
+                          marginTop: '3px',
+                          padding: '5px 10px',
+                          borderRadius: '999px',
+                          background: '#FDF2F8',
+                          border: '1px solid #FBCFE8',
+                          color: '#9D174D',
+                          fontSize: '0.73rem',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        <Images size={13} />
+                        <span>Ver más ejemplos en Google Photos</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
                   </div>
 
                   {/* Opción rápida: Mismos colores de la foto vs Elegir colores */}
@@ -2557,48 +2744,337 @@ export function ModalDetalleProducto() {
                             </span>
                           </div>
 
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
-                            {coloresHabilitados.map((col) => {
-                              const activo = coloresRosasSel.includes(col.etiqueta);
-                              return (
-                                <button
-                                  key={col.clave}
-                                  type="button"
-                                  onClick={() => toggleColorRosaCliente(col.etiqueta)}
-                                  aria-pressed={activo}
-                                  title={`Seleccionar color ${col.etiqueta}`}
+                          {/* Aviso compacto si existen colores en oferta hoy en inventario */}
+                          {(() => {
+                            const coloresOfertaDisp = coloresEnStockUI.filter((c) => c.enOferta);
+                            if (coloresOfertaDisp.length === 0) return null;
+                            const pct = coloresOfertaDisp[0]!.porcentajeDescuentoOferta;
+                            return (
+                              <div
+                                style={{
+                                  marginBottom: '8px',
+                                  padding: '7px 10px',
+                                  borderRadius: '10px',
+                                  background: '#ECFDF5',
+                                  border: '1px solid #A7F3D0',
+                                  color: '#065F46',
+                                  fontSize: '0.73rem',
+                                  lineHeight: 1.38,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                }}
+                              >
+                                <Tag size={13} color="#059669" style={{ flexShrink: 0 }} />
+                                <span>
+                                  <strong>Colores en oferta (-{pct}%):</strong> elige{' '}
+                                  {coloresOfertaDisp.map((c) => c.etiqueta).join(', ')} y recibe{' '}
+                                  <strong>{pct}% de descuento automático</strong> en tu arreglo.
+                                </span>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Colores disponibles hoy en el inventario del taller */}
+                          {coloresEnStockUI.length > 0 && (
+                            <div style={{ marginBottom: coloresBajoConfUI.length > 0 ? '9px' : 0 }}>
+                              {inventarioActivo && (
+                                <span
                                   style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '6px 11px',
-                                    borderRadius: '999px',
-                                    border: activo
-                                      ? '2px solid #BE185D'
-                                      : '1px solid #E4DDD4',
-                                    background: activo ? '#FDF2F8' : '#FFFFFF',
-                                    color: activo ? '#831843' : '#27272A',
-                                    fontSize: '0.76rem',
-                                    fontWeight: activo ? 800 : 600,
-                                    cursor: 'pointer',
+                                    gap: '5px',
+                                    fontSize: '0.69rem',
+                                    fontWeight: 700,
+                                    color: '#166534',
+                                    marginBottom: '5px',
                                   }}
                                 >
                                   <span
                                     style={{
-                                      width: '13px',
-                                      height: '13px',
+                                      width: '7px',
+                                      height: '7px',
                                       borderRadius: '999px',
-                                      background: col.colorHex,
-                                      border: `1px solid ${col.bordeHex || 'rgba(0,0,0,0.2)'}`,
-                                      flexShrink: 0,
+                                      background: '#16A34A',
+                                      display: 'inline-block',
                                     }}
                                   />
-                                  <span>{col.etiqueta}</span>
-                                  {activo && <Check size={12} color="#BE185D" />}
+                                  <span>Disponibles en inventario hoy</span>
+                                </span>
+                              )}
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                                {coloresEnStockUI.map((col) => {
+                                  const activo = coloresRosasSel.includes(col.etiqueta);
+                                  return (
+                                    <button
+                                      key={col.clave}
+                                      type="button"
+                                      onClick={() => toggleColorRosaCliente(col.etiqueta)}
+                                      aria-pressed={activo}
+                                      title={
+                                        col.enOferta
+                                          ? `Seleccionar color ${col.etiqueta} en oferta (-${col.porcentajeDescuentoOferta}% de descuento)`
+                                          : inventarioActivo
+                                          ? `Seleccionar color ${col.etiqueta} (disponible en inventario)`
+                                          : `Seleccionar color ${col.etiqueta}`
+                                      }
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '6px 11px',
+                                        borderRadius: '999px',
+                                        border: activo
+                                          ? col.enOferta
+                                            ? '2px solid #059669'
+                                            : '2px solid #BE185D'
+                                          : col.enOferta
+                                          ? '1.5px solid #34D399'
+                                          : '1px solid #E4DDD4',
+                                        background: activo
+                                          ? col.enOferta
+                                            ? '#ECFDF5'
+                                            : '#FDF2F8'
+                                          : col.enOferta
+                                          ? '#F0FDF4'
+                                          : '#FFFFFF',
+                                        color: activo
+                                          ? col.enOferta
+                                            ? '#065F46'
+                                            : '#831843'
+                                          : '#27272A',
+                                        fontSize: '0.76rem',
+                                        fontWeight: activo ? 800 : 600,
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          width: '13px',
+                                          height: '13px',
+                                          borderRadius: '999px',
+                                          background: col.colorHex,
+                                          border: `1px solid ${col.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                      <span>{col.etiqueta}</span>
+                                      {col.enOferta && (
+                                        <span
+                                          style={{
+                                            fontSize: '0.65rem',
+                                            fontWeight: 800,
+                                            color: '#FFFFFF',
+                                            background: '#059669',
+                                            padding: '1px 6px',
+                                            borderRadius: '999px',
+                                          }}
+                                        >
+                                          -{col.porcentajeDescuentoOferta}%
+                                        </span>
+                                      )}
+                                      {activo && (
+                                        <Check size={12} color={col.enOferta ? '#059669' : '#BE185D'} />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Confirmación en vivo cuando se activa el descuento por color en oferta */}
+                          {descuentoColorOferta.aplicaDescuento && (
+                            <div
+                              role="status"
+                              style={{
+                                marginBottom: coloresBajoConfUI.length > 0 ? '9px' : '2px',
+                                padding: '8px 11px',
+                                borderRadius: '10px',
+                                background: '#ECFDF5',
+                                border: '1.5px solid #10B981',
+                                color: '#065F46',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              🎉 <strong>¡Descuento de -{descuentoColorOferta.porcentajeDescuento}% aplicado!</strong>{' '}
+                              Ahorras{' '}
+                              <strong>${descuentoColorOferta.ahorroTotalLinea.toFixed(2)}</strong> en
+                              este arreglo por elegir color en oferta (
+                              {descuentoColorOferta.coloresOfertaElegidos.join(', ')}).
+                            </div>
+                          )}
+
+                          {descuentoColorOferta.tieneMezclaConColorRegular && (
+                            <div
+                              style={{
+                                marginBottom: coloresBajoConfUI.length > 0 ? '9px' : '2px',
+                                padding: '7px 10px',
+                                borderRadius: '9px',
+                                background: '#F8FAFC',
+                                border: '1px dashed #CBD5E1',
+                                color: '#475569',
+                                fontSize: '0.72rem',
+                                lineHeight: 1.38,
+                              }}
+                            >
+                              💡 Elige únicamente colores con insignia de oferta para activar el
+                              descuento automático en este arreglo.
+                            </div>
+                          )}
+
+                          {/* Colores no presentes en el inventario actual -> Bajo confirmación */}
+                          {coloresBajoConfUI.length > 0 && (
+                            <div>
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  fontSize: '0.69rem',
+                                  fontWeight: 700,
+                                  color: '#92400E',
+                                  marginBottom: '5px',
+                                }}
+                              >
+                                <Clock size={11} color="#D97706" />
+                                <span>Bajo confirmación (pedido con anticipación)</span>
+                              </span>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                                {coloresBajoConfUI.map((col) => {
+                                  const activo = coloresRosasSel.includes(col.etiqueta);
+                                  return (
+                                    <button
+                                      key={col.clave}
+                                      type="button"
+                                      onClick={() => toggleColorRosaCliente(col.etiqueta)}
+                                      aria-pressed={activo}
+                                      title={`Color ${col.etiqueta} bajo confirmación: no disponible para entrega inmediata, verificar con tienda`}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '6px 11px',
+                                        borderRadius: '999px',
+                                        border: activo
+                                          ? '2px solid #D97706'
+                                          : '1px dashed #F59E0B',
+                                        background: activo ? '#FFFBEB' : '#FFFDF7',
+                                        color: activo ? '#92400E' : '#57524C',
+                                        fontSize: '0.76rem',
+                                        fontWeight: activo ? 800 : 600,
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          width: '13px',
+                                          height: '13px',
+                                          borderRadius: '999px',
+                                          background: col.colorHex,
+                                          border: `1px solid ${col.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                      <span>{col.etiqueta}</span>
+                                      <span
+                                        style={{
+                                          fontSize: '0.64rem',
+                                          fontWeight: 700,
+                                          color: '#B45309',
+                                          background: '#FEF3C7',
+                                          padding: '1px 5px',
+                                          borderRadius: '999px',
+                                        }}
+                                      >
+                                        Bajo conf.
+                                      </span>
+                                      {activo && <Check size={12} color="#B45309" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Advertencia explícita cuando el cliente selecciona un color fuera de inventario */}
+                          {coloresElegidosBajoConfirmacion.length > 0 && (
+                            <div
+                              role="status"
+                              style={{
+                                marginTop: '9px',
+                                padding: '10px 12px',
+                                borderRadius: '11px',
+                                background: '#FFFBEB',
+                                border: '1.5px solid #F59E0B',
+                                color: '#78350F',
+                                fontSize: '0.75rem',
+                                lineHeight: 1.42,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '7px',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                <AlertTriangle
+                                  size={16}
+                                  color="#D97706"
+                                  style={{ flexShrink: 0, marginTop: '1px' }}
+                                />
+                                <div>
+                                  <strong style={{ display: 'block', color: '#92400E', marginBottom: '2px' }}>
+                                    Bajo confirmación ({coloresElegidosBajoConfirmacion.join(', ')})
+                                  </strong>
+                                  <span>
+                                    Este color no está en nuestro inventario actual, por lo que{' '}
+                                    <strong>no está listo para entrega inmediata</strong>. Con
+                                    anticipación podemos pedirlo a nuestros proveedores;{' '}
+                                    <strong>verifica disponibilidad y fecha con la tienda</strong>.
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const urlProd = obtenerEnlaceProducto(
+                                      producto,
+                                      varianteSeleccionada.sku
+                                    );
+                                    abrirWhatsappTiendaConPuenteOmnicanal({
+                                      whatsappTienda: configTiendaCheckout?.whatsappTienda,
+                                      productoNombre: `${producto.nombre} (consulta color bajo confirmación: ${coloresElegidosBajoConfirmacion.join(', ')})`,
+                                      productoSlug: producto.slug || producto.id,
+                                      varianteNombre: varianteSeleccionada.nombre,
+                                      precioUsd: varianteSeleccionada.pvp,
+                                      urlProducto: urlProd,
+                                    });
+                                  }}
+                                  title="Consultar disponibilidad de este color por WhatsApp con la tienda"
+                                  aria-label="Verificar por WhatsApp"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '5px 11px',
+                                    borderRadius: '999px',
+                                    border: '1px solid #D97706',
+                                    background: '#FFFFFF',
+                                    color: '#92400E',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    fontFamily: 'inherit',
+                                  }}
+                                >
+                                  <IconoWhatsappVector size={13} color="#16A34A" />
+                                  <span>Verificar con tienda</span>
                                 </button>
-                              );
-                            })}
-                          </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -3384,10 +3860,16 @@ export function ModalDetalleProducto() {
                       resumenFinancieroCombo.pvpSet <=
                         resumenFinancieroCombo.sumaPersonalizadaFinal));
 
+                const factorOfertaBtn = descuentoColorOferta.aplicaDescuento
+                  ? 1 - descuentoColorOferta.porcentajeDescuento / 100
+                  : 1;
+
                 const subtotalBaseBoton = esComboActivo
                   ? usarSetCerradoBtn
-                    ? resumenFinancieroCombo.pvpSet
+                    ? Number((resumenFinancieroCombo.pvpSet * factorOfertaBtn).toFixed(2))
                     : resumenFinancieroCombo.sumaPersonalizadaFinal
+                  : descuentoColorOferta.aplicaDescuento
+                  ? descuentoColorOferta.subtotalLineaFinal
                   : calculoVolumenIndividual.subtotalLineaFinal;
 
                 const totalBoton = Number((subtotalBaseBoton + sumaExtras).toFixed(2));
@@ -3684,6 +4166,43 @@ export function ModalDetalleProducto() {
                   </small>
                 </div>
               </div>
+
+              {/* Enlace al álbum de Google Photos del extra si tiene uno configurado */}
+              {(() => {
+                const albumExtra =
+                  varianteExtraInspeccion?.albumFotosUrl?.trim() ||
+                  extraParaInspeccionar.albumFotosUrl?.trim() ||
+                  '';
+                if (!/^https?:\/\//i.test(albumExtra)) return null;
+                return (
+                  <a
+                    href={albumExtra}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Abrir álbum en Google Photos con más ejemplos reales"
+                    aria-label="Ver más ejemplos en Google Photos"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      alignSelf: 'flex-start',
+                      marginBottom: '8px',
+                      padding: '5px 11px',
+                      borderRadius: '999px',
+                      background: '#FDF2F8',
+                      border: '1px solid #FBCFE8',
+                      color: '#9D174D',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <Images size={14} />
+                    <span>Ver más ejemplos en Google Photos</span>
+                    <ExternalLink size={12} />
+                  </a>
+                );
+              })()}
 
               {/* Descripción Detallada */}
               <div className="descripcion-extra-box">

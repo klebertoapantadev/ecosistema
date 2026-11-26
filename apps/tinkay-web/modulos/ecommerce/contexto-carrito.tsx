@@ -12,7 +12,10 @@ import {
   CategoriaEcommerce,
 } from './tipos';
 import { PRODUCTOS_TINKAY, CATEGORIAS_TINKAY } from './datos-catalogo';
-import { cargarCatalogoDinamicoTinkay } from './servicio-catalogo';
+import {
+  cargarCatalogoDinamicoTinkay,
+  cargarColoresInventarioTinkay,
+} from './servicio-catalogo';
 import {
   expandirProductosVitrina,
   obtenerCategoriasVisibles,
@@ -37,6 +40,7 @@ import {
   type ConfiguracionLogisticaNegocio,
   type ConfiguracionTiendaCheckout,
   type EstadoRegaloPrimeraCompra,
+  type InventarioColoresTienda,
   type SeleccionPersonalizacionFloral,
 } from '@eco/comercio';
 
@@ -67,6 +71,7 @@ interface ContextoCarritoValor {
   filtrosPanelAbierto: boolean;
   configLogistica: ConfiguracionLogisticaNegocio;
   configTiendaCheckout: ConfiguracionTiendaCheckout;
+  inventarioColores: InventarioColoresTienda | null;
   usuarioRegistrado: boolean;
   estadoRegalo: EstadoRegaloPrimeraCompra | null;
   favoritosIds: string[];
@@ -195,6 +200,7 @@ export interface ProveedorCarritoProps {
   usuarioRegistradoInicial?: boolean;
   productosIniciales?: ProductoEcommerce[];
   categoriasIniciales?: CategoriaEcommerce[];
+  inventarioColoresInicial?: InventarioColoresTienda | null;
 }
 
 export function ProveedorCarrito({
@@ -205,6 +211,7 @@ export function ProveedorCarrito({
   usuarioRegistradoInicial,
   productosIniciales,
   categoriasIniciales,
+  inventarioColoresInicial,
 }: ProveedorCarritoProps) {
   const [items, setItems] = useState<ItemCarrito[]>([]);
   const [modalidadEntrega, setModalidadEntrega] = useState<ModalidadEntrega>('unificada');
@@ -294,6 +301,9 @@ export function ProveedorCarrito({
   );
   const [configTiendaCheckout, setConfigTiendaCheckout] = useState<ConfiguracionTiendaCheckout>(() =>
     crearConfiguracionTiendaCheckoutPorDefecto('tinkay')
+  );
+  const [inventarioColores, setInventarioColores] = useState<InventarioColoresTienda | null>(
+    inventarioColoresInicial ?? null
   );
 
   const sincronizarRutaNavegador = React.useCallback((rutaCompletaONuevaUrl: string) => {
@@ -524,6 +534,11 @@ export function ProveedorCarrito({
           resolverDesdeUrlOProps(prodsFinales, catsFinales, true);
         }
       });
+      cargarColoresInventarioTinkay().then((invLive) => {
+        if (invLive) {
+          setInventarioColores(invLive);
+        }
+      });
     };
 
     refrescarCatalogoEnVivo(true);
@@ -741,26 +756,47 @@ export function ProveedorCarrito({
 
   const recalcularVarianteConVolumen = (
     variante: VarianteEcommerce,
-    cantidad: number
+    cantidad: number,
+    personalizacionFloral?: SeleccionPersonalizacionFloral
   ): VarianteEcommerce => {
     const pvpNominal = variante.pvpNominalSinVolumen ?? variante.pvp;
-    if (!variante.escalasVolumen || variante.escalasVolumen.length === 0) {
+    let pvpTrasVolumen = pvpNominal;
+    let baseTrasVolumen =
+      variante.tarifaIva > 0
+        ? Number((pvpNominal / (1 + variante.tarifaIva / 100)).toFixed(2))
+        : pvpNominal;
+
+    if (variante.escalasVolumen && variante.escalasVolumen.length > 0) {
+      const calc = calcularPrecioPorVolumen({
+        pvpUnitarioNominal: pvpNominal,
+        tarifaIvaPorcentaje: variante.tarifaIva,
+        cantidad,
+        escalas: variante.escalasVolumen,
+      });
+      pvpTrasVolumen = calc.pvpUnitarioFinal;
+      baseTrasVolumen = calc.baseImponibleUnitariaFinal;
+    }
+
+    const pctOfertaColor = Number(personalizacionFloral?.descuentoColorOfertaPct ?? 0);
+    if (Number.isFinite(pctOfertaColor) && pctOfertaColor > 0 && pctOfertaColor <= 80) {
+      const pvpConOferta = Number((pvpTrasVolumen * (1 - pctOfertaColor / 100)).toFixed(2));
+      const baseConOferta =
+        variante.tarifaIva > 0
+          ? Number((pvpConOferta / (1 + variante.tarifaIva / 100)).toFixed(2))
+          : pvpConOferta;
       return {
         ...variante,
         pvpNominalSinVolumen: pvpNominal,
+        pvp: pvpConOferta,
+        baseImponible: baseConOferta,
       };
     }
-    const calc = calcularPrecioPorVolumen({
-      pvpUnitarioNominal: pvpNominal,
-      tarifaIvaPorcentaje: variante.tarifaIva,
-      cantidad,
-      escalas: variante.escalasVolumen,
-    });
+
     return {
       ...variante,
       pvpNominalSinVolumen: pvpNominal,
-      pvp: calc.pvpUnitarioFinal,
-      baseImponible: calc.baseImponibleUnitariaFinal,
+      pvp: pvpTrasVolumen,
+      baseImponible: baseTrasVolumen,
     };
   };
 
@@ -774,6 +810,11 @@ export function ProveedorCarrito({
     personalizacionFloral?: SeleccionPersonalizacionFloral
   ) => {
     const cantAgregar = Math.max(1, Math.floor(cantidadInicial || 1));
+    const varianteCalculada = recalcularVarianteConVolumen(
+      variante,
+      cantAgregar,
+      personalizacionFloral
+    );
 
     setItems((prev) => {
       const clavePersNueva = `${personalizacionFloral?.resumenTexto?.trim() || ''}||${personalizacionFloral?.fotoReferenciaUrl?.trim() || producto.fotos?.[0] || ''}`;
@@ -795,7 +836,11 @@ export function ProveedorCarrito({
             clon[indexExistente] = {
               ...actual,
               cantidad: nuevaCantidad,
-              variante: recalcularVarianteConVolumen(actual.variante, nuevaCantidad),
+              variante: recalcularVarianteConVolumen(
+                actual.variante,
+                nuevaCantidad,
+                actual.personalizacionFloral
+              ),
             };
           }
           return clon;
@@ -807,7 +852,7 @@ export function ProveedorCarrito({
       const nuevoItem: ItemCarrito = {
         id: nuevoId,
         producto,
-        variante: recalcularVarianteConVolumen(variante, cantAgregar),
+        variante: varianteCalculada,
         cantidad: cantAgregar,
         dedicatoria: dedicatoria || {
           para: '',
@@ -825,21 +870,21 @@ export function ProveedorCarrito({
       setDrawerAbierto(true);
     }
 
-    if (variante.sku && variante.pvp > 0) {
+    if (varianteCalculada.sku && varianteCalculada.pvp > 0) {
       dispararEventoPixelNavegador('AddToCart', {
-        content_ids: [variante.sku],
+        content_ids: [varianteCalculada.sku],
         contents: [
           {
-            id: variante.sku,
+            id: varianteCalculada.sku,
             quantity: cantAgregar,
-            item_price: variante.pvp,
+            item_price: varianteCalculada.pvp,
             title: producto.nombre,
           },
         ],
-        content_name: `${producto.nombre} — ${variante.nombre}`,
+        content_name: `${producto.nombre} — ${varianteCalculada.nombre}`,
         content_category: producto.categoriaNombre || producto.categoriaPrincipal,
         content_type: 'product',
-        value: Math.round(variante.pvp * cantAgregar * 100) / 100,
+        value: Math.round(varianteCalculada.pvp * cantAgregar * 100) / 100,
         currency: 'USD',
         num_items: cantAgregar,
       });
@@ -861,7 +906,11 @@ export function ProveedorCarrito({
           ? {
               ...i,
               cantidad,
-              variante: recalcularVarianteConVolumen(i.variante, cantidad),
+              variante: recalcularVarianteConVolumen(
+                i.variante,
+                cantidad,
+                i.personalizacionFloral
+              ),
             }
           : i
       )
@@ -1361,6 +1410,7 @@ export function ProveedorCarrito({
         filtrosPanelAbierto,
         configLogistica,
         configTiendaCheckout,
+        inventarioColores,
         usuarioRegistrado,
         estadoRegalo,
         favoritosIds,

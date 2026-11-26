@@ -6,6 +6,7 @@ import {
   construirMensajeWhatsappContextual,
   construirUrlWhatsappTienda,
   leerAtribucionNavegador,
+  type InventarioColoresTienda,
 } from '@eco/comercio';
 import { ProveedorCarrito, useCarrito } from '../contexto-carrito';
 import type { CategoriaEcommerce, ProductoEcommerce } from '../tipos';
@@ -343,6 +344,7 @@ export interface LandingEcommerceTinkayProps {
   varianteInicialUrl?: string;
   productosIniciales?: ProductoEcommerce[];
   categoriasIniciales?: CategoriaEcommerce[];
+  inventarioColoresInicial?: InventarioColoresTienda | null;
 }
 
 export function LandingEcommerceTinkay({
@@ -351,6 +353,7 @@ export function LandingEcommerceTinkay({
   varianteInicialUrl,
   productosIniciales,
   categoriasIniciales,
+  inventarioColoresInicial,
 }: LandingEcommerceTinkayProps) {
   return (
     <ProveedorCarrito
@@ -359,6 +362,7 @@ export function LandingEcommerceTinkay({
       varianteInicialUrl={varianteInicialUrl}
       productosIniciales={productosIniciales}
       categoriasIniciales={categoriasIniciales}
+      inventarioColoresInicial={inventarioColoresInicial}
     >
       <ContenidoPaginaEcommerceTinkay />
     </ProveedorCarrito>

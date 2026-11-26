@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import { LandingEcommerceTinkay } from '../../../modulos/ecommerce/componentes/LandingEcommerceTinkay';
 import { generarMetadataEcommerceTinkay } from '../../../modulos/ecommerce/metadata-ecommerce';
-import { cargarCatalogoDinamicoTinkay } from '../../../modulos/ecommerce/servicio-catalogo';
+import {
+  cargarCatalogoDinamicoTinkay,
+  cargarColoresInventarioTinkay,
+} from '../../../modulos/ecommerce/servicio-catalogo';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,15 +26,17 @@ export default async function PaginaCategoriaTinkay({
 }: {
   params: ParamsPromise;
 }) {
-  const [{ slug }, catalogoInicial] = await Promise.all([
+  const [{ slug }, catalogoInicial, inventarioColoresInicial] = await Promise.all([
     params,
     cargarCatalogoDinamicoTinkay(),
+    cargarColoresInventarioTinkay(),
   ]);
   return (
     <LandingEcommerceTinkay
       categoriaInicialUrl={decodeURIComponent(slug || '')}
       productosIniciales={catalogoInicial.productos}
       categoriasIniciales={catalogoInicial.categorias}
+      inventarioColoresInicial={inventarioColoresInicial}
     />
   );
 }

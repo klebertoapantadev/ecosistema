@@ -10,6 +10,7 @@ import {
   normalizarConfiguracionRenta,
   normalizarEscalasVolumen,
   obtenerEtiquetaCortaTipoOferta,
+  type InventarioColoresTienda,
 } from '@eco/comercio';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oaybbpdxhlxjbpwnoymy.supabase.co';
@@ -29,6 +30,7 @@ interface SupabaseVarianteRaw {
     pvp_nominal?: number;
     portada_url?: string;
     album_url?: string;
+    album_fotos_url?: string;
     galeria_urls?: string[];
     beneficios_custom?: string[] | string;
     detalle?: string;
@@ -56,6 +58,8 @@ interface SupabaseProductoRaw {
   pro_total_me_gusta?: number;
   pro_detalle_producto?: {
     imagen_url?: string;
+    album_fotos_url?: string;
+    album_url?: string;
     galeria_urls?: string[];
     descripcion_corta?: string;
     beneficios?: string[] | string;
@@ -443,6 +447,15 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             v.var_detalle_variante?.escalas_volumen
           );
 
+          const albumVarRaw =
+            typeof v.var_detalle_variante?.album_url === 'string' && v.var_detalle_variante.album_url.trim()
+              ? v.var_detalle_variante.album_url.trim()
+              : typeof v.var_detalle_variante?.album_fotos_url === 'string' &&
+                  v.var_detalle_variante.album_fotos_url.trim()
+                ? v.var_detalle_variante.album_fotos_url.trim()
+                : '';
+          const albumVarUrl = /^https?:\/\//i.test(albumVarRaw) ? albumVarRaw : undefined;
+
           return {
             varId: v.var_id,
             sku: v.var_sku || `VAR-${v.var_id.slice(0, 6)}`,
@@ -455,6 +468,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             escalasVolumen: escalasVolumen.length > 0 ? escalasVolumen : undefined,
             foto: fotosVarianteFinal[0],
             fotos: fotosVarianteFinal,
+            albumFotosUrl: albumVarUrl,
             detalle:
               beneficiosVar[0] ||
               v.var_detalle_variante?.detalle ||
@@ -636,6 +650,14 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
           ? normalizarComponentesCombo(detalle.combo_componentes)
           : [];
 
+        const albumMasterRaw =
+          typeof detalle.album_fotos_url === 'string' && detalle.album_fotos_url.trim()
+            ? detalle.album_fotos_url.trim()
+            : typeof detalle.album_url === 'string' && detalle.album_url.trim()
+              ? detalle.album_url.trim()
+              : '';
+        const albumMasterUrl = /^https?:\/\//i.test(albumMasterRaw) ? albumMasterRaw : undefined;
+
         return {
           id: p.pro_slug || p.pro_id,
           proIdUuid: p.pro_id,
@@ -674,6 +696,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
           categoriasSecundarias: catsSecundarias,
           fotos,
           fotosMaster,
+          albumFotosUrl: albumMasterUrl,
           variantes:
             variantes.length > 0
               ? variantes
@@ -773,3 +796,77 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
     return { productos: PRODUCTOS_TINKAY, categorias: CATEGORIAS_TINKAY };
   }
 });
+
+/**
+ * Carga en tiempo real los colores de rosas actualmente disponibles en el inventario
+ * del taller Tinkay mediante la RPC pública `com_fn_obtener_colores_inventario_tienda`.
+ * Deduplicado por request con `React.cache` en SSR y reutilizable en el navegador.
+ */
+export const cargarColoresInventarioTinkay = cache(
+  async function cargarColoresInventarioTinkayInterno(): Promise<InventarioColoresTienda | null> {
+    const invocar = async (conPerfilComercio: boolean) => {
+      const headers: Record<string, string> = {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      };
+      if (conPerfilComercio) {
+        headers['Content-Profile'] = 'comun_comercio';
+        headers['Accept-Profile'] = 'comun_comercio';
+      }
+      return fetch(`${SUPABASE_URL}/rest/v1/rpc/com_fn_obtener_colores_inventario_tienda`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ p_negocio: 'tinkay' }),
+        cache: 'no-store',
+      });
+    };
+
+    try {
+      let res = await invocar(true);
+      if (!res.ok) {
+        res = await invocar(false);
+      }
+      if (!res.ok) {
+        return null;
+      }
+      const data = await res.json();
+      if (!data || data.ok !== true) {
+        return null;
+      }
+      return {
+        tieneInventarioRegistrado: Boolean(data.tieneInventarioRegistrado),
+        fechaUltimoCorte:
+          typeof data.fechaUltimoCorte === 'string' ? data.fechaUltimoCorte : null,
+        coloresEnStock: Array.isArray(data.coloresEnStock)
+          ? data.coloresEnStock.map((c: unknown) => String(c || '').trim()).filter(Boolean)
+          : [],
+        orquideasEnStock: Array.isArray(data.orquideasEnStock)
+          ? data.orquideasEnStock.map((c: unknown) => String(c || '').trim()).filter(Boolean)
+          : [],
+        coloresCatalogo: Array.isArray(data.coloresCatalogo)
+          ? data.coloresCatalogo.map((c: unknown) => String(c || '').trim()).filter(Boolean)
+          : [],
+        categoriasColores:
+          data.categoriasColores && typeof data.categoriasColores === 'object'
+            ? (data.categoriasColores as Record<
+                string,
+                { etiqueta?: string; colorHex?: string }
+              >)
+            : {},
+        ofertaColoresActiva: Boolean(data.ofertaColoresActiva),
+        porcentajeDescuentoOferta:
+          Number.isFinite(Number(data.porcentajeDescuentoOferta)) &&
+          Number(data.porcentajeDescuentoOferta) > 0
+            ? Number(data.porcentajeDescuentoOferta)
+            : 10,
+        coloresEnOferta: Array.isArray(data.coloresEnOferta)
+          ? data.coloresEnOferta.map((c: unknown) => String(c || '').trim()).filter(Boolean)
+          : [],
+      };
+    } catch (error) {
+      console.warn('No se pudo cargar el inventario de colores de Tinkay:', error);
+      return null;
+    }
+  }
+);

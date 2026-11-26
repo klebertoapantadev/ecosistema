@@ -277,6 +277,54 @@ export function DrawerCarritoFloristeria() {
                               🎨 {item.personalizacionFloral.resumenTexto}
                             </span>
                           )}
+                          {(item.personalizacionFloral?.descuentoColorOfertaPct ?? 0) > 0 && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '0.69rem',
+                                fontWeight: 700,
+                                lineHeight: 1.3,
+                                color: '#065F46',
+                                background: '#ECFDF5',
+                                border: '1px solid #6EE7B7',
+                                borderRadius: '8px',
+                                padding: '3px 7px',
+                                marginTop: '3px',
+                              }}
+                            >
+                              <span>
+                                🔥 Oferta color (-{item.personalizacionFloral?.descuentoColorOfertaPct}
+                                %) aplicada en el precio
+                              </span>
+                            </span>
+                          )}
+                          {(item.personalizacionFloral?.requiereConfirmacionColor ||
+                            (item.personalizacionFloral?.coloresBajoConfirmacion?.length ?? 0) > 0) && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '0.69rem',
+                                fontWeight: 700,
+                                lineHeight: 1.3,
+                                color: '#92400E',
+                                background: '#FFFBEB',
+                                border: '1px solid #F59E0B',
+                                borderRadius: '8px',
+                                padding: '3px 7px',
+                                marginTop: '3px',
+                              }}
+                            >
+                              <AlertTriangle size={12} color="#D97706" style={{ flexShrink: 0 }} />
+                              <span>
+                                Color bajo confirmación — no listo para entrega inmediata, verificar
+                                con tienda
+                              </span>
+                            </span>
+                          )}
                         </div>
 
                         <div className="precio-y-cantidad-fila">

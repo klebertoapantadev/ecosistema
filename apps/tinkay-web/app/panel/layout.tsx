@@ -14,7 +14,11 @@ import {
   type ItemNavegacionPanel,
 } from "@eco/configuracion-negocio";
 import { CampanaNotificaciones } from "@eco/notificaciones";
-import { GestorPushChatsOmnicanal, obtenerMisProformasEventoAction } from "@eco/comercio";
+import {
+  AlertaInventarioRosasBanner,
+  GestorPushChatsOmnicanal,
+  obtenerMisProformasEventoAction,
+} from "@eco/comercio";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import { MarcoEcommerceClienteTinkay } from "../../modulos/ecommerce/componentes/MarcoEcommerceClienteTinkay";
 import { obtenerContextoAccesoTinkay } from "./acceso-tinkay";
@@ -499,6 +503,9 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         rolPrincipal={rolPrincipal}
         puedeVerConversacionesClientes={clavesAutorizadas.has("consola_chat")}
       />
+      {clavesAutorizadas.has("inventario_rosas") && (
+        <AlertaInventarioRosasBanner negocio={NEGOCIO} horasLimite={15} />
+      )}
       {children}
     </MarcoPanelLateral>
   );

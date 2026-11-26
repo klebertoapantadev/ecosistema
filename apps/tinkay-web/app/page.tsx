@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import { LandingEcommerceTinkay } from '../modulos/ecommerce/componentes/LandingEcommerceTinkay';
 import { generarMetadataEcommerceTinkay } from '../modulos/ecommerce/metadata-ecommerce';
-import { cargarCatalogoDinamicoTinkay } from '../modulos/ecommerce/servicio-catalogo';
+import {
+  cargarCatalogoDinamicoTinkay,
+  cargarColoresInventarioTinkay,
+} from '../modulos/ecommerce/servicio-catalogo';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,9 +38,10 @@ export default async function PaginaEcommerceTinkay({
 }: {
   searchParams: SearchParamsPromise;
 }) {
-  const [sp, catalogoInicial] = await Promise.all([
+  const [sp, catalogoInicial, inventarioColoresInicial] = await Promise.all([
     searchParams,
     cargarCatalogoDinamicoTinkay(),
+    cargarColoresInventarioTinkay(),
   ]);
   const productoInicialUrl =
     primerParam(sp.producto) || primerParam(sp.prod) || primerParam(sp.arreglo);
@@ -52,6 +56,7 @@ export default async function PaginaEcommerceTinkay({
       varianteInicialUrl={varianteInicialUrl}
       productosIniciales={catalogoInicial.productos}
       categoriasIniciales={catalogoInicial.categorias}
+      inventarioColoresInicial={inventarioColoresInicial}
     />
   );
 }

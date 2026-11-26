@@ -3011,6 +3011,41 @@ export function BandejaPedidosTienda({
                                   : "🎨 Personalización floral:"}
                               </strong>{" "}
                               {it.personalizacionFloral.resumenTexto}
+                              {(it.personalizacionFloral.descuentoColorOfertaPct ?? 0) > 0 && (
+                                <div
+                                  style={{
+                                    marginTop: "4px",
+                                    padding: "3px 6px",
+                                    borderRadius: "5px",
+                                    background: "#ECFDF5",
+                                    border: "1px solid #6EE7B7",
+                                    color: "#065F46",
+                                    fontWeight: 700,
+                                    fontSize: "0.7rem",
+                                  }}
+                                >
+                                  🔥 Descuento por color en oferta (-
+                                  {it.personalizacionFloral.descuentoColorOfertaPct}%) aplicado
+                                </div>
+                              )}
+                              {(it.personalizacionFloral.requiereConfirmacionColor ||
+                                (it.personalizacionFloral.coloresBajoConfirmacion?.length ?? 0) > 0) && (
+                                <div
+                                  style={{
+                                    marginTop: "4px",
+                                    padding: "3px 6px",
+                                    borderRadius: "5px",
+                                    background: "#FFFBEB",
+                                    border: "1px solid #F59E0B",
+                                    color: "#92400E",
+                                    fontWeight: 700,
+                                    fontSize: "0.7rem",
+                                  }}
+                                >
+                                  ⚠️ Color bajo confirmación (no en inventario al momento del
+                                  pedido — confirmar con proveedor y cliente)
+                                </div>
+                              )}
                             </div>
                           )}
                           {it.dedicatoria?.mensaje && (

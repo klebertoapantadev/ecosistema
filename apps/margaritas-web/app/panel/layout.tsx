@@ -12,6 +12,7 @@ import {
   NavegacionPanelLateral,
   type ItemNavegacionPanel,
 } from "@eco/configuracion-negocio";
+import { AlertaInventarioRosasBanner } from "@eco/comercio";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
 const NEGOCIO = "margaritas";
@@ -230,6 +231,9 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         </>
       }
     >
+      {clavesVisibles.has("inventario_rosas") && (
+        <AlertaInventarioRosasBanner negocio={NEGOCIO} horasLimite={15} />
+      )}
       {children}
     </MarcoPanelLateral>
   );

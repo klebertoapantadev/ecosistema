@@ -34,6 +34,7 @@ export interface VarianteEcommerce {
   unidadesFlores?: number;
   foto?: string;
   fotos?: string[]; // Galería completa configurada para esta variante (portada + galeria_urls)
+  albumFotosUrl?: string; // Enlace a álbum de Google Photos con más ejemplos reales de esta presentación
   precioComparacion?: number;
   escalasVolumen?: EscalaVolumenVariante[];
   usos?: string[];
@@ -62,6 +63,7 @@ export interface ProductoEcommerce {
   fotos: string[]; // Carrusel de fotos reales en alta definición
   fotosMaster?: string[]; // Fotos globales configuradas en la ficha maestra del producto
   fotosModal?: string[]; // Galería completa para el modal de detalle
+  albumFotosUrl?: string; // Enlace a álbum de Google Photos configurado en el producto maestro
   varianteInicialSku?: string; // Variante preseleccionada en caso de desglose individual
   variantes: VarianteEcommerce[];
   destacado: boolean;

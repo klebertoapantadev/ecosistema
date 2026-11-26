@@ -1693,6 +1693,45 @@ export function ModalCheckoutTinkay() {
                                     🎨 {it.personalizacionFloral.resumenTexto}
                                   </small>
                                 )}
+                                {(it.personalizacionFloral?.descuentoColorOfertaPct ?? 0) > 0 && (
+                                  <small
+                                    style={{
+                                      display: 'inline-block',
+                                      marginTop: '3px',
+                                      fontSize: '0.69rem',
+                                      fontWeight: 700,
+                                      lineHeight: 1.35,
+                                      color: '#065F46',
+                                      background: '#ECFDF5',
+                                      border: '1px solid #6EE7B7',
+                                      borderRadius: '6px',
+                                      padding: '3px 7px',
+                                    }}
+                                  >
+                                    🔥 Descuento color en oferta (-
+                                    {it.personalizacionFloral?.descuentoColorOfertaPct}%) aplicado
+                                  </small>
+                                )}
+                                {(it.personalizacionFloral?.requiereConfirmacionColor ||
+                                  (it.personalizacionFloral?.coloresBajoConfirmacion?.length ?? 0) > 0) && (
+                                  <small
+                                    style={{
+                                      display: 'block',
+                                      marginTop: '3px',
+                                      fontSize: '0.69rem',
+                                      fontWeight: 700,
+                                      lineHeight: 1.35,
+                                      color: '#92400E',
+                                      background: '#FFFBEB',
+                                      border: '1px solid #F59E0B',
+                                      borderRadius: '6px',
+                                      padding: '3px 7px',
+                                    }}
+                                  >
+                                    ⚠️ Color bajo confirmación: no aplica entrega inmediata,
+                                    verificar disponibilidad con la tienda.
+                                  </small>
+                                )}
                                 {it.dedicatoria?.mensaje && (
                                   <small className="mini-dedicatoria-preview" style={{ display: 'block', marginTop: '2px' }}>
                                     💌 Tarjeta: &quot;{it.dedicatoria.mensaje.slice(0, 40)}&quot;

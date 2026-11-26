@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  COLORES_ROSAS_PERSONALIZACION,
   OPCIONES_COLOR_BASE,
   OPCIONES_COLOR_PAPEL,
+  calcularDescuentoColorOferta,
   crearConfiguracionPersonalizacionFloralPorDefecto,
   describirConfiguracionPersonalizacionCliente,
+  evaluarVigenciaInventarioRosas,
   inferirTipoEnvoltorioPorColeccion,
   inferirTipoEnvoltorioPorNombre,
   normalizarConfiguracionPersonalizacionFloral,
+  obtenerColoresRosasConInventario,
   obtenerModosFlorDisponibles,
   obtenerOpcionesColorEnvoltorio,
   resolverPersonalizacionFloralEfectiva,
@@ -277,5 +281,185 @@ describe("personalizacionFloral", () => {
       expect(resNoAplica.seleccionFinal.colorBasePapel).toBeNull();
       expect(resNoAplica.seleccionFinal.resumenTexto).toBe("Rosas (Rojo)");
     }
+  });
+
+  it('elimina "Surtido / Mix" (multicolor) de la paleta, normalización y validación, y mapea alias heredado "azul" -> "tinturado"', () => {
+    expect(COLORES_ROSAS_PERSONALIZACION.some((c) => c.clave === "multicolor")).toBe(false);
+    expect(
+      COLORES_ROSAS_PERSONALIZACION.some((c) => c.etiqueta.toLowerCase().includes("surtido"))
+    ).toBe(false);
+
+    const cfg = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      coloresRosasDisponibles: ["rojo", "multicolor", "azul", "verde"],
+    });
+    expect(cfg.coloresRosasDisponibles).toEqual(["rojo", "tinturado", "verde"]);
+
+    const resExcluido = validarSeleccionPersonalizacionFloral(cfg, {
+      modoFlores: "solo_rosas",
+      coloresRosas: ["Surtido / Mix"],
+      cantidadOrquideas: 0,
+      colorBasePapel: null,
+    });
+    expect(resExcluido.ok).toBe(false);
+  });
+
+  it('carga disponibilidad desde inventario, ordena disponibles primero y marca "bajo confirmación" en colores sin stock', () => {
+    const cfg = crearConfiguracionPersonalizacionFloralPorDefecto(true, "papel_envoltorio");
+    const colores = obtenerColoresRosasConInventario(cfg, {
+      tieneInventarioRegistrado: true,
+      fechaUltimoCorte: "2026-11-19T16:56:43.109162+00:00",
+      coloresEnStock: ["rojo", "blanco", "rosado", "durazno", "amarillo", "orquidea_blanco"],
+      coloresCatalogo: [
+        "amarillo",
+        "blanco",
+        "durazno",
+        "fucsia",
+        "lavanda",
+        "naranja",
+        "novedad",
+        "rojo",
+        "rosado",
+        "tinturado",
+        "verde",
+      ],
+      categoriasColores: {},
+    });
+
+    // Ninguna clave de orquídea ni multicolor aparece como color de rosa
+    expect(colores.some((c) => c.clave.includes("orquidea"))).toBe(false);
+    expect(colores.some((c) => c.clave === "multicolor")).toBe(false);
+
+    const enStock = colores.filter((c) => c.disponibleEnInventario);
+    const bajoConf = colores.filter((c) => c.bajoConfirmacion);
+    expect(enStock.map((c) => c.clave)).toEqual(["rojo", "blanco", "rosado", "amarillo", "durazno"]);
+    expect(bajoConf.map((c) => c.clave)).toContain("verde");
+    expect(bajoConf.map((c) => c.clave)).toContain("tinturado");
+    expect(bajoConf.map((c) => c.clave)).toContain("novedad");
+
+    // Todos los disponibles aparecen antes de los de bajo confirmación
+    expect(colores.slice(0, enStock.length).every((c) => c.disponibleEnInventario)).toBe(true);
+    expect(colores.slice(enStock.length).every((c) => c.bajoConfirmacion)).toBe(true);
+
+    const validacionVerde = validarSeleccionPersonalizacionFloral(cfg, {
+      modoFlores: "solo_rosas",
+      coloresRosas: ["Verde"],
+      coloresBajoConfirmacion: ["Verde"],
+      cantidadOrquideas: 0,
+      colorBasePapel: "claros",
+    });
+    expect(validacionVerde.ok).toBe(true);
+    if (validacionVerde.ok) {
+      expect(validacionVerde.seleccionFinal.requiereConfirmacionColor).toBe(true);
+      expect(validacionVerde.seleccionFinal.coloresBajoConfirmacion).toEqual(["Verde"]);
+      expect(validacionVerde.seleccionFinal.resumenTexto).toContain(
+        "Bajo confirmación con tienda (Verde)"
+      );
+    }
+
+    // Sin inventario registrado todavía: no marca colores como bajo confirmación
+    const sinInv = obtenerColoresRosasConInventario(cfg, {
+      tieneInventarioRegistrado: false,
+      coloresEnStock: [],
+    });
+    expect(sinInv.every((c) => c.disponibleEnInventario && !c.bajoConfirmacion)).toBe(true);
+  });
+
+  it("aplica descuento configurable (10% por defecto) al seleccionar colores en oferta del inventario", () => {
+    const cfg = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      maxColoresRosas: 2,
+      tipoEnvoltorio: "papel_envoltorio",
+    });
+    const colores = obtenerColoresRosasConInventario(cfg, {
+      tieneInventarioRegistrado: true,
+      coloresEnStock: ["rojo", "amarillo", "durazno"],
+      ofertaColoresActiva: true,
+      porcentajeDescuentoOferta: 10,
+      coloresEnOferta: ["amarillo", "durazno", "verde"], // verde no está en stock, no debe marcarse en oferta
+    });
+
+    const amarillo = colores.find((c) => c.clave === "amarillo");
+    const verde = colores.find((c) => c.clave === "verde");
+    expect(amarillo?.enOferta).toBe(true);
+    expect(amarillo?.porcentajeDescuentoOferta).toBe(10);
+    expect(verde?.enOferta).toBe(false);
+    expect(verde?.bajoConfirmacion).toBe(true);
+    // Los colores en oferta aparecen primero
+    expect(colores[0]?.enOferta).toBe(true);
+
+    // 1) Selecciona color en oferta -> aplica 10% sobre $80 => $72
+    const descOk = calcularDescuentoColorOferta({
+      pvpUnitarioBase: 80,
+      tarifaIvaPorcentaje: 0,
+      cantidad: 1,
+      coloresElegidos: ["Amarillo"],
+      coloresConInventario: colores,
+    });
+    expect(descOk.aplicaDescuento).toBe(true);
+    expect(descOk.porcentajeDescuento).toBe(10);
+    expect(descOk.pvpUnitarioFinal).toBe(72);
+    expect(descOk.ahorroTotalLinea).toBe(8);
+
+    // 2) Selecciona 2 colores y ambos están en oferta -> aplica descuento
+    const descDosOferta = calcularDescuentoColorOferta({
+      pvpUnitarioBase: 50,
+      tarifaIvaPorcentaje: 15,
+      cantidad: 2,
+      coloresElegidos: ["Amarillo", "Durazno"],
+      coloresConInventario: colores,
+    });
+    expect(descDosOferta.aplicaDescuento).toBe(true);
+    expect(descDosOferta.pvpUnitarioFinal).toBe(45);
+    expect(descDosOferta.subtotalLineaFinal).toBe(90);
+    expect(descDosOferta.baseImponibleUnitariaFinal).toBe(39.13);
+
+    // 3) Combina un color en oferta con un color regular -> no aplica descuento, marca mezcla
+    const descMezcla = calcularDescuentoColorOferta({
+      pvpUnitarioBase: 80,
+      coloresElegidos: ["Amarillo", "Rojo"],
+      coloresConInventario: colores,
+    });
+    expect(descMezcla.aplicaDescuento).toBe(false);
+    expect(descMezcla.tieneMezclaConColorRegular).toBe(true);
+
+    // 4) "Mismos colores de la foto" -> no aplica descuento de color en oferta
+    const descFoto = calcularDescuentoColorOferta({
+      pvpUnitarioBase: 80,
+      mismosColoresFoto: true,
+      coloresElegidos: ["Amarillo"],
+      coloresConInventario: colores,
+    });
+    expect(descFoto.aplicaDescuento).toBe(false);
+
+    // 5) Validación incluye oferta en resumenTexto
+    const valOferta = validarSeleccionPersonalizacionFloral(cfg, {
+      modoFlores: "solo_rosas",
+      coloresRosas: ["Amarillo"],
+      coloresEnOferta: ["Amarillo"],
+      descuentoColorOfertaPct: 10,
+      cantidadOrquideas: 0,
+      colorBasePapel: "claros",
+    });
+    expect(valOferta.ok).toBe(true);
+    if (valOferta.ok) {
+      expect(valOferta.seleccionFinal.descuentoColorOfertaPct).toBe(10);
+      expect(valOferta.seleccionFinal.resumenTexto).toContain("Oferta color -10%");
+    }
+  });
+
+  it("evalúa vigencia del inventario de rosas con límite de 15 horas", () => {
+    const ahora = new Date("2026-11-26T12:00:00.000Z");
+    const reciente = evaluarVigenciaInventarioRosas("2026-11-26T00:00:00.000Z", 15, ahora);
+    expect(reciente.requiereAlerta).toBe(false);
+    expect(reciente.horasDesdeUltimoCorte).toBe(12);
+
+    const vencido = evaluarVigenciaInventarioRosas("2026-11-25T20:00:00.000Z", 15, ahora);
+    expect(vencido.requiereAlerta).toBe(true);
+    expect(vencido.horasDesdeUltimoCorte).toBe(16);
+
+    const sinCorte = evaluarVigenciaInventarioRosas(null, 15, ahora);
+    expect(sinCorte.requiereAlerta).toBe(true);
+    expect(sinCorte.horasDesdeUltimoCorte).toBeNull();
   });
 });
