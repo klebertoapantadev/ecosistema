@@ -414,34 +414,43 @@ update comun_agentes.agc_conversacion c
    and l.lwa_es_principal = true
    and l.lwa_eliminado_en is null;
 
--- Blindar RLS de `agc_conversacion` y `agc_mensaje` según visibilidad
+-- Blindar RLS de `agc_conversacion` y `agc_mensaje` según visibilidad (preservando Chat Equipo `interno`)
 drop policy if exists agc_conversacion_lectura_equipo on comun_agentes.agc_conversacion;
 create policy agc_conversacion_lectura_equipo on comun_agentes.agc_conversacion
   for select using (
-    comun_agentes.agc_fn_puede_ver_conversacion(
-      cnv_negocio,
-      cnv_visibilidad,
-      cnv_titular_privado_id,
-      cnv_usuario_id
-    )
+    case
+      when cnv_canal = 'interno' then comun_seguridad.seg_fn_es_delivery_o_staff_negocio(cnv_negocio)
+      else comun_agentes.agc_fn_puede_ver_conversacion(
+        cnv_negocio,
+        cnv_visibilidad,
+        cnv_titular_privado_id,
+        cnv_usuario_id
+      )
+    end
   );
 
 drop policy if exists agc_conversacion_gestion_equipo on comun_agentes.agc_conversacion;
 create policy agc_conversacion_gestion_equipo on comun_agentes.agc_conversacion
   for all using (
-    comun_agentes.agc_fn_puede_ver_conversacion(
-      cnv_negocio,
-      cnv_visibilidad,
-      cnv_titular_privado_id,
-      null
-    )
+    case
+      when cnv_canal = 'interno' then comun_seguridad.seg_fn_es_delivery_o_staff_negocio(cnv_negocio)
+      else comun_agentes.agc_fn_puede_ver_conversacion(
+        cnv_negocio,
+        cnv_visibilidad,
+        cnv_titular_privado_id,
+        null::uuid
+      )
+    end
   ) with check (
-    comun_agentes.agc_fn_puede_ver_conversacion(
-      cnv_negocio,
-      cnv_visibilidad,
-      cnv_titular_privado_id,
-      null
-    )
+    case
+      when cnv_canal = 'interno' then comun_seguridad.seg_fn_es_delivery_o_staff_negocio(cnv_negocio)
+      else comun_agentes.agc_fn_puede_ver_conversacion(
+        cnv_negocio,
+        cnv_visibilidad,
+        cnv_titular_privado_id,
+        null::uuid
+      )
+    end
   );
 
 drop policy if exists agc_mensaje_lectura_equipo on comun_agentes.agc_mensaje;
@@ -450,11 +459,17 @@ create policy agc_mensaje_lectura_equipo on comun_agentes.agc_mensaje
     exists (
       select 1 from comun_agentes.agc_conversacion c
       where c.cnv_id = msg_conversacion_id
-        and comun_agentes.agc_fn_puede_ver_conversacion(
-          c.cnv_negocio,
-          c.cnv_visibilidad,
-          c.cnv_titular_privado_id,
-          case when msg_origen <> 'NOTA_INTERNA' then c.cnv_usuario_id else null end
+        and (
+          (c.cnv_canal = 'interno' and comun_seguridad.seg_fn_es_delivery_o_staff_negocio(c.cnv_negocio))
+          or (
+            c.cnv_canal <> 'interno'
+            and comun_agentes.agc_fn_puede_ver_conversacion(
+              c.cnv_negocio,
+              c.cnv_visibilidad,
+              c.cnv_titular_privado_id,
+              case when msg_origen <> 'NOTA_INTERNA' then c.cnv_usuario_id else null::uuid end
+            )
+          )
         )
     )
   );
@@ -465,22 +480,34 @@ create policy agc_mensaje_gestion_equipo on comun_agentes.agc_mensaje
     exists (
       select 1 from comun_agentes.agc_conversacion c
       where c.cnv_id = msg_conversacion_id
-        and comun_agentes.agc_fn_puede_ver_conversacion(
-          c.cnv_negocio,
-          c.cnv_visibilidad,
-          c.cnv_titular_privado_id,
-          null
+        and (
+          (c.cnv_canal = 'interno' and comun_seguridad.seg_fn_es_delivery_o_staff_negocio(c.cnv_negocio))
+          or (
+            c.cnv_canal <> 'interno'
+            and comun_agentes.agc_fn_puede_ver_conversacion(
+              c.cnv_negocio,
+              c.cnv_visibilidad,
+              c.cnv_titular_privado_id,
+              null::uuid
+            )
+          )
         )
     )
   ) with check (
     exists (
       select 1 from comun_agentes.agc_conversacion c
       where c.cnv_id = msg_conversacion_id
-        and comun_agentes.agc_fn_puede_ver_conversacion(
-          c.cnv_negocio,
-          c.cnv_visibilidad,
-          c.cnv_titular_privado_id,
-          null
+        and (
+          (c.cnv_canal = 'interno' and comun_seguridad.seg_fn_es_delivery_o_staff_negocio(c.cnv_negocio))
+          or (
+            c.cnv_canal <> 'interno'
+            and comun_agentes.agc_fn_puede_ver_conversacion(
+              c.cnv_negocio,
+              c.cnv_visibilidad,
+              c.cnv_titular_privado_id,
+              null::uuid
+            )
+          )
         )
     )
   );
