@@ -440,6 +440,90 @@ export async function borrarClaveMetaMensajeriaAction(
   }
 }
 
+export async function guardarMetaComentariosAction(
+  datos: {
+    habilitado: boolean;
+    modo: "PALABRAS_CLAVE" | "TODOS";
+    soloRaiz: boolean;
+    palabrasClave: string;
+    urlTienda: string;
+    respuestaCorta: string;
+    respuestaCondolencias: string;
+    respuestaEventos: string;
+    enviarDm: boolean;
+    plantillaDm: string;
+  },
+  negocio: string
+): Promise<
+  Resultado<{
+    habilitado: boolean;
+    modo: "PALABRAS_CLAVE" | "TODOS";
+    soloRaiz: boolean;
+    urlTienda: string;
+    enviarDm: boolean;
+  }>
+> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaCfg = supabase.schema("comun_configuracion") as any;
+    const codigoNegocio = negocio.trim().toLowerCase();
+
+    const { data, error } = await esquemaCfg.rpc("cfg_fn_guardar_meta_comentarios", {
+      p_negocio: codigoNegocio,
+      p_habilitado: Boolean(datos.habilitado),
+      p_modo: datos.modo === "TODOS" ? "TODOS" : "PALABRAS_CLAVE",
+      p_solo_raiz: Boolean(datos.soloRaiz),
+      p_palabras_clave: datos.palabrasClave.trim(),
+      p_url_tienda: datos.urlTienda.trim(),
+      p_respuesta_corta: datos.respuestaCorta.trim(),
+      p_respuesta_condolencias: datos.respuestaCondolencias.trim(),
+      p_respuesta_eventos: datos.respuestaEventos.trim(),
+      p_enviar_dm: Boolean(datos.enviarDm),
+      p_plantilla_dm: datos.plantillaDm.trim(),
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message.includes("cfg_fn_guardar_meta_comentarios")
+          ? "Ejecuta primero la migración 20261126000008_omnicanal_simulador_aria_y_comentarios_meta.sql en Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se pudo guardar la configuración de comentarios Meta"),
+      };
+    }
+
+    revalidatePath("/panel/aria");
+    revalidatePath("/panel/configuracion");
+    revalidatePath("/panel/conversaciones");
+
+    return {
+      ok: true,
+      data: {
+        habilitado: Boolean(data.habilitado),
+        modo: data.modo === "TODOS" ? "TODOS" : "PALABRAS_CLAVE",
+        soloRaiz: data.soloRaiz !== false,
+        urlTienda: String(data.urlTienda || datos.urlTienda),
+        enviarDm: Boolean(data.enviarDm),
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error inesperado guardando auto-respuesta a comentarios Meta",
+    };
+  }
+}
+
 export async function guardarEstudioIaAction(
   datos: {
     proveedor: ProveedorEstudioIa;

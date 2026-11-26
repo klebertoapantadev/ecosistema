@@ -63,6 +63,7 @@ export * from "./componentes/ConfiguracionFacturacionSri";
 export * from "./omnicanal";
 export * from "./acciones-omnicanal";
 export * from "./componentes/ConsolaVentasOmnicanal";
+export * from "./componentes/SimuladorChatAriaPanel";
 export * from "./configuracion-tienda-checkout";
 export * from "./acciones-tienda-checkout";
 export * from "./operaciones-taller";

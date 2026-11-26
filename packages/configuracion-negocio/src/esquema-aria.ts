@@ -44,6 +44,17 @@ export interface ConfiguracionAriaVista {
   tieneMetaPageToken?: boolean;
   tieneMetaIgToken?: boolean;
   tieneMetaAppSecret?: boolean;
+  // Configuración Auto-respuesta a Comentarios en Posts y Reels (FB / IG)
+  metaComentariosHabilitado?: boolean;
+  metaComentariosModo?: "PALABRAS_CLAVE" | "TODOS";
+  metaComentariosSoloRaiz?: boolean;
+  metaComentariosPalabrasClave?: string;
+  metaComentariosUrlTienda?: string;
+  metaComentariosRespuestaCorta?: string;
+  metaComentariosRespuestaCondolencias?: string;
+  metaComentariosRespuestaEventos?: string;
+  metaComentariosEnviarDm?: boolean;
+  metaComentariosPlantillaDm?: string;
   // Configuración Estudio IA (Generador de Fotos OpenRouter / Gemini en Vault)
   estudioIaProveedor?: ProveedorEstudioIa;
   estudioIaModelo?: string;

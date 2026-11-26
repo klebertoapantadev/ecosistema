@@ -11,6 +11,8 @@ import {
   Copy,
   KeyRound,
   MessageCircle,
+  MessageSquareText,
+  RefreshCw,
   RotateCcw,
   Save,
   Share2,
@@ -18,11 +20,19 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  evaluarAutoRespuestaComentarioMeta,
+  listarComentariosMetaOmnicanalAction,
+  PALABRAS_CLAVE_COMENTARIOS_META_DEFECTO,
+  SimuladorChatAriaPanel,
+  type RegistroComentarioMetaOmnicanal,
+} from "@eco/comercio";
+import {
   borrarClaveAria,
   borrarClaveEstudioIaAction,
   borrarClaveMetaMensajeriaAction,
   guardarAria,
   guardarEstudioIaAction,
+  guardarMetaComentariosAction,
   guardarMetaMensajeriaAction,
   guardarWhatsappYcloudAction,
   probarConexionAria,
@@ -189,6 +199,59 @@ export function FormularioAria({
   const [mensajeMeta, setMensajeMeta] = useState<{ tipo: "ok" | "error"; texto: string } | null>(
     null
   );
+
+  // Estado Auto-respuesta Corta a Comentarios en Posts y Reels (Facebook e Instagram)
+  const [comHabilitado, setComHabilitado] = useState<boolean>(
+    inicial?.metaComentariosHabilitado ?? false
+  );
+  const [comModo, setComModo] = useState<"PALABRAS_CLAVE" | "TODOS">(
+    inicial?.metaComentariosModo === "TODOS" ? "TODOS" : "PALABRAS_CLAVE"
+  );
+  const [comSoloRaiz, setComSoloRaiz] = useState<boolean>(
+    inicial?.metaComentariosSoloRaiz ?? true
+  );
+  const [comPalabrasClave, setComPalabrasClave] = useState<string>(
+    inicial?.metaComentariosPalabrasClave ?? PALABRAS_CLAVE_COMENTARIOS_META_DEFECTO
+  );
+  const [comUrlTienda, setComUrlTienda] = useState<string>(
+    inicial?.metaComentariosUrlTienda ||
+      (codigoNegocio === "tinkay"
+        ? "https://www.tinkay.net"
+        : `https://${codigoNegocio}-web.vercel.app`)
+  );
+  const [comRespuestaCorta, setComRespuestaCorta] = useState<string>(
+    inicial?.metaComentariosRespuestaCorta ||
+      "¡Hola {{nombre}}! 🌿 Mira modelos, precios actualizados y pide en línea aquí 👉 {{url_tienda}} (o escríbenos por mensaje directo)."
+  );
+  const [comRespuestaCondolencias, setComRespuestaCondolencias] = useState<string>(
+    inicial?.metaComentariosRespuestaCondolencias ||
+      "Hola {{nombre}}, con todo respeto puedes revisar nuestros arreglos de condolencias y entregas prioritarias aquí: {{url_tienda}}/categoria/condolencias"
+  );
+  const [comRespuestaEventos, setComRespuestaEventos] = useState<string>(
+    inicial?.metaComentariosRespuestaEventos ||
+      "¡Hola {{nombre}}! Con gusto cotizamos tu evento. Revisa opciones y arma tu proforma en línea aquí: {{url_tienda}}"
+  );
+  const [comEnviarDm, setComEnviarDm] = useState<boolean>(
+    inicial?.metaComentariosEnviarDm ?? false
+  );
+  const [comPlantillaDm, setComPlantillaDm] = useState<string>(
+    inicial?.metaComentariosPlantillaDm ||
+      "¡Hola {{nombre}}! 🌿 Gracias por tu comentario. Aquí tienes nuestro catálogo con precios y entregas en Quito: {{url_tienda}} ¿Para qué ocasión buscas flores?"
+  );
+  const [mostrarAvanzadasCom, setMostrarAvanzadasCom] = useState<boolean>(false);
+  const [guardandoCom, setGuardandoCom] = useState<boolean>(false);
+  const [mensajeCom, setMensajeCom] = useState<{ tipo: "ok" | "error"; texto: string } | null>(
+    null
+  );
+  const [comentarioSimulacion, setComentarioSimulacion] = useState<string>(
+    "Hola, precio de este arreglo por favor?"
+  );
+  const [autorSimulacion, setAutorSimulacion] = useState<string>("María López");
+  const [historialComentarios, setHistorialComentarios] = useState<
+    RegistroComentarioMetaOmnicanal[]
+  >([]);
+  const [mostrarHistorialCom, setMostrarHistorialCom] = useState<boolean>(false);
+  const [cargandoHistorialCom, setCargandoHistorialCom] = useState<boolean>(false);
 
   // Estado Estudio IA (Generador de Fotos Estudio + Taller vía OpenRouter / Gemini en Vault)
   const [estudioIaProveedor, setEstudioIaProveedor] = useState<ProveedorEstudioIa>(
@@ -584,6 +647,76 @@ export function FormularioAria({
     });
   }
 
+  const vistaPreviaComentario = evaluarAutoRespuestaComentarioMeta({
+    textoComentario: comentarioSimulacion,
+    autorNombre: autorSimulacion,
+    esSubcomentario: false,
+    esCuentaPropia: false,
+    regla: {
+      habilitado: true,
+      modo: comModo,
+      soloRaiz: comSoloRaiz,
+      palabrasClave: comPalabrasClave,
+      urlTienda: comUrlTienda,
+      respuestaCorta: comRespuestaCorta,
+      respuestaCondolencias: comRespuestaCondolencias,
+      respuestaEventos: comRespuestaEventos,
+      enviarDm: comEnviarDm,
+      plantillaDm: comPlantillaDm,
+    },
+  });
+
+  async function alGuardarComentariosMeta(e: React.FormEvent) {
+    e.preventDefault();
+    setMensajeCom(null);
+    setGuardandoCom(true);
+    const res = await guardarMetaComentariosAction(
+      {
+        habilitado: comHabilitado,
+        modo: comModo,
+        soloRaiz: comSoloRaiz,
+        palabrasClave: comPalabrasClave,
+        urlTienda: comUrlTienda,
+        respuestaCorta: comRespuestaCorta,
+        respuestaCondolencias: comRespuestaCondolencias,
+        respuestaEventos: comRespuestaEventos,
+        enviarDm: comEnviarDm,
+        plantillaDm: comPlantillaDm,
+      },
+      codigoNegocio
+    );
+    setGuardandoCom(false);
+
+    if (!res.ok) {
+      setMensajeCom({ tipo: "error", texto: res.error });
+      return;
+    }
+
+    setComHabilitado(res.data.habilitado);
+    setComModo(res.data.modo);
+    setComSoloRaiz(res.data.soloRaiz);
+    setComUrlTienda(res.data.urlTienda);
+    setComEnviarDm(res.data.enviarDm);
+    setMensajeCom({
+      tipo: "ok",
+      texto: res.data.habilitado
+        ? "Auto-respuesta corta a comentarios en Posts y Reels guardada y ACTIVA."
+        : "Reglas de comentarios guardadas en pausa (no responderá públicamente hasta activarlo).",
+    });
+  }
+
+  async function cargarBitacoraComentariosMeta() {
+    setCargandoHistorialCom(true);
+    const res = await listarComentariosMetaOmnicanalAction(codigoNegocio, 20);
+    setCargandoHistorialCom(false);
+    setMostrarHistorialCom(true);
+    if (res.ok) {
+      setHistorialComentarios(res.items);
+    } else {
+      setMensajeCom({ tipo: "error", texto: res.error });
+    }
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
     <form onSubmit={alEnviar} style={estiloTarjetaConfig}>
@@ -919,6 +1052,11 @@ export function FormularioAria({
         </button>
       </div>
     </form>
+
+    {/* ========================================================================
+        SIMULADOR DE CHAT ARIA MULTI-TURNO (PROBAR, REINICIAR Y VOLVER A PROBAR)
+    ======================================================================== */}
+    <SimuladorChatAriaPanel negocio={codigoNegocio} compacto />
 
     {/* ========================================================================
         TARJETA 2: CANAL WHATSAPP BUSINESS (YCLOUD) — ORQUESTACIÓN HITL + ROLLBACK
@@ -1762,6 +1900,421 @@ export function FormularioAria({
           <Save size={15} />
           <span className="btn-texto-responsive">
             {guardandoMeta ? "Guardando…" : "Guardar Meta"}
+          </span>
+        </button>
+      </div>
+    </form>
+
+    {/* ========================================================================
+        TARJETA 2C: AUTO-RESPUESTA CORTA A COMENTARIOS EN POSTS Y REELS (FB / IG)
+    ======================================================================== */}
+    <form id="meta-comentarios" onSubmit={alGuardarComentariosMeta} style={estiloTarjetaConfig}>
+      <div style={estiloCabeceraTarjeta}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div
+            style={{
+              ...estiloCajaIconoCabecera,
+              background: "#FDF2F8",
+              color: "#BE185D",
+              borderColor: "#FBCFE8",
+            }}
+          >
+            <MessageSquareText size={19} />
+          </div>
+          <div>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+              Comentarios en Posts y Reels (Auto-respuesta Corta + Redirección Web)
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+              Responde automáticamente comentarios públicos en Facebook e Instagram con información básica y enlace a tu web (sin bucles ni duplicados).
+            </div>
+          </div>
+        </div>
+
+        <span style={estiloPastillaEstado(comHabilitado ? "activo" : "guardado")}>
+          <MessageSquareText size={13} />
+          {comHabilitado ? "Comentarios Activos" : "En Pausa"}
+        </span>
+      </div>
+
+      <div style={estiloCuerpoTarjeta}>
+        <label
+          style={{
+            ...estiloCajaToggle,
+            background: comHabilitado ? "#F2F6F3" : "#F8F7F4",
+            borderColor: comHabilitado ? "#BBF7D0" : "#E6E2DA",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={comHabilitado}
+            onChange={(e) => setComHabilitado(e.target.checked)}
+            disabled={guardandoCom}
+            style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+              Activar auto-respuesta corta a comentarios en Facebook Posts e Instagram Posts/Reels
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+              Requiere suscribir los campos <code>feed</code> (Página Facebook) y <code>comments</code> (Instagram) en tu App de Meta (`Tinkay Omnicanal`). Jamás responde a comentarios propios ni repite respuestas.
+            </div>
+          </div>
+        </label>
+
+        <div style={estiloGrillaDosColumnas}>
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`com-modo-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>Cuándo responder automáticamente</span>
+            </label>
+            <select
+              id={`com-modo-${codigoNegocio}`}
+              style={estiloInputCampo}
+              value={comModo}
+              onChange={(e) =>
+                setComModo(e.target.value === "TODOS" ? "TODOS" : "PALABRAS_CLAVE")
+              }
+              disabled={guardandoCom}
+            >
+              <option value="PALABRAS_CLAVE">
+                Solo cuando contenga palabras clave (Recomendado)
+              </option>
+              <option value="TODOS">Todos los comentarios raíz en Posts/Reels</option>
+            </select>
+            <span style={estiloTextoAyuda}>
+              Con palabras clave evitas responder comentarios que son solo emojis o etiquetas entre amigos.
+            </span>
+          </div>
+
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`com-url-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>URL Web de destino</span>
+              <span style={estiloCodigoBadge}>{"{{url_tienda}}"}</span>
+            </label>
+            <input
+              id={`com-url-${codigoNegocio}`}
+              style={estiloInputMonoespaciado}
+              type="url"
+              value={comUrlTienda}
+              onChange={(e) => setComUrlTienda(e.target.value)}
+              disabled={guardandoCom}
+              placeholder="https://www.tinkay.net"
+            />
+            <span style={estiloTextoAyuda}>
+              Enlace al que redirigen tus respuestas cortas en comentarios.
+            </span>
+          </div>
+        </div>
+
+        {comModo === "PALABRAS_CLAVE" && (
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`com-kw-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>Palabras clave disparadoras (separadas por coma)</span>
+            </label>
+            <textarea
+              id={`com-kw-${codigoNegocio}`}
+              style={{ ...estiloInputCampo, minHeight: "62px", resize: "vertical" }}
+              value={comPalabrasClave}
+              onChange={(e) => setComPalabrasClave(e.target.value)}
+              disabled={guardandoCom}
+            />
+          </div>
+        )}
+
+        <div style={estiloGrupoCampo}>
+          <label htmlFor={`com-resp-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+            <span>Respuesta pública corta (General)</span>
+            <span style={estiloCodigoBadge}>{"{{nombre}} · {{url_tienda}}"}</span>
+          </label>
+          <textarea
+            id={`com-resp-${codigoNegocio}`}
+            style={{ ...estiloInputCampo, minHeight: "68px", resize: "vertical" }}
+            value={comRespuestaCorta}
+            onChange={(e) => setComRespuestaCorta(e.target.value)}
+            disabled={guardandoCom}
+          />
+          <span style={estiloTextoAyuda}>
+            Mantén el mensaje corto y directo (1–2 líneas) invitando a ver precios/modelos en tu web o escribir por mensaje directo.
+          </span>
+        </div>
+
+        <label
+          style={{
+            ...estiloCajaToggle,
+            background: "#F8F7F4",
+            borderColor: "#E6E2DA",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={comSoloRaiz}
+            onChange={(e) => setComSoloRaiz(e.target.checked)}
+            disabled={guardandoCom}
+            style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19" }}>
+              Responder solo comentarios principales (ignorar sub-respuestas anidadas)
+            </div>
+            <div style={{ fontSize: "0.76rem", color: "#847D74", marginTop: "2px" }}>
+              Evita interrumpir hilos donde personas conversan entre sí debajo de un comentario.
+            </div>
+          </div>
+        </label>
+
+        {/* Acordeón opcional: Respuestas temáticas + DM privado automático */}
+        <div
+          style={{
+            border: "1px solid #E6E2DA",
+            borderRadius: "10px",
+            background: "#FFFFFF",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setMostrarAvanzadasCom((v) => !v)}
+            style={{
+              width: "100%",
+              padding: "11px 16px",
+              background: "#F8F7F4",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: "0.83rem",
+              fontWeight: 600,
+              color: "#57524C",
+            }}
+          >
+            <span>
+              Opcional: Respuestas temáticas (Condolencias / Eventos) y Mensaje Privado (DM) automático
+            </span>
+            {mostrarAvanzadasCom ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {mostrarAvanzadasCom && (
+            <div
+              style={{
+                padding: "16px",
+                borderTop: "1px solid #E6E2DA",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+              }}
+            >
+              <div style={estiloGrupoCampo}>
+                <label style={estiloEtiquetaCampo}>
+                  <span>Respuesta sobria automática si comentan sobre Condolencias / Coronas</span>
+                </label>
+                <textarea
+                  style={{ ...estiloInputCampo, minHeight: "56px", resize: "vertical" }}
+                  value={comRespuestaCondolencias}
+                  onChange={(e) => setComRespuestaCondolencias(e.target.value)}
+                  disabled={guardandoCom}
+                />
+              </div>
+
+              <div style={estiloGrupoCampo}>
+                <label style={estiloEtiquetaCampo}>
+                  <span>Respuesta automática si comentan sobre Eventos / Bodas / Decoración</span>
+                </label>
+                <textarea
+                  style={{ ...estiloInputCampo, minHeight: "56px", resize: "vertical" }}
+                  value={comRespuestaEventos}
+                  onChange={(e) => setComRespuestaEventos(e.target.value)}
+                  disabled={guardandoCom}
+                />
+              </div>
+
+              <label
+                style={{
+                  ...estiloCajaToggle,
+                  background: comEnviarDm ? "#EEF4FD" : "#F8F7F4",
+                  borderColor: comEnviarDm ? "#BFDBFE" : "#E6E2DA",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={comEnviarDm}
+                  onChange={(e) => setComEnviarDm(e.target.checked)}
+                  disabled={guardandoCom}
+                  style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+                />
+                <div>
+                  <div style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19" }}>
+                    Enviar además un Mensaje Privado (DM) automático al autor del comentario
+                  </div>
+                  <div style={{ fontSize: "0.76rem", color: "#847D74", marginTop: "2px" }}>
+                    Usa la función oficial Private Replies de Meta (1 DM por comentario). Si el cliente responde, entrará en Manual a tu panel.
+                  </div>
+                </div>
+              </label>
+
+              {comEnviarDm && (
+                <div style={estiloGrupoCampo}>
+                  <label style={estiloEtiquetaCampo}>
+                    <span>Plantilla del Mensaje Privado (DM)</span>
+                  </label>
+                  <textarea
+                    style={{ ...estiloInputCampo, minHeight: "60px", resize: "vertical" }}
+                    value={comPlantillaDm}
+                    onChange={(e) => setComPlantillaDm(e.target.value)}
+                    disabled={guardandoCom}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Probador instantáneo sin publicar en Facebook/Instagram */}
+        <div
+          style={{
+            padding: "14px 16px",
+            borderRadius: "10px",
+            border: "1px solid #E6E2DA",
+            background: "#FAF8F5",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1F1C19" }}>
+            Simulador instantáneo de comentario (vista previa sin publicar en redes)
+          </div>
+          <div style={estiloGrillaDosColumnas}>
+            <input
+              style={estiloInputCampo}
+              value={comentarioSimulacion}
+              onChange={(e) => setComentarioSimulacion(e.target.value)}
+              placeholder="Ej. Precio por favor?, Corona de condolencias, Qué lindo..."
+            />
+            <input
+              style={estiloInputCampo}
+              value={autorSimulacion}
+              onChange={(e) => setAutorSimulacion(e.target.value)}
+              placeholder="Nombre o @usuario de ejemplo"
+            />
+          </div>
+          <div
+            style={{
+              padding: "10px 12px",
+              borderRadius: "8px",
+              border: vistaPreviaComentario.debeResponder
+                ? "1px solid #BBF7D0"
+                : "1px solid #E6E2DA",
+              background: vistaPreviaComentario.debeResponder ? "#F2F6F3" : "#FFFFFF",
+              fontSize: "0.8rem",
+              color: "#2E2A26",
+            }}
+          >
+            {vistaPreviaComentario.debeResponder ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <strong style={{ color: "#14532D" }}>
+                  ✅ Respondería automáticamente (regla: {vistaPreviaComentario.motivo}):
+                </strong>
+                <span>{vistaPreviaComentario.respuestaPublica}</span>
+                {vistaPreviaComentario.respuestaDm && (
+                  <span style={{ fontSize: "0.75rem", color: "#1E3A8A", marginTop: "2px" }}>
+                    <strong>+ DM Privado:</strong> {vistaPreviaComentario.respuestaDm}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span style={{ color: "#847D74" }}>
+                ⚪ No respondería este comentario (motivo: {vistaPreviaComentario.motivo}).
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Bitácora reciente de comentarios atendidos */}
+        {mostrarHistorialCom && (
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: "10px",
+              border: "1px solid #E6E2DA",
+              background: "#FFFFFF",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            <strong style={{ fontSize: "0.8rem", color: "#1F1C19" }}>
+              Últimos comentarios recibidos ({historialComentarios.length})
+            </strong>
+            {historialComentarios.length === 0 ? (
+              <span style={{ fontSize: "0.78rem", color: "#847D74" }}>
+                Todavía no han llegado comentarios por webhook en Facebook o Instagram.
+              </span>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "220px", overflowY: "auto" }}>
+                {historialComentarios.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      background: "#F8F7F4",
+                      border: "1px solid #EFECE6",
+                      fontSize: "0.77rem",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", fontWeight: 700 }}>
+                      <span>
+                        {item.canal === "instagram" ? "📸 IG" : "📘 FB"} · {item.autorNombre}
+                      </span>
+                      <span style={{ color: item.estado === "RESPONDIDO" ? "#15803D" : item.estado === "ERROR" ? "#B91C1C" : "#64748B" }}>
+                        {item.estado} ({item.reglaAplicada || "-"})
+                      </span>
+                    </div>
+                    <div style={{ color: "#3A3530", marginTop: "3px" }}>“{item.textoComentario}”</div>
+                    {item.respuestaPublica && (
+                      <div style={{ color: "#2F4737", marginTop: "3px" }}>
+                        ↳ {item.respuestaPublica}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {mensajeCom && <div style={estiloAlertaMensaje(mensajeCom.tipo)}>{mensajeCom.texto}</div>}
+      </div>
+
+      <div style={estiloPieTarjeta}>
+        <button
+          type="button"
+          className="btn-responsive-accion"
+          onClick={() => void cargarBitacoraComentariosMeta()}
+          disabled={cargandoHistorialCom}
+          title="Consultar bitácora de comentarios atendidos en Facebook e Instagram"
+          aria-label="Ver Bitácora"
+          style={{ ...estiloBotonSecundario, opacity: cargandoHistorialCom ? 0.65 : 1 }}
+        >
+          <RefreshCw size={14} />
+          <span className="btn-texto-responsive">
+            {cargandoHistorialCom ? "Cargando…" : "Ver Bitácora"}
+          </span>
+        </button>
+
+        <button
+          type="submit"
+          className="btn-responsive-accion"
+          disabled={guardandoCom}
+          title="Guardar reglas de auto-respuesta a comentarios en Posts y Reels"
+          aria-label="Guardar Reglas"
+          style={{ ...estiloBotonPrimario, opacity: guardandoCom ? 0.65 : 1 }}
+        >
+          <Save size={15} />
+          <span className="btn-texto-responsive">
+            {guardandoCom ? "Guardando…" : "Guardar Reglas"}
           </span>
         </button>
       </div>

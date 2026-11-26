@@ -3046,9 +3046,17 @@ export async function procesarWebhookMetaOmnicanalAction(entrada: {
     const negocio = String(rec.negocio || "tinkay");
     const tokenWebhook = String(rec.tokenWebhook || entrada.token || "");
     const eventos = Array.isArray(rec.eventos) ? (rec.eventos as Array<Record<string, any>>) : [];
+    const comentarios = Array.isArray(rec.comentarios)
+      ? (rec.comentarios as Array<Record<string, any>>)
+      : [];
 
     if (eventos.length === 0) {
-      return { ok: true, status: 200, accion: String(rec.accion || "SIN_EVENTOS"), procesados: 0 };
+      return {
+        ok: true,
+        status: 200,
+        accion: comentarios.length > 0 ? "COMENTARIOS_META_PROCESADOS" : String(rec.accion || "SIN_EVENTOS"),
+        procesados: comentarios.length,
+      };
     }
 
     const {
@@ -3483,13 +3491,238 @@ export async function procesarWebhookMetaOmnicanalAction(entrada: {
       ok: true,
       status: 200,
       accion: "PROCESADO_META",
-      procesados: eventos.length,
+      procesados: eventos.length + comentarios.length,
     };
   } catch (err) {
     return {
       ok: false,
       status: 500,
       error: err instanceof Error ? err.message : "Error interno en webhook Meta",
+    };
+  }
+}
+
+/**
+ * Simulador interactivo de chat con Mía (ARIA) en modo Sandbox multi-turno.
+ * Inyecta exactamente el mismo contexto de producción (Entrega Inmediata, Cotización GPS,
+ * enlaces e-commerce y atribución publicitaria) usando un `sesionId` descartable que se
+ * reinicia en 1 clic sin crear conversaciones falsas ni enviar mensajes a clientes reales.
+ */
+export async function simularTurnoChatAriaAction(entrada: {
+  negocio: string;
+  sesionId: string;
+  canal: "whatsapp" | "facebook" | "instagram" | "web";
+  mensaje: string;
+  nombreSimulado?: string;
+  intencionAnuncio?: "GENERAL" | "CONDOLENCIAS" | "EVENTOS" | "ENTREGA_INMEDIATA";
+  usarAgenteWhatsapp?: boolean;
+  origenTiendaUrl?: string;
+  imagenUrl?: string | null;
+}): Promise<
+  | {
+      ok: true;
+      sesionId: string;
+      respuesta: string;
+      agenteNombre: string;
+      agenteOrigen: string;
+      runId?: string | null;
+      latenciaMs: number;
+      escaloHumano: boolean;
+      contextosInyectados: string[];
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const texto = (entrada.mensaje || "").trim();
+    if (!texto) {
+      return { ok: false, error: "Escribe un mensaje de prueba para consultar a ARIA." };
+    }
+
+    const sesion =
+      (entrada.sesionId || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 48) ||
+      `s${Date.now()}`;
+    const canal = entrada.canal || "whatsapp";
+    const nombreCorto = (entrada.nombreSimulado || "Cliente Prueba").trim().slice(0, 40);
+    const origenTienda = (
+      entrada.origenTiendaUrl ||
+      (neg === "tinkay" ? "https://www.tinkay.net" : `https://${neg}-web.vercel.app`)
+    ).replace(/\/+$/, "");
+
+    const contextosInyectados: string[] = [`Canal: ${canal}`];
+
+    let bloqueAnuncio = "";
+    if (entrada.intencionAnuncio && entrada.intencionAnuncio !== "GENERAL") {
+      const { construirBloqueReferralWhatsappParaAria, etiquetaIntencionLegible } = await import(
+        "./marketing-meta"
+      );
+      const headlineSim =
+        entrada.intencionAnuncio === "CONDOLENCIAS"
+          ? "Arreglos y Coronas de Condolencias con entrega prioritaria"
+          : entrada.intencionAnuncio === "EVENTOS"
+            ? "Decoración Floral para Bodas y Eventos Corporativos"
+            : "Arreglos Listos para Entrega Inmediata en 1 a 2 horas";
+      bloqueAnuncio = construirBloqueReferralWhatsappParaAria(
+        {
+          sourceType: "ad",
+          headline: headlineSim,
+          intencionDetectada: entrada.intencionAnuncio,
+        },
+        canal === "web" ? "whatsapp" : canal
+      );
+      contextosInyectados.push(
+        `Anuncio: ${etiquetaIntencionLegible(entrada.intencionAnuncio)}`
+      );
+    }
+
+    let bloqueInmediata = "";
+    try {
+      const { listarEntregaInmediataAction } = await import("./acciones-operaciones-taller");
+      const resInm = await listarEntregaInmediataAction(neg, false);
+      if (resInm.ok && resInm.items.length > 0) {
+        const lista = resInm.items
+          .slice(0, 6)
+          .map(
+            (i) =>
+              `"${i.nombre}" a $${Number(i.precio).toFixed(2)} USD (${i.tiempoEntregaTexto}${
+                i.imagenUrl && /^https?:\/\//i.test(i.imagenUrl)
+                  ? `, foto markdown para adjuntar: ![${i.nombre}](${i.imagenUrl})`
+                  : ""
+              }, link tienda: ${origenTienda}/producto/${i.slug})`
+          )
+          .join("; ");
+        bloqueInmediata = `\n[ARREGLOS LISTOS EN TIENDA PARA ENTREGA INMEDIATA 1-2h: ${lista}. Cuando recomiendes uno incluye su foto markdown ![Nombre](url). Catálogo inmediato: ${origenTienda}/categoria/entrega-inmediata]`;
+        contextosInyectados.push(`Entrega Inmediata (${resInm.items.length})`);
+      }
+    } catch {
+      // Continuar sin bloquear simulador
+    }
+
+    let bloqueCotizacionGps = "";
+    try {
+      const { cotizarEnvioDesdeEntradaAction } = await import("./acciones-logistica");
+      const { extraerCoordenadasDeTextoOUrl, extraerPrimeraUrlDeTexto } = await import(
+        "./logistica"
+      );
+      const urlMapa = extraerPrimeraUrlDeTexto(texto);
+      const tieneMapa =
+        Boolean(
+          urlMapa &&
+            /(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google|waze\.com)/i.test(
+              urlMapa
+            )
+        ) || Boolean(extraerCoordenadasDeTextoOUrl(texto));
+
+      if (tieneMapa) {
+        const cot = await cotizarEnvioDesdeEntradaAction({
+          negocio: neg,
+          enlaceOTexto: urlMapa ?? texto,
+        });
+        if (cot.ok) {
+          const c = cot.cotizacion;
+          const dirRef =
+            c.detalleDireccion?.resumenDireccion || cot.direccionDetectada || "Pin GPS verificado";
+          bloqueCotizacionGps = `\n[COTIZACIÓN OFICIAL DE ENVÍO CALCULADA POR SISTEMA: ${c.etiquetaResumen}. Costo final de envío: $${c.costoTotalEnvio.toFixed(2)} USD. Dirección referencial: ${dirRef}. Usa exactamente este costo final al responder al cliente.]`;
+          contextosInyectados.push(`Envío GPS: $${c.costoTotalEnvio.toFixed(2)}`);
+        }
+      }
+    } catch {
+      // Continuar sin bloquear simulador
+    }
+
+    const encabezadoUsuario = `[USUARIO ACTUAL: chat_id=sim-${sesion} | canal=${canal} | nombre_corto=${nombreCorto}]`;
+    const promptCompleto =
+      `${encabezadoUsuario}${bloqueAnuncio}\n${texto}\n\n` +
+      `[ENLACES DIRECTOS E-COMMERCE: Categorías ${origenTienda}/categoria/{slug}, Entrega Inmediata ${origenTienda}/categoria/entrega-inmediata, Producto ${origenTienda}/producto/{slug}]` +
+      bloqueInmediata +
+      bloqueCotizacionGps;
+
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_simular_chat_aria", {
+      p_negocio: neg,
+      p_sesion_id: sesion,
+      p_canal: canal,
+      p_prompt: promptCompleto,
+      p_usar_agente_whatsapp: entrada.usarAgenteWhatsapp !== false,
+      p_imagen_url: entrada.imagenUrl?.trim() || null,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message.includes("com_fn_omnicanal_simular_chat_aria")
+          ? "Ejecuta primero la migración 20261126000008_omnicanal_simulador_aria_y_comentarios_meta.sql en Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se recibió respuesta del agente ARIA."),
+      };
+    }
+
+    return {
+      ok: true,
+      sesionId: String(data.sesionId || sesion),
+      respuesta: String(data.respuesta || ""),
+      agenteNombre: String(data.agenteNombre || "Mía · ARIA"),
+      agenteOrigen: String(data.agenteOrigen || "principal"),
+      runId: data.runId ? String(data.runId) : null,
+      latenciaMs: Number(data.latenciaMs) || 0,
+      escaloHumano: Boolean(data.escaloHumano),
+      contextosInyectados,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado en el simulador de ARIA",
+    };
+  }
+}
+
+export async function listarComentariosMetaOmnicanalAction(
+  negocio: string,
+  limite = 25
+): Promise<
+  | { ok: true; items: import("./omnicanal").RegistroComentarioMetaOmnicanal[] }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_listar_comentarios_meta",
+      {
+        p_negocio: neg,
+        p_limite: limite,
+      }
+    );
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo leer el historial de comentarios") };
+    }
+
+    return {
+      ok: true,
+      items: Array.isArray(data.items)
+        ? (data.items as import("./omnicanal").RegistroComentarioMetaOmnicanal[])
+        : [],
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error consultando historial de comentarios",
     };
   }
 }

@@ -150,6 +150,40 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
     tieneMetaPageToken: data.ari_meta_page_token_secreto_id != null,
     tieneMetaIgToken: data.ari_meta_ig_token_secreto_id != null,
     tieneMetaAppSecret: data.ari_meta_app_secret_secreto_id != null,
+    metaComentariosHabilitado: Boolean(det.meta_comentarios_habilitado),
+    metaComentariosModo: det.meta_comentarios_modo === "TODOS" ? "TODOS" : "PALABRAS_CLAVE",
+    metaComentariosSoloRaiz: det.meta_comentarios_solo_raiz !== false,
+    metaComentariosPalabrasClave:
+      typeof det.meta_comentarios_palabras_clave === "string"
+        ? det.meta_comentarios_palabras_clave
+        : "precio, precios, info, informacion, información, catalogo, catálogo, cuanto, cuánto, valor, costo, envio, envío, disponible, rosas, arreglo, arreglos, ramo, ramos, donde, dónde, ubicacion, ubicación, horario, quiero, pedir, comprar, whatsapp, ?",
+    metaComentariosUrlTienda:
+      typeof det.meta_comentarios_url_tienda === "string" && det.meta_comentarios_url_tienda.trim()
+        ? det.meta_comentarios_url_tienda.trim()
+        : negNorm === "tinkay"
+          ? "https://www.tinkay.net"
+          : `https://${negNorm}-web.vercel.app`,
+    metaComentariosRespuestaCorta:
+      typeof det.meta_comentarios_respuesta_corta === "string" &&
+      det.meta_comentarios_respuesta_corta.trim()
+        ? det.meta_comentarios_respuesta_corta
+        : "¡Hola {{nombre}}! 🌿 Mira modelos, precios actualizados y pide en línea aquí 👉 {{url_tienda}} (o escríbenos por mensaje directo).",
+    metaComentariosRespuestaCondolencias:
+      typeof det.meta_comentarios_respuesta_condolencias === "string" &&
+      det.meta_comentarios_respuesta_condolencias.trim()
+        ? det.meta_comentarios_respuesta_condolencias
+        : "Hola {{nombre}}, con todo respeto puedes revisar nuestros arreglos de condolencias y entregas prioritarias aquí: {{url_tienda}}/categoria/condolencias",
+    metaComentariosRespuestaEventos:
+      typeof det.meta_comentarios_respuesta_eventos === "string" &&
+      det.meta_comentarios_respuesta_eventos.trim()
+        ? det.meta_comentarios_respuesta_eventos
+        : "¡Hola {{nombre}}! Con gusto cotizamos tu evento. Revisa opciones y arma tu proforma en línea aquí: {{url_tienda}}",
+    metaComentariosEnviarDm: Boolean(det.meta_comentarios_enviar_dm),
+    metaComentariosPlantillaDm:
+      typeof det.meta_comentarios_plantilla_dm === "string" &&
+      det.meta_comentarios_plantilla_dm.trim()
+        ? det.meta_comentarios_plantilla_dm
+        : "¡Hola {{nombre}}! 🌿 Gracias por tu comentario. Aquí tienes nuestro catálogo con precios y entregas en Quito: {{url_tienda}} ¿Para qué ocasión buscas flores?",
     estudioIaProveedor,
     estudioIaModelo,
     estudioIaActivo: Boolean(est.activo),

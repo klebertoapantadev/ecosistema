@@ -47,6 +47,7 @@ import {
   Star,
   StickyNote,
   Store,
+  FlaskConical,
   Tag,
   Trash2,
   UserCheck,
@@ -137,6 +138,7 @@ import {
   type SeleccionProductoCatalogoChat,
 } from "./ModalSelectorCatalogoChat";
 import { PanelCamposVentaChat } from "./PanelCamposVentaChat";
+import { SimuladorChatAriaPanel } from "./SimuladorChatAriaPanel";
 import {
   construirUrlProxyMediaOmnicanal,
   descargarImagenChatOmnicanal,
@@ -152,7 +154,13 @@ export interface PropsConsolaVentasOmnicanal {
   errorInicial?: string | null;
 }
 
-type PestanaPrincipal = "inbox" | "chat_equipo" | "compras" | "usuarios" | "ia_config";
+type PestanaPrincipal =
+  | "inbox"
+  | "chat_equipo"
+  | "simulador_ia"
+  | "compras"
+  | "usuarios"
+  | "ia_config";
 type FiltroBandejaIzquierda =
   | "todos"
   | "no_asignado"
@@ -3365,6 +3373,12 @@ export function ConsolaVentasOmnicanal({
                 icono: MessageCircle,
               },
               {
+                id: "simulador_ia" as const,
+                etiqueta: "Simulador IA",
+                cortoMovil: "Simular IA",
+                icono: FlaskConical,
+              },
+              {
                 id: "compras" as const,
                 etiqueta: "Compras Web",
                 cortoMovil: "Compras",
@@ -3593,6 +3607,11 @@ export function ConsolaVentasOmnicanal({
           onAbrirConversacionCliente={handleAbrirConversacionDesdeEquipo}
         />
       )}
+
+      {/* =====================================================================
+          PESTAÑA SIMULADOR IA ARIA (PRUEBAS MULTI-TURNO CON REINICIO EN 1 CLIC)
+      ===================================================================== */}
+      {pestana === "simulador_ia" && <SimuladorChatAriaPanel negocio={negNorm} />}
 
       {/* =====================================================================
           PESTAÑA 1: BANDEJA UNIFICADA ESTILO MANYCHAT (FILTROS ARRIBA + 3 COLUMNAS AMPLIAS)

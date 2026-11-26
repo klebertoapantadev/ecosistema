@@ -33,6 +33,7 @@ export {
   guardarWhatsappYcloudAction,
   guardarMetaMensajeriaAction,
   borrarClaveMetaMensajeriaAction,
+  guardarMetaComentariosAction,
   guardarEstudioIaAction,
   borrarClaveEstudioIaAction,
   probarEstudioIaAction,

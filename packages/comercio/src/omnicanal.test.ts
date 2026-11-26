@@ -11,6 +11,7 @@ import {
   describirCalificacionCliente,
   emparejarComprasConConversacion,
   etiquetaCanalMensajeria,
+  evaluarAutoRespuestaComentarioMeta,
   extraerCodigoRefWebDeTexto,
   extraerCodigoRefWhatsappDeUrl,
   extraerSegmentosMultimediaMensaje,
@@ -24,6 +25,7 @@ import {
   normalizarHandleMencion,
   normalizarTelefonoOmnicanal,
   obtenerDefinicionMotivoCierre,
+  PALABRAS_CLAVE_COMENTARIOS_META_DEFECTO,
   resolverConversacionPorContextoReenvio,
   resolverEstadoAtencionMetaEntrante,
   type ContactoUnificadoOmnicanal,
@@ -548,5 +550,72 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
       estadoAtencion: "BOT_ACTIVO",
       debeInvocarAria: false,
     });
+  });
+
+  it("evalúa auto-respuesta corta a comentarios en Posts/Reels respetando anti-bucle, palabras clave y tono sobrio en condolencias", () => {
+    const reglaBase = {
+      habilitado: true,
+      modo: "PALABRAS_CLAVE" as const,
+      soloRaiz: true,
+      palabrasClave: PALABRAS_CLAVE_COMENTARIOS_META_DEFECTO,
+      urlTienda: "https://www.tinkay.net",
+      respuestaCorta:
+        "¡Hola {{nombre}}! Mira modelos y precios en {{url_tienda}}",
+      respuestaCondolencias:
+        "Hola {{nombre}}, revisa nuestros arreglos de condolencias aquí: {{url_tienda}}/categoria/condolencias",
+      respuestaEventos:
+        "¡Hola {{nombre}}! Cotiza tu evento en línea aquí: {{url_tienda}}",
+      enviarDm: true,
+      plantillaDm: "¡Hola {{nombre}}! Te comparto el catálogo: {{url_tienda}}",
+    };
+
+    // 1. Comentario con palabra clave -> responde corto redirigiendo a la web + DM opcional
+    const rPrecio = evaluarAutoRespuestaComentarioMeta({
+      textoComentario: "Hola precio por favor?",
+      autorNombre: "María Pérez",
+      regla: reglaBase,
+    });
+    expect(rPrecio.debeResponder).toBe(true);
+    expect(rPrecio.motivo).toBe("PALABRA_CLAVE");
+    expect(rPrecio.respuestaPublica).toBe(
+      "¡Hola María! Mira modelos y precios en https://www.tinkay.net"
+    );
+    expect(rPrecio.respuestaDm).toContain("https://www.tinkay.net");
+
+    // 2. Comentario de condolencias -> aplica plantilla sobria sin emojis festivos
+    const rCond = evaluarAutoRespuestaComentarioMeta({
+      textoComentario: "Precio de una corona de condolencias para hoy",
+      autorNombre: "@carlos_uio",
+      regla: reglaBase,
+    });
+    expect(rCond.debeResponder).toBe(true);
+    expect(rCond.motivo).toBe("CONDOLENCIAS");
+    expect(rCond.respuestaPublica).toContain("/categoria/condolencias");
+
+    // 3. Comentario propio de la página -> JAMÁS responde (anti-bucle)
+    const rPropio = evaluarAutoRespuestaComentarioMeta({
+      textoComentario: "Precio en tinkay.net",
+      esCuentaPropia: true,
+      regla: reglaBase,
+    });
+    expect(rPropio.debeResponder).toBe(false);
+    expect(rPropio.motivo).toBe("CUENTA_PROPIA");
+
+    // 4. Subcomentario anidado con soloRaiz=true -> ignorado
+    const rSub = evaluarAutoRespuestaComentarioMeta({
+      textoComentario: "Precio?",
+      esSubcomentario: true,
+      regla: reglaBase,
+    });
+    expect(rSub.debeResponder).toBe(false);
+    expect(rSub.motivo).toBe("IGNORADO_SUBCOMENTARIO");
+
+    // 5. Comentario sin palabra clave en modo PALABRAS_CLAVE -> ignorado
+    const rSinKw = evaluarAutoRespuestaComentarioMeta({
+      textoComentario: "Qué hermosas fotos 😍",
+      regla: reglaBase,
+    });
+    expect(rSinKw.debeResponder).toBe(false);
+    expect(rSinKw.motivo).toBe("SIN_PALABRA_CLAVE");
   });
 });

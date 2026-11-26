@@ -1636,6 +1636,136 @@ export function resolverEstadoAtencionMetaEntrante(entrada: {
   };
 }
 
+export type ModoAutoRespuestaComentariosMeta = "PALABRAS_CLAVE" | "TODOS";
+
+export interface ReglaAutoRespuestaComentariosMeta {
+  habilitado: boolean;
+  modo: ModoAutoRespuestaComentariosMeta;
+  soloRaiz: boolean;
+  palabrasClave: string;
+  urlTienda: string;
+  respuestaCorta: string;
+  respuestaCondolencias: string;
+  respuestaEventos: string;
+  enviarDm: boolean;
+  plantillaDm: string;
+}
+
+export interface RegistroComentarioMetaOmnicanal {
+  id: string;
+  canal: "facebook" | "instagram";
+  comentarioExternoId: string;
+  postId?: string | null;
+  autorNombre: string;
+  textoComentario: string;
+  reglaAplicada?: string | null;
+  respuestaPublica?: string | null;
+  respuestaDm?: string | null;
+  estado: "RECIBIDO" | "RESPONDIDO" | "IGNORADO" | "ERROR";
+  detalle?: Record<string, unknown>;
+  creadoEn: string;
+}
+
+export const PALABRAS_CLAVE_COMENTARIOS_META_DEFECTO =
+  "precio, precios, info, informacion, información, catalogo, catálogo, cuanto, cuánto, valor, costo, envio, envío, disponible, rosas, arreglo, arreglos, ramo, ramos, donde, dónde, ubicacion, ubicación, horario, quiero, pedir, comprar, whatsapp, ?";
+
+export function evaluarAutoRespuestaComentarioMeta(entrada: {
+  textoComentario: string;
+  autorNombre?: string | null;
+  esSubcomentario?: boolean;
+  esCuentaPropia?: boolean;
+  regla: ReglaAutoRespuestaComentariosMeta;
+}): {
+  debeResponder: boolean;
+  motivo:
+    | "CUENTA_PROPIA"
+    | "DESHABILITADO"
+    | "IGNORADO_SUBCOMENTARIO"
+    | "SIN_PALABRA_CLAVE"
+    | "CONDOLENCIAS"
+    | "EVENTOS"
+    | "PALABRA_CLAVE"
+    | "GENERAL_TODOS";
+  respuestaPublica: string | null;
+  respuestaDm: string | null;
+} {
+  const texto = String(entrada.textoComentario || "").trim();
+  if (!texto || entrada.esCuentaPropia) {
+    return { debeResponder: false, motivo: "CUENTA_PROPIA", respuestaPublica: null, respuestaDm: null };
+  }
+
+  const r = entrada.regla;
+  if (!r.habilitado) {
+    return { debeResponder: false, motivo: "DESHABILITADO", respuestaPublica: null, respuestaDm: null };
+  }
+  if (r.soloRaiz && entrada.esSubcomentario) {
+    return {
+      debeResponder: false,
+      motivo: "IGNORADO_SUBCOMENTARIO",
+      respuestaPublica: null,
+      respuestaDm: null,
+    };
+  }
+
+  const textoMin = texto.toLowerCase();
+  const coincide =
+    r.modo === "TODOS"
+      ? texto.length >= 2
+      : String(r.palabrasClave || "")
+          .split(/[,;\n]+/)
+          .map((k) => k.trim().toLowerCase())
+          .filter(Boolean)
+          .some((k) => textoMin.includes(k));
+
+  if (!coincide) {
+    return {
+      debeResponder: false,
+      motivo: "SIN_PALABRA_CLAVE",
+      respuestaPublica: null,
+      respuestaDm: null,
+    };
+  }
+
+  let motivo: "CONDOLENCIAS" | "EVENTOS" | "PALABRA_CLAVE" | "GENERAL_TODOS";
+  let plantilla = r.respuestaCorta;
+  if (/(condolencia|corona|velaci[oó]n|funeral|p[eé]same|fallec|f[uú]nebre|exequi)/i.test(texto)) {
+    motivo = "CONDOLENCIAS";
+    plantilla = r.respuestaCondolencias || r.respuestaCorta;
+  } else if (/(evento|boda|matrimonio|decoraci[oó]n|proforma|corporativo|quincea[ñn])/i.test(texto)) {
+    motivo = "EVENTOS";
+    plantilla = r.respuestaEventos || r.respuestaCorta;
+  } else {
+    motivo = r.modo === "TODOS" ? "GENERAL_TODOS" : "PALABRA_CLAVE";
+  }
+
+  const primerNombre = String(entrada.autorNombre || "")
+    .replace(/^@/, "")
+    .trim()
+    .split(/\s+/)[0] || "";
+  const url = String(r.urlTienda || "https://www.tinkay.net")
+    .trim()
+    .replace(/\/+$/, "");
+
+  const interpolar = (tpl: string) =>
+    tpl
+      .replace(/\{\{\s*nombre\s*\}\}/gi, primerNombre)
+      .replace(/\{\{\s*url_tienda\s*\}\}/gi, url)
+      .replace(/¡Hola\s+!/g, "¡Hola!")
+      .replace(/Hola\s+,/g, "Hola,")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
+  const respuestaPublica = interpolar(plantilla);
+  const respuestaDm = r.enviarDm && r.plantillaDm?.trim() ? interpolar(r.plantillaDm) : null;
+
+  return {
+    debeResponder: Boolean(respuestaPublica),
+    motivo,
+    respuestaPublica: respuestaPublica || null,
+    respuestaDm,
+  };
+}
+
 /**
  * Agrupa conversaciones que pertenecen al mismo cliente a través de distintos canales
  * (teléfono normalizado sin importar formato `09...` vs `+593...`, correo electrónico,
