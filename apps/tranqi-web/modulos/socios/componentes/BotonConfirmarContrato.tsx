@@ -176,10 +176,10 @@ export function BotonConfirmarContrato({
             padding: "10px 16px",
             borderRadius: "8px",
             background: "#FFFFFF",
-            color: "#05876E",
+            color: "#0E6648",
             fontSize: "0.82rem",
             fontWeight: 700,
-            border: "1.5px solid #05876E",
+            border: "1.5px solid #0E6648",
             cursor: confirmando ? "wait" : "pointer",
           }}
         >

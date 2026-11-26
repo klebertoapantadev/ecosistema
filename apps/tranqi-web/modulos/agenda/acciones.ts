@@ -1433,7 +1433,7 @@ export async function decidirCitaAction(
           }.
         </p>
         <div style="font-size:0.82rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;margin:6px 0;">
-          <strong>📅 Nueva fecha y hora:</strong> <span style="color:#05876E;font-weight:800;">${nuevaFechaTxt}</span><br/>
+          <strong>📅 Nueva fecha y hora:</strong> <span style="color:#0E6648;font-weight:800;">${nuevaFechaTxt}</span><br/>
           <strong>🕒 Horario anterior:</strong> <span style="text-decoration:line-through;color:#64748B;">${fechaAnteriorTxt}</span><br/>
           <strong>📍 Modalidad:</strong> ${etiquetaModalidad}<br/>
           ${
@@ -2003,7 +2003,7 @@ export async function reasignarCitaAction(
         ${d.motivo ? `<strong>📌 Nota de asignación:</strong> ${d.motivo}` : ""}
       </div>
       <p style="margin:8px 0 0 0;font-size:0.8rem;">
-        <a href="/panel/agendamiento?widget=citas_programadas" style="color:#05876E;font-weight:800;text-decoration:underline;">
+        <a href="/panel/agendamiento?widget=citas_programadas" style="color:#0E6648;font-weight:800;text-decoration:underline;">
           Abrir mis Citas Programadas →
         </a>
       </p>

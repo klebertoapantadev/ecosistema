@@ -541,7 +541,7 @@ export function MiPerfilRedAbogadoWidget({
           style={{
             padding: "10px 18px",
             borderRadius: "10px",
-            border: tab === "especialidades" ? "2px solid #05876E" : "1px solid var(--linea-fuerte)",
+            border: tab === "especialidades" ? "2px solid #0E6648" : "1px solid var(--linea-fuerte)",
             background: tab === "especialidades" ? "var(--exito-diluido)" : "#ffffff",
             color: tab === "especialidades" ? "var(--exito-texto)" : "var(--texto-2)",
             fontWeight: 800,
@@ -626,7 +626,7 @@ export function MiPerfilRedAbogadoWidget({
                 gap: "8px",
               }}
             >
-              <Briefcase size={17} color="#05876E" />
+              <Briefcase size={17} color="#0E6648" />
               Credenciales y Contacto Profesional
             </h4>
             <div
@@ -872,7 +872,7 @@ export function MiPerfilRedAbogadoWidget({
                     gap: "8px",
                   }}
                 >
-                  <MapPin size={17} color="#05876E" />
+                  <MapPin size={17} color="#0E6648" />
                   Mis Zonas de Cobertura — Provincias ({provinciasIds.length} seleccionadas)
                 </h4>
                 <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
@@ -891,7 +891,7 @@ export function MiPerfilRedAbogadoWidget({
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#05876E",
+                  color: "#0E6648",
                   fontWeight: 800,
                   fontSize: "0.78rem",
                   cursor: "pointer",
@@ -916,8 +916,8 @@ export function MiPerfilRedAbogadoWidget({
                       fontSize: "0.78rem",
                       fontWeight: 700,
                       cursor: "pointer",
-                      border: activa ? "2px solid #05876E" : "1px solid var(--linea-fuerte)",
-                      background: activa ? "#05876E" : "var(--fondo-suave)",
+                      border: activa ? "2px solid #0E6648" : "1px solid var(--linea-fuerte)",
+                      background: activa ? "#0E6648" : "var(--fondo-suave)",
                       color: activa ? "#ffffff" : "var(--texto-2)",
                     }}
                   >
@@ -936,7 +936,7 @@ export function MiPerfilRedAbogadoWidget({
               title="Guardar mis especialidades y zonas de cobertura"
               aria-label="Guardar especialidades"
               style={{
-                background: "#05876E",
+                background: "#0E6648",
                 color: "#ffffff",
                 border: "none",
                 borderRadius: "10px",

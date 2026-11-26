@@ -189,7 +189,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
       {/* Encabezado Principal */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
         <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
-          <FileText size={22} color="#05876E" /> Contrato de Sociedad de Abogados
+          <FileText size={22} color="#0E6648" /> Contrato de Sociedad de Abogados
         </h3>
 
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -201,14 +201,14 @@ export function GestionContratoPostulante({ solicitud }: Props) {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              background: "#05876E",
+              background: "#0E6648",
               color: "#FFF",
               textDecoration: "none",
               borderRadius: "8px",
               padding: "6px 12px",
               fontSize: "0.8rem",
               fontWeight: 700,
-              boxShadow: "0 2px 4px rgba(5,135,110,0.2)",
+              boxShadow: "0 2px 4px rgba(14,102,72,0.2)",
             }}
           >
             <Download size={14} /> Ver / Descargar PDF Oficial
@@ -240,7 +240,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
       {contratoFirmado && (
         <div style={{ background: "var(--exito-diluido)", border: "1.5px solid var(--exito)", borderRadius: "12px", padding: "18px", marginBottom: "20px" }}>
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-            <CheckCircle size={24} color="#05876E" style={{ flexShrink: 0, marginTop: "2px" }} />
+            <CheckCircle size={24} color="#0E6648" style={{ flexShrink: 0, marginTop: "2px" }} />
             <div style={{ flexGrow: 1 }}>
               <h4 style={{ margin: "0 0 4px 0", color: "var(--exito-texto)", fontWeight: 800, fontSize: "0.98rem" }}>
                 ¡Contrato firmado registrado correctamente!
@@ -257,7 +257,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  background: "#05876E",
+                  background: "#0E6648",
                   color: "#FFF",
                   textDecoration: "none",
                   borderRadius: "6px",
@@ -296,7 +296,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             flex: 1,
             padding: "14px 18px",
             borderRadius: "12px",
-            border: `2px solid ${seccionActiva === "FIRMAR" ? "#05876E" : "var(--linea)"}`,
+            border: `2px solid ${seccionActiva === "FIRMAR" ? "#0E6648" : "var(--linea)"}`,
             background: seccionActiva === "FIRMAR" ? "var(--exito-diluido)" : "#FFFFFF",
             color: seccionActiva === "FIRMAR" ? "var(--exito-texto)" : "var(--texto-2)",
             fontWeight: 800,
@@ -306,10 +306,10 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             alignItems: "center",
             justifyContent: "center",
             gap: "8px",
-            boxShadow: seccionActiva === "FIRMAR" ? "0 4px 12px rgba(5, 135, 110, 0.15)" : "none",
+            boxShadow: seccionActiva === "FIRMAR" ? "0 4px 12px rgba(14, 102, 72, 0.15)" : "none",
           }}
         >
-          <FileCheck2 size={20} color={seccionActiva === "FIRMAR" ? "#05876E" : "var(--texto-tenue)"} />
+          <FileCheck2 size={20} color={seccionActiva === "FIRMAR" ? "#0E6648" : "var(--texto-tenue)"} />
           Opción 1: Aceptar y Firmar Contrato
         </button>
 
@@ -349,7 +349,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 padding: "8px 16px",
                 borderRadius: "8px",
                 border: "none",
-                background: tipoFirma === "DIGITAL_P12" ? "#05876E" : "var(--fondo-hundido)",
+                background: tipoFirma === "DIGITAL_P12" ? "#0E6648" : "var(--fondo-hundido)",
                 color: tipoFirma === "DIGITAL_P12" ? "#FFFFFF" : "var(--texto-2)",
                 fontWeight: 700,
                 fontSize: "0.82rem",
@@ -370,7 +370,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                 padding: "8px 16px",
                 borderRadius: "8px",
                 border: "none",
-                background: tipoFirma === "MANUAL_PDF" ? "#05876E" : "var(--fondo-hundido)",
+                background: tipoFirma === "MANUAL_PDF" ? "#0E6648" : "var(--fondo-hundido)",
                 color: tipoFirma === "MANUAL_PDF" ? "#FFFFFF" : "var(--texto-2)",
                 fontWeight: 700,
                 fontSize: "0.82rem",
@@ -388,7 +388,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
           {tipoFirma === "DIGITAL_P12" ? (
             <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "18px" }}>
               <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "12px" }}>
-                <ShieldCheck size={24} color="#05876E" />
+                <ShieldCheck size={24} color="#0E6648" />
                 <div>
                   <h4 style={{ margin: "0 0 4px 0", color: "var(--texto)", fontWeight: 800, fontSize: "0.95rem" }}>
                     Firma Electrónica PAdES con Estampa de QR Oficial
@@ -405,7 +405,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   onClick={() => setModalFirmaAbierto(true)}
                   style={{
                     padding: "12px 24px",
-                    background: "linear-gradient(135deg, #05876E 0%, var(--exito-texto) 100%)",
+                    background: "linear-gradient(135deg, #0E6648 0%, var(--exito-texto) 100%)",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "10px",
@@ -415,7 +415,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
-                    boxShadow: "0 4px 12px rgba(5, 135, 110, 0.25)",
+                    boxShadow: "0 4px 12px rgba(14, 102, 72, 0.25)",
                   }}
                 >
                   <KeyRound size={18} />
@@ -445,7 +445,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   cursor: "pointer",
                 }}
               >
-                <UploadCloud size={32} color="#05876E" />
+                <UploadCloud size={32} color="#0E6648" />
                 <span style={{ marginTop: "8px", fontSize: "0.88rem", fontWeight: 700, color: "var(--texto)" }}>
                   Haz clic para seleccionar el archivo PDF firmado
                 </span>

@@ -340,7 +340,7 @@ export async function GET(request: Request) {
                 not_negocio: "TRANQ",
                 not_canal: "IN_APP",
                 not_titulo: `Contrato Firmado Recibido — Postulante: ${uPost.nombre}`,
-                not_contenido_html: `<p>El postulante <strong>${uPost.nombre}</strong> ha subido su contrato firmado. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #05876E; font-weight: 700;">Verificar Contrato y Activar Socio</a> para completar su incorporación.</p>`,
+                not_contenido_html: `<p>El postulante <strong>${uPost.nombre}</strong> ha subido su contrato firmado. Haz clic en <a href="/panel/socios/${sol.ssc_id}" style="color: #0E6648; font-weight: 700;">Verificar Contrato y Activar Socio</a> para completar su incorporación.</p>`,
                 not_url_accion: `/panel/socios/${sol.ssc_id}`,
                 not_leido_en: sol.ssc_estado === "aceptada" ? sol.ssc_actualizado_en : null,
                 not_eliminada: false,

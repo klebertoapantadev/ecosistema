@@ -207,13 +207,13 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
-                background: "linear-gradient(135deg, #05876E 0%, #046A57 100%)",
+                background: "linear-gradient(135deg, #0E6648 0%, #046A57 100%)",
                 color: "#FFF",
                 padding: "10px 20px",
                 borderRadius: "10px",
                 fontSize: "0.88rem",
                 fontWeight: 800,
-                boxShadow: "0 4px 12px rgba(5, 135, 110, 0.25)",
+                boxShadow: "0 4px 12px rgba(14, 102, 72, 0.25)",
                 whiteSpace: "nowrap",
               }}
             >

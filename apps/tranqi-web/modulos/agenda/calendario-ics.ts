@@ -239,7 +239,7 @@ export function construirBloqueHtmlCalendarioCorreo(
         <a href="${outlookCalendarUrl}" target="_blank" rel="noreferrer" style="display:inline-block;padding:7px 12px;border-radius:7px;background:#0284C7;color:#FFFFFF;font-size:0.78rem;font-weight:800;text-decoration:none;margin-right:6px;">
           📆 Outlook / Office 365
         </a>
-        <a href="${icsDownloadUrl}" target="_blank" rel="noreferrer" style="display:inline-block;padding:7px 12px;border-radius:7px;background:#05876E;color:#FFFFFF;font-size:0.78rem;font-weight:800;text-decoration:none;">
+        <a href="${icsDownloadUrl}" target="_blank" rel="noreferrer" style="display:inline-block;padding:7px 12px;border-radius:7px;background:#0E6648;color:#FFFFFF;font-size:0.78rem;font-weight:800;text-decoration:none;">
           📥 Archivo .ICS (Apple / Correo)
         </a>
       </div>

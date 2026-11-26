@@ -119,7 +119,7 @@ graph TD
     style C fill:#F0FDF4,stroke:#16A34A,stroke-width:2px;
     style D fill:#FFFBEB,stroke:#F59E0B,stroke-width:2px;
     style E fill:#EFF6FF,stroke:#2563EB,stroke-width:2px;
-    style F fill:#F0FDF4,stroke:#05876E,stroke-width:2px;
+    style F fill:#F0FDF4,stroke:#0E6648,stroke-width:2px;
 ```
 
 #### Reglas de Negocio y Estándares Técnicos:
@@ -1078,6 +1078,7 @@ Vista dedicada e informativa que replica íntegramente la estructura, propuesta 
    - Encabezado: *"Tu práctica legal con más casos, más ingresos y más respaldo."*
    - Badges de confianza: Red Nacional de Abogados, beneficios e invitación a la comunidad.
    - Enlace directo a registro y exploración de beneficios.
+   - Foto de dos abogados en su despacho (`abogados-firma.jpg`) a la derecha, con degradado violeta bajo el texto; por debajo de 1100 px la foto pasa a fondo completo con el velo encima. Cambiada en TRQ-037 (26-nov-2026): negocio pidió una imagen que representara a la red en lugar del joven en el sofá.
 2. **Matriz de Beneficios (8 Pilares):**
    - Nuevas oportunidades laborales, nuevas fuentes de ingresos, beneficios exclusivos del ecosistema, capacitación constante, certificaciones oficiales de idoneidad, red de derivación inteligente de clientes, cuenta digital propia para gestión contable y programas de crédito y desarrollo.
 3. **Flujo de Ingreso en 3 Pasos:**

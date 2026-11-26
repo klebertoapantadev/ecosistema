@@ -43,7 +43,7 @@ export function WidgetProximamente({
           left: 0,
           right: 0,
           height: "6px",
-          background: "linear-gradient(90deg, var(--violeta, #5000BA) 0%, #05876E 50%, var(--aviso) 100%)",
+          background: "linear-gradient(90deg, var(--violeta, #5000BA) 0%, #0E6648 50%, var(--aviso) 100%)",
         }}
       />
 
@@ -150,7 +150,7 @@ export function WidgetProximamente({
             gap: "10px",
           }}
         >
-          <CheckCircle2 size={18} color="#05876E" style={{ flexShrink: 0, marginTop: "2px" }} />
+          <CheckCircle2 size={18} color="#0E6648" style={{ flexShrink: 0, marginTop: "2px" }} />
           <div>
             <strong style={{ display: "block", fontSize: "0.82rem", color: "var(--texto)", marginBottom: "2px" }}>
               {esFinanciamiento ? "Cuotas Flexibles" : "Experiencia Integrada"}

@@ -112,7 +112,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Alianzas corporativas, asignación de bolsas de consultas y descuentos automáticos",
     ruta: "/panel/administrar?widget=gestion_convenios_corporativos",
     icono: Building2,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio & B2B"
   },
   {
@@ -121,7 +121,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Matriz de obligaciones normativas, monitoreo de caducidades con Tranqi y cálculo del Legal Health Score",
     ruta: "/panel/administrar?widget=compliance_score_legal",
     icono: ShieldCheck,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio & B2B"
   },
   {
@@ -148,7 +148,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado, registro de pagos y emisión/descarga de facturas electrónicas SRI",
     ruta: "/panel/administrar?widget=historial_pagos",
     icono: Receipt,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio y Pagos"
   },
   {
@@ -193,7 +193,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Búsqueda de usuarios registrados para convertirlos en socios abogados, registro manual y gestión de especialidades, cobertura y disponibilidad",
     ruta: "/panel/administrar?widget=gestion_red_abogados",
     icono: Scale,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Operación Legal"
   },
   {
@@ -202,7 +202,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Validación de matrículas, acreditación y verificación de abogados",
     ruta: "/panel/administrar?widget=socios",
     icono: Users,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Operación Legal"
   },
   {
@@ -211,7 +211,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Procesamiento de postulaciones y formularios de postulación socio",
     ruta: "/panel/administrar?widget=solicitud_socio",
     icono: ClipboardList,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Operación Legal"
   },
   {
@@ -238,7 +238,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
     ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
     icono: FileText,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Gobernanza & Legales"
   },
   {
@@ -515,7 +515,7 @@ export function SociosWidget() {
 function SolicitudSocioWidget() {
   return (
     <div style={{ padding: "24px", textAlign: "center", background: "var(--fondo-suave)", borderRadius: "12px", border: "1px solid var(--linea)" }}>
-      <ClipboardList style={{ width: 42, height: 42, color: "#05876E", margin: "0 auto 12px", display: "block" }} />
+      <ClipboardList style={{ width: 42, height: 42, color: "#0E6648", margin: "0 auto 12px", display: "block" }} />
       <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 0 8px 0" }}>Formulario de Solicitud de Socio Abogado</h3>
       <p style={{ margin: "0 0 20px 0", color: "#666", fontSize: "0.88rem", maxWidth: "540px", marginInline: "auto" }}>
         Únete a la red de abogados de tranqi. Completa tus datos de acreditación SENESCYT y foro de abogados para revisión.

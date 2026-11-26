@@ -204,12 +204,12 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                   gap: "6px",
                   padding: "8px 14px",
                   borderRadius: "8px",
-                  background: "#05876E",
+                  background: "#0E6648",
                   color: "#FFFFFF",
                   fontSize: "0.82rem",
                   fontWeight: 700,
                   textDecoration: "none",
-                  boxShadow: "0 2px 6px rgba(5, 135, 110, 0.2)",
+                  boxShadow: "0 2px 6px rgba(14, 102, 72, 0.2)",
                 }}
               >
                 <Download size={14} /> Ver Contrato Firmado Cargado
@@ -362,7 +362,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                           fontSize: "0.76rem",
                           fontWeight: 800,
                           textTransform: "uppercase",
-                          background: esReingresoItem ? "#5000BA" : esRechazo ? "var(--error)" : esAprobado ? "#05876E" : "var(--acento)",
+                          background: esReingresoItem ? "#5000BA" : esRechazo ? "var(--error)" : esAprobado ? "#0E6648" : "var(--acento)",
                           color: "#FFFFFF",
                         }}
                       >
@@ -528,7 +528,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                         gap: "6px",
                         padding: "8px 14px",
                         borderRadius: "8px",
-                        background: "#05876E",
+                        background: "#0E6648",
                         color: "#FFFFFF",
                         fontSize: "0.82rem",
                         fontWeight: 700,

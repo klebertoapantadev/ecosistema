@@ -87,13 +87,13 @@ export function AccionesSolicitud({ solicitudId, estadoActual }: { solicitudId: 
             gap: "8px",
             padding: "10px 20px",
             borderRadius: "8px",
-            background: "#05876E",
+            background: "#0E6648",
             color: "#FFFFFF",
             border: "none",
             fontSize: "0.9rem",
             fontWeight: 800,
             cursor: enviando ? "wait" : "pointer",
-            boxShadow: "0 2px 6px rgba(5, 135, 110, 0.25)",
+            boxShadow: "0 2px 6px rgba(14, 102, 72, 0.25)",
             transition: "all 0.2s ease",
           }}
         >

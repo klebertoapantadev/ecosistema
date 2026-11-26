@@ -210,14 +210,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Citas Programadas & Agenda Legal",
     subtitulo: "Confirma, atiende o reagenda las consultas legales asignadas a tu turno",
     icono: Calendar,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Agenda del Abogado"
   },
   disponibilidad: {
     titulo: "Disponibilidad de Horarios & Citas",
     subtitulo: "Configura tus franjas horarias de atención presencial y teleconsulta virtual",
     icono: Calendar,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Agenda del Abogado"
   },
   vitrina_comercial_personas: {
@@ -322,21 +322,21 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Historial de Pagos",
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: Receipt,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio y Pagos"
   },
   comprobantes_electronicos: {
     titulo: "Historial de Pagos",
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: Receipt,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio y Pagos"
   },
   historial_pagos: {
     titulo: "Historial de Pagos",
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: CreditCard,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio y Pagos"
   },
   crm_clientes: {
@@ -497,14 +497,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Convenios Corporativos & Paquetes B2B",
     subtitulo: "Gestión de alianzas empresariales, bolsas de consultas y descuentos automáticos",
     icono: Building2,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio & B2B"
   },
   compliance_score_legal: {
     titulo: "Compliance & Score Legal Empresarial",
     subtitulo: "Matriz de obligaciones normativas, monitoreo continuo de caducidades con Tranqi y cálculo del Legal Health Score",
     icono: ShieldCheck,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio & B2B"
   },
   legal_hr_laboral: {
@@ -518,7 +518,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Mis Beneficios Corporativos & Convenio",
     subtitulo: "Consultas telemáticas gratuitas ($0.00) y descuentos corporativos activos por convenio empresarial",
     icono: Gift,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Comercio Personas"
   },
   disponibilidad_abogados: {
@@ -567,28 +567,28 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Red Profesional & Registro de Abogados",
     subtitulo: "Convertir usuarios registrados en abogados, registro manual y gestión de especialidades, cobertura y disponibilidad",
     icono: Scale,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Red Profesional"
   },
   mi_perfil_abogado: {
     titulo: "Mis Especialidades, Cobertura y Disponibilidad",
     subtitulo: "Configura tus materias legales, provincias de cobertura y horarios de atención presencial y teleconsulta",
     icono: Scale,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Red Profesional"
   },
   socios: {
     titulo: "Aprobación de Socios Abogados",
     subtitulo: "Validación de matrículas, acreditación y verificación de abogados",
     icono: Users,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Operación Legal"
   },
   solicitud_socio: {
     titulo: "Solicitudes de Socios",
     subtitulo: "Procesamiento de postulaciones y formularios de postulación socio",
     icono: ClipboardList,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Operación Legal"
   },
   auditoria: {
@@ -609,7 +609,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Configuración de Contrato de Socios",
     subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
     icono: FileText,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Gobernanza & Legales"
   },
   horarios_atencion_agenda: {
@@ -672,14 +672,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Servidor SMTP & Correo",
     subtitulo: "Credenciales cifradas SMTP y plantillas HTML",
     icono: Settings,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Servicios"
   },
   correo: {
     titulo: "Servidor SMTP & Correo",
     subtitulo: "Credenciales cifradas SMTP y plantillas HTML",
     icono: Settings,
-    colorIcono: "#05876E",
+    colorIcono: "#0E6648",
     categoria: "Servicios"
   },
   mi_cuenta: {
@@ -1182,7 +1182,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
             texto="Ver Solicitudes de Socios"
             descripcion="Revisión y procesamiento de formularios de postulación a socio profesional."
             ruta="/panel/solicitud-socio"
-            color="#05876E"
+            color="#0E6648"
           />
         );
       case "configuracion_contrato_abogado":

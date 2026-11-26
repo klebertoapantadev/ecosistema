@@ -466,7 +466,7 @@ export default function BandejaCitasAbogado({
                 textAlign: "left",
                 padding: "12px 14px",
                 borderRadius: "12px",
-                border: activo ? "2px solid #05876E" : "1px solid var(--linea)",
+                border: activo ? "2px solid #0E6648" : "1px solid var(--linea)",
                 background: activo ? "var(--exito-diluido)" : "#FFFFFF",
                 cursor: "pointer",
                 display: "flex",
@@ -545,7 +545,7 @@ export default function BandejaCitasAbogado({
               style={{
                 background: "none",
                 border: "none",
-                color: "#05876E",
+                color: "#0E6648",
                 fontWeight: 800,
                 textDecoration: "underline",
                 cursor: "pointer",
@@ -1039,7 +1039,7 @@ export default function BandejaCitasAbogado({
                             padding: "5px 10px",
                             borderRadius: "7px",
                             border: "none",
-                            background: "#05876E",
+                            background: "#0E6648",
                             color: "#FFFFFF",
                             fontSize: "0.75rem",
                             fontWeight: 800,
@@ -1220,7 +1220,7 @@ export default function BandejaCitasAbogado({
                               gap: "5px",
                               padding: "6px 12px",
                               borderRadius: "8px",
-                              background: abierta ? "#05876E" : "#5000BA",
+                              background: abierta ? "#0E6648" : "#5000BA",
                               color: "#FFFFFF",
                               fontSize: "0.76rem",
                               fontWeight: 800,
@@ -1516,7 +1516,7 @@ export default function BandejaCitasAbogado({
                               padding: "8px 14px",
                               borderRadius: "8px",
                               border: "none",
-                              background: "#05876E",
+                              background: "#0E6648",
                               color: "#FFFFFF",
                               fontWeight: 800,
                               fontSize: "0.8rem",
@@ -1948,7 +1948,7 @@ export default function BandejaCitasAbogado({
                           padding: "8px 14px",
                           borderRadius: "8px",
                           border: "none",
-                          background: "#05876E",
+                          background: "#0E6648",
                           color: "#FFFFFF",
                           fontSize: "0.8rem",
                           fontWeight: 800,
@@ -2772,7 +2772,7 @@ function PanelGestionReunionYExpediente({
               borderRadius: "8px",
               border:
                 accionCaso === "crear_nuevo"
-                  ? "1.5px solid #05876E"
+                  ? "1.5px solid #0E6648"
                   : "1px solid var(--linea-fuerte)",
               background: accionCaso === "crear_nuevo" ? "var(--exito-diluido)" : "#FFFFFF",
               color: accionCaso === "crear_nuevo" ? "var(--exito-texto)" : "var(--texto-2)",

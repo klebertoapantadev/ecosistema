@@ -29,7 +29,7 @@ export default async function PaginaPerfilAbogado() {
               Tu foto, formación, título SENESCYT, matrícula del Foro de Abogados, especialidades y provincias.
             </div>
           </div>
-          <span className="badge-rol" style={{ background: "rgba(5, 135, 110, 0.12)", color: "var(--esmeralda, #05876e)" }}>
+          <span className="badge-rol" style={{ background: "rgba(14, 102, 72, 0.12)", color: "var(--esmeralda, #0E6648)" }}>
             <Briefcase style={{ width: 14, height: 14, marginRight: 4 }} /> Socio Profesional
           </span>
         </div>

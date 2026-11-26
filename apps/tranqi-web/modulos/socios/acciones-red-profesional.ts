@@ -1446,7 +1446,7 @@ async function notificarEventoRedAbogadoMulticanal(
     const correoOperador = parametros.operadorCorreo || "admin@tranqi24.com";
 
     let asunto = "⚖️ Actualización de tu Perfil Profesional en Tranqi";
-    let colorCabecera = "linear-gradient(135deg, #05876E 0%, #046C58 100%)";
+    let colorCabecera = "linear-gradient(135deg, #0E6648 0%, #046C58 100%)";
     let etiquetaEstado = "ACTIVO · VERIFICADO";
     let mensajePrincipalHtml = "";
     let textoBotonCta = "Ir a mi Portal de Socio Abogado →";
@@ -1502,7 +1502,7 @@ async function notificarEventoRedAbogadoMulticanal(
 
       case "CONVERSION_ACTIVO":
         asunto = "🎉 ¡Bienvenido al Equipo! Tu cuenta de Socio Abogado en Tranqi está Activa";
-        colorCabecera = "linear-gradient(135deg, #05876E 0%, #046C58 100%)";
+        colorCabecera = "linear-gradient(135deg, #0E6648 0%, #046C58 100%)";
         etiquetaEstado = "SOCIO ABOGADO ACTIVO";
         mensajePrincipalHtml = `
           <p style="font-size: 15px; line-height: 1.6; color: #374151;">
@@ -1548,7 +1548,7 @@ async function notificarEventoRedAbogadoMulticanal(
 
       case "ACTIVADO":
         asunto = "✅ ¡Tu Perfil de Socio Abogado en Tranqi ha sido Reactivado!";
-        colorCabecera = "linear-gradient(135deg, #05876E 0%, #046C58 100%)";
+        colorCabecera = "linear-gradient(135deg, #0E6648 0%, #046C58 100%)";
         etiquetaEstado = "ESTADO: ACTIVO / VERIFICADO";
         mensajePrincipalHtml = `
           <p style="font-size: 15px; line-height: 1.6; color: #374151;">
@@ -1631,7 +1631,7 @@ async function notificarEventoRedAbogadoMulticanal(
           </p>
           ${mensajePrincipalHtml}
           <div style="text-align: center; margin: 28px 0;">
-            <a href="${urlAccion}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #05876E; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 13px 26px; border-radius: 12px;">
+            <a href="${urlAccion}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #0E6648; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 13px 26px; border-radius: 12px;">
               ${textoBotonCta}
             </a>
           </div>
@@ -2941,7 +2941,7 @@ export async function enviarInvitacionesRegistroAbogadosAction(entrada: {
 
     const construirHtmlInvitacion = (correoDestino: string) => `
       <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; color: #111827;">
-        <div style="background: linear-gradient(135deg, #05876E 0%, #046C58 100%); padding: 28px 32px; color: #ffffff;">
+        <div style="background: linear-gradient(135deg, #0E6648 0%, #046C58 100%); padding: 28px 32px; color: #ffffff;">
           <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.9; margin-bottom: 6px;">
             RED NACIONAL DE ABOGADOS · TRANQI
           </div>
@@ -2958,7 +2958,7 @@ export async function enviarInvitacionesRegistroAbogadosAction(entrada: {
           </p>
           ${
             notaExtra
-              ? `<div style="margin: 18px 0; padding: 14px 18px; background: #ECFDF5; border-left: 4px solid #05876E; border-radius: 8px; font-size: 14px; color: #065F46; line-height: 1.5;">
+              ? `<div style="margin: 18px 0; padding: 14px 18px; background: #ECFDF5; border-left: 4px solid #0E6648; border-radius: 8px; font-size: 14px; color: #065F46; line-height: 1.5;">
                   <strong>Mensaje de invitación:</strong><br/>
                   ${notaExtra.replace(/\n/g, "<br/>")}
                 </div>`
@@ -2975,17 +2975,17 @@ export async function enviarInvitacionesRegistroAbogadosAction(entrada: {
             </ul>
           </div>
           <div style="text-align: center; margin: 28px 0;">
-            <a href="${URL_REGISTRO_ABOGADOS}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #05876E; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 28px; border-radius: 12px;">
+            <a href="${URL_REGISTRO_ABOGADOS}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #0E6648; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 15px; padding: 14px 28px; border-radius: 12px;">
               Registrarme como Socio Abogado →
             </a>
           </div>
           <p style="font-size: 13px; color: #6B7280; text-align: center; margin-bottom: 0;">
             O ingresa directamente en tu navegador a:<br/>
-            <a href="${URL_REGISTRO_ABOGADOS}" style="color: #05876E; font-weight: 700;">${URL_REGISTRO_ABOGADOS}</a>
+            <a href="${URL_REGISTRO_ABOGADOS}" style="color: #0E6648; font-weight: 700;">${URL_REGISTRO_ABOGADOS}</a>
           </p>
         </div>
         <div style="background: #F3F4F6; padding: 14px 32px; text-align: center; font-size: 12px; color: #6B7280;">
-          Tranqi Legal Network · Ecuador · <a href="${URL_REGISTRO_ABOGADOS}" style="color: #05876E; text-decoration: none;">tranqi24.com/abogados</a>
+          Tranqi Legal Network · Ecuador · <a href="${URL_REGISTRO_ABOGADOS}" style="color: #0E6648; text-decoration: none;">tranqi24.com/abogados</a>
         </div>
       </div>
     `;

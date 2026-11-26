@@ -32,7 +32,7 @@ El contenedor principal `.panel-layout` inyecta dinámicamente la clase correspo
 | Rol / Perfil | Clase CSS | Superficie Sidebar | Color de Acento Principal | Cinta / Ribbon Textura |
 | :--- | :--- | :--- | :--- | :--- |
 | **`Cliente`** | `.perfil-cliente` | Violeta Oscuro (`#33007A`) | **Violeta Marca (`#5000BA`)** | Menta (`#B1FBE3`) |
-| **`Socio Abogado`** | `.perfil-abogado` | Esmeralda Tinta (`#052A23`) | **Esmeralda (`#05876E`)** | Lima (`#D8FFB3`) |
+| **`Socio Abogado`** | `.perfil-abogado` | Esmeralda Tinta (`#083D2C`) | **Esmeralda (`#0E6648`)** | Lima (`#D8FFB3`) |
 | **`Administrador`** | `.perfil-admin` | Negro (`#111111`) | **Lavanda (`#7866FF`)** | Lavanda (`#7866FF`) |
 
 ---
