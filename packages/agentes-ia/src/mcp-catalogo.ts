@@ -100,7 +100,76 @@ export function palabrasSignificativas(termino: string): string[] {
   return [...new Set(palabras)];
 }
 
-// Texto normalizado donde se busca cada palabra: nombre, slug, categoría, descripción, beneficios, etiquetas, usos y variantes.
+// Formatea la receta/composición del producto o variante (solo ítems con cantidad > 0).
+interface ItemRecetaMcp {
+  clave?: string;
+  nombre?: string;
+  cantidad?: number;
+  unidad?: string;
+  aproximado?: boolean;
+  max_colores?: number;
+  maxColores?: number;
+}
+
+const PLURALES_RECETA_MCP: Record<string, { singular: string; plural: string }> = {
+  rosas: { singular: "rosa", plural: "rosas" },
+  girasoles: { singular: "girasol", plural: "girasoles" },
+  orquideas: { singular: "orquídea", plural: "orquídeas" },
+  gerberas: { singular: "gerbera", plural: "gerberas" },
+  lirios: { singular: "lirio", plural: "lirios" },
+};
+
+function extraerItemsActivosRecetaMcp(raw: unknown): ItemRecetaMcp[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((it): it is ItemRecetaMcp => Boolean(it && typeof it === "object"))
+    .filter((it) => Number(it.cantidad ?? 0) > 0);
+}
+
+function obtenerRecetaEfectivaMcp(p: any, v?: any): ItemRecetaMcp[] {
+  const detProd = p?.pro_detalle_producto ?? {};
+  const recetaMaster = extraerItemsActivosRecetaMcp(
+    detProd.composicion_receta ??
+      detProd.personalizacion_floral?.composicionReceta ??
+      detProd.personalizacion_floral?.composicion_receta
+  );
+  if (!v) return recetaMaster;
+  const detVar = v?.var_detalle_variante ?? {};
+  const modoVar = String(detVar.personalizacion_floral_modo || "").toLowerCase();
+  if (modoVar === "personalizado") {
+    return extraerItemsActivosRecetaMcp(
+      detVar.composicion_receta ??
+        detVar.personalizacion_floral?.composicionReceta ??
+        detVar.personalizacion_floral?.composicion_receta
+    );
+  }
+  return recetaMaster;
+}
+
+function formatearComposicionRecetaMcp(items: ItemRecetaMcp[]): string {
+  if (!items || items.length === 0) return "";
+  const partes = items
+    .map((it) => {
+      const cant = Number(it.cantidad ?? 0);
+      if (!(cant > 0)) return "";
+      const clave = String(it.clave || "").trim().toLowerCase();
+      const cat = PLURALES_RECETA_MCP[clave];
+      const nombreItem = cat
+        ? cant === 1
+          ? cat.singular
+          : cat.plural
+        : String(it.nombre || it.clave || "").trim().toLowerCase();
+      if (!nombreItem) return "";
+      const prefijo = it.aproximado !== false ? "aprox. " : "";
+      return `${prefijo}${cant} ${nombreItem}`;
+    })
+    .filter(Boolean);
+  if (partes.length === 0) return "";
+  const texto = partes.join(", ");
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+// Texto normalizado donde se busca cada palabra: nombre, slug, categoría, descripción, beneficios, etiquetas, usos, receta y variantes.
 function textoBuscable(p: any): string {
   const detalle = p.pro_detalle_producto ?? {};
   const etiquetas = Array.isArray(detalle.etiquetas) ? detalle.etiquetas : [];
@@ -116,6 +185,7 @@ function textoBuscable(p: any): string {
     : [];
   const catNombre = p.categoria?.ctg_nombre || p.categoria?.nombre || p.categoria_nombre;
   const catSlug = p.categoria?.ctg_slug || p.categoria?.slug;
+  const composicionMasterTxt = formatearComposicionRecetaMcp(obtenerRecetaEfectivaMcp(p));
   const variantes = Array.isArray(p.variantes)
     ? p.variantes.flatMap((v: any) => [
         v.var_nombre || v.nombre,
@@ -123,6 +193,7 @@ function textoBuscable(p: any): string {
         v.var_detalle_variante?.descripcion_corta,
         v.var_detalle_variante?.detalle,
         v.var_detalle_variante?.receta_bom,
+        formatearComposicionRecetaMcp(obtenerRecetaEfectivaMcp(p, v)),
         ...(Array.isArray(v.var_detalle_variante?.beneficios_custom)
           ? v.var_detalle_variante.beneficios_custom
           : []),
@@ -140,6 +211,7 @@ function textoBuscable(p: any): string {
       p.pro_descripcion || p.descripcion,
       detalle.descripcion_corta,
       detalle.ocasion_recomendada,
+      composicionMasterTxt,
       ...beneficios,
       ...etiquetas,
       ...usos,
@@ -377,6 +449,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
               p.categoria?.ctg_nombre || p.categoria?.nombre || p.categoria_nombre || null;
             const catSlug = p.categoria?.ctg_slug || p.categoria?.slug || catNombre;
             const listaVariantes = Array.isArray(p.variantes) ? p.variantes : [];
+            const compMasterTxt = formatearComposicionRecetaMcp(obtenerRecetaEfectivaMcp(p));
 
             return {
               id: p.pro_id || p.id || p.producto_id,
@@ -385,6 +458,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
               url_tienda_producto: construirUrlProductoMcp(baseTienda, prodSlug),
               url_tienda_categoria: construirUrlCategoriaMcp(baseTienda, catSlug),
               descripcion: p.pro_descripcion || p.descripcion,
+              ...(compMasterTxt ? { composicion: compMasterTxt } : {}),
               tipo: p.pro_tipo || p.tipo,
               destacado: p.pro_destacado ?? false,
               es_combo: Boolean(p.pro_detalle_producto?.es_combo),
@@ -425,11 +499,13 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
                 const montoIva = Number(v.monto_iva ?? v.monto_iva_usd ?? ((base * tarifaIva) / 100));
                 const pvpTotal = Number(v.precio_total ?? v.pvp_total_usd ?? (base + montoIva));
                 const skuVar = v.var_sku || v.sku;
+                const compVarTxt = formatearComposicionRecetaMcp(obtenerRecetaEfectivaMcp(p, v));
 
                 return {
                   id: v.var_id || v.id || v.variante_id,
                   sku: skuVar,
                   nombre: v.var_nombre || v.nombre,
+                  ...(compVarTxt ? { composicion: compVarTxt } : {}),
                   url_tienda_variante: construirUrlProductoMcp(
                     baseTienda,
                     prodSlug,
@@ -495,6 +571,9 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
           const catSlug =
             encontrado.categoria?.ctg_slug || encontrado.categoria?.slug || catNombre;
           const listaVariantes = Array.isArray(encontrado.variantes) ? encontrado.variantes : [];
+          const compDetMasterTxt = formatearComposicionRecetaMcp(
+            obtenerRecetaEfectivaMcp(encontrado)
+          );
 
           return {
             id: encontrado.pro_id || encontrado.id || encontrado.producto_id,
@@ -503,6 +582,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
             url_tienda_producto: construirUrlProductoMcp(baseTienda, prodSlug),
             url_tienda_categoria: construirUrlCategoriaMcp(baseTienda, catSlug),
             descripcion: encontrado.pro_descripcion || encontrado.descripcion,
+            ...(compDetMasterTxt ? { composicion: compDetMasterTxt } : {}),
             tipo: encontrado.pro_tipo || encontrado.tipo,
             es_renta: Boolean(
               encontrado.pro_detalle_producto?.es_renta === true ||
@@ -534,11 +614,15 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
               const montoIva = Number(v.monto_iva ?? v.monto_iva_usd ?? ((base * tarifaIva) / 100));
               const pvpTotal = Number(v.precio_total ?? v.pvp_total_usd ?? (base + montoIva));
               const skuVar = v.var_sku || v.sku;
+              const compDetVarTxt = formatearComposicionRecetaMcp(
+                obtenerRecetaEfectivaMcp(encontrado, v)
+              );
 
               return {
                 id: v.var_id || v.id || v.variante_id,
                 sku: skuVar,
                 nombre: v.var_nombre || v.nombre,
+                ...(compDetVarTxt ? { composicion: compDetVarTxt } : {}),
                 url_tienda_variante: construirUrlProductoMcp(
                   baseTienda,
                   prodSlug,

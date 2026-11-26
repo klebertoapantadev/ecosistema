@@ -847,8 +847,20 @@ export function ModalEditarProducto({
           c.ctg_id === producto.pro_categoria_principal_id ||
           c.ctg_slug === producto.pro_categoria_principal_id
       );
+      const persMasterRaw =
+        det.personalizacion_floral && typeof det.personalizacion_floral === "object"
+          ? {
+              ...(det.personalizacion_floral as Record<string, unknown>),
+              composicion_receta:
+                (det.personalizacion_floral as Record<string, unknown>).composicionReceta ??
+                (det.personalizacion_floral as Record<string, unknown>).composicion_receta ??
+                det.composicion_receta,
+            }
+          : det.composicion_receta
+            ? { composicion_receta: det.composicion_receta }
+            : det.personalizacion_floral;
       setPersonalizacionFloral(
-        normalizarConfiguracionPersonalizacionFloral(det.personalizacion_floral, {
+        normalizarConfiguracionPersonalizacionFloral(persMasterRaw, {
           habilitadaPorDefecto: esFloristeria && !esRentaProdIni && !esExtraIni,
           tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorColeccion({
             categoriaNombre: producto.categoria?.ctg_nombre || catIniObj?.ctg_nombre,
@@ -1676,6 +1688,10 @@ export function ModalEditarProducto({
             usos_modo: v.var_detalle_variante?.usos_modo || "heredar",
             personalizacion_floral_modo: modoColoresVar,
             personalizacion_floral: persVarFinal,
+            composicion_receta:
+              modoColoresVar === "personalizado" && persVarFinal?.composicionReceta
+                ? persVarFinal.composicionReceta
+                : null,
             escalas_volumen: normalizarEscalasVolumen(v.var_detalle_variante?.escalas_volumen),
           },
         };
@@ -4887,9 +4903,32 @@ export function ModalEditarProducto({
                         ? "personalizado"
                         : "heredar";
                     const coloresHeredados = modoColoresVar === "heredar";
+                    const persVarRaw =
+                      varianteActual.var_detalle_variante?.personalizacion_floral &&
+                      typeof varianteActual.var_detalle_variante.personalizacion_floral === "object"
+                        ? {
+                            ...(varianteActual.var_detalle_variante
+                              .personalizacion_floral as Record<string, unknown>),
+                            composicion_receta:
+                              (
+                                varianteActual.var_detalle_variante
+                                  .personalizacion_floral as Record<string, unknown>
+                              ).composicionReceta ??
+                              (
+                                varianteActual.var_detalle_variante
+                                  .personalizacion_floral as Record<string, unknown>
+                              ).composicion_receta ??
+                              varianteActual.var_detalle_variante.composicion_receta,
+                          }
+                        : varianteActual.var_detalle_variante?.composicion_receta
+                          ? {
+                              composicion_receta:
+                                varianteActual.var_detalle_variante.composicion_receta,
+                            }
+                          : varianteActual.var_detalle_variante?.personalizacion_floral;
                     const configEfectivaVar = resolverPersonalizacionFloralEfectiva({
                       configMaster: personalizacionFloral,
-                      configVariante: varianteActual.var_detalle_variante?.personalizacion_floral,
+                      configVariante: persVarRaw,
                       modoVariante: modoColoresVar,
                       habilitadaPorDefecto: personalizacionFloral.habilitada,
                     });
@@ -4944,6 +4983,7 @@ export function ModalEditarProducto({
                                 ...(varianteActual.var_detalle_variante || {}),
                                 personalizacion_floral_modo: "personalizado",
                                 personalizacion_floral: { ...personalizacionFloral },
+                                composicion_receta: personalizacionFloral.composicionReceta ?? [],
                               };
                               actualizarVarianteActual("var_detalle_variante", det);
                               alternarSeccionHeredable("colores_flores", true);
@@ -5022,6 +5062,7 @@ export function ModalEditarProducto({
                                     ...(varianteActual.var_detalle_variante || {}),
                                     personalizacion_floral_modo: "heredar",
                                     personalizacion_floral: null,
+                                    composicion_receta: null,
                                   };
                                   actualizarVarianteActual("var_detalle_variante", det);
                                   alternarSeccionHeredable("colores_flores", false);
@@ -5051,6 +5092,7 @@ export function ModalEditarProducto({
                               ...(varianteActual.var_detalle_variante || {}),
                               personalizacion_floral_modo: "personalizado",
                               personalizacion_floral: nuevaCfg,
+                              composicion_receta: nuevaCfg.composicionReceta ?? [],
                             };
                             actualizarVarianteActual("var_detalle_variante", det);
                           }}

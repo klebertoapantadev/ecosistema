@@ -12,11 +12,19 @@
  * - Campo de indicaciones adicionales del cliente.
  */
 
+import {
+  formatearDescripcionComposicion,
+  normalizarComposicionReceta,
+  obtenerResumenFloresReceta,
+  type ItemComposicionReceta,
+} from "./recetaProducto";
+
 export type ModoFlorPersonalizacion =
   | "solo_rosas"
   | "solo_girasoles"
   | "girasoles_y_rosas"
-  | "solo_orquideas";
+  | "solo_orquideas"
+  | "flores_receta";
 
 export type ColorPapelId = "claros" | "oscuros" | "rosa";
 export type ColorBaseId = "blanco" | "negro" | "rosado";
@@ -420,6 +428,8 @@ export interface ConfiguracionPersonalizacionFloral {
   coloresBaseDisponibles: ColorBasePapelId[];
   /** Permitir campo libre de indicaciones adicionales del comprador. */
   permitirIndicacionesAdicionales: boolean;
+  /** Composición / receta estructurada del arreglo (rosas, girasoles, orquídeas, gerberas, lirios u otros). */
+  composicionReceta?: ItemComposicionReceta[];
 }
 
 export interface SeleccionPersonalizacionFloral {
@@ -472,6 +482,7 @@ export function crearConfiguracionPersonalizacionFloralPorDefecto(
     tipoEnvoltorio,
     coloresBaseDisponibles: obtenerColoresPorDefectoEnvoltorio(tipoEnvoltorio),
     permitirIndicacionesAdicionales: true,
+    composicionReceta: [],
   };
 }
 
@@ -605,23 +616,67 @@ export function normalizarConfiguracionPersonalizacionFloral(
   const permitirIndicacionesAdicionales =
     typeof permitirIndicacionesRaw === "boolean" ? permitirIndicacionesRaw : true;
 
-  // Garantizar que si el producto está habilitado exista al menos una modalidad de flor válida
-  const tieneAlgunaModalidad =
-    permiteSoloRosas || permiteSoloGirasoles || permiteGirasolesYRosas || orquideasMax > 0;
+  const composicionReceta = normalizarComposicionReceta(
+    r.composicionReceta ?? r.composicion_receta
+  );
+  const resumenReceta = obtenerResumenFloresReceta(composicionReceta);
+
+  // Regla de negocio: si el producto/variante tiene receta configurada, la receta gobierna
+  // si lleva rosas (solo se selecciona color de rosas cuando la receta incluye rosas),
+  // girasoles y orquídeas.
+  let maxColoresFinal = maxColoresRosas;
+  let soloRosasFinal = permiteSoloRosas;
+  let soloGirasolesFinal = permiteSoloGirasoles;
+  let girasolesYRosasFinal = permiteGirasolesYRosas;
+  let orqMinFinal = orquideasMin;
+  let orqMaxFinal = orquideasMax;
+
+  if (resumenReceta.tieneReceta) {
+    if (!resumenReceta.incluyeRosas) {
+      soloRosasFinal = false;
+      girasolesYRosasFinal = false;
+      maxColoresFinal = 0;
+      soloGirasolesFinal = resumenReceta.incluyeGirasoles;
+    } else {
+      maxColoresFinal = Math.max(1, resumenReceta.maxColoresRosas || maxColoresRosas || 1);
+      if (resumenReceta.incluyeGirasoles) {
+        girasolesYRosasFinal = true;
+        if (!permiteSoloRosas && !permiteSoloGirasoles) {
+          soloRosasFinal = false;
+        }
+      } else {
+        soloRosasFinal = true;
+      }
+    }
+
+    if (resumenReceta.incluyeOrquideas) {
+      const cantOrqReceta = Math.max(1, Math.min(50, Math.round(resumenReceta.orquideas)));
+      orqMinFinal = orqMinFinal > 0 ? Math.min(orqMinFinal, cantOrqReceta) : cantOrqReceta;
+      orqMaxFinal = Math.max(orqMaxFinal, cantOrqReceta);
+    }
+  } else {
+    // Garantizar que si el producto está habilitado sin receta exista al menos una modalidad de flor válida
+    const tieneAlgunaModalidad =
+      soloRosasFinal || soloGirasolesFinal || girasolesYRosasFinal || orqMaxFinal > 0;
+    if (!tieneAlgunaModalidad) {
+      soloRosasFinal = true;
+    }
+  }
 
   return {
     habilitada,
-    maxColoresRosas,
+    maxColoresRosas: maxColoresFinal,
     coloresRosasDisponibles,
-    permiteSoloRosas: tieneAlgunaModalidad ? permiteSoloRosas : true,
-    permiteSoloGirasoles,
-    permiteGirasolesYRosas,
-    orquideasMin,
-    orquideasMax,
+    permiteSoloRosas: soloRosasFinal,
+    permiteSoloGirasoles: soloGirasolesFinal,
+    permiteGirasolesYRosas: girasolesYRosasFinal,
+    orquideasMin: orqMinFinal,
+    orquideasMax: orqMaxFinal,
     mostrarColorBase,
     tipoEnvoltorio,
     coloresBaseDisponibles,
     permitirIndicacionesAdicionales,
+    composicionReceta,
   };
 }
 
@@ -634,7 +689,64 @@ export interface ModoFlorOpcion {
 export function obtenerModosFlorDisponibles(
   config: ConfiguracionPersonalizacionFloral
 ): ModoFlorOpcion[] {
+  const resumenReceta = obtenerResumenFloresReceta(config.composicionReceta);
   const modos: ModoFlorOpcion[] = [];
+
+  if (resumenReceta.tieneReceta && !resumenReceta.incluyeRosas) {
+    if (resumenReceta.incluyeGirasoles) {
+      modos.push({
+        id: "solo_girasoles",
+        etiqueta: "Solo Girasoles",
+        descripcion: `Elaborado con aprox. ${resumenReceta.girasoles} girasoles`,
+      });
+    } else if (resumenReceta.incluyeOrquideas) {
+      modos.push({
+        id: "solo_orquideas",
+        etiqueta: "Orquídeas",
+        descripcion: `Elaborado con ${resumenReceta.orquideas} ${
+          resumenReceta.orquideas === 1 ? "orquídea" : "orquídeas"
+        }`,
+      });
+    } else {
+      modos.push({
+        id: "flores_receta",
+        etiqueta: "Flores del diseño",
+        descripcion: formatearDescripcionComposicion(config.composicionReceta) || "Composición floral",
+      });
+    }
+    return modos;
+  }
+
+  // Si la receta incluye girasoles Y rosas, priorizar Girasoles y Rosas como opción inicial
+  if (resumenReceta.tieneReceta && resumenReceta.incluyeRosas && resumenReceta.incluyeGirasoles) {
+    modos.push({
+      id: "girasoles_y_rosas",
+      etiqueta: "Girasoles y Rosas",
+      descripcion:
+        config.maxColoresRosas <= 1
+          ? "Combina girasoles + 1 color de rosas"
+          : `Combina girasoles + hasta ${config.maxColoresRosas} colores de rosas`,
+    });
+    if (config.permiteSoloRosas) {
+      modos.push({
+        id: "solo_rosas",
+        etiqueta: "Solo Rosas",
+        descripcion:
+          config.maxColoresRosas === 1
+            ? "1 color de rosas a elección"
+            : `Hasta ${config.maxColoresRosas} colores de rosas`,
+      });
+    }
+    if (config.permiteSoloGirasoles) {
+      modos.push({
+        id: "solo_girasoles",
+        etiqueta: "Solo Girasoles",
+        descripcion: "Elaborado con girasoles frescos",
+      });
+    }
+    return modos;
+  }
+
   if (config.permiteSoloRosas) {
     modos.push({
       id: "solo_rosas",
@@ -683,6 +795,10 @@ export function modoRequiereColoresRosas(
   modo: ModoFlorPersonalizacion,
   config: ConfiguracionPersonalizacionFloral
 ): boolean {
+  const resumenReceta = obtenerResumenFloresReceta(config.composicionReceta);
+  if (resumenReceta.tieneReceta && !resumenReceta.incluyeRosas) {
+    return false;
+  }
   if (config.maxColoresRosas <= 0) return false;
   return modo === "solo_rosas" || modo === "girasoles_y_rosas";
 }
@@ -1075,6 +1191,8 @@ export function obtenerEtiquetaModoFlor(modo: ModoFlorPersonalizacion): string {
       return "Girasoles y Rosas";
     case "solo_orquideas":
       return "Orquídeas";
+    case "flores_receta":
+      return "Flores del diseño";
     case "solo_rosas":
     default:
       return "Solo Rosas";
@@ -1133,6 +1251,8 @@ export function formatearResumenPersonalizacionFloral(
       ? ` (${seleccion.colorOrquideaEtiqueta.trim()})`
       : "";
     partes.push(`Orquídeas${colOrqTxt}`);
+  } else if (seleccion.modoFlores === "flores_receta") {
+    partes.push("Flores del diseño");
   } else {
     partes.push(coloresLimpios.length > 0 ? `Rosas (${coloresLimpios.join(", ")})` : "Rosas");
   }
@@ -1440,21 +1560,31 @@ export function resumirConfiguracionPersonalizacionAdmin(
     return "Desactivada en tienda";
   }
   const partes: string[] = [];
-  const modos: string[] = [];
-  if (config.permiteSoloRosas) modos.push("Rosas");
-  if (config.permiteSoloGirasoles) modos.push("Girasoles");
-  if (config.permiteGirasolesYRosas) modos.push("Girasoles + Rosas");
-  if (modos.length > 0) {
-    partes.push(modos.join(" / "));
+  const txtReceta = formatearDescripcionComposicion(config.composicionReceta);
+  if (txtReceta) {
+    partes.push(txtReceta);
   }
-  if (config.permiteSoloRosas || config.permiteGirasolesYRosas) {
+  const resumenRec = obtenerResumenFloresReceta(config.composicionReceta);
+  const modos: string[] = [];
+  if (!resumenRec.tieneReceta) {
+    if (config.permiteSoloRosas) modos.push("Rosas");
+    if (config.permiteSoloGirasoles) modos.push("Girasoles");
+    if (config.permiteGirasolesYRosas) modos.push("Girasoles + Rosas");
+    if (modos.length > 0) {
+      partes.push(modos.join(" / "));
+    }
+  }
+  if (
+    (!resumenRec.tieneReceta && (config.permiteSoloRosas || config.permiteGirasolesYRosas)) ||
+    resumenRec.incluyeRosas
+  ) {
     partes.push(
       config.maxColoresRosas === 1
-        ? "1 color"
-        : `hasta ${config.maxColoresRosas} colores`
+        ? "1 color rosas"
+        : `hasta ${config.maxColoresRosas} colores rosas`
     );
   }
-  if (config.orquideasMax > 0) {
+  if (!resumenRec.incluyeOrquideas && config.orquideasMax > 0) {
     partes.push(`${config.orquideasMin}–${config.orquideasMax} orquídeas`);
   }
   if (config.mostrarColorBase && config.tipoEnvoltorio !== "no_aplica") {

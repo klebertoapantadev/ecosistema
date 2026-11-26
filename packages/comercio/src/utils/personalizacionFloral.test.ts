@@ -10,6 +10,7 @@ import {
   evaluarVigenciaInventarioRosas,
   inferirTipoEnvoltorioPorColeccion,
   inferirTipoEnvoltorioPorNombre,
+  modoRequiereColoresRosas,
   normalizarConfiguracionPersonalizacionFloral,
   obtenerColoresOrquideasConInventario,
   obtenerColoresRosasConInventario,
@@ -558,5 +559,97 @@ describe("personalizacionFloral", () => {
     expect(descOrq.aplicaDescuento).toBe(true);
     expect(descOrq.porcentajeDescuento).toBe(15);
     expect(descOrq.pvpUnitarioFinal).toBe(85);
+  });
+
+  it("solo exige seleccionar colores de rosas cuando la receta del producto incluye rosas (y soporta override por variante)", () => {
+    // 1) Receta SOLO girasoles (sin rosas) -> NO pide color de rosas
+    const cfgSoloGirasoles = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      maxColoresRosas: 2,
+      permiteSoloRosas: true,
+      tipoEnvoltorio: "papel_envoltorio",
+      composicionReceta: [{ clave: "girasoles", nombre: "Girasoles", cantidad: 18, aproximado: true }],
+    });
+    expect(cfgSoloGirasoles.maxColoresRosas).toBe(0);
+    const modosGir = obtenerModosFlorDisponibles(cfgSoloGirasoles);
+    expect(modosGir.map((m) => m.id)).toEqual(["solo_girasoles"]);
+    expect(modoRequiereColoresRosas("solo_girasoles", cfgSoloGirasoles)).toBe(false);
+    expect(modoRequiereColoresRosas("solo_rosas", cfgSoloGirasoles)).toBe(false);
+    expect(resumirConfiguracionPersonalizacionAdmin(cfgSoloGirasoles)).toContain(
+      "Aprox. 18 girasoles"
+    );
+
+    const valGir = validarSeleccionPersonalizacionFloral(cfgSoloGirasoles, {
+      modoFlores: "solo_girasoles",
+      coloresRosas: [],
+      cantidadOrquideas: 0,
+      colorBasePapel: "claros",
+    });
+    expect(valGir.ok).toBe(true);
+
+    // 2) Receta SOLO gerberas y lirios (sin rosas, sin girasoles, sin orquídeas, sin envoltorio) -> modo flores_receta, jamás pide color de rosas
+    const cfgGerberasLirios = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      tipoEnvoltorio: "no_aplica",
+      composicionReceta: [
+        { clave: "gerberas", nombre: "Gerberas", cantidad: 12, aproximado: true },
+        { clave: "lirios", nombre: "Lirios", cantidad: 6, aproximado: true },
+      ],
+    });
+    const modosGerb = obtenerModosFlorDisponibles(cfgGerberasLirios);
+    expect(modosGerb.map((m) => m.id)).toEqual(["flores_receta"]);
+    expect(modoRequiereColoresRosas("flores_receta", cfgGerberasLirios)).toBe(false);
+    const valGerb = validarSeleccionPersonalizacionFloral(cfgGerberasLirios, {
+      modoFlores: "flores_receta",
+      coloresRosas: [],
+      cantidadOrquideas: 0,
+      colorBasePapel: null,
+    });
+    expect(valGerb.ok).toBe(true);
+
+    // 3) Receta con rosas (50 rosas, 2 colores) + girasoles (18) -> exige seleccionar 1..2 colores de rosas
+    const cfgRosasYGirasoles = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      tipoEnvoltorio: "papel_envoltorio",
+      composicionReceta: [
+        { clave: "rosas", nombre: "Rosas", cantidad: 50, aproximado: true, maxColores: 2 },
+        { clave: "girasoles", nombre: "Girasoles", cantidad: 18, aproximado: true },
+      ],
+    });
+    expect(cfgRosasYGirasoles.maxColoresRosas).toBe(2);
+    const modosCombo = obtenerModosFlorDisponibles(cfgRosasYGirasoles);
+    expect(modosCombo[0]?.id).toBe("girasoles_y_rosas");
+    expect(modoRequiereColoresRosas("girasoles_y_rosas", cfgRosasYGirasoles)).toBe(true);
+
+    const sinColorRosas = validarSeleccionPersonalizacionFloral(cfgRosasYGirasoles, {
+      modoFlores: "girasoles_y_rosas",
+      coloresRosas: [],
+      cantidadOrquideas: 0,
+      colorBasePapel: "claros",
+    });
+    expect(sinColorRosas.ok).toBe(false);
+
+    const conDosColores = validarSeleccionPersonalizacionFloral(cfgRosasYGirasoles, {
+      modoFlores: "girasoles_y_rosas",
+      coloresRosas: ["Rojo", "Amarillo"],
+      cantidadOrquideas: 0,
+      colorBasePapel: "claros",
+    });
+    expect(conDosColores.ok).toBe(true);
+
+    // 4) Herencia Master vs Override en Variante: Master tiene rosas, Variante solo girasoles -> Variante NO pide color de rosas
+    const varEfectiva = resolverPersonalizacionFloralEfectiva({
+      configMaster: cfgRosasYGirasoles,
+      modoVariante: "personalizado",
+      configVariante: {
+        habilitada: true,
+        tipoEnvoltorio: "papel_envoltorio",
+        composicionReceta: [
+          { clave: "girasoles", nombre: "Girasoles", cantidad: 18, aproximado: true },
+        ],
+      },
+    });
+    expect(modoRequiereColoresRosas("solo_girasoles", varEfectiva)).toBe(false);
+    expect(varEfectiva.maxColoresRosas).toBe(0);
   });
 });

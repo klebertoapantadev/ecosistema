@@ -3767,6 +3767,7 @@ export async function crearProductoAction(datos: {
               habilitadaPorDefecto: negocio === "tinkay" || negocio === "margaritas",
             })
           : null,
+        composicion_receta: datos.personalizacionFloral?.composicionReceta ?? [],
         creado_desde_panel: true,
       },
       categoria: cat
@@ -3828,6 +3829,16 @@ export async function crearProductoAction(datos: {
               nuevoProducto.variantes[0].var_producto_id = resRpc.pro_id;
             }
             rpcOk = true;
+            try {
+              await clienteActivo
+                .schema("comun_comercio")
+                .rpc("com_fn_sincronizar_recetas_producto", {
+                  p_negocio: negocio,
+                  p_producto_id: resRpc.pro_id,
+                });
+            } catch {
+              // No interrumpir guardado de producto si aún no se aplica sincronización relacional
+            }
           }
         } catch {}
 
@@ -4254,6 +4265,12 @@ export async function editarProductoAction(datos: {
                 })
               : null
             : prodActual.pro_detalle_producto?.personalizacion_floral ?? null,
+        composicion_receta:
+          datos.personalizacionFloral !== undefined
+            ? datos.personalizacionFloral?.composicionReceta ?? []
+            : prodActual.pro_detalle_producto?.composicion_receta ??
+              prodActual.pro_detalle_producto?.personalizacion_floral?.composicionReceta ??
+              [],
         editado_en: new Date().toISOString(),
       },
 
@@ -4313,6 +4330,16 @@ export async function editarProductoAction(datos: {
             .rpc("com_fn_guardar_producto_catalogo", { p_datos: payloadRpc });
           if (!errRpc && rpcRes?.ok) {
             rpcExitoso = true;
+            try {
+              await clienteActivo
+                .schema("comun_comercio")
+                .rpc("com_fn_sincronizar_recetas_producto", {
+                  p_negocio: negocio,
+                  p_producto_id: targetId,
+                });
+            } catch {
+              // No interrumpir guardado de catálogo
+            }
           }
         } catch {
           rpcExitoso = false;

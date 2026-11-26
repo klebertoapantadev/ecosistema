@@ -211,6 +211,8 @@ export function expandirProductosVitrina(
           fotosModal: fotosTarjetaIndividual,
           variantes: p.variantes,
           varianteInicialSku: v.sku,
+          composicionReceta: v.composicionReceta ?? p.composicionReceta,
+          composicionDescripcion: v.composicionDescripcion ?? p.composicionDescripcion,
           destacado: p.destacado,
           totalMeGusta: totalMeGustaCard,
         };
@@ -238,6 +240,8 @@ export function expandirProductosVitrina(
           beneficios: beneficiosCombinados,
           usos: usosUnico,
           varianteInicialSku: unica.sku,
+          composicionReceta: unica.composicionReceta ?? p.composicionReceta,
+          composicionDescripcion: unica.composicionDescripcion ?? p.composicionDescripcion,
           totalMeGusta: Math.max(
             0,
             Number(p.totalMeGusta ?? 0) || 0,
@@ -871,6 +875,7 @@ export function construirCorpusBusquedaProducto(
     v.detalle,
     ...(v.beneficiosCustom || []),
     v.recetaBom,
+    v.composicionDescripcion,
     v.unidadesFlores ? `${v.unidadesFlores} rosas ${v.unidadesFlores} tallos ${v.unidadesFlores} flores` : '',
     ...(v.usos || []).map((u) => expandirTerminosUso(u)),
     Number.isFinite(v.pvp) ? `$${v.pvp.toFixed(0)} $${v.pvp.toFixed(2)} ${v.pvp}` : '',
@@ -897,6 +902,7 @@ export function construirCorpusBusquedaProducto(
     p.descripcionCorta,
     p.descripcionMasterCorta,
     p.descripcionLarga,
+    p.composicionDescripcion,
     ...(p.beneficios || []),
     ...(p.etiquetas || []),
     ...(p.etiquetasBusqueda || []),

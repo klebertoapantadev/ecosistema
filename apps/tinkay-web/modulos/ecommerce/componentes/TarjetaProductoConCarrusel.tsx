@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   describirConfiguracionPersonalizacionCliente,
   describirEscalaVolumen,
+  formatearDescripcionComposicion,
   inferirTipoEnvoltorioPorColeccion,
   resolverPersonalizacionFloralEfectiva,
 } from '@eco/comercio';
@@ -155,6 +156,11 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
   const textoColoresPreferencia = requierePersonalizacionFloral
     ? describirConfiguracionPersonalizacionCliente(configPersonalizacion)
     : '';
+  const textoComposicionTarjeta =
+    formatearDescripcionComposicion(configPersonalizacion.composicionReceta) ||
+    varianteSeleccionada.composicionDescripcion ||
+    producto.composicionDescripcion ||
+    '';
 
   const handleAgregar = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -379,6 +385,26 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
           </button>
         </h3>
         <p className="descripcion-corta-carrusel">{producto.descripcionCorta}</p>
+
+        {textoComposicionTarjeta && (
+          <div
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              color: esCondolenciasSobrio ? '#3F3F46' : '#2B4A36',
+              background: esCondolenciasSobrio ? '#F4F4F5' : '#F2F6F3',
+              border: esCondolenciasSobrio ? '1px solid #E4E4E7' : '1px solid #D5E4DA',
+              borderRadius: '8px',
+              padding: '3px 8px',
+              marginTop: '4px',
+              marginBottom: '4px',
+              lineHeight: 1.35,
+            }}
+            title={`Composición floral: ${textoComposicionTarjeta}`}
+          >
+            🌸 {textoComposicionTarjeta}
+          </div>
+        )}
 
         {requierePersonalizacionFloral && (
           <div

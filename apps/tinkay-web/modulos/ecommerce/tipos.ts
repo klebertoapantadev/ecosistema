@@ -3,6 +3,7 @@ import type {
   ConfiguracionPersonalizacionFloral,
   ConfiguracionRentaProducto,
   EscalaVolumenVariante,
+  ItemComposicionReceta,
   SeleccionPersonalizacionFloral,
 } from '@eco/comercio';
 
@@ -41,6 +42,8 @@ export interface VarianteEcommerce {
   usosModo?: 'heredar' | 'personalizado';
   personalizacionFloral?: ConfiguracionPersonalizacionFloral;
   personalizacionFloralModo?: 'heredar' | 'personalizado';
+  composicionReceta?: ItemComposicionReceta[];
+  composicionDescripcion?: string;
   totalMeGusta?: number;
 }
 
@@ -92,6 +95,8 @@ export interface ProductoEcommerce {
   recargoLogisticoUsd?: number;
   totalMeGusta?: number;
   personalizacionFloral?: ConfiguracionPersonalizacionFloral;
+  composicionReceta?: ItemComposicionReceta[];
+  composicionDescripcion?: string;
 }
 
 export interface DedicatoriaArreglo {

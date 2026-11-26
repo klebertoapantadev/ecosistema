@@ -1,16 +1,24 @@
 "use client";
 
-import React from "react";
-import { Palette, Sparkles, Check } from "lucide-react";
+import React, { useState } from "react";
+import { Palette, Sparkles, Check, Plus, Trash2, ClipboardList } from "lucide-react";
 import {
   COLORES_ROSAS_PERSONALIZACION,
   OPCIONES_TIPO_ENVOLTORIO_FLORAL,
+  normalizarConfiguracionPersonalizacionFloral,
   obtenerColoresPorDefectoEnvoltorio,
   obtenerOpcionesColorEnvoltorio,
   type ColorBasePapelId,
   type ConfiguracionPersonalizacionFloral,
   type TipoEnvoltorioFloral,
 } from "../utils/personalizacionFloral";
+import {
+  COMPONENTES_RECETA_FLORISTERIA,
+  formatearDescripcionComposicion,
+  normalizarComposicionReceta,
+  obtenerResumenFloresReceta,
+  type ItemComposicionReceta,
+} from "../utils/recetaProducto";
 
 interface Props {
   valor: ConfiguracionPersonalizacionFloral;
@@ -18,8 +26,124 @@ interface Props {
 }
 
 export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) {
+  const [mostrarAgregarOtro, setMostrarAgregarOtro] = useState(false);
+  const [otroNombre, setOtroNombre] = useState("");
+  const [otroCantidad, setOtroCantidad] = useState<number>(1);
+  const [otroAproximado, setOtroAproximado] = useState<boolean>(true);
+
+  const recetaActual = normalizarComposicionReceta(valor.composicionReceta);
+  const resumenReceta = obtenerResumenFloresReceta(recetaActual);
+  const textoComposicionPreview = formatearDescripcionComposicion(recetaActual);
+
   const actualizar = (parcial: Partial<ConfiguracionPersonalizacionFloral>) => {
     onChange({ ...valor, ...parcial });
+  };
+
+  const actualizarReceta = (nuevaLista: ItemComposicionReceta[]) => {
+    const limpia = normalizarComposicionReceta(nuevaLista);
+    const res = obtenerResumenFloresReceta(limpia);
+    const actualizado = normalizarConfiguracionPersonalizacionFloral(
+      {
+        ...valor,
+        composicionReceta: limpia,
+        ...(res.tieneReceta
+          ? {
+              maxColoresRosas: res.incluyeRosas
+                ? Math.max(1, res.maxColoresRosas || valor.maxColoresRosas || 1)
+                : 0,
+              permiteSoloRosas: res.incluyeRosas && !res.incluyeGirasoles,
+              permiteSoloGirasoles: !res.incluyeRosas && res.incluyeGirasoles,
+              permiteGirasolesYRosas: res.incluyeRosas && res.incluyeGirasoles,
+              orquideasMin: res.incluyeOrquideas ? Math.max(1, Math.round(res.orquideas)) : 0,
+              orquideasMax: res.incluyeOrquideas
+                ? Math.max(valor.orquideasMax, Math.round(res.orquideas))
+                : 0,
+            }
+          : {}),
+      },
+      {
+        habilitadaPorDefecto: valor.habilitada,
+        tipoEnvoltorioPorDefecto: valor.tipoEnvoltorio,
+      }
+    );
+    onChange(actualizado);
+  };
+
+  const obtenerItemReceta = (clave: string): ItemComposicionReceta | undefined =>
+    recetaActual.find((it) => it.clave === clave);
+
+  const cambiarCantidadComponente = (
+    clave: string,
+    cantidadNueva: number,
+    opciones?: { aproximado?: boolean; maxColores?: number }
+  ) => {
+    const cant = Math.max(0, Math.min(9999, Math.round(Number(cantidadNueva) || 0)));
+    const def = COMPONENTES_RECETA_FLORISTERIA.find((c) => c.clave === clave);
+    const existente = obtenerItemReceta(clave);
+    const sinClave = recetaActual.filter((it) => it.clave !== clave);
+    if (cant <= 0) {
+      actualizarReceta(sinClave);
+      return;
+    }
+    const nuevoItem: ItemComposicionReceta = {
+      clave,
+      etiquetaSingular: existente?.etiquetaSingular || def?.etiquetaSingular || clave,
+      etiquetaPlural: existente?.etiquetaPlural || def?.etiquetaPlural || clave,
+      cantidad: cant,
+      aproximado:
+        opciones?.aproximado !== undefined
+          ? opciones.aproximado
+          : existente?.aproximado ?? def?.aproximadoPorDefecto ?? true,
+      ...(clave === "rosas"
+        ? {
+            maxColores: Math.max(
+              1,
+              Math.min(
+                12,
+                Math.round(
+                  opciones?.maxColores ?? existente?.maxColores ?? (valor.maxColoresRosas || 1)
+                )
+              )
+            ),
+          }
+        : {}),
+      visibleCliente: existente?.visibleCliente ?? true,
+      unidadMedida: existente?.unidadMedida || def?.unidadMedida || "UNIDAD",
+      codigoInsumo: existente?.codigoInsumo || def?.codigoInsumo || `REC_${clave.toUpperCase()}`,
+    };
+    actualizarReceta([...sinClave, nuevoItem]);
+  };
+
+  const agregarComponentePersonalizado = () => {
+    const nombreLimpio = otroNombre.trim();
+    const cant = Math.max(1, Math.min(9999, Math.round(Number(otroCantidad) || 1)));
+    if (!nombreLimpio) return;
+    const clave = nombreLimpio
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    if (!clave) return;
+    const plural = nombreLimpio.toLowerCase();
+    const singular = plural.endsWith("s") && plural.length > 2 ? plural.slice(0, -1) : plural;
+    const sinPrev = recetaActual.filter((it) => it.clave !== clave);
+    actualizarReceta([
+      ...sinPrev,
+      {
+        clave,
+        etiquetaSingular: singular,
+        etiquetaPlural: plural,
+        cantidad: cant,
+        aproximado: otroAproximado,
+        visibleCliente: true,
+        unidadMedida: "UNIDAD",
+        codigoInsumo: `REC_${clave.toUpperCase()}`,
+      },
+    ]);
+    setOtroNombre("");
+    setOtroCantidad(1);
+    setMostrarAgregarOtro(false);
   };
 
   const toggleColorRosa = (clave: string) => {
@@ -148,71 +272,435 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
 
       {valor.habilitada && (
         <>
-          {/* 1. Combinaciones de flores permitidas */}
+          {/* 0. Composición / Receta del producto (Rosas, Girasoles, Orquídeas, Gerberas, Lirios u otros) */}
           <div
             style={{
               background: "#FFFFFF",
-              border: "1px solid #ECE7DF",
+              border: "1.5px solid #E5DDD2",
               borderRadius: "10px",
-              padding: "10px 12px",
+              padding: "11px 12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "9px",
             }}
           >
-            <span
+            <div
               style={{
-                display: "block",
-                fontSize: "0.75rem",
-                fontWeight: 800,
-                color: "#221E1B",
-                marginBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+                flexWrap: "wrap",
               }}
             >
-              1. Combinaciones de Flores Disponibles
-            </span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {[
-                {
-                  clave: "permiteSoloRosas" as const,
-                  label: "🌹 Solo Rosas",
-                  activo: valor.permiteSoloRosas,
-                },
-                {
-                  clave: "permiteSoloGirasoles" as const,
-                  label: "🌻 Solo Girasoles",
-                  activo: valor.permiteSoloGirasoles,
-                },
-                {
-                  clave: "permiteGirasolesYRosas" as const,
-                  label: "🌻🌹 Girasoles y Rosas",
-                  activo: valor.permiteGirasolesYRosas,
-                },
-              ].map((op) => (
-                <button
-                  key={op.clave}
-                  type="button"
-                  onClick={() => actualizar({ [op.clave]: !op.activo })}
+              <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                <ClipboardList size={15} color="#2F4737" style={{ flexShrink: 0 }} />
+                <div>
+                  <span style={{ display: "block", fontSize: "0.76rem", fontWeight: 800, color: "#221E1B" }}>
+                    Composición / Receta del Producto
+                  </span>
+                  <span style={{ fontSize: "0.69rem", color: "#57524C" }}>
+                    Indica la cantidad de cada flor (0 = no lleva). Solo los valores mayores a 0 aparecen en la descripción.
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMostrarAgregarOtro((prev) => !prev)}
+                title="Agregar otro componente o flor a la receta"
+                aria-label="Otro componente"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "4px 9px",
+                  borderRadius: "8px",
+                  border: "1px solid #D5CFC4",
+                  background: "#FAF8F5",
+                  color: "#3F3A35",
+                  fontSize: "0.71rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={12} />
+                <span>Otro</span>
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(215px, 100%), 1fr))",
+                gap: "7px",
+              }}
+            >
+              {COMPONENTES_RECETA_FLORISTERIA.map((comp) => {
+                const it = obtenerItemReceta(comp.clave);
+                const cant = it?.cantidad ?? 0;
+                const aprox = it?.aproximado ?? comp.aproximadoPorDefecto;
+                const activo = cant > 0;
+                const maxColRosas = it?.maxColores ?? (valor.maxColoresRosas || 1);
+
+                return (
+                  <div
+                    key={comp.clave}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "6px",
+                      padding: "8px 9px",
+                      borderRadius: "9px",
+                      border: activo ? "1.5px solid #2F4737" : "1px solid #E6E2DA",
+                      background: activo ? "#F4F8F5" : "#FAF8F5",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "6px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: activo ? "#1F3528" : "#57524C",
+                        }}
+                      >
+                        {comp.emoji} {comp.etiquetaAdmin}
+                      </span>
+
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <input
+                          type="number"
+                          min={0}
+                          max={9999}
+                          value={cant}
+                          onChange={(e) =>
+                            cambiarCantidadComponente(comp.clave, Number(e.target.value))
+                          }
+                          aria-label={`Cantidad de ${comp.etiquetaAdmin}`}
+                          style={{
+                            width: "58px",
+                            padding: "4px 6px",
+                            borderRadius: "7px",
+                            border: activo ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                            background: "#FFFFFF",
+                            fontSize: "0.78rem",
+                            fontWeight: 800,
+                            color: activo ? "#1F3528" : "#6E6861",
+                            textAlign: "center",
+                          }}
+                        />
+                        {activo && (
+                          <label
+                            title="Mostrar como cantidad aproximada (ej. aprox. 50 rosas)"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              fontSize: "0.68rem",
+                              fontWeight: 600,
+                              color: "#57524C",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={aprox}
+                              onChange={(e) =>
+                                cambiarCantidadComponente(comp.clave, cant, {
+                                  aproximado: e.target.checked,
+                                })
+                              }
+                            />
+                            <span>Aprox.</span>
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Colores 1..N directamente en Rosas cuando cantidad > 0 */}
+                    {comp.clave === "rosas" && activo && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "6px",
+                          paddingTop: "4px",
+                          borderTop: "1px dashed #CEDDD3",
+                        }}
+                      >
+                        <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#9D174D" }}>
+                          Colores (1–N):
+                        </span>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          {[1, 2, 3].map((n) => (
+                            <button
+                              key={`rc-col-${n}`}
+                              type="button"
+                              onClick={() =>
+                                cambiarCantidadComponente("rosas", cant, { maxColores: n })
+                              }
+                              style={{
+                                padding: "2px 7px",
+                                borderRadius: "999px",
+                                border:
+                                  maxColRosas === n ? "1.5px solid #BE185D" : "1px solid #D5CFC4",
+                                background: maxColRosas === n ? "#FDF2F8" : "#FFFFFF",
+                                color: maxColRosas === n ? "#9D174D" : "#57524C",
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                          <input
+                            type="number"
+                            min={1}
+                            max={12}
+                            value={maxColRosas}
+                            onChange={(e) =>
+                              cambiarCantidadComponente("rosas", cant, {
+                                maxColores: Math.max(1, Math.min(12, Number(e.target.value) || 1)),
+                              })
+                            }
+                            aria-label="Número máximo de colores de rosas"
+                            style={{
+                              width: "40px",
+                              padding: "2px 4px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              background: "#FFFFFF",
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              textAlign: "center",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Otros componentes personalizados en la receta */}
+              {resumenReceta.otrosComponentes.map((otro) => (
+                <div
+                  key={`otro-${otro.clave}`}
                   style={{
-                    display: "inline-flex",
+                    display: "flex",
                     alignItems: "center",
+                    justifyContent: "space-between",
                     gap: "6px",
-                    padding: "7px 12px",
-                    borderRadius: "999px",
-                    border: op.activo ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
-                    background: op.activo ? "#2F4737" : "#FAF8F5",
-                    color: op.activo ? "#FFFFFF" : "#57524C",
-                    fontSize: "0.76rem",
+                    padding: "8px 9px",
+                    borderRadius: "9px",
+                    border: "1.5px solid #2F4737",
+                    background: "#F4F8F5",
+                  }}
+                >
+                  <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#1F3528" }}>
+                    ✨ {otro.aproximado ? "Aprox. " : ""}
+                    {otro.cantidad} {otro.cantidad === 1 ? otro.etiquetaSingular : otro.etiquetaPlural}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => actualizarReceta(recetaActual.filter((it) => it.clave !== otro.clave))}
+                    title="Quitar componente"
+                    aria-label={`Quitar ${otro.etiquetaPlural}`}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: "#8A2E2E",
+                      cursor: "pointer",
+                      padding: "2px",
+                      display: "inline-flex",
+                    }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {mostrarAgregarOtro && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  flexWrap: "wrap",
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  background: "#FAF8F5",
+                  border: "1px dashed #B8B0A4",
+                }}
+              >
+                <input
+                  type="text"
+                  value={otroNombre}
+                  onChange={(e) => setOtroNombre(e.target.value)}
+                  placeholder="Ej. Tulipanes, Hortensias, Claveles..."
+                  style={{
+                    flex: "1 1 160px",
+                    padding: "5px 8px",
+                    borderRadius: "7px",
+                    border: "1px solid #D5CFC4",
+                    fontSize: "0.75rem",
+                    background: "#FFFFFF",
+                  }}
+                />
+                <input
+                  type="number"
+                  min={1}
+                  max={999}
+                  value={otroCantidad}
+                  onChange={(e) => setOtroCantidad(Math.max(1, Number(e.target.value) || 1))}
+                  aria-label="Cantidad componente personalizado"
+                  style={{
+                    width: "60px",
+                    padding: "5px 6px",
+                    borderRadius: "7px",
+                    border: "1px solid #D5CFC4",
+                    fontSize: "0.75rem",
+                    textAlign: "center",
+                    background: "#FFFFFF",
+                  }}
+                />
+                <label style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "0.71rem", color: "#57524C" }}>
+                  <input
+                    type="checkbox"
+                    checked={otroAproximado}
+                    onChange={(e) => setOtroAproximado(e.target.checked)}
+                  />
+                  <span>Aprox.</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={agregarComponentePersonalizado}
+                  style={{
+                    padding: "5px 10px",
+                    borderRadius: "7px",
+                    border: "none",
+                    background: "#2F4737",
+                    color: "#FFFFFF",
+                    fontSize: "0.72rem",
                     fontWeight: 700,
                     cursor: "pointer",
                   }}
                 >
-                  {op.activo && <Check size={13} />}
-                  <span>{op.label}</span>
+                  Agregar
                 </button>
-              ))}
-            </div>
+              </div>
+            )}
+
+            {/* Vista previa en vivo de la descripción y regla de color de rosas */}
+            {textoComposicionPreview ? (
+              <div
+                style={{
+                  padding: "7px 10px",
+                  borderRadius: "8px",
+                  background: "#F0FDF4",
+                  border: "1px solid #BBF7D0",
+                  color: "#166534",
+                  fontSize: "0.72rem",
+                  lineHeight: 1.4,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "3px",
+                }}
+              >
+                <div>
+                  <strong>Vista en descripción del producto:</strong> {textoComposicionPreview}
+                </div>
+                <div style={{ fontSize: "0.69rem", color: "#15803D" }}>
+                  {resumenReceta.incluyeRosas
+                    ? `✓ Incluye rosas → el cliente podrá elegir hasta ${resumenReceta.maxColoresRosas} color(es) de rosas desde inventario.`
+                    : "✓ Esta receta no lleva rosas → la tienda NO pedirá seleccionar color de rosas al comprar."}
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: "0.7rem", color: "#847D74" }}>
+                Sin cantidades cargadas todavía (todos en 0): no se agregará texto automático de composición.
+              </div>
+            )}
           </div>
 
-          {/* 2. Cantidad máxima de colores de rosas (1 color por defecto, 2 o N) */}
-          {(valor.permiteSoloRosas || valor.permiteGirasolesYRosas) && (
+          {/* 1. Combinaciones de flores permitidas (visible solo cuando no hay receta cerrada sin rosas) */}
+          {(!resumenReceta.tieneReceta || resumenReceta.incluyeRosas) && (
+            <div
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #ECE7DF",
+                borderRadius: "10px",
+                padding: "10px 12px",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  color: "#221E1B",
+                  marginBottom: "8px",
+                }}
+              >
+                1. Combinaciones de Flores Disponibles
+              </span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {[
+                  {
+                    clave: "permiteSoloRosas" as const,
+                    label: "🌹 Solo Rosas",
+                    activo: valor.permiteSoloRosas,
+                  },
+                  {
+                    clave: "permiteSoloGirasoles" as const,
+                    label: "🌻 Solo Girasoles",
+                    activo: valor.permiteSoloGirasoles,
+                  },
+                  {
+                    clave: "permiteGirasolesYRosas" as const,
+                    label: "🌻🌹 Girasoles y Rosas",
+                    activo: valor.permiteGirasolesYRosas,
+                  },
+                ].map((op) => (
+                  <button
+                    key={op.clave}
+                    type="button"
+                    onClick={() => actualizar({ [op.clave]: !op.activo })}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "7px 12px",
+                      borderRadius: "999px",
+                      border: op.activo ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                      background: op.activo ? "#2F4737" : "#FAF8F5",
+                      color: op.activo ? "#FFFFFF" : "#57524C",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {op.activo && <Check size={13} />}
+                    <span>{op.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 2. Cantidad máxima de colores de rosas (solo si la receta incluye rosas o aún no tiene receta) */}
+          {((!resumenReceta.tieneReceta && (valor.permiteSoloRosas || valor.permiteGirasolesYRosas)) ||
+            resumenReceta.incluyeRosas) && (
             <div
               style={{
                 background: "#FFFFFF",

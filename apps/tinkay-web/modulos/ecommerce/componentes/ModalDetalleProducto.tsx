@@ -8,6 +8,7 @@ import {
   capturarYPersistirAtribucionNavegador,
   describirEscalaVolumen,
   dispararEventoPixelNavegador,
+  formatearDescripcionComposicion,
   formatearResumenPersonalizacionFloral,
   inferirTipoEnvoltorioPorColeccion,
   modoRequiereColoresRosas,
@@ -17,6 +18,7 @@ import {
   obtenerEtiquetaTipoEnvoltorio,
   obtenerModosFlorDisponibles,
   obtenerOpcionesColorEnvoltorio,
+  obtenerResumenFloresReceta,
   resolverPersonalizacionFloralEfectiva,
   validarSeleccionPersonalizacionFloral,
   type ColorBasePapelId,
@@ -1096,6 +1098,16 @@ export function ModalDetalleProducto() {
   };
 
   const descripcionProducto = (producto.descripcionLarga || producto.descripcionCorta || '').trim();
+  const composicionActiva =
+    configPersonalizacionFloral?.composicionReceta &&
+    configPersonalizacionFloral.composicionReceta.length > 0
+      ? configPersonalizacionFloral.composicionReceta
+      : varianteSeleccionada.composicionReceta &&
+          varianteSeleccionada.composicionReceta.length > 0
+        ? varianteSeleccionada.composicionReceta
+        : producto.composicionReceta;
+  const textoComposicionActiva = formatearDescripcionComposicion(composicionActiva);
+  const resumenRecetaActiva = obtenerResumenFloresReceta(composicionActiva);
   const urlAlbumEjemplos = (() => {
     const candidato =
       varianteSeleccionada?.albumFotosUrl?.trim() ||
@@ -1272,18 +1284,38 @@ export function ModalDetalleProducto() {
             )}
 
             {/* Descripción y Beneficios del Producto */}
-            {(descripcionProducto || beneficiosMostrados.length > 0) && (
+            {(descripcionProducto || textoComposicionActiva || beneficiosMostrados.length > 0) && (
               <div className="caja-descripcion-beneficios-producto">
-                {descripcionProducto && (
+                {(descripcionProducto || textoComposicionActiva) && (
                   <div className="bloque-descripcion-producto">
                     <span className="subtitulo-seccion-detalle">Descripción</span>
-                    <p className="texto-descripcion-producto">{descripcionProducto}</p>
+                    {descripcionProducto && (
+                      <p className="texto-descripcion-producto">{descripcionProducto}</p>
+                    )}
+                    {textoComposicionActiva && (
+                      <p
+                        style={{
+                          margin: descripcionProducto ? '8px 0 0' : 0,
+                          padding: '7px 10px',
+                          borderRadius: '9px',
+                          background: '#F2F6F3',
+                          border: '1px solid #D5E4DA',
+                          color: '#2B4A36',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        🌸 <strong>Composición:</strong> {textoComposicionActiva}
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {descripcionProducto && beneficiosMostrados.length > 0 && (
-                  <div className="separador-detalle-producto" />
-                )}
+                {(descripcionProducto || textoComposicionActiva) &&
+                  beneficiosMostrados.length > 0 && (
+                    <div className="separador-detalle-producto" />
+                  )}
 
                 {beneficiosMostrados.length > 0 && (
                   <div className="bloque-beneficios-producto">
@@ -2405,6 +2437,34 @@ export function ModalDetalleProducto() {
                 </div>
               )}
 
+            {/* Composición / Receta del Producto (solo visible cuando tiene al menos un componente > 0) */}
+            {textoComposicionActiva && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '8px',
+                  background: '#F2F6F3',
+                  border: '1px solid #C8DDD0',
+                  borderLeft: '3.5px solid #2F4737',
+                  padding: '9px 13px',
+                  borderRadius: '10px',
+                  margin: '0 0 14px',
+                  fontSize: '0.84rem',
+                  color: '#1F3A2A',
+                  lineHeight: 1.4,
+                }}
+              >
+                <span style={{ flexShrink: 0 }} aria-hidden="true">
+                  🌸
+                </span>
+                <div>
+                  <strong style={{ fontWeight: 800 }}>Composición:</strong>{' '}
+                  <span>{textoComposicionActiva}</span>
+                </div>
+              </div>
+            )}
+
             {/* Receta Botánica (BOM) */}
             {varianteSeleccionada.recetaBom && (
               <div className="caja-receta-bom">
@@ -2441,6 +2501,12 @@ export function ModalDetalleProducto() {
               const rotuloTipoEnv = tipoEnvEfectivo
                 ? obtenerEtiquetaTipoEnvoltorio(tipoEnvEfectivo)
                 : '';
+              const tieneOpcionesColorOEnvoltorio = Boolean(
+                modosFlor.length > 1 ||
+                  modoRequiereColoresRosas(modoFloresSel, configPersonalizacionFloral) ||
+                  (tipoEnvEfectivo && opcionesBaseDisponibles.length > 0) ||
+                  configPersonalizacionFloral.orquideasMax > 0
+              );
               const resumenActual = formatearResumenPersonalizacionFloral({
                 mismosColoresFoto,
                 fotoReferenciaUrl: fotos[indiceFotoSeguro],
@@ -2511,14 +2577,16 @@ export function ModalDetalleProducto() {
                         style={{
                           fontSize: '0.68rem',
                           fontWeight: 700,
-                          color: '#9D174D',
-                          background: '#FDF2F8',
-                          border: '1px solid #FBCFE8',
+                          color: tieneOpcionesColorOEnvoltorio ? '#9D174D' : '#2B4A36',
+                          background: tieneOpcionesColorOEnvoltorio ? '#FDF2F8' : '#F2F6F3',
+                          border: tieneOpcionesColorOEnvoltorio
+                            ? '1px solid #FBCFE8'
+                            : '1px solid #C8DDD0',
                           padding: '2px 8px',
                           borderRadius: '999px',
                         }}
                       >
-                        Requerido para comprar
+                        {tieneOpcionesColorOEnvoltorio ? 'Requerido para comprar' : 'Opcional'}
                       </span>
                     </div>
                     <p
@@ -2529,8 +2597,22 @@ export function ModalDetalleProducto() {
                         lineHeight: 1.4,
                       }}
                     >
-                      ✨ <strong>Colores y decoración según la ocasión.</strong>{' '}
-                      Elige tu combinación ideal o solicita los mismos colores de la foto.
+                      {!tieneOpcionesColorOEnvoltorio && textoComposicionActiva ? (
+                        <>
+                          🌸 <strong>Composición definida:</strong> {textoComposicionActiva}.{' '}
+                          Puedes añadir indicaciones adicionales si lo deseas.
+                        </>
+                      ) : resumenRecetaActiva.tieneReceta && !resumenRecetaActiva.incluyeRosas ? (
+                        <>
+                          ✨ <strong>Personaliza los detalles de tu arreglo.</strong>{' '}
+                          Elige las opciones disponibles o solicita los mismos colores de la foto.
+                        </>
+                      ) : (
+                        <>
+                          ✨ <strong>Colores y decoración según la ocasión.</strong>{' '}
+                          Elige tu combinación ideal o solicita los mismos colores de la foto.
+                        </>
+                      )}
                     </p>
                     {urlAlbumEjemplos && (
                       <a
@@ -2563,6 +2645,7 @@ export function ModalDetalleProducto() {
                   </div>
 
                   {/* Opción rápida: Mismos colores de la foto vs Elegir colores */}
+                  {tieneOpcionesColorOEnvoltorio && (
                   <div
                     style={{
                       display: 'grid',
@@ -2628,6 +2711,7 @@ export function ModalDetalleProducto() {
                       <span>Elegir mis colores</span>
                     </button>
                   </div>
+                  )}
 
                   {mismosColoresFoto ? (
                     <div
@@ -3367,8 +3451,11 @@ export function ModalDetalleProducto() {
                               color: '#581C87',
                             }}
                           >
-                            🌺 Cantidad de Orquídeas ({configPersonalizacionFloral.orquideasMin} a{' '}
-                            {configPersonalizacionFloral.orquideasMax})
+                            {configPersonalizacionFloral.orquideasMin ===
+                              configPersonalizacionFloral.orquideasMax &&
+                            configPersonalizacionFloral.orquideasMax > 0
+                              ? `🌺 Orquídeas incluidas (${configPersonalizacionFloral.orquideasMax})`
+                              : `🌺 Cantidad de Orquídeas (${configPersonalizacionFloral.orquideasMin} a ${configPersonalizacionFloral.orquideasMax})`}
                           </strong>
                           <span style={{ fontSize: '0.71rem', color: '#6B21A8' }}>
                             {cantidadOrquideasSel === 0
@@ -3379,6 +3466,8 @@ export function ModalDetalleProducto() {
                           </span>
                         </div>
 
+                        {configPersonalizacionFloral.orquideasMax >
+                          configPersonalizacionFloral.orquideasMin && (
                         <div
                           style={{
                             display: 'inline-flex',
@@ -3455,6 +3544,7 @@ export function ModalDetalleProducto() {
                             <Plus size={14} />
                           </button>
                         </div>
+                        )}
                       </div>
 
                       {/* Selector de color de orquídea (Blanco, Beige, Verde, Amarilla, Lila) */}
@@ -3608,6 +3698,85 @@ export function ModalDetalleProducto() {
                               </div>
                             )}
 
+                            {!pideColoresRosas &&
+                              coloresElegidosBajoConfirmacion.some((c) =>
+                                c.toLowerCase().includes('orqu')
+                              ) && (
+                                <div
+                                  role="status"
+                                  style={{
+                                    padding: '9px 11px',
+                                    borderRadius: '10px',
+                                    background: '#FFFBEB',
+                                    border: '1.5px solid #F59E0B',
+                                    color: '#78350F',
+                                    fontSize: '0.73rem',
+                                    lineHeight: 1.4,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '7px',
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '7px' }}>
+                                    <AlertTriangle
+                                      size={15}
+                                      color="#D97706"
+                                      style={{ flexShrink: 0, marginTop: '1px' }}
+                                    />
+                                    <span>
+                                      <strong>
+                                        Bajo confirmación o para reservas (1 día) —{' '}
+                                        {coloresElegidosBajoConfirmacion
+                                          .filter((c) => c.toLowerCase().includes('orqu'))
+                                          .join(', ')}
+                                        :
+                                      </strong>{' '}
+                                      este color/cantidad de orquídea no consta disponible para entrega
+                                      inmediata hoy; verifica disponibilidad o reserva con 1 día de
+                                      anticipación.
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const urlProd = obtenerEnlaceProducto(
+                                          producto,
+                                          varianteSeleccionada.sku
+                                        );
+                                        abrirWhatsappTiendaConPuenteOmnicanal({
+                                          whatsappTienda: configTiendaCheckout?.whatsappTienda,
+                                          productoNombre: `${producto.nombre} (consulta bajo confirmación: ${coloresElegidosBajoConfirmacion.join(', ')})`,
+                                          productoSlug: producto.slug || producto.id,
+                                          varianteNombre: varianteSeleccionada.nombre,
+                                          precioUsd: varianteSeleccionada.pvp,
+                                          urlProducto: urlProd,
+                                        });
+                                      }}
+                                      title="Consultar disponibilidad por WhatsApp con la tienda"
+                                      aria-label="Verificar con tienda"
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '5px 11px',
+                                        borderRadius: '999px',
+                                        border: '1px solid #D97706',
+                                        background: '#FFFFFF',
+                                        color: '#92400E',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        fontFamily: 'inherit',
+                                      }}
+                                    >
+                                      <IconoWhatsappVector size={13} color="#16A34A" />
+                                      <span>Verificar con tienda</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
                             {descuentoColorOferta.aplicaDescuento &&
                               !pideColoresRosas &&
                               modoFloresSel !== 'solo_girasoles' && (
@@ -3687,6 +3856,9 @@ export function ModalDetalleProducto() {
                     (mismosColoresFoto ||
                       coloresRosasSel.length > 0 ||
                       modoFloresSel === 'solo_girasoles' ||
+                      modoFloresSel === 'solo_orquideas' ||
+                      modoFloresSel === 'flores_receta' ||
+                      Boolean(colorOrquideaSel) ||
                       colorBasePapelSel) && (
                       <div
                         style={{

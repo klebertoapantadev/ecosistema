@@ -4,12 +4,15 @@ import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from './datos-catalogo';
 import { normalizarTextoEcommerce } from './filtrado-catalogo';
 import {
   esCodigoOfertaRenta,
+  formatearDescripcionComposicion,
   inferirTipoEnvoltorioPorColeccion,
   normalizarComponentesCombo,
+  normalizarComposicionReceta,
   normalizarConfiguracionPersonalizacionFloral,
   normalizarConfiguracionRenta,
   normalizarEscalasVolumen,
   obtenerEtiquetaCortaTipoOferta,
+  resolverComposicionRecetaEfectiva,
   type InventarioColoresTienda,
 } from '@eco/comercio';
 
@@ -42,6 +45,7 @@ interface SupabaseVarianteRaw {
     usos_modo?: 'heredar' | 'personalizado';
     personalizacion_floral_modo?: 'heredar' | 'personalizado';
     personalizacion_floral?: unknown;
+    composicion_receta?: unknown;
     escalas_volumen?: unknown;
   };
 }
@@ -76,6 +80,7 @@ interface SupabaseProductoRaw {
     tipo_oferta_etiqueta?: string;
     renta_config?: unknown;
     personalizacion_floral?: unknown;
+    composicion_receta?: unknown;
     canales_visibilidad?: string[];
     vigencia_tipo?: 'SIEMPRE' | 'RANGO_FECHAS' | 'ESTACIONAL_ANUAL';
     fecha_inicio?: string;
@@ -380,6 +385,17 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
           productoSlug: p.pro_slug,
         });
 
+        const persMasterObj =
+          detalle.personalizacion_floral && typeof detalle.personalizacion_floral === 'object'
+            ? (detalle.personalizacion_floral as Record<string, unknown>)
+            : null;
+        const composicionMaster = normalizarComposicionReceta(
+          detalle.composicion_receta ??
+            persMasterObj?.composicionReceta ??
+            persMasterObj?.composicion_receta
+        );
+        const composicionMasterDesc = formatearDescripcionComposicion(composicionMaster) || undefined;
+
         const variantes: VarianteEcommerce[] = varsActivas.map((v) => {
           const detVar = v.var_detalle_variante as Record<string, unknown> | undefined;
           const esPersonalizada = detVar?.iva_personalizado === true;
@@ -456,6 +472,40 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
                 : '';
           const albumVarUrl = /^https?:\/\//i.test(albumVarRaw) ? albumVarRaw : undefined;
 
+          const modoPersVar: 'heredar' | 'personalizado' =
+            v.var_detalle_variante?.personalizacion_floral_modo === 'personalizado'
+              ? 'personalizado'
+              : 'heredar';
+          const persVarObj =
+            v.var_detalle_variante?.personalizacion_floral &&
+            typeof v.var_detalle_variante.personalizacion_floral === 'object'
+              ? (v.var_detalle_variante.personalizacion_floral as Record<string, unknown>)
+              : null;
+          const recetaVarRaw =
+            v.var_detalle_variante?.composicion_receta ??
+            persVarObj?.composicionReceta ??
+            persVarObj?.composicion_receta;
+          const composicionVarEfectiva = resolverComposicionRecetaEfectiva({
+            recetaMaster: composicionMaster,
+            recetaVariante: recetaVarRaw,
+            modoVariante: modoPersVar,
+          });
+          const composicionVarDesc =
+            formatearDescripcionComposicion(composicionVarEfectiva) || undefined;
+          const persVarNormalizada =
+            modoPersVar === 'personalizado' && (persVarObj || recetaVarRaw !== undefined)
+              ? normalizarConfiguracionPersonalizacionFloral(
+                  {
+                    ...(persVarObj || {}),
+                    ...(recetaVarRaw !== undefined ? { composicion_receta: recetaVarRaw } : {}),
+                  },
+                  {
+                    habilitadaPorDefecto: true,
+                    tipoEnvoltorioPorDefecto: tipoEnvoltorioColeccion,
+                  }
+                )
+              : undefined;
+
           return {
             varId: v.var_id,
             sku: v.var_sku || `VAR-${v.var_id.slice(0, 6)}`,
@@ -478,21 +528,11 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             unidadesFlores: v.var_detalle_variante?.tallos || undefined,
             usos: usosVarRaw.length > 0 ? usosVarRaw : undefined,
             usosModo: v.var_detalle_variante?.usos_modo || 'heredar',
-            personalizacionFloralModo:
-              v.var_detalle_variante?.personalizacion_floral_modo === 'personalizado'
-                ? 'personalizado'
-                : 'heredar',
-            personalizacionFloral:
-              v.var_detalle_variante?.personalizacion_floral_modo === 'personalizado' &&
-              v.var_detalle_variante?.personalizacion_floral
-                ? normalizarConfiguracionPersonalizacionFloral(
-                    v.var_detalle_variante.personalizacion_floral,
-                    {
-                      habilitadaPorDefecto: true,
-                      tipoEnvoltorioPorDefecto: tipoEnvoltorioColeccion,
-                    }
-                  )
-                : undefined,
+            personalizacionFloralModo: modoPersVar,
+            personalizacionFloral: persVarNormalizada,
+            composicionReceta:
+              composicionVarEfectiva.length > 0 ? composicionVarEfectiva : undefined,
+            composicionDescripcion: composicionVarDesc,
             totalMeGusta: Math.max(0, Number(v.var_total_me_gusta ?? 0) || 0),
           };
         });
@@ -752,12 +792,19 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             : 0,
           totalMeGusta: Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0),
           personalizacionFloral: normalizarConfiguracionPersonalizacionFloral(
-            detalle.personalizacion_floral,
+            persMasterObj || composicionMaster.length > 0
+              ? {
+                  ...(persMasterObj || {}),
+                  ...(composicionMaster.length > 0 ? { composicion_receta: composicionMaster } : {}),
+                }
+              : detalle.personalizacion_floral,
             {
               habilitadaPorDefecto: !esRentaProd && !esEventoProd && !esExtra,
               tipoEnvoltorioPorDefecto: tipoEnvoltorioColeccion,
             }
           ),
+          composicionReceta: composicionMaster.length > 0 ? composicionMaster : undefined,
+          composicionDescripcion: composicionMasterDesc,
         };
       });
 

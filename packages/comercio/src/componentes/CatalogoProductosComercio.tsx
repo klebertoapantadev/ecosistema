@@ -88,6 +88,10 @@ import {
 import { ModalGestionTiposOferta } from "./ModalGestionTiposOferta";
 import { ModalExportarImportarCatalogo } from "./ModalExportarImportarCatalogo";
 import { formatearConfiguracionProductoTexto } from "../utils/catalogoMasivo";
+import {
+  formatearDescripcionComposicion,
+  resolverComposicionRecetaEfectiva,
+} from "../utils/recetaProducto";
 
 interface Props {
   negocio?: string;
@@ -1954,9 +1958,33 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               return [];
             };
 
+            const recetaMasterRaw =
+              p.pro_detalle_producto?.composicion_receta ??
+              p.pro_detalle_producto?.personalizacion_floral?.composicionReceta ??
+              p.pro_detalle_producto?.personalizacion_floral?.composicion_receta;
+
+            const obtenerComposicionTextoVariante = (v?: VarianteCatalogo | null): string => {
+              const vd = v?.var_detalle_variante || {};
+              const recetaEfectiva = resolverComposicionRecetaEfectiva({
+                recetaMaster: recetaMasterRaw,
+                recetaVariante:
+                  vd.composicion_receta ??
+                  vd.personalizacion_floral?.composicionReceta ??
+                  vd.personalizacion_floral?.composicion_receta,
+                modoVariante: vd.personalizacion_floral_modo,
+              });
+              return formatearDescripcionComposicion(recetaEfectiva);
+            };
+
             const obtenerResumenVariante = (v: VarianteCatalogo): string => {
               const vd = v.var_detalle_variante || {};
+              const txtRecetaVar = obtenerComposicionTextoVariante(v);
               const custom = normalizarBeneficiosCustom(vd.beneficios_custom);
+              if (txtRecetaVar) {
+                return custom.length > 0 && !custom[0]!.toLowerCase().includes(txtRecetaVar.toLowerCase())
+                  ? `${txtRecetaVar} · ${custom[0]!}`
+                  : txtRecetaVar;
+              }
               if (custom.length > 0) return custom[0]!;
               if (typeof vd.receta_bom === "string" && vd.receta_bom.trim()) {
                 return vd.receta_bom.trim();
@@ -1998,8 +2026,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             })();
 
             const currentVarDet = currentVar?.var_detalle_variante || {};
-            const recetaBomActual =
+            const composicionRecetaActual = obtenerComposicionTextoVariante(currentVar);
+            const recetaBomLegacy =
               typeof currentVarDet.receta_bom === "string" ? currentVarDet.receta_bom.trim() : "";
+            const recetaBomActual = composicionRecetaActual || recetaBomLegacy;
             const detalleVarActual =
               typeof currentVarDet.detalle === "string" ? currentVarDet.detalle.trim() : "";
             const tallosActual =
