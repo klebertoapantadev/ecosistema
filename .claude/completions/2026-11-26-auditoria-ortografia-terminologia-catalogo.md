@@ -47,3 +47,12 @@ Revisar nombres, descripciones, beneficios y recetas de todos los productos y va
   - Se corrige la resolución de `beneficios_custom` cuando `beneficios_modo` no estaba explícito o cuando el producto master no tenía beneficios propios (ej. `Box Florales`).
   - Se muestran también `receta_bom`, `detalle`, `SKU` y `tallos` de la variante seleccionada, indicando la variante activa en el encabezado del bloque.
 - **Otros ajustes visuales**: deduplicación de `cobertura_texto` en el badge logístico y separación vertical de los puntos del carrusel respecto a los badges inferiores de la imagen.
+
+---
+
+## Mejora adicional — Filtros rápidos de operador: Destacados y En oferta (`CatalogoProductosComercio.tsx`)
+- Se añadieron dos filtros toggle combinables en la barra de operador (`modoVista === "admin"`):
+  - **`✨ Destacados (N)`**: filtra únicamente productos con `pro_destacado = true`.
+  - **`🏷️ En oferta (N)`**: filtra productos que tienen precio de oferta (`var_precio_comparacion > pvp`) en cualquiera de sus variantes o descuento de Set/Combo (`sumaNominal > pvp`), alineado con la lógica de ofertas del storefront.
+- Se muestran precio tachado y etiqueta `-X% OFF` directamente en cada variante en oferta dentro del card de operador.
+- Soporte de parámetros URL (`?destacados=1`, `?ofertas=1`) para deep-linking y botón `Compartir`.

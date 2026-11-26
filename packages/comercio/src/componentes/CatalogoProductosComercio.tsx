@@ -119,6 +119,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todas");
   const [canalSeleccionado, setCanalSeleccionado] = useState<string>("todos");
   const [filtroEstadoAdmin, setFiltroEstadoAdmin] = useState<"todos" | "activos" | "inactivos">("todos");
+  const [soloDestacados, setSoloDestacados] = useState<boolean>(false);
+  const [soloEnOferta, setSoloEnOferta] = useState<boolean>(false);
   const [verTodosEnFiltroCanal, setVerTodosEnFiltroCanal] = useState<boolean>(false);
   const [guardandoCanalKey, setGuardandoCanalKey] = useState<string | null>(null);
   const [guardandoActivoKey, setGuardandoActivoKey] = useState<string | null>(null);
@@ -192,6 +194,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       const urlQ = params.get("q") || params.get("busqueda");
       const urlCat = params.get("categoria");
       const urlCanal = params.get("canal");
+      const urlDestacados = params.get("destacados");
+      const urlOfertas = params.get("ofertas");
 
       if (urlPestana === "catalogo" || urlPestana === "disponibilidad" || urlPestana === "convenios" || urlPestana === "empresas") {
         setPestanaActiva(urlPestana as any);
@@ -207,6 +211,12 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       }
       if (urlCanal) {
         setCanalSeleccionado(urlCanal);
+      }
+      if (urlDestacados === "1" || urlDestacados === "true") {
+        setSoloDestacados(true);
+      }
+      if (urlOfertas === "1" || urlOfertas === "true") {
+        setSoloEnOferta(true);
       }
     }
   }, []);
@@ -434,6 +444,16 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
     } else {
       url.searchParams.delete("canal");
     }
+    if (soloDestacados) {
+      url.searchParams.set("destacados", "1");
+    } else {
+      url.searchParams.delete("destacados");
+    }
+    if (soloEnOferta) {
+      url.searchParams.set("ofertas", "1");
+    } else {
+      url.searchParams.delete("ofertas");
+    }
 
     // Actualizar historial del navegador sin recargar
     window.history.replaceState({}, "", url.toString());
@@ -464,8 +484,56 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
     }
   };
 
+  const calcularPvpVariante = (v?: VarianteCatalogo | null): number => {
+    if (!v) return 0;
+    if (v.precio_total !== undefined && v.precio_total > 0) {
+      return Number(v.precio_total);
+    }
+    return Number(
+      (
+        Number(v.var_precio || 0) *
+        (1 + Number(v.var_tarifa_iva_porcentaje || 0) / 100)
+      ).toFixed(2)
+    );
+  };
+
+  const productoEstaEnOferta = (p: ProductoCatalogo): boolean => {
+    if (!p) return false;
+    const vars = Array.isArray(p.variantes) ? p.variantes : [];
+    const tienePrecioTachado = vars.some((v) => {
+      const pvpV = calcularPvpVariante(v);
+      return Number(v.var_precio_comparacion || 0) > pvpV;
+    });
+    if (tienePrecioTachado) return true;
+
+    if (p.pro_detalle_producto?.es_combo && vars.length > 0) {
+      const comps = normalizarComponentesCombo(p.pro_detalle_producto?.combo_componentes);
+      if (comps.length > 0) {
+        const sumaNominal = comps.reduce((acc, comp) => {
+          const prodHijo = (productos || []).find(
+            (item) =>
+              item.pro_id === comp.producto_id ||
+              (comp.producto_slug && item.pro_slug === comp.producto_slug)
+          );
+          const varHijo =
+            prodHijo?.variantes.find(
+              (vh) =>
+                (comp.variante_id && vh.var_id === comp.variante_id) ||
+                (comp.variante_sku && vh.var_sku === comp.variante_sku)
+            ) || prodHijo?.variantes[0];
+          return acc + calcularPvpVariante(varHijo) * comp.cantidad_base;
+        }, 0);
+        const pvpMinCombo = Math.min(...vars.map((v) => calcularPvpVariante(v)));
+        if (sumaNominal > pvpMinCombo) return true;
+      }
+    }
+    return false;
+  };
+
   const totalInactivos = (productos || []).filter((p) => p && p.pro_activo === false).length;
   const totalActivos = (productos || []).filter((p) => p && p.pro_activo !== false).length;
+  const totalDestacados = (productos || []).filter((p) => p && Boolean(p.pro_destacado)).length;
+  const totalEnOferta = (productos || []).filter((p) => p && productoEstaEnOferta(p)).length;
   const totalMeGustaGlobal = (productos || []).reduce(
     (acc, p) => acc + Math.max(0, Number(p?.pro_total_me_gusta ?? 0) || 0),
     0
@@ -521,6 +589,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
     } else {
       if (filtroEstadoAdmin === "activos" && p.pro_activo === false) return false;
       if (filtroEstadoAdmin === "inactivos" && p.pro_activo !== false) return false;
+      if (soloDestacados && !p.pro_destacado) return false;
+      if (soloEnOferta && !productoEstaEnOferta(p)) return false;
     }
 
     const queryNorm = normalizarTextoFiltro(busqueda);
@@ -1239,6 +1309,62 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   }}
                 >
                   Inactivos ({totalInactivos})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSoloDestacados((prev) => !prev)}
+                  title="Filtrar solo productos marcados como destacados"
+                  aria-label="Filtrar solo destacados"
+                  aria-pressed={soloDestacados}
+                  style={{
+                    padding: "6px 11px",
+                    borderRadius: "8px",
+                    border: soloDestacados ? "1.5px solid #8F6A2E" : "1px solid #E5D7BC",
+                    background: soloDestacados ? "#8F6A2E" : "#FAF6EE",
+                    color: soloDestacados ? "#FFFFFF" : "#745622",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <Sparkles size={13} color={soloDestacados ? "#FFFFFF" : "#8F6A2E"} />
+                  <span>Destacados ({totalDestacados})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSoloEnOferta((prev) => !prev)}
+                  title="Filtrar solo productos con precio de oferta o descuento de set"
+                  aria-label="Filtrar solo en oferta"
+                  aria-pressed={soloEnOferta}
+                  style={{
+                    padding: "6px 11px",
+                    borderRadius: "8px",
+                    border: soloEnOferta ? "1.5px solid #B91C1C" : "1px solid #FECACA",
+                    background: soloEnOferta ? "#B91C1C" : "#FEF2F2",
+                    color: soloEnOferta ? "#FFFFFF" : "#991B1B",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <Tag size={13} color={soloEnOferta ? "#FFFFFF" : "#B91C1C"} />
+                  <span>En oferta ({totalEnOferta})</span>
                 </button>
 
                 <button
@@ -3461,7 +3587,16 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             const colVar =
                               PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] ||
                               PALETA_COLORES_VARIANTES[0]!;
-                            const precioTexto = v.precio_total ? v.precio_total.toFixed(2) : "0.00";
+                            const pvpVarItem = calcularPvpVariante(v);
+                            const precioTexto = pvpVarItem > 0 ? pvpVarItem.toFixed(2) : "0.00";
+                            const compVarItem =
+                              v.var_precio_comparacion && Number(v.var_precio_comparacion) > pvpVarItem
+                                ? Number(v.var_precio_comparacion)
+                                : 0;
+                            const pctVarOferta =
+                              compVarItem > 0
+                                ? Math.round(((compVarItem - pvpVarItem) / compVarItem) * 100)
+                                : 0;
                             const resumenVar = obtenerResumenVariante(v);
                             const skuVarItem = typeof v.var_sku === "string" ? v.var_sku.trim() : "";
 
@@ -3588,17 +3723,50 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                     flexShrink: 0,
                                   }}
                                 >
-                                  <strong
-                                    style={{
-                                      fontSize: "0.82rem",
-                                      fontWeight: 800,
-                                      color: activa ? colVar.text : "#1F1C19",
-                                      fontVariantNumeric: "tabular-nums",
-                                      whiteSpace: "nowrap",
-                                    }}
-                                  >
-                                    ${precioTexto}
-                                  </strong>
+                                  <div style={{ textAlign: "right", lineHeight: 1.15 }}>
+                                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: "4px" }}>
+                                      {compVarItem > 0 && (
+                                        <span
+                                          style={{
+                                            fontSize: "0.68rem",
+                                            color: "#847D74",
+                                            textDecoration: "line-through",
+                                            fontVariantNumeric: "tabular-nums",
+                                          }}
+                                        >
+                                          ${compVarItem.toFixed(2)}
+                                        </span>
+                                      )}
+                                      <strong
+                                        style={{
+                                          fontSize: "0.82rem",
+                                          fontWeight: 800,
+                                          color: compVarItem > 0 ? "#B91C1C" : activa ? colVar.text : "#1F1C19",
+                                          fontVariantNumeric: "tabular-nums",
+                                          whiteSpace: "nowrap",
+                                        }}
+                                      >
+                                        ${precioTexto}
+                                      </strong>
+                                    </div>
+                                    {pctVarOferta > 0 && (
+                                      <span
+                                        style={{
+                                          display: "inline-block",
+                                          marginTop: "2px",
+                                          background: "#FEF2F2",
+                                          border: "1px solid #FECACA",
+                                          color: "#B91C1C",
+                                          fontSize: "0.61rem",
+                                          fontWeight: 800,
+                                          padding: "0px 4px",
+                                          borderRadius: "4px",
+                                        }}
+                                      >
+                                        -{pctVarOferta}% OFF
+                                      </span>
+                                    )}
+                                  </div>
                                   <button
                                     type="button"
                                     onClick={(e) => {
