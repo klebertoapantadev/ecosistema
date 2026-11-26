@@ -157,7 +157,10 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
   >["resumen"] | null>(null);
   const [filtroPreview, setFiltroPreview] = useState<FiltroPreview>("todos");
   const [busquedaPreview, setBusquedaPreview] = useState<string>("");
+  const [paginaPreview, setPaginaPreview] = useState<number>(1);
+  const [porPaginaPreview, setPorPaginaPreview] = useState<number>(50);
   const [guardandoLote, setGuardandoLote] = useState<boolean>(false);
+  const [progresoGuardado, setProgresoGuardado] = useState<string | null>(null);
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
   const [filtroClasifDirectorio, setFiltroClasifDirectorio] = useState<string>("TODOS");
   const [soportaContactPicker, setSoportaContactPicker] = useState<boolean>(false);
@@ -436,6 +439,32 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
     setMensaje(null);
   };
 
+  const contadoresPreview = useMemo(() => {
+    let conflictos = 0;
+    let personales = 0;
+    let clientes = 0;
+    let otros = 0;
+    let nuevos = 0;
+    let seleccionados = 0;
+    for (const item of previewItems) {
+      if (item.tieneConflictoNombre) conflictos++;
+      if (item.clasificacion === "PERSONAL") personales++;
+      else if (item.clasificacion === "CLIENTE") clientes++;
+      else otros++;
+      if (!item.yaExisteEnDirectorio) nuevos++;
+      if (item.seleccionado) seleccionados++;
+    }
+    return {
+      total: previewItems.length,
+      conflictos,
+      personales,
+      clientes,
+      otros,
+      nuevos,
+      seleccionados,
+    };
+  }, [previewItems]);
+
   const previewFiltrado = useMemo(() => {
     const q = busquedaPreview.trim().toLowerCase();
     return previewItems.filter((item) => {
@@ -467,6 +496,23 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
     });
   }, [previewItems, filtroPreview, busquedaPreview]);
 
+  useEffect(() => {
+    setPaginaPreview(1);
+  }, [filtroPreview, busquedaPreview, porPaginaPreview, previewItems.length]);
+
+  const totalPaginasPreview = useMemo(() => {
+    if (porPaginaPreview <= 0) return 1;
+    return Math.max(1, Math.ceil(previewFiltrado.length / porPaginaPreview));
+  }, [previewFiltrado.length, porPaginaPreview]);
+
+  const paginaSeguraPreview = Math.min(paginaPreview, totalPaginasPreview);
+
+  const previewPaginado = useMemo(() => {
+    if (porPaginaPreview <= 0) return previewFiltrado;
+    const inicio = (paginaSeguraPreview - 1) * porPaginaPreview;
+    return previewFiltrado.slice(inicio, inicio + porPaginaPreview);
+  }, [previewFiltrado, paginaSeguraPreview, porPaginaPreview]);
+
   const actualizarItemPreview = (
     clave: string,
     parcial: Partial<ContactoConsolidadoPreview>
@@ -496,6 +542,23 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
   const aplicarAccionMasivaPreview = (
     modo: "PERSONAL_IGNORAR" | "PERSONAL_ADMIN" | "CLIENTE_LINEA" | "CLIENTE_AUTO" | "SELECCIONAR_TODOS" | "DESELECCIONAR_TODOS"
   ) => {
+    const esCambioClasificacion =
+      modo !== "SELECCIONAR_TODOS" && modo !== "DESELECCIONAR_TODOS";
+    if (esCambioClasificacion && previewFiltrado.length > 50 && typeof window !== "undefined") {
+      const etiquetaAccion =
+        modo === "PERSONAL_IGNORAR"
+          ? "Personal (Ignorar Total)"
+          : modo === "PERSONAL_ADMIN"
+            ? "Personal (Solo Admin)"
+            : modo === "CLIENTE_LINEA"
+              ? "Cliente (Según Línea)"
+              : "Cliente + IA Auto";
+      const ok = window.confirm(
+        `¿Cambiar los ${previewFiltrado.length} contactos del filtro actual a «${etiquetaAccion}»?\n\nTip: si quieres cambiar solo un grupo, primero toca una pestaña de filtro (Personales, Clientes o Conflictos) o busca por nombre.`
+      );
+      if (!ok) return;
+    }
+
     const clavesVisibles = new Set(previewFiltrado.map((p) => p.claveConsolidacion));
     setPreviewItems((prev) =>
       prev.map((it) => {
@@ -572,39 +635,66 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
     }
 
     setGuardandoLote(true);
+    setProgresoGuardado(null);
     setMensaje(null);
     const origenPrincipal = fuentesCargadasResumen[0]?.origen ?? "VCF";
 
-    const res = await importarContactosDirectorioLoteAction({
-      negocio: negNorm,
-      lineaWhatsappId: lineaSeleccionadaId || null,
-      origen: origenPrincipal,
-      ocultarChatsPersonalesExistentes: ocultarExistentes,
-      contactos: seleccionados.map((it) => ({
-        telefonoE164: it.telefonoE164,
-        nombreConsolidado: it.nombreConsolidado,
-        correo: it.correo,
-        clasificacion: it.clasificacion,
-        politicaIa: it.politicaIa,
-        visibilidad: it.visibilidad,
-        detalle: {
-          alias: it.nombresCandidatos,
-          motivoClasificacion: it.motivoClasificacion,
-          notas: it.notas || null,
-        },
-        fuentes: it.fuentes,
-      })),
-    });
-    setGuardandoLote(false);
+    const TAMANO_LOTE = 150;
+    const totalLotes = Math.ceil(seleccionados.length / TAMANO_LOTE);
+    let totalCreados = 0;
+    let totalActualizados = 0;
+    let totalHilosProtegidos = 0;
 
-    if (!res.ok) {
-      setMensaje({ tipo: "error", texto: res.error });
-      return;
+    for (let i = 0; i < totalLotes; i++) {
+      const inicio = i * TAMANO_LOTE;
+      const chunk = seleccionados.slice(inicio, inicio + TAMANO_LOTE);
+      setProgresoGuardado(
+        `Lote ${i + 1}/${totalLotes} (${Math.min(inicio + chunk.length, seleccionados.length)}/${seleccionados.length})`
+      );
+
+      const res = await importarContactosDirectorioLoteAction({
+        negocio: negNorm,
+        lineaWhatsappId: lineaSeleccionadaId || null,
+        origen: origenPrincipal,
+        ocultarChatsPersonalesExistentes: ocultarExistentes,
+        contactos: chunk.map((it) => ({
+          telefonoE164: it.telefonoE164,
+          nombreConsolidado: it.nombreConsolidado,
+          correo: it.correo,
+          clasificacion: it.clasificacion,
+          politicaIa: it.politicaIa,
+          visibilidad: it.visibilidad,
+          detalle: {
+            alias: it.nombresCandidatos,
+            motivoClasificacion: it.motivoClasificacion,
+            notas: it.notas || null,
+          },
+          fuentes: it.fuentes,
+        })),
+      });
+
+      if (!res.ok) {
+        setGuardandoLote(false);
+        setProgresoGuardado(null);
+        setMensaje({
+          tipo: "error",
+          texto: `Error en lote ${i + 1}/${totalLotes} (ya guardados: ${totalCreados + totalActualizados}): ${res.error}`,
+        });
+        await cargarDirectorio();
+        return;
+      }
+
+      totalCreados += res.creados;
+      totalActualizados += res.actualizados;
+      totalHilosProtegidos += res.hilosProtegidos;
     }
+
+    setGuardandoLote(false);
+    setProgresoGuardado(null);
 
     setMensaje({
       tipo: "ok",
-      texto: `Lista consolidada guardada: ${res.creados} nuevos, ${res.actualizados} actualizados, ${res.hilosProtegidos} chat(s) existentes protegidos.`,
+      texto: `Lista consolidada guardada: ${totalCreados} nuevos, ${totalActualizados} actualizados, ${totalHilosProtegidos} chat(s) existentes protegidos.`,
     });
     handleLimpiarBorrador();
     await cargarDirectorio();
@@ -1131,8 +1221,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 </div>
                 <p style={{ margin: 0, fontSize: "0.75rem", color: "#6E6861", lineHeight: 1.45 }}>
                   {soportaContactPicker
-                    ? "Tu celular soporta lectura directa de agenda (Contact Picker). Elige contactos en 1 toque."
-                    : "Disponible directamente en Android Chrome/PWA. En iPhone o PC exporta .vcf desde Contactos/iCloud."}
+                    ? "Ideal para 1 a 20 contactos puntuales (Android no incluye «Seleccionar todos» aquí). Para toda tu agenda usa .vcf desde Contactos → Organizar → Exportar a un archivo."
+                    : "Disponible en Android Chrome para selección puntual. Para toda tu agenda exporta .vcf desde Contactos/iCloud o Google Contacts."}
                 </p>
                 <button
                   type="button"
@@ -1453,8 +1543,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     <Save size={15} />
                     <span>
                       {guardandoLote
-                        ? "Guardando…"
-                        : `Guardar (${previewItems.filter((p) => p.seleccionado).length})`}
+                        ? progresoGuardado || "Guardando…"
+                        : `Guardar (${contadoresPreview.seleccionados})`}
                     </span>
                   </button>
                 </div>
@@ -1476,12 +1566,12 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 />
                 {(
                   [
-                    { id: "todos", label: `Todos (${previewItems.length})` },
-                    { id: "conflictos", label: `⚠️ Conflictos (${resumenMerge.conflictosNombre})` },
-                    { id: "personales", label: `🔒 Personales (${resumenMerge.totalPersonales})` },
-                    { id: "clientes", label: `💼 Clientes (${resumenMerge.totalClientes})` },
-                    { id: "otros", label: `🚚 Otros (${resumenMerge.totalProveedoresOInternos})` },
-                    { id: "nuevos", label: `✨ Nuevos (${resumenMerge.nuevos})` },
+                    { id: "todos", label: `Todos (${contadoresPreview.total})` },
+                    { id: "conflictos", label: `⚠️ Conflictos (${contadoresPreview.conflictos})` },
+                    { id: "personales", label: `🔒 Personales (${contadoresPreview.personales})` },
+                    { id: "clientes", label: `💼 Clientes (${contadoresPreview.clientes})` },
+                    { id: "otros", label: `🚚 Otros (${contadoresPreview.otros})` },
+                    { id: "nuevos", label: `✨ Nuevos (${contadoresPreview.nuevos})` },
                   ] as Array<{ id: FiltroPreview; label: string }>
                 ).map((f) => (
                   <button
@@ -1517,7 +1607,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 }}
               >
                 <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#57524C" }}>
-                  Aplicar a los {previewFiltrado.length} visibles:
+                  Aplicar a los {previewFiltrado.length} del filtro actual:
                 </span>
                 <button
                   type="button"
@@ -1549,6 +1639,14 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 </button>
                 <button
                   type="button"
+                  onClick={() => recalcularConsolidacion(brutosAcumulados)}
+                  title="Restablecer auto-clasificación automática según reglas y CRM"
+                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid #F59E0B", background: "#FFFBEB", color: "#92400E", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}
+                >
+                  ↺ Re-clasificar auto
+                </button>
+                <button
+                  type="button"
                   onClick={() => aplicarAccionMasivaPreview("SELECCIONAR_TODOS")}
                   style={{ padding: "4px 8px", borderRadius: "7px", border: "1px solid #D5CFC4", background: "#FFFFFF", color: "#3A3530", fontSize: "0.72rem", cursor: "pointer" }}
                 >
@@ -1572,10 +1670,104 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 Bloquear IA y ocultar automáticamente chats WhatsApp abiertos que coincidan con contactos marcados como Personales.
               </label>
 
-              {/* Lista editable de filas consolidadas (máximo 200 visibles por página ligera) */}
+              {/* Barra superior de paginación */}
               <div
                 style={{
-                  maxHeight: "480px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "8px",
+                  flexWrap: "wrap",
+                  fontSize: "0.76rem",
+                  color: "#57524C",
+                }}
+              >
+                <span>
+                  Mostrando{" "}
+                  <strong>
+                    {previewFiltrado.length === 0
+                      ? 0
+                      : porPaginaPreview <= 0
+                        ? `1–${previewFiltrado.length}`
+                        : `${(paginaSeguraPreview - 1) * porPaginaPreview + 1}–${Math.min(
+                            paginaSeguraPreview * porPaginaPreview,
+                            previewFiltrado.length
+                          )}`}
+                  </strong>{" "}
+                  de <strong>{previewFiltrado.length}</strong> contactos
+                </span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  <select
+                    value={porPaginaPreview}
+                    onChange={(e) => setPorPaginaPreview(Number(e.target.value))}
+                    aria-label="Contactos por página"
+                    style={{
+                      padding: "4px 7px",
+                      borderRadius: "7px",
+                      border: "1px solid #D5CFC4",
+                      background: "#FFFFFF",
+                      fontSize: "0.74rem",
+                    }}
+                  >
+                    <option value={50}>50 / pág</option>
+                    <option value={100}>100 / pág</option>
+                    <option value={250}>250 / pág</option>
+                    <option value={0}>Ver todos ({previewFiltrado.length})</option>
+                  </select>
+                  {totalPaginasPreview > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={paginaSeguraPreview <= 1}
+                        onClick={() => setPaginaPreview((p) => Math.max(1, p - 1))}
+                        style={{
+                          padding: "4px 9px",
+                          borderRadius: "7px",
+                          border: "1px solid #D5CFC4",
+                          background: "#FFFFFF",
+                          color: "#2E2A26",
+                          fontSize: "0.74rem",
+                          fontWeight: 600,
+                          cursor: paginaSeguraPreview <= 1 ? "not-allowed" : "pointer",
+                          opacity: paginaSeguraPreview <= 1 ? 0.5 : 1,
+                        }}
+                      >
+                        ← Anterior
+                      </button>
+                      <span style={{ fontWeight: 700, color: "#1F1C19" }}>
+                        {paginaSeguraPreview} / {totalPaginasPreview}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={paginaSeguraPreview >= totalPaginasPreview}
+                        onClick={() =>
+                          setPaginaPreview((p) => Math.min(totalPaginasPreview, p + 1))
+                        }
+                        style={{
+                          padding: "4px 9px",
+                          borderRadius: "7px",
+                          border: "1px solid #D5CFC4",
+                          background: "#FFFFFF",
+                          color: "#2E2A26",
+                          fontSize: "0.74rem",
+                          fontWeight: 600,
+                          cursor:
+                            paginaSeguraPreview >= totalPaginasPreview ? "not-allowed" : "pointer",
+                          opacity: paginaSeguraPreview >= totalPaginasPreview ? 0.5 : 1,
+                        }}
+                      >
+                        Siguiente →
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Lista editable responsive (sin recortes horizontales en móvil) */}
+              <div
+                style={{
+                  maxHeight: "560px",
                   overflowY: "auto",
                   border: "1px solid #E6E2DA",
                   borderRadius: "10px",
@@ -1583,152 +1775,268 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   flexDirection: "column",
                 }}
               >
-                {previewFiltrado.slice(0, 200).map((it) => {
+                {previewPaginado.map((it) => {
                   const est = ESTILO_CLASIFICACION[it.clasificacion];
                   return (
                     <div
                       key={it.claveConsolidacion}
                       style={{
-                        display: "grid",
-                        gridTemplateColumns: "28px minmax(180px, 1.4fr) 135px 145px 150px 165px",
+                        display: "flex",
+                        flexDirection: "column",
                         gap: "8px",
-                        alignItems: "center",
-                        padding: "9px 12px",
+                        padding: "10px 12px",
                         borderBottom: "1px solid #F1EFEA",
                         background: it.seleccionado ? "#FFFFFF" : "#F8F7F4",
                         opacity: it.seleccionado ? 1 : 0.6,
                         fontSize: "0.78rem",
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={it.seleccionado}
-                        onChange={(e) =>
-                          actualizarItemPreview(it.claveConsolidacion, {
-                            seleccionado: e.target.checked,
-                          })
-                        }
-                      />
+                      {/* Fila 1: Checkbox + Nombre/Conflicto + Teléfono + Badge */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "9px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={it.seleccionado}
+                          onChange={(e) =>
+                            actualizarItemPreview(it.claveConsolidacion, {
+                              seleccionado: e.target.checked,
+                            })
+                          }
+                          style={{ marginTop: "3px", flexShrink: 0 }}
+                        />
 
-                      <div style={{ display: "flex", flexDirection: "column", gap: "3px", minWidth: 0 }}>
-                        {it.tieneConflictoNombre ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                            <AlertTriangle size={13} color="#D97706" style={{ flexShrink: 0 }} />
-                            <select
-                              value={it.nombreConsolidado}
-                              onChange={(e) =>
-                                actualizarItemPreview(it.claveConsolidacion, {
-                                  nombreConsolidado: e.target.value,
-                                })
-                              }
+                        <div style={{ flex: "1 1 180px", display: "flex", flexDirection: "column", gap: "3px", minWidth: 0 }}>
+                          {it.tieneConflictoNombre ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                              <AlertTriangle size={13} color="#D97706" style={{ flexShrink: 0 }} />
+                              <select
+                                value={it.nombreConsolidado}
+                                onChange={(e) =>
+                                  actualizarItemPreview(it.claveConsolidacion, {
+                                    nombreConsolidado: e.target.value,
+                                  })
+                                }
+                                style={{
+                                  width: "100%",
+                                  padding: "3px 6px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #F59E0B",
+                                  background: "#FFFBEB",
+                                  fontSize: "0.77rem",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {it.nombresCandidatos.map((nom) => (
+                                  <option key={nom} value={nom}>
+                                    {nom}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <strong style={{ color: "#1F1C19", wordBreak: "break-word" }}>
+                              {it.nombreConsolidado}
+                            </strong>
+                          )}
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                            <span style={{ fontFamily: "monospace", fontSize: "0.76rem", color: "#2E2A26", fontWeight: 600 }}>
+                              {it.telefonoE164}
+                            </span>
+                            <span
                               style={{
-                                width: "100%",
-                                padding: "3px 6px",
-                                borderRadius: "6px",
-                                border: "1px solid #F59E0B",
-                                background: "#FFFBEB",
-                                fontSize: "0.77rem",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                padding: "1px 7px",
+                                borderRadius: "999px",
+                                border: `1px solid ${est.borde}`,
+                                background: est.fondo,
+                                color: est.texto,
+                                fontSize: "0.69rem",
                                 fontWeight: 700,
                               }}
                             >
-                              {it.nombresCandidatos.map((nom) => (
-                                <option key={nom} value={nom}>
-                                  {nom}
-                                </option>
-                              ))}
-                            </select>
+                              {est.etiqueta}
+                            </span>
+                            {it.totalComprasCrm > 0 && (
+                              <span
+                                style={{
+                                  padding: "1px 7px",
+                                  borderRadius: "999px",
+                                  background: "#DCFCE7",
+                                  color: "#166534",
+                                  fontSize: "0.69rem",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {it.totalComprasCrm} compra(s) CRM
+                              </span>
+                            )}
                           </div>
-                        ) : (
-                          <strong style={{ color: "#1F1C19", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {it.nombreConsolidado}
-                          </strong>
-                        )}
-                        <span style={{ fontSize: "0.7rem", color: "#7B746B" }}>
-                          {it.motivoClasificacion}
-                          {it.duplicadosFusionados > 0
-                            ? ` · ${it.duplicadosFusionados + 1} registros fusionados`
-                            : ""}
-                        </span>
+                          <span style={{ fontSize: "0.7rem", color: "#7B746B" }}>
+                            {it.motivoClasificacion}
+                            {it.duplicadosFusionados > 0
+                              ? ` · ${it.duplicadosFusionados + 1} registros fusionados`
+                              : ""}
+                          </span>
+                        </div>
                       </div>
 
-                      <div style={{ fontFamily: "monospace", fontSize: "0.77rem", color: "#2E2A26" }}>
-                        {it.telefonoE164}
+                      {/* Fila 2: Controles 100% visibles y tocables en móvil y escritorio */}
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "6px",
+                          flexWrap: "wrap",
+                          paddingLeft: "24px",
+                        }}
+                      >
+                        <select
+                          aria-label={`Clasificación de ${it.nombreConsolidado}`}
+                          value={it.clasificacion}
+                          onChange={(e) =>
+                            actualizarItemPreview(it.claveConsolidacion, {
+                              clasificacion: e.target.value as ClasificacionContacto,
+                            })
+                          }
+                          style={{
+                            flex: "1 1 120px",
+                            padding: "5px 7px",
+                            borderRadius: "7px",
+                            border: `1px solid ${est.borde}`,
+                            background: est.fondo,
+                            color: est.texto,
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                          }}
+                        >
+                          <option value="PERSONAL">🔒 Personal</option>
+                          <option value="CLIENTE">💼 Cliente</option>
+                          <option value="PROVEEDOR">🚚 Proveedor</option>
+                          <option value="EQUIPO_INTERNO">👥 Equipo</option>
+                          <option value="BLOQUEADO_SPAM">🚫 Bloqueado</option>
+                        </select>
+
+                        <select
+                          aria-label={`Política IA de ${it.nombreConsolidado}`}
+                          value={it.politicaIa}
+                          disabled={it.clasificacion !== "CLIENTE"}
+                          onChange={(e) =>
+                            actualizarItemPreview(it.claveConsolidacion, {
+                              politicaIa: e.target.value as PoliticaIaContacto,
+                            })
+                          }
+                          style={{
+                            flex: "1 1 125px",
+                            padding: "5px 7px",
+                            borderRadius: "7px",
+                            border: "1px solid #D5CFC4",
+                            background: it.clasificacion !== "CLIENTE" ? "#F3F4F6" : "#FFFFFF",
+                            fontSize: "0.74rem",
+                          }}
+                        >
+                          <option value="SIEMPRE_MANUAL">✋ Siempre Manual</option>
+                          <option value="SEGUN_LINEA">📱 Según teléfono</option>
+                          <option value="AUTO_IA">⚡ IA Automática</option>
+                        </select>
+
+                        <select
+                          aria-label={`Privacidad de ${it.nombreConsolidado}`}
+                          value={it.visibilidad}
+                          onChange={(e) =>
+                            actualizarItemPreview(it.claveConsolidacion, {
+                              visibilidad: e.target.value as VisibilidadContacto,
+                            })
+                          }
+                          style={{
+                            flex: "1 1 130px",
+                            padding: "5px 7px",
+                            borderRadius: "7px",
+                            border: "1px solid #D5CFC4",
+                            background: "#FFFFFF",
+                            fontSize: "0.73rem",
+                          }}
+                        >
+                          <option value="IGNORAR_TOTAL">📵 Ignorar Total</option>
+                          <option value="SOLO_ADMIN">🛡️ Solo Admin</option>
+                          <option value="SOLO_TITULAR">👤 Solo Titular</option>
+                          <option value="EQUIPO_VENTAS">💬 Ventas y Admin</option>
+                        </select>
                       </div>
-
-                      <select
-                        value={it.clasificacion}
-                        onChange={(e) =>
-                          actualizarItemPreview(it.claveConsolidacion, {
-                            clasificacion: e.target.value as ClasificacionContacto,
-                          })
-                        }
-                        style={{
-                          padding: "4px 6px",
-                          borderRadius: "7px",
-                          border: `1px solid ${est.borde}`,
-                          background: est.fondo,
-                          color: est.texto,
-                          fontSize: "0.74rem",
-                          fontWeight: 700,
-                        }}
-                      >
-                        <option value="PERSONAL">🔒 Personal</option>
-                        <option value="CLIENTE">💼 Cliente</option>
-                        <option value="PROVEEDOR">🚚 Proveedor</option>
-                        <option value="EQUIPO_INTERNO">👥 Equipo</option>
-                        <option value="BLOQUEADO_SPAM">🚫 Bloqueado</option>
-                      </select>
-
-                      <select
-                        value={it.politicaIa}
-                        disabled={it.clasificacion !== "CLIENTE"}
-                        onChange={(e) =>
-                          actualizarItemPreview(it.claveConsolidacion, {
-                            politicaIa: e.target.value as PoliticaIaContacto,
-                          })
-                        }
-                        style={{
-                          padding: "4px 6px",
-                          borderRadius: "7px",
-                          border: "1px solid #D5CFC4",
-                          background: it.clasificacion !== "CLIENTE" ? "#F3F4F6" : "#FFFFFF",
-                          fontSize: "0.74rem",
-                        }}
-                      >
-                        <option value="SIEMPRE_MANUAL">✋ Siempre Manual</option>
-                        <option value="SEGUN_LINEA">📱 Según teléfono</option>
-                        <option value="AUTO_IA">⚡ IA Automática</option>
-                      </select>
-
-                      <select
-                        value={it.visibilidad}
-                        onChange={(e) =>
-                          actualizarItemPreview(it.claveConsolidacion, {
-                            visibilidad: e.target.value as VisibilidadContacto,
-                          })
-                        }
-                        style={{
-                          padding: "4px 6px",
-                          borderRadius: "7px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
-                          fontSize: "0.73rem",
-                        }}
-                      >
-                        <option value="IGNORAR_TOTAL">📵 Ignorar Total</option>
-                        <option value="SOLO_ADMIN">🛡️ Solo Admin</option>
-                        <option value="SOLO_TITULAR">👤 Solo Titular</option>
-                        <option value="EQUIPO_VENTAS">💬 Ventas y Admin</option>
-                      </select>
                     </div>
                   );
                 })}
-                {previewFiltrado.length > 200 && (
-                  <div style={{ padding: "10px 12px", fontSize: "0.76rem", color: "#6E6861", background: "#FAF9F6" }}>
-                    Mostrando primeros 200 de {previewFiltrado.length} contactos filtrados. Todos los contactos marcados se guardarán al pulsar <strong>Guardar</strong>.
+                {previewPaginado.length === 0 && (
+                  <div style={{ padding: "18px 12px", textAlign: "center", fontSize: "0.8rem", color: "#6E6861" }}>
+                    No hay contactos que coincidan con este filtro o búsqueda.
                   </div>
                 )}
               </div>
+
+              {/* Barra inferior de paginación */}
+              {totalPaginasPreview > 1 && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "8px",
+                    flexWrap: "wrap",
+                    fontSize: "0.76rem",
+                    color: "#57524C",
+                  }}
+                >
+                  <span>
+                    Página <strong>{paginaSeguraPreview}</strong> de <strong>{totalPaginasPreview}</strong> ({previewFiltrado.length} contactos en este filtro)
+                  </span>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      disabled={paginaSeguraPreview <= 1}
+                      onClick={() => setPaginaPreview((p) => Math.max(1, p - 1))}
+                      style={{
+                        padding: "5px 10px",
+                        borderRadius: "7px",
+                        border: "1px solid #D5CFC4",
+                        background: "#FFFFFF",
+                        color: "#2E2A26",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        cursor: paginaSeguraPreview <= 1 ? "not-allowed" : "pointer",
+                        opacity: paginaSeguraPreview <= 1 ? 0.5 : 1,
+                      }}
+                    >
+                      ← Anterior
+                    </button>
+                    <button
+                      type="button"
+                      disabled={paginaSeguraPreview >= totalPaginasPreview}
+                      onClick={() =>
+                        setPaginaPreview((p) => Math.min(totalPaginasPreview, p + 1))
+                      }
+                      style={{
+                        padding: "5px 10px",
+                        borderRadius: "7px",
+                        border: "1px solid #D5CFC4",
+                        background: "#FFFFFF",
+                        color: "#2E2A26",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        cursor:
+                          paginaSeguraPreview >= totalPaginasPreview ? "not-allowed" : "pointer",
+                        opacity: paginaSeguraPreview >= totalPaginasPreview ? 0.5 : 1,
+                      }}
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
