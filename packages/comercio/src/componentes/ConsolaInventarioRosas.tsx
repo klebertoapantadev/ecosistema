@@ -170,6 +170,7 @@ export function ConsolaInventarioRosas({
   // Alerta manual al equipo si han pasado > 15 horas sin inventario
   const [enviandoAlertaEquipo, setEnviandoAlertaEquipo] = useState<boolean>(false);
   const [mensajeAlertaEquipo, setMensajeAlertaEquipo] = useState<string | null>(null);
+  const [errorAlertaEquipo, setErrorAlertaEquipo] = useState<string | null>(null);
 
   const cargarConfigOferta = useCallback(async () => {
     setCargandoOferta(true);
@@ -354,6 +355,7 @@ export function ConsolaInventarioRosas({
   const handleAlertarEquipoAhora = async () => {
     setEnviandoAlertaEquipo(true);
     setMensajeAlertaEquipo(null);
+    setErrorAlertaEquipo(null);
     const res = await verificarYAlertarInventarioRosasAction(negNorm, {
       horasLimite: HORAS_LIMITE_ALERTA_INVENTARIO_ROSAS,
       cooldownHoras: 0.5,
@@ -361,7 +363,7 @@ export function ConsolaInventarioRosas({
     });
     setEnviandoAlertaEquipo(false);
     if (!res.ok) {
-      setMensajeAlertaEquipo(res.error || "No se pudo enviar la alerta al equipo.");
+      setErrorAlertaEquipo(res.error || "No se pudo enviar la alerta al equipo.");
       return;
     }
     if (typeof window !== "undefined") {
@@ -910,7 +912,7 @@ export function ConsolaInventarioRosas({
             <div
               role="alert"
               style={{
-                padding: "12px 15px",
+                padding: "12px 14px",
                 borderRadius: "12px",
                 background: "#FFFBEB",
                 border: "1.5px solid #F59E0B",
@@ -920,12 +922,34 @@ export function ConsolaInventarioRosas({
                 justifyContent: "space-between",
                 gap: "12px",
                 flexWrap: "wrap",
+                boxSizing: "border-box",
+                maxWidth: "100%",
+                overflow: "hidden",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", flex: 1, minWidth: "220px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "10px",
+                  flex: "1 1 200px",
+                  minWidth: 0,
+                  maxWidth: "100%",
+                }}
+              >
                 <AlertTriangle size={18} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <strong style={{ fontSize: "0.85rem", color: "#92400E" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "3px",
+                    flex: 1,
+                    minWidth: 0,
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  <strong style={{ fontSize: "0.85rem", color: "#92400E", lineHeight: 1.35 }}>
                     {vigenciaInventario.horasDesdeUltimoCorte === null
                       ? "Inventario de rosas pendiente (sin registro previo)"
                       : `Han pasado ${vigenciaInventario.horasDesdeUltimoCorte}h desde el último inventario (límite ${vigenciaInventario.horasLimite}h)`}
@@ -934,8 +958,13 @@ export function ConsolaInventarioRosas({
                     Registra un nuevo conteo de bonches hoy para que la tienda muestre los colores disponibles en tiempo real.
                   </span>
                   {mensajeAlertaEquipo && (
-                    <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#2B4A36", marginTop: "2px" }}>
+                    <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#2B4A36", marginTop: "2px", lineHeight: 1.35 }}>
                       ✓ {mensajeAlertaEquipo}
+                    </span>
+                  )}
+                  {errorAlertaEquipo && (
+                    <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#991B1B", marginTop: "2px", lineHeight: 1.35 }}>
+                      ⚠ {errorAlertaEquipo}
                     </span>
                   )}
                 </div>
@@ -960,6 +989,7 @@ export function ConsolaInventarioRosas({
                   fontWeight: 700,
                   cursor: enviandoAlertaEquipo ? "wait" : "pointer",
                   whiteSpace: "nowrap",
+                  flexShrink: 0,
                 }}
               >
                 {enviandoAlertaEquipo ? <Loader2 size={14} /> : <Bell size={14} />}

@@ -99,10 +99,22 @@ export function AlertaInventarioRosasBanner({
         justifyContent: "space-between",
         gap: "12px",
         flexWrap: "wrap",
+        boxSizing: "border-box",
+        maxWidth: "100%",
+        overflow: "hidden",
         boxShadow: "0 2px 10px rgba(217, 119, 6, 0.1)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", flex: 1, minWidth: "220px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: "10px",
+          flex: "1 1 200px",
+          minWidth: 0,
+          maxWidth: "100%",
+        }}
+      >
         <div
           style={{
             width: "32px",
@@ -120,7 +132,17 @@ export function AlertaInventarioRosasBanner({
         >
           <AlertTriangle size={16} />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "2px",
+            flex: 1,
+            minWidth: 0,
+            overflowWrap: "anywhere",
+            wordBreak: "break-word",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "7px", flexWrap: "wrap" }}>
             <strong style={{ fontSize: "0.84rem", color: "#92400E" }}>
               Inventario de rosas pendiente
