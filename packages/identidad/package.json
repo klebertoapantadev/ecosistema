@@ -21,7 +21,7 @@
     "@eco/supabase": "workspace:*",
     "@supabase/ssr": "0.12.3",
     "libphonenumber-js": "1.13.9",
-    "lucide-react": "1.27.0",
+    "lucide-react": "1.76.0",
     "zod": "4.6.6"
   },
   "devDependencies": {
