@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 
-const CLAVE_SESION_SPLASH = "tinkay_pwa_splash_v3";
-const DURACION_TOTAL_MS = 2600;
-const INICIO_SALIDA_MS = 2150;
+const CLAVE_SESION_SPLASH = "tinkay_pwa_splash_v4";
+const DURACION_TOTAL_MS = 2200;
+const INICIO_SALIDA_MS = 1750;
 
 /**
  * Pantalla animada de bienvenida para la app instalada (PWA standalone) de Tinkay.
@@ -108,8 +108,7 @@ export function SplashAnimadoTinkay() {
         alignItems: "center",
         justifyContent: "center",
         padding: "24px",
-        background:
-          "radial-gradient(circle at 50% 42%, #FFFDF9 0%, #FAF7F2 58%, #F2EAE0 100%)",
+        background: "#FAF7F2",
         cursor: "pointer",
         userSelect: "none",
         WebkitTapHighlightColor: "transparent",
@@ -125,92 +124,92 @@ export function SplashAnimadoTinkay() {
           pointer-events: none;
         }
 
-        @keyframes tinkayCajaEntrada {
-          0% { opacity: 0; transform: translateY(22px) scale(0.84); }
-          45% { opacity: 1; transform: translateY(-4px) scale(1.03); }
-          70% { transform: translateY(2px) scale(0.98, 1.02); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
+        /* Frame 0 arranca idéntico al ícono de la app (caja abierta con rosas, opacity: 1)
+           para una transición continua sin saltos desde el splash nativo del sistema. */
+        @keyframes tinkayCajaRespirar {
+          0% { transform: translateY(0px) scale(1); }
+          42% { transform: translateY(-4px) scale(1.035); }
+          100% { transform: translateY(0px) scale(1); }
         }
 
-        @keyframes tinkayTapaAbrir {
-          0%, 26% { transform: translate(0px, 0px) rotate(0deg); }
-          36% { transform: translate(0px, 2px) rotate(0deg); }
-          68% { transform: translate(-24px, -30px) rotate(-26deg); }
+        @keyframes tinkayTapaSaludo {
+          0% { transform: translate(-22px, -26px) rotate(-23deg); }
+          42% { transform: translate(-25px, -31px) rotate(-28deg); }
           100% { transform: translate(-22px, -26px) rotate(-23deg); }
         }
 
-        @keyframes tinkayBouquetSalir {
-          0%, 34% { opacity: 0; transform: translateY(58px) scale(0.42); }
-          52% { opacity: 1; }
-          78% { opacity: 1; transform: translateY(-5px) scale(1.05); }
-          100% { opacity: 1; transform: translateY(0px) scale(1); }
+        @keyframes tinkayBouquetBrillo {
+          0% { transform: translateY(0px) scale(1); }
+          45% { transform: translateY(-3px) scale(1.045); }
+          100% { transform: translateY(0px) scale(1); }
         }
 
         @keyframes tinkayDestello {
-          0%, 40% { opacity: 0; transform: scale(0.3); }
-          66% { opacity: 1; transform: scale(1.15); }
-          100% { opacity: 0.2; transform: scale(0.85) translateY(-10px); }
+          0% { opacity: 0.9; transform: scale(1); }
+          48% { opacity: 1; transform: scale(1.16); }
+          100% { opacity: 0.78; transform: scale(0.96) translateY(-4px); }
         }
 
         @keyframes tinkayPetaloFlotarA {
-          0%, 46% { opacity: 0; transform: translate(0px, 18px) rotate(0deg) scale(0.5); }
-          65% { opacity: 0.95; }
-          100% { opacity: 0; transform: translate(-26px, -34px) rotate(-42deg) scale(1); }
+          0% { opacity: 0; transform: translate(0px, 14px) rotate(0deg) scale(0.55); }
+          30% { opacity: 0.95; }
+          100% { opacity: 0; transform: translate(-24px, -32px) rotate(-40deg) scale(1); }
         }
 
         @keyframes tinkayPetaloFlotarB {
-          0%, 50% { opacity: 0; transform: translate(0px, 16px) rotate(0deg) scale(0.5); }
-          68% { opacity: 0.95; }
-          100% { opacity: 0; transform: translate(28px, -38px) rotate(48deg) scale(1); }
+          0% { opacity: 0; transform: translate(0px, 12px) rotate(0deg) scale(0.55); }
+          34% { opacity: 0.95; }
+          100% { opacity: 0; transform: translate(26px, -36px) rotate(46deg) scale(1); }
         }
 
         @keyframes tinkayLogoRevelar {
-          0%, 48% { opacity: 0; transform: translateY(14px) scale(0.94); }
-          82% { opacity: 1; transform: translateY(0px) scale(1); }
+          0% { opacity: 0; transform: translateY(10px) scale(0.96); }
+          45% { opacity: 1; transform: translateY(0px) scale(1); }
           100% { opacity: 1; transform: translateY(0px) scale(1); }
         }
 
         @keyframes tinkaySombraPulso {
-          0%, 26% { transform: scaleX(0.85); opacity: 0.14; }
-          65% { transform: scaleX(1.06); opacity: 0.22; }
-          100% { transform: scaleX(1); opacity: 0.18; }
+          0% { transform: scaleX(1); opacity: 0.16; }
+          45% { transform: scaleX(1.06); opacity: 0.21; }
+          100% { transform: scaleX(1); opacity: 0.16; }
         }
 
         .tinkay-splash-escena {
-          animation: tinkayCajaEntrada 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: tinkayCajaRespirar 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         .tinkay-splash-tapa {
           transform-box: fill-box;
           transform-origin: 18% 92%;
-          animation: tinkayTapaAbrir 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          transform: translate(-22px, -26px) rotate(-23deg);
+          animation: tinkayTapaSaludo 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         .tinkay-splash-bouquet {
           transform-box: fill-box;
           transform-origin: 50% 95%;
-          animation: tinkayBouquetSalir 1.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: tinkayBouquetBrillo 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         .tinkay-splash-destello {
           transform-box: fill-box;
           transform-origin: center;
-          animation: tinkayDestello 1.85s ease-out forwards;
+          animation: tinkayDestello 1.5s ease-out forwards;
         }
         .tinkay-splash-petalo-a {
           transform-box: fill-box;
           transform-origin: center;
-          animation: tinkayPetaloFlotarA 1.95s ease-out forwards;
+          animation: tinkayPetaloFlotarA 1.65s ease-out forwards;
         }
         .tinkay-splash-petalo-b {
           transform-box: fill-box;
           transform-origin: center;
-          animation: tinkayPetaloFlotarB 2.05s ease-out forwards;
+          animation: tinkayPetaloFlotarB 1.75s ease-out forwards;
         }
         .tinkay-splash-logo-wrap {
-          animation: tinkayLogoRevelar 1.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: tinkayLogoRevelar 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         .tinkay-splash-sombra {
           transform-box: fill-box;
           transform-origin: center;
-          animation: tinkaySombraPulso 1.5s ease-out forwards;
+          animation: tinkaySombraPulso 1.35s ease-out forwards;
         }
 
         @media (prefers-reduced-motion: reduce) {

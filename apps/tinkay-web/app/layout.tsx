@@ -48,8 +48,8 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "Tinkay",
     },
     icons: {
-      icon: "/icons/icon-192.png?v=3",
-      apple: "/icons/apple-touch-icon.png?v=3",
+      icon: "/icons/tinkay-icon-192.png",
+      apple: "/icons/tinkay-apple-touch-icon.png",
     },
     ...(mkm?.dominioVerificacion
       ? {
@@ -61,7 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const SCRIPT_SPLASH_SIN_PARPADEO = `(function(){try{var s=(window.matchMedia&&(window.matchMedia('(display-mode: standalone)').matches||window.matchMedia('(display-mode: fullscreen)').matches))||window.navigator.standalone===true;var p=/[?&]splash=1(?:&|$)/.test(window.location.search);if((s&&window.sessionStorage.getItem('tinkay_pwa_splash_v3')!=='1')||p){window.__tinkaySplashInicioMs=Date.now();document.documentElement.classList.add('tinkay-splash-activo');window.setTimeout(function(){document.documentElement.classList.remove('tinkay-splash-activo');},4500);}}catch(e){}})();`;
+const SCRIPT_SPLASH_SIN_PARPADEO = `(function(){try{var s=(window.matchMedia&&(window.matchMedia('(display-mode: standalone)').matches||window.matchMedia('(display-mode: fullscreen)').matches))||window.navigator.standalone===true;var p=/[?&]splash=1(?:&|$)/.test(window.location.search);if((s&&window.sessionStorage.getItem('tinkay_pwa_splash_v4')!=='1')||p){window.__tinkaySplashInicioMs=Date.now();document.documentElement.classList.add('tinkay-splash-activo');window.setTimeout(function(){document.documentElement.classList.remove('tinkay-splash-activo');},4500);}}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

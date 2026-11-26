@@ -15,19 +15,19 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#1B2E22",
     icons: [
       {
-        src: "/icons/icon-192.png?v=3",
+        src: "/icons/tinkay-icon-192.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/icon-512.png?v=3",
+        src: "/icons/tinkay-icon-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/icon-512.png?v=3",
+        src: "/icons/tinkay-icon-maskable-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
