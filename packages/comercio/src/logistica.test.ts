@@ -33,99 +33,73 @@ describe("Motor de logística y cobertura Tinkay", () => {
     });
   });
 
-  it("aplica $0.00 (Envío Gratis) dentro de Centro-Norte de Quito (ej. La Carolina / González Suárez)", () => {
-    const laCarolina = { lat: -0.184, lng: -78.4846 };
-    expect(puntoEnPoligono(laCarolina, config.zonas[0]!.poligono)).toBe(true);
+  it("aplica $0.00 (Envío Gratis) dentro de Centro-Norte de Quito (isodistancia real <= 4 km en auto)", () => {
+    const quicentro = { lat: -0.1763, lng: -78.4793 };
+    expect(puntoEnPoligono(quicentro, config.zonas[0]!.poligono)).toBe(true);
 
     const res = cotizarEnvioDomicilio({
       config,
-      destino: laCarolina,
-      distanciaVialKm: 3.4,
+      destino: quicentro,
+      distanciaVialKm: 2.34,
     });
     expect(res.dentroCobertura).toBe(true);
     expect(res.reglaAplicada).toBe("ZONA_GRATIS");
     expect(res.costoTotalEnvio).toBe(0);
     expect(res.zonaDetectada?.codigo).toBe("centro_norte_quito");
 
-    // Verificar isodistancia real de 5 km en auto: incluye sectores alcanzables por calles (Quicentro, El Inca)
-    // y excluye áreas sin calles vehiculares (bosque interior Parque Metropolitano) o >5 km en auto (Plaza Foch)
-    expect(puntoEnPoligono({ lat: -0.1763, lng: -78.4793 }, config.zonas[0]!.poligono)).toBe(true);
+    // Verificar isodistancia real de 4 km en auto: incluye sectores alcanzables por calles (Quicentro, El Inca)
+    // y excluye áreas sin calles vehiculares (bosque interior Parque Metropolitano) o >4 km en auto (Plaza Foch)
     expect(puntoEnPoligono({ lat: -0.1455, lng: -78.4712 }, config.zonas[0]!.poligono)).toBe(true);
     expect(puntoEnPoligono({ lat: -0.178, lng: -78.46 }, config.zonas[0]!.poligono)).toBe(false);
     expect(puntoEnPoligono({ lat: -0.2014, lng: -78.4912 }, config.zonas[0]!.poligono)).toBe(false);
   });
 
-  it("aplica Entrega $1 (5-7 km en auto) y Entrega $2 (7-9 km en auto) alrededor de la zona gratuita", () => {
-    // Plaza Foch / La Mariscal (~5.25 km en auto): cae en Entrega $1 y Entrega $2 -> gana tarifa más baja ($1.00)
+  it("aplica $0.75 extra por cada km adicional sobre la zona gratuita de 4 km (5 km -> $0.75 hasta 24 km -> $15.00)", () => {
+    // Parque La Carolina Sur (~4-5 km en auto): cae en Entrega $0.75 (5 km) -> $0.75 exacto sin redondeo a $1.00
+    const carolinaSur = { lat: -0.184, lng: -78.4846 };
+    const res5 = cotizarEnvioDomicilio({
+      config,
+      destino: carolinaSur,
+      distanciaVialKm: 4.5,
+    });
+    expect(res5.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
+    expect(res5.zonaDetectada?.nombre).toBe("Entrega $0.75");
+    expect(res5.costoTotalEnvio).toBe(0.75);
+
+    // Plaza Foch / La Mariscal (~5.25 km en auto): cae en Entrega $1.50 (6 km) -> $1.50
     const plazaFoch = { lat: -0.2014, lng: -78.4912 };
-    const res1 = cotizarEnvioDomicilio({
+    const res6 = cotizarEnvioDomicilio({
       config,
       destino: plazaFoch,
       distanciaVialKm: 5.25,
     });
-    expect(res1.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
-    expect(res1.zonaDetectada?.nombre).toBe("Entrega $1");
-    expect(res1.costoTotalEnvio).toBe(1.0);
+    expect(res6.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
+    expect(res6.zonaDetectada?.nombre).toBe("Entrega $1.50");
+    expect(res6.costoTotalEnvio).toBe(1.5);
 
-    // Centro Histórico (~8.59 km en auto): fuera de Entrega $1, dentro de Entrega $2 -> $2.00
+    // Centro Histórico (~8.59 km en auto): cae en Entrega $3.75 (9 km) -> $3.75 exacto
     const centroHistorico = { lat: -0.2201, lng: -78.5123 };
-    const res2 = cotizarEnvioDomicilio({
+    const res9 = cotizarEnvioDomicilio({
       config,
       destino: centroHistorico,
       distanciaVialKm: 8.59,
     });
-    expect(res2.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
-    expect(res2.zonaDetectada?.nombre).toBe("Entrega $2");
-    expect(res2.costoTotalEnvio).toBe(2.0);
+    expect(res9.reglaAplicada).toBe("ZONA_TARIFA_FIJA");
+    expect(res9.zonaDetectada?.nombre).toBe("Entrega $3.75");
+    expect(res9.costoTotalEnvio).toBe(3.75);
 
-    // El Condado Shopping (~10.26 km en auto): dentro de Entrega $3 (11 km) -> $3.00
-    const condado = { lat: -0.1045, lng: -78.4975 };
-    const res3 = cotizarEnvioDomicilio({
-      config,
-      destino: condado,
-      distanciaVialKm: 10.26,
-    });
-    expect(res3.zonaDetectada?.nombre).toBe("Entrega $3");
-    expect(res3.costoTotalEnvio).toBe(3.0);
-
-    // Carcelén (~12.47 km en auto): fuera de Entrega $3 (11 km), dentro de Entrega $4 (13 km)
+    // Carcelén (~12.47 km en auto): fuera de 12 km ($6.00), dentro de 13 km ($6.75)
     const carcelen = { lat: -0.0885, lng: -78.474 };
-    expect(puntoEnPoligono(carcelen, config.zonas.find((z) => z.codigo === "entrega_3_usd")!.poligono)).toBe(false);
-    expect(puntoEnPoligono(carcelen, config.zonas.find((z) => z.codigo === "entrega_4_usd")!.poligono)).toBe(true);
-    // Zona dentro de Entrega $4 sin otra zona fija más barata (ej. Mena del Hierro / El Condado Oeste) -> $4.00
-    const condadoOeste = { lat: -0.118, lng: -78.52 };
-    const res4 = cotizarEnvioDomicilio({
-      config,
-      destino: condadoOeste,
-      distanciaVialKm: 12.8,
-    });
-    expect(res4.zonaDetectada?.nombre).toBe("Entrega $4");
-    expect(res4.costoTotalEnvio).toBe(4.0);
+    expect(puntoEnPoligono(carcelen, config.zonas.find((z) => z.codigo === "entrega_12km")!.poligono)).toBe(false);
+    expect(puntoEnPoligono(carcelen, config.zonas.find((z) => z.codigo === "entrega_13km")!.poligono)).toBe(true);
 
-    // Calderón / Carapungo (~14.26 km en auto): dentro de Entrega $5 (15 km) -> $5.00
-    const calderon = { lat: -0.095, lng: -78.423 };
-    const res5 = cotizarEnvioDomicilio({
-      config,
-      destino: calderon,
-      distanciaVialKm: 14.26,
-    });
-    expect(res5.costoTotalEnvio).toBe(4.0); // POR_KM (14.26*0.5-3=4.13->4.00) o Entrega $5 ($5.00): gana la tarifa más baja ($4.00)
-    expect(puntoEnPoligono(calderon, config.zonas.find((z) => z.codigo === "entrega_5_usd")!.poligono)).toBe(true);
-
-    // El Recreo (~15.90 km en auto): dentro de Entrega $6 (17 km)
-    const elRecreo = { lat: -0.252, lng: -78.522 };
-    expect(puntoEnPoligono(elRecreo, config.zonas.find((z) => z.codigo === "entrega_6_usd")!.poligono)).toBe(true);
-    expect(puntoEnPoligono(elRecreo, config.zonas.find((z) => z.codigo === "entrega_5_usd")!.poligono)).toBe(false);
-
-    // Solanda (~17.58 km): Entrega $7 (19 km); Pomasqui (~19.55 km): Entrega $8 (21 km);
-    // Quitumbe (~22.97 km): Entrega $9 (23 km); Mitad del Mundo (~23.31 km): Entrega $10 (25 km)
-    expect(puntoEnPoligono({ lat: -0.264, lng: -78.538 }, config.zonas.find((z) => z.codigo === "entrega_7_usd")!.poligono)).toBe(true);
-    expect(puntoEnPoligono({ lat: -0.056, lng: -78.458 }, config.zonas.find((z) => z.codigo === "entrega_7_usd")!.poligono)).toBe(false);
-    expect(puntoEnPoligono({ lat: -0.056, lng: -78.458 }, config.zonas.find((z) => z.codigo === "entrega_8_usd")!.poligono)).toBe(true);
-    expect(puntoEnPoligono({ lat: -0.298, lng: -78.552 }, config.zonas.find((z) => z.codigo === "entrega_8_usd")!.poligono)).toBe(false);
-    expect(puntoEnPoligono({ lat: -0.298, lng: -78.552 }, config.zonas.find((z) => z.codigo === "entrega_9_usd")!.poligono)).toBe(true);
-    expect(puntoEnPoligono({ lat: -0.008, lng: -78.453 }, config.zonas.find((z) => z.codigo === "entrega_9_usd")!.poligono)).toBe(false);
-    expect(puntoEnPoligono({ lat: -0.008, lng: -78.453 }, config.zonas.find((z) => z.codigo === "entrega_10_usd")!.poligono)).toBe(true);
+    // Verificar anillos exteriores hasta 24 km ($15.00)
+    expect(puntoEnPoligono({ lat: -0.095, lng: -78.423 }, config.zonas.find((z) => z.codigo === "entrega_14km")!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.252, lng: -78.522 }, config.zonas.find((z) => z.codigo === "entrega_17km")!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.264, lng: -78.538 }, config.zonas.find((z) => z.codigo === "entrega_19km")!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.056, lng: -78.458 }, config.zonas.find((z) => z.codigo === "entrega_20km")!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.298, lng: -78.552 }, config.zonas.find((z) => z.codigo === "entrega_23km")!.poligono)).toBe(true);
+    expect(puntoEnPoligono({ lat: -0.008, lng: -78.453 }, config.zonas.find((z) => z.codigo === "entrega_24km")!.poligono)).toBe(true);
   });
 
   it("aplica tarifa fija de zona en Cumbayá ($3.50)", () => {
@@ -136,26 +110,26 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(res.costoTotalEnvio).toBe(3.5);
   });
 
-  it("aplica fórmula (km * $0.50 - $3.00) con mínimo $1.00 fuera de zona gratis cuando es POR_KM", () => {
-    // Sur de Quito - Villaflora (7 km viales: 7*0.5 - 3 = 0.50 -> aplica mínimo $1.00)
+  it("aplica fórmula (km * $0.75 - $3.00) con mínimo $0.75 fuera de zona gratis cuando es POR_KM", () => {
+    // Sur de Quito - Villaflora (4.5 km viales: 4.5*0.75 - 3 = 0.375 -> aplica mínimo $0.75 -> redondeo comercial $1.00)
     const villaflora = { lat: -0.245, lng: -78.518 };
     const resCerca = cotizarEnvioDomicilio({
       config,
       destino: villaflora,
-      distanciaVialKm: 7.0,
+      distanciaVialKm: 4.5,
     });
     expect(resCerca.reglaAplicada).toBe("CALCULO_POR_KM");
     expect(resCerca.costoTotalEnvio).toBe(1.0);
 
-    // Quitumbe (18 km viales: 18*0.5 - 3 = $6.00)
+    // Quitumbe (16 km viales: 16*0.75 - 3 = $9.00)
     const quitumbe = { lat: -0.298, lng: -78.552 };
     const resLejos = cotizarEnvioDomicilio({
       config,
       destino: quitumbe,
-      distanciaVialKm: 18.0,
+      distanciaVialKm: 16.0,
     });
     expect(resLejos.reglaAplicada).toBe("CALCULO_POR_KM");
-    expect(resLejos.costoTotalEnvio).toBe(6.0);
+    expect(resLejos.costoTotalEnvio).toBe(9.0);
   });
 
   it("bloquea cobro automático fuera del radio máximo de Pichincha (ej. Guayaquil)", () => {
@@ -176,8 +150,8 @@ describe("Motor de logística y cobertura Tinkay", () => {
       distanciaVialKm: 17.84,
     });
     expect(conKm.etiquetaResumen).toBe("Envío a domicilio (17.8 km)");
-    expect(conKm.etiquetaResumen).not.toContain("$0.50");
-    expect(conKm.formulaDetalle).toContain("17.8 km × $0.50/km");
+    expect(conKm.etiquetaResumen).not.toContain("$0.75");
+    expect(conKm.formulaDetalle).toContain("17.8 km × $0.75/km");
 
     const sinKm = cotizarEnvioDomicilio({
       config: { ...config, mostrarKilometrosCliente: false },
@@ -186,8 +160,8 @@ describe("Motor de logística y cobertura Tinkay", () => {
     });
     expect(sinKm.etiquetaResumen).toBe("Envío a domicilio");
     expect(sinKm.etiquetaResumen).not.toContain("km");
-    expect(sinKm.formulaDetalle).toContain("17.8 km × $0.50/km");
-    expect(sinKm.costoTotalEnvio).toBe(6.0);
+    expect(sinKm.formulaDetalle).toContain("17.8 km × $0.75/km");
+    expect(sinKm.costoTotalEnvio).toBe(10.5);
   });
 
   it("aplica redondeo comercial en tramos (<25 ctv baja a .00, 25-50 ctv a .50, >50 ctv sube al entero)", () => {
@@ -200,31 +174,31 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(redondearTarifaComercialEnvio(5.51)).toBe(6.0);
     expect(redondearTarifaComercialEnvio(5.92)).toBe(6.0);
 
-    const surQuito = { lat: -0.298, lng: -78.552 }; // Quitumbe (fuera de anillos de tarifa fija hasta 17 km)
+    const surQuito = { lat: -0.298, lng: -78.552 }; // Quitumbe (evaluación POR_KM)
 
-    // 16.06 km * $0.50 - $3.00 = $5.03 -> menos de 25 ctv -> $5.00
+    // 10.72 km * $0.75 - $3.00 = $5.04 -> menos de 25 ctv -> $5.00
     const casoMenos25 = cotizarEnvioDomicilio({
       config,
       destino: surQuito,
-      distanciaVialKm: 16.06,
+      distanciaVialKm: 10.72,
     });
     expect(casoMenos25.costoTotalEnvio).toBe(5.0);
-    expect(casoMenos25.formulaDetalle).toContain("= $5.03 → aproximado $5.00");
+    expect(casoMenos25.formulaDetalle).toContain("= $5.04 → aproximado $5.00");
 
-    // 14.70 km * $0.50 - $3.00 = $4.35 -> entre 25 y 50 ctv -> $4.50
+    // 9.80 km * $0.75 - $3.00 = $4.35 -> entre 25 y 50 ctv -> $4.50
     const casoEntre25y50 = cotizarEnvioDomicilio({
       config,
       destino: surQuito,
-      distanciaVialKm: 14.7,
+      distanciaVialKm: 9.8,
     });
     expect(casoEntre25y50.costoTotalEnvio).toBe(4.5);
     expect(casoEntre25y50.formulaDetalle).toContain("= $4.35 → aproximado $4.50");
 
-    // 17.84 km * $0.50 - $3.00 = $5.92 -> más de 50 ctv -> $6.00
+    // 11.89 km * $0.75 - $3.00 = $5.92 -> más de 50 ctv -> $6.00
     const casoMas50 = cotizarEnvioDomicilio({
       config,
       destino: surQuito,
-      distanciaVialKm: 17.84,
+      distanciaVialKm: 11.89,
     });
     expect(casoMas50.costoTotalEnvio).toBe(6.0);
     expect(casoMas50.formulaDetalle).toContain("= $5.92 → aproximado $6.00");
@@ -334,12 +308,12 @@ describe("Motor de logística y cobertura Tinkay", () => {
   });
 
   it("para clientes NO registrados no aplica zona gratuita y cobra tarifa mínima $1.00 + $0.50 por km (calculando ahorro por registrarse)", () => {
-    const laCarolina = { lat: -0.184, lng: -78.4846 };
+    const quicentro = { lat: -0.1763, lng: -78.4793 };
 
     // 1. Mismo punto en Centro-Norte (2.0 km): Registrado = $0.00 vs No Registrado = $1.00 + 2.0 * $0.50 = $2.00
     const cotRegistrado = cotizarEnvioDomicilio({
       config,
-      destino: laCarolina,
+      destino: quicentro,
       distanciaVialKm: 2.0,
       clienteRegistrado: true,
     });
@@ -348,7 +322,7 @@ describe("Motor de logística y cobertura Tinkay", () => {
 
     const cotNoRegistrado = cotizarEnvioDomicilio({
       config,
-      destino: laCarolina,
+      destino: quicentro,
       distanciaVialKm: 2.0,
       clienteRegistrado: false,
     });
@@ -362,7 +336,7 @@ describe("Motor de logística y cobertura Tinkay", () => {
     // 2. Distancia muy corta (0.2 km): $1.00 + $0.10 = $1.10 -> respeta tarifa mínima $1.00
     const cotMinima = cotizarEnvioDomicilio({
       config,
-      destino: laCarolina,
+      destino: quicentro,
       distanciaVialKm: 0.2,
       clienteRegistrado: false,
     });
@@ -371,7 +345,7 @@ describe("Motor de logística y cobertura Tinkay", () => {
     // 3. Retiro en tienda sigue siendo $0.00 incluso para visitantes no registrados
     const cotRetiroInvitado = cotizarEnvioDomicilio({
       config,
-      destino: laCarolina,
+      destino: quicentro,
       retiroEnLocal: true,
       clienteRegistrado: false,
     });
