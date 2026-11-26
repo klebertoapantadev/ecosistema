@@ -15,7 +15,6 @@ import {
   Flower2,
   Loader2,
   Minus,
-  Percent,
   Plus,
   RefreshCw,
   Save,
@@ -162,9 +161,8 @@ export function ConsolaInventarioRosas({
   const [inlineCantidad, setInlineCantidad] = useState<number>(1);
   const [inlineNumeroFlores, setInlineNumeroFlores] = useState<number>(9);
 
-  // Configuración de colores/flores en oferta y % de descuento individual por clave (10% por defecto)
+  // Configuración de colores/flores en oferta con % individual por clave
   const [ofertaActiva, setOfertaActiva] = useState<boolean>(false);
-  const [ofertaPorcentaje, setOfertaPorcentaje] = useState<number>(10);
   const [descuentosOfertaPorClave, setDescuentosOfertaPorClave] = useState<Record<string, number>>({});
   const [cargandoOferta, setCargandoOferta] = useState<boolean>(false);
   const [guardandoOferta, setGuardandoOferta] = useState<boolean>(false);
@@ -195,7 +193,6 @@ export function ConsolaInventarioRosas({
             ? Number(res.porcentajeDescuentoOferta)
             : 10;
         setOfertaActiva(Boolean(res.ofertaColoresActiva));
-        setOfertaPorcentaje(pctDef);
         const mapa: Record<string, number> = {};
         if (res.descuentosPorColor && typeof res.descuentosPorColor === "object") {
           for (const [k, v] of Object.entries(res.descuentosPorColor)) {
@@ -405,7 +402,7 @@ export function ConsolaInventarioRosas({
       if (copia[clave] && copia[clave] > 0) {
         delete copia[clave];
       } else {
-        copia[clave] = Math.round(Math.min(80, Math.max(1, Number(ofertaPorcentaje) || 10)) * 100) / 100;
+        copia[clave] = 10;
         if (!ofertaActiva) {
           setOfertaActiva(true);
         }
@@ -424,25 +421,10 @@ export function ConsolaInventarioRosas({
     }));
   };
 
-  const aplicarPorcentajeDefectoATodos = (pctBase?: number) => {
-    const pct = Math.round(Math.min(80, Math.max(1, Number(pctBase ?? ofertaPorcentaje) || 10)) * 100) / 100;
-    setMensajeOfertaOk(null);
-    setErrorOfertaMsg(null);
-    setDescuentosOfertaPorClave((prev) => {
-      const next: Record<string, number> = {};
-      for (const k of Object.keys(prev)) {
-        next[k] = pct;
-      }
-      return next;
-    });
-  };
-
   const handleGuardarOfertaColores = async () => {
     setGuardandoOferta(true);
     setMensajeOfertaOk(null);
     setErrorOfertaMsg(null);
-    const pctClamped =
-      Math.round(Math.min(80, Math.max(1, Number(ofertaPorcentaje) || 10)) * 100) / 100;
     const descuentosLimpios: Record<string, number> = {};
     for (const [k, v] of Object.entries(descuentosOfertaPorClave)) {
       const cl = normalizarClaveOfertaInventario(k);
@@ -452,11 +434,12 @@ export function ConsolaInventarioRosas({
       }
     }
     const listaClaves = Object.keys(descuentosLimpios);
+    const primerPct = listaClaves.length > 0 ? descuentosLimpios[listaClaves[0]!] ?? 10 : 10;
 
     const res = await guardarColoresOfertaInventarioAction({
       negocio: negNorm,
       activo: ofertaActiva && listaClaves.length > 0,
-      porcentajeDescuento: pctClamped,
+      porcentajeDescuento: primerPct,
       colores: listaClaves,
       descuentosPorColor: descuentosLimpios,
     });
@@ -466,7 +449,6 @@ export function ConsolaInventarioRosas({
       return;
     }
     setOfertaActiva(res.oferta.activo);
-    setOfertaPorcentaje(res.oferta.porcentajeDescuento);
     setDescuentosOfertaPorClave(res.oferta.descuentosPorColor || descuentosLimpios);
     const totalAct = Object.keys(res.oferta.descuentosPorColor || descuentosLimpios).length;
     setMensajeOfertaOk(
@@ -1433,171 +1415,59 @@ export function ConsolaInventarioRosas({
                 </div>
               </div>
 
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  padding: "5px 11px",
-                  borderRadius: "999px",
-                  background: ofertaActiva ? "#FDF2F8" : "#F4F2EE",
-                  border: ofertaActiva ? "1px solid #FBCFE8" : "1px solid #D5CFC4",
-                  color: ofertaActiva ? "#9D174D" : "#57524C",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={ofertaActiva}
-                  onChange={(e) => {
-                    setOfertaActiva(e.target.checked);
-                    setMensajeOfertaOk(null);
-                    setErrorOfertaMsg(null);
-                  }}
-                />
-                <span>{ofertaActiva ? "Oferta activa" : "Oferta inactiva"}</span>
-              </label>
-            </div>
-
-            {/* Porcentaje por defecto + acción rápida Aplicar a todos + Guardar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "10px",
-                flexWrap: "wrap",
-                padding: "9px 11px",
-                borderRadius: "10px",
-                background: "#FAF8F5",
-                border: "1px solid #ECE7DF",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "7px", flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: "#221E1B",
-                  }}
-                >
-                  <Percent size={13} color="#BE185D" />
-                  <span>% base al marcar:</span>
-                </span>
-                {[5, 10, 15, 20].map((preset) => {
-                  const sel = ofertaPorcentaje === preset;
-                  return (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => {
-                        setOfertaPorcentaje(preset);
-                        setMensajeOfertaOk(null);
-                      }}
-                      style={{
-                        padding: "4px 9px",
-                        borderRadius: "999px",
-                        border: sel ? "1.5px solid #BE185D" : "1px solid #D5CFC4",
-                        background: sel ? "#FDF2F8" : "#FFFFFF",
-                        color: sel ? "#9D174D" : "#57524C",
-                        fontSize: "0.73rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {preset}%
-                    </button>
-                  );
-                })}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flexShrink: 0 }}>
                 <label
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "4px",
-                    fontSize: "0.73rem",
+                    gap: "7px",
+                    padding: "6px 11px",
+                    borderRadius: "999px",
+                    background: ofertaActiva ? "#FDF2F8" : "#F4F2EE",
+                    border: ofertaActiva ? "1px solid #FBCFE8" : "1px solid #D5CFC4",
+                    color: ofertaActiva ? "#9D174D" : "#57524C",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
-                    color: "#57524C",
+                    cursor: "pointer",
                   }}
                 >
-                  <span>Otro:</span>
                   <input
-                    type="number"
-                    min={1}
-                    max={80}
-                    step={1}
-                    value={ofertaPorcentaje}
+                    type="checkbox"
+                    checked={ofertaActiva}
                     onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setOfertaPorcentaje(Number.isFinite(val) ? Math.max(1, Math.min(80, val)) : 10);
+                      setOfertaActiva(e.target.checked);
                       setMensajeOfertaOk(null);
-                    }}
-                    aria-label="Porcentaje base para nuevos colores en oferta"
-                    style={{
-                      width: "52px",
-                      padding: "4px 6px",
-                      borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      fontSize: "0.78rem",
-                      fontWeight: 700,
-                      textAlign: "center",
+                      setErrorOfertaMsg(null);
                     }}
                   />
-                  <span>%</span>
+                  <span>{ofertaActiva ? "Oferta activa" : "Oferta inactiva"}</span>
                 </label>
 
-                {clavesOfertaActivas.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => aplicarPorcentajeDefectoATodos(ofertaPorcentaje)}
-                    title={`Aplicar ${ofertaPorcentaje}% a todos los colores y flores seleccionados`}
-                    aria-label="Aplicar a todos"
-                    style={{
-                      padding: "4px 9px",
-                      borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#3F3A35",
-                      fontSize: "0.72rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Aplicar {ofertaPorcentaje}% a todos
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => void handleGuardarOfertaColores()}
+                  disabled={guardandoOferta || cargandoOferta}
+                  title="Guardar descuentos por color y flor para la tienda web"
+                  aria-label="Guardar oferta"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "7px 14px",
+                    borderRadius: "9px",
+                    border: "none",
+                    background: "#2F4737",
+                    color: "#FFFFFF",
+                    fontSize: "0.77rem",
+                    fontWeight: 700,
+                    cursor: guardandoOferta ? "wait" : "pointer",
+                    opacity: guardandoOferta ? 0.7 : 1,
+                  }}
+                >
+                  {guardandoOferta ? <Loader2 size={14} /> : <Save size={14} />}
+                  <span>Guardar oferta</span>
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => void handleGuardarOfertaColores()}
-                disabled={guardandoOferta || cargandoOferta}
-                title="Guardar configuración de colores y flores en oferta para la tienda web"
-                aria-label="Guardar oferta"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "7px 14px",
-                  borderRadius: "9px",
-                  border: "none",
-                  background: "#2F4737",
-                  color: "#FFFFFF",
-                  fontSize: "0.77rem",
-                  fontWeight: 700,
-                  cursor: guardandoOferta ? "wait" : "pointer",
-                  opacity: guardandoOferta ? 0.7 : 1,
-                }}
-              >
-                {guardandoOferta ? <Loader2 size={14} /> : <Save size={14} />}
-                <span>Guardar oferta</span>
-              </button>
             </div>
 
             {/* 1. Rosas por color */}
@@ -1894,7 +1764,7 @@ export function ConsolaInventarioRosas({
                     }}
                   >
                     {clavesOfertaActivas.map((clave) => {
-                      const pctActual = descuentosOfertaPorClave[clave] ?? ofertaPorcentaje;
+                      const pctActual = descuentosOfertaPorClave[clave] ?? 10;
                       const etiqueta = obtenerEtiquetaClaveOferta(clave);
                       const hex = obtenerColorHexClaveOferta(clave);
                       return (
