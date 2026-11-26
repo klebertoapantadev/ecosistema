@@ -75,7 +75,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Datos de Facturación & Comprobantes",
     subtitulo: "Razón social, RUC/Cédula, dirección fiscal y correo electrónico de facturación",
     icono: Receipt,
-    colorIcono: "var(--esmeralda, #05876E)",
+    colorIcono: "var(--esmeralda, #0E6648)",
     categoria: "Facturación & Cobros"
   },
   {
@@ -91,7 +91,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Perfil Profesional de Abogado (MFA)",
     subtitulo: "Visualiza y edita tus datos de registro, SENESCYT, matrícula del Foro y especialidades (Protegido por MFA)",
     icono: Briefcase,
-    colorIcono: "var(--esmeralda, #05876E)",
+    colorIcono: "var(--esmeralda, #0E6648)",
     categoria: "Socio Abogado"
   },
   {
@@ -550,7 +550,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
             {widgetActivo === "sesion" && (
               <div className="bloque-seguridad">
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                  <CheckCircle2 size={24} color="var(--esmeralda, #05876e)" />
+                  <CheckCircle2 size={24} color="var(--esmeralda, #0E6648)" />
                   <div>
                     <strong style={{ display: "block", color: "var(--negro, #111111)" }}>Sesión Activa Segura</strong>
                     <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))" }}>

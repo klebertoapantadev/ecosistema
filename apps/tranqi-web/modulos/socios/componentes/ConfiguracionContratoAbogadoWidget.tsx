@@ -85,17 +85,17 @@ export function ConfiguracionContratoAbogadoWidget() {
 
     // Reemplazar los placeholders estándar con estilos llamativos
     html = html
-      .replace(/\{\{nombre_completo\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[DRA. CAROLINA COLCHA]</strong>')
-      .replace(/\{\{cedula\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[1715489623]</strong>')
-      .replace(/\{\{correo\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[abogada.carolina@gmail.com]</strong>')
-      .replace(/\{\{telefono\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[0998765432]</strong>')
-      .replace(/\{\{whatsapp\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[+593 998765432]</strong>')
+      .replace(/\{\{nombre_completo\}\}/g, '<strong style="color: #0E6648; background: rgba(14,102,72,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[DRA. CAROLINA COLCHA]</strong>')
+      .replace(/\{\{cedula\}\}/g, '<strong style="color: #0E6648; background: rgba(14,102,72,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[1715489623]</strong>')
+      .replace(/\{\{correo\}\}/g, '<strong style="color: #0E6648; background: rgba(14,102,72,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[abogada.carolina@gmail.com]</strong>')
+      .replace(/\{\{telefono\}\}/g, '<strong style="color: #0E6648; background: rgba(14,102,72,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[0998765432]</strong>')
+      .replace(/\{\{whatsapp\}\}/g, '<strong style="color: #0E6648; background: rgba(14,102,72,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[+593 998765432]</strong>')
       .replace(/\{\{negocio\}\}/g, '<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[TRANQI]</strong>')
       .replace(/\{\{fecha_actual\}\}/g, `<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[${new Date().toLocaleDateString("es-EC")}]</strong>`)
       .replace(/\{\{ciudad\}\}/g, '<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Quito, D.M.]</strong>')
-      .replace(/\{\{matricula_profesional\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[17-2020-89]</strong>')
-      .replace(/\{\{universidad\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Universidad Central del Ecuador]</strong>')
-      .replace(/\{\{titulo_profesional\}\}/g, '<strong style="color: #05876E; background: rgba(5,135,110,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Abogada de los Tribunales de la República]</strong>')
+      .replace(/\{\{matricula_profesional\}\}/g, '<strong style="color: #0E6648; background: rgba(14,102,72,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[17-2020-89]</strong>')
+      .replace(/\{\{universidad\}\}/g, '<strong style="color: #0E6648; background: rgba(14,102,72,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Universidad Central del Ecuador]</strong>')
+      .replace(/\{\{titulo_profesional\}\}/g, '<strong style="color: #0E6648; background: rgba(14,102,72,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Abogada de los Tribunales de la República]</strong>')
       .replace(/\{\{representante_legal\}\}/g, '<strong style="color: #5000BA; background: rgba(80,0,186,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[Dr. Kleber Toapanta]</strong>')
       .replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<strong style="color: #6B21A8; background: rgba(107,33,168,0.08); padding: 2px 6px; border-radius: 4px; font-weight: 800;">[$1]</strong>');
 
@@ -182,7 +182,7 @@ export function ConfiguracionContratoAbogadoWidget() {
             disabled={guardando}
             style={{
               padding: "8px 18px",
-              background: "#05876E",
+              background: "#0E6648",
               color: "#FFF",
               border: "none",
               borderRadius: "8px",
@@ -192,7 +192,7 @@ export function ConfiguracionContratoAbogadoWidget() {
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              boxShadow: "0 2px 4px rgba(5,135,110,0.15)",
+              boxShadow: "0 2px 4px rgba(14,102,72,0.15)",
             }}
           >
             <Save size={16} /> {guardando ? "Guardando..." : "Guardar Plantilla"}

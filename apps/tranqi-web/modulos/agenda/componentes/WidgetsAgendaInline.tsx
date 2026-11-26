@@ -278,7 +278,7 @@ export function WidgetCitasProgramadasAbogadoInline({
           color: "var(--texto-2)",
         }}
       >
-        <Loader2 size={28} color="#05876E" style={{ animation: "spin 1s linear infinite" }} />
+        <Loader2 size={28} color="#0E6648" style={{ animation: "spin 1s linear infinite" }} />
         <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>Cargando tu agenda de los próximos 7 días…</span>
       </div>
     );

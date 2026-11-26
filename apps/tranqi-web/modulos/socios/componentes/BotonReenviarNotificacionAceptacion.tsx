@@ -43,7 +43,7 @@ export function BotonReenviarNotificacionAceptacion({ solicitudId, correo }: Pro
           display: "inline-flex",
           alignItems: "center",
           gap: "8px",
-          background: "linear-gradient(135deg, #05876E 0%, #046A57 100%)",
+          background: "linear-gradient(135deg, #0E6648 0%, #046A57 100%)",
           color: "#FFFFFF",
           border: "none",
           padding: "10px 18px",
@@ -51,7 +51,7 @@ export function BotonReenviarNotificacionAceptacion({ solicitudId, correo }: Pro
           fontSize: "0.86rem",
           fontWeight: 800,
           cursor: enviando ? "not-allowed" : "pointer",
-          boxShadow: "0 4px 12px rgba(5, 135, 110, 0.25)",
+          boxShadow: "0 4px 12px rgba(14, 102, 72, 0.25)",
           transition: "all 0.15s ease",
           opacity: enviando ? 0.7 : 1,
         }}

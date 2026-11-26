@@ -928,7 +928,7 @@ export async function registrarDocumentoSocio(
               CONTRATO FIRMADO CARGADO
             </span>
           </div>
-          <h2 style="color: #05876E; margin-top: 0; font-size: 1.3rem; text-align: center;">Contrato de Sociedad Listo para Verificación</h2>
+          <h2 style="color: #0E6648; margin-top: 0; font-size: 1.3rem; text-align: center;">Contrato de Sociedad Listo para Verificación</h2>
           <p style="font-size: 0.95rem; line-height: 1.5; color: #374151;">
             El postulante <strong>${nombrePostulante}</strong> (<code>${correoPostulante}</code>) ha subido exitosamente su contrato de sociedad firmado.
           </p>
@@ -936,7 +936,7 @@ export async function registrarDocumentoSocio(
             Por favor ingresa a la plataforma para verificar el documento adjunto y realizar la confirmación y activación definitiva del nuevo <strong>Socio Abogado</strong>.
           </p>
           <div style="text-align: center; margin: 24px 0;">
-            <a href="${urlRevision}" style="display: inline-block; background: #05876E; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; font-weight: 800; text-decoration: none; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(5, 135, 110, 0.3);">
+            <a href="${urlRevision}" style="display: inline-block; background: #0E6648; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; font-weight: 800; text-decoration: none; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(14, 102, 72, 0.3);">
               Verificar Contrato y Activar Socio →
             </a>
           </div>
@@ -1141,7 +1141,7 @@ export async function decidirSolicitudSocio(datos: {
               </ol>
             </div>
             ${comentario ? `<div style="background: #F3F4F6; border-left: 4px solid #5000BA; padding: 12px; border-radius: 6px; margin: 16px 0;"><strong>Observación del Evaluador:</strong> ${comentario}</div>` : ""}
-            <p><a href="/panel/solicitud-socio" style="display: inline-block; padding: 10px 18px; background: #05876E; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ir a Firmar Contrato</a></p>
+            <p><a href="/panel/solicitud-socio" style="display: inline-block; padding: 10px 18px; background: #0E6648; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ir a Firmar Contrato</a></p>
           </div>
         ` : `
           <div style="font-family: sans-serif; padding: 20px; color: #111;">
@@ -1292,7 +1292,7 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
           </li>
           <li style="margin-bottom: 0;">
             <strong>Sube el contrato firmado</strong> en la plataforma:<br/>
-            <a href="https://www.tranqi24.com/panel/solicitud-socio" style="display: inline-block; margin-top: 6px; background: #05876E; color: #FFFFFF; padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 0.88rem;">
+            <a href="https://www.tranqi24.com/panel/solicitud-socio" style="display: inline-block; margin-top: 6px; background: #0E6648; color: #FFFFFF; padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 0.88rem;">
               Subir Contrato Firmado en mi Panel →
             </a>
           </li>

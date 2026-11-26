@@ -14,7 +14,7 @@ export default async function PaginaSocios() {
     <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "24px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <Users size={22} color="#05876E" />
+          <Users size={22} color="#0E6648" />
           <h1 style={{ margin: 0, fontSize: "1.35rem" }}>Red Profesional & Registro de Abogados</h1>
         </div>
         <Link

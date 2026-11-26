@@ -469,14 +469,14 @@ export default function PaginaDocumentoCompartidoTTL() {
                         alignItems: "center",
                         justifyContent: "center",
                         gap: "8px",
-                        background: "#05876E",
+                        background: "#0E6648",
                         color: "#ffffff",
                         borderRadius: "12px",
                         padding: "14px",
                         fontSize: "0.95rem",
                         fontWeight: 800,
                         textDecoration: "none",
-                        boxShadow: "0 6px 16px rgba(5, 135, 110, 0.25)"
+                        boxShadow: "0 6px 16px rgba(14, 102, 72, 0.25)"
                       }}
                     >
                       <Download size={18} /> Descargar Parte Actual ({archivoActivo.nombre})

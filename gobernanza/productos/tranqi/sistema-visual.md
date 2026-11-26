@@ -34,7 +34,7 @@ oscura de GitHub en estilos inline).
 | `--violeta` | `#5000BA` | Identidad y acción del lado **cliente** |
 | `--lavanda` | `#7866FF` | Buddie, hilo decorativo sobre fondo oscuro |
 | `--menta` | `#B1FBE3` | Estado positivo del lado cliente ("activa", "resuelto") |
-| `--esmeralda` | `#05876E` | Identidad y acción del lado **abogado**; mensaje de éxito |
+| `--esmeralda` | `#0E6648` | Identidad y acción del lado **abogado**; mensaje de éxito |
 | `--lima` | `#D8FFB3` | Acento sobre oscuro del lado abogado |
 | `--amarillo` | `#FEE300` | CTA de la landing; etiqueta `SuperAdmin` |
 | `--rosa` | `#FEB9FF` | Solo landing |
@@ -44,9 +44,12 @@ oscura de GitHub en estilos inline).
 | `--blanco` | `#FFFFFF` | Superficies |
 
 **Verde del brandbook.** La lámina «Paleta de Color» del brandbook (14-nov-2026) trae como verde
-principal `#0E6648`, más hondo que `--esmeralda`. Desde TRQ-035 lo usa el bloque de cierre de
-`/abogados` (antes `#085e54`, que no era de marca). El token `--esmeralda` no se ha tocado: alinearlo
-con el brandbook afecta a todo el lado abogado y queda como decisión pendiente.
+principal `#0E6648`. Desde TRQ-035 lo usa el bloque de cierre de `/abogados` (antes `#085e54`, que
+no era de marca) y desde TRQ-037 (26-nov-2026) es el valor de `--esmeralda`: negocio pidió que el
+verde del perfil de abogado saliera del brandbook. El `#05876E` anterior ya no se usa en la app. El
+rail del abogado va en `--esmeralda-tinta` `#083D2C`, el mismo verde llevado a tinta, porque sobre
+`#0E6648` directo los rótulos tenues del menú no alcanzan contraste; el verde exacto marca la opción
+activa, la tarjeta del portal y los botones.
 
 Tipografía: **Inter**, la del brandbook (antes Archivo; cambio de TRQ-023, 16-nov-2026), pesos 400–900. Cifras con
 `font-variant-numeric: tabular-nums` en tablas y métricas.
@@ -71,7 +74,7 @@ Ancho 240 px, superficie oscura, tipografía blanca al 66–72 % de opacidad.
 | :--- | :--- | :--- | :--- |
 | Administración | `--negro` | `--lavanda` | `.perfil-admin` |
 | Cliente | `--violeta-tinta` `#1E0046` (activo `#371C5A`) | `--menta` | `.perfil-cliente` |
-| Abogado | `--esmeralda-tinta` `#052A23` | `--lima` | `.perfil-abogado` |
+| Abogado | `--esmeralda-tinta` `#083D2C` (activo `--esmeralda` `#0E6648`) | `--lima` | `.perfil-abogado` |
 
 La opción activa se marca con un **filo de 2 px** en el color de acento más un
 fondo apenas más claro, no con un relleno saturado: el color entra por el borde

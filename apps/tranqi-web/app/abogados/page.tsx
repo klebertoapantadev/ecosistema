@@ -136,7 +136,7 @@ export default function PaginaRedAbogados() {
       </header>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 0: HERO (Foto con iluminación natural como imagen 2) */}
+      {/* SECCIÓN 0: HERO (dos abogados en su despacho, degradado violeta — TRQ-037) */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
         style={{
@@ -144,14 +144,21 @@ export default function PaginaRedAbogados() {
           minHeight: "86vh",
           display: "flex",
           alignItems: "center",
-          backgroundImage: "linear-gradient(to right, rgba(0, 0, 0, 0.48) 0%, rgba(0, 0, 0, 0.28) 42%, rgba(0, 0, 0, 0) 65%), url('/assets/abogados/chico1b.webp')",
-          backgroundSize: "cover",
-          backgroundPosition: "center right",
+          backgroundColor: "#1e0046",
+          overflow: "hidden",
           padding: "70px 24px"
         }}
       >
+        <img
+          className="abg-hero-foto"
+          src="/assets/landing/abogados-firma.jpg"
+          alt="Dos abogados revisando un documento en su despacho"
+        />
+        <div className="abg-hero-velo" aria-hidden="true" />
         <div
           style={{
+            position: "relative",
+            zIndex: 1,
             maxWidth: "1180px",
             margin: "0 auto",
             width: "100%",
@@ -160,7 +167,7 @@ export default function PaginaRedAbogados() {
           }}
         >
           {/* Columna Izquierda con texto blanco alineado a la izquierda */}
-          <div style={{ maxWidth: "640px" }}>
+          <div style={{ maxWidth: "560px" }}>
             <div style={{ marginBottom: "18px" }}>
               <span
                 style={{

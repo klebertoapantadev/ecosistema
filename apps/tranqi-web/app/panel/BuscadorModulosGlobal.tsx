@@ -60,7 +60,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agenda",
     minNivel: 1,
     icono: CalendarClock,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "disponibilidad",
@@ -70,7 +70,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agenda",
     minNivel: 1,
     icono: CalendarClock,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "asignaciones_agenda",
@@ -90,7 +90,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Facturación",
     minNivel: 1,
     icono: CreditCard,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "vitrina_comercial_personas",
@@ -360,7 +360,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & B2B",
     minNivel: 50,
     icono: Building2,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "compliance_score_legal",
@@ -370,7 +370,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & B2B",
     minNivel: 30,
     icono: ShieldCheck,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "legal_hr_laboral",
@@ -440,7 +440,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Red Profesional",
     minNivel: 30,
     icono: Scale,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "mi_perfil_abogado",
@@ -450,7 +450,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Red Profesional",
     minNivel: 20,
     icono: Scale,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "socios",
@@ -460,7 +460,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Operación legal",
     minNivel: 50,
     icono: UserCheck,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "crm_clientes",
@@ -480,7 +480,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Operación legal",
     minNivel: 50,
     icono: Briefcase,
-    colorIcono: "#05876E"
+    colorIcono: "#0E6648"
   },
   {
     clave: "panel_administrar",

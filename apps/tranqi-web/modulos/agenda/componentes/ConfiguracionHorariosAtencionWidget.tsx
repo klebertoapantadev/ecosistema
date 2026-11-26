@@ -886,7 +886,7 @@ export function ConfiguracionHorariosAtencionWidget({
             <div>
               <label htmlFor="select-modo-capacidad" style={labelBaseStyle}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                  <ShieldCheck size={14} color="#05876E" />
+                  <ShieldCheck size={14} color="#0E6648" />
                   Modo de Disponibilidad Operativa
                 </span>
               </label>

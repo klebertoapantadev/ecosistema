@@ -1322,7 +1322,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           {/* Paso 1: Recibiendo el documento */}
                           <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "var(--texto)" }}>
                             {segundosAnalisis > 3 ? (
-                              <CheckCircle2 size={16} color="#05876E" style={{ flexShrink: 0 }} />
+                              <CheckCircle2 size={16} color="#0E6648" style={{ flexShrink: 0 }} />
                             ) : (
                               <span
                                 className="billetera-aria-latido"
@@ -1344,7 +1344,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           {/* Paso 2: Leyendo el contenido con visión */}
                           <li style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: "var(--texto)" }}>
                             {segundosAnalisis > 12 ? (
-                              <CheckCircle2 size={16} color="#05876E" style={{ flexShrink: 0 }} />
+                              <CheckCircle2 size={16} color="#0E6648" style={{ flexShrink: 0 }} />
                             ) : segundosAnalisis >= 3 ? (
                               <span
                                 className="billetera-aria-latido"

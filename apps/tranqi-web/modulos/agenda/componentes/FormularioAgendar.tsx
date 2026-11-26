@@ -392,7 +392,7 @@ export default function FormularioAgendar({
           borderRadius: "24px",
           padding: "36px 28px",
           textAlign: "center",
-          boxShadow: "0 10px 30px rgba(5, 135, 110, 0.08)",
+          boxShadow: "0 10px 30px rgba(14, 102, 72, 0.08)",
         }}
       >
         <div
@@ -400,7 +400,7 @@ export default function FormularioAgendar({
             width: "56px",
             height: "56px",
             borderRadius: "18px",
-            background: "#05876E",
+            background: "#0E6648",
             color: "#FFFFFF",
             display: "flex",
             alignItems: "center",
@@ -460,7 +460,7 @@ export default function FormularioAgendar({
               justifyContent: "center",
               fontSize: "0.82rem",
               fontWeight: 800,
-              background: paso === 0 ? "#5000BA" : "#05876E",
+              background: paso === 0 ? "#5000BA" : "#0E6648",
               color: "#FFFFFF",
             }}
           >
@@ -718,7 +718,7 @@ export default function FormularioAgendar({
                       <div style={{ fontSize: "0.74rem", color: "var(--texto-suave)", fontWeight: 600 }}>
                         Especialista para tu agendamiento:
                       </div>
-                      <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#05876E" }}>
+                      <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#0E6648" }}>
                         Abogado Especialista en {materia.mat_nombre}
                       </div>
                     </div>
@@ -776,7 +776,7 @@ export default function FormularioAgendar({
                   type="button"
                   onClick={() => void irAPasoAgendamiento()}
                   style={{
-                    background: "#05876E",
+                    background: "#0E6648",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "14px",
@@ -787,7 +787,7 @@ export default function FormularioAgendar({
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "8px",
-                    boxShadow: "0 6px 18px rgba(5, 135, 110, 0.24)",
+                    boxShadow: "0 6px 18px rgba(14, 102, 72, 0.24)",
                   }}
                 >
                   Continuar al Agendamiento

@@ -465,7 +465,7 @@ export function ModalFirmaDigitalPdf({
             padding: "16px 24px",
             background: esTranqi
               ? "linear-gradient(135deg, #3B0086 0%, #5000BA 100%)"
-              : "linear-gradient(135deg, var(--exito-texto) 0%, #05876E 100%)",
+              : "linear-gradient(135deg, var(--exito-texto) 0%, #0E6648 100%)",
             color: "#FFFFFF",
             display: "flex",
             justifyContent: "space-between",

@@ -2476,8 +2476,8 @@ Como socio acreditado tendrás:
 
         {/* Banner de Datos Oficiales Extraídos por ARIA desde el Carnet */}
         {dictamenAriaCarnet && (
-          <div style={{ padding: "14px 18px", background: "rgba(5, 135, 110, 0.05)", border: "1.5px solid #05876E", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "var(--exito-texto)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#05876E", marginBottom: "8px" }}>
+          <div style={{ padding: "14px 18px", background: "rgba(14, 102, 72, 0.05)", border: "1.5px solid #0E6648", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "var(--exito-texto)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#0E6648", marginBottom: "8px" }}>
               <CheckCircle2 size={18} /> Datos Extraídos por Tranqi desde tu Carnet Profesional
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px" }}>
@@ -2500,7 +2500,7 @@ Como socio acreditado tendrás:
             style={{
               marginTop: "12px",
               padding: "16px 18px",
-              background: "linear-gradient(135deg, rgba(80, 0, 186, 0.05) 0%, rgba(5, 135, 110, 0.06) 100%)",
+              background: "linear-gradient(135deg, rgba(80, 0, 186, 0.05) 0%, rgba(14, 102, 72, 0.06) 100%)",
               border: "1.5px solid #5000BA",
               borderRadius: "14px",
               boxShadow: "0 4px 12px rgba(80, 0, 186, 0.08)",
@@ -2549,7 +2549,7 @@ Como socio acreditado tendrás:
                   position: "absolute",
                   bottom: "-2px",
                   right: "-2px",
-                  background: "#05876E",
+                  background: "#0E6648",
                   color: "#ffffff",
                   borderRadius: "50%",
                   width: "22px",
@@ -2599,15 +2599,15 @@ Como socio acreditado tendrás:
               <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.82rem", color: "var(--texto-2)", flexWrap: "wrap" }}>
                 <span><strong>Matrícula:</strong> {matriculaProfesional || dictamenAriaCarnet?.matricula_profesional || "Registrada"}</span>
                 {cedula && <span><strong>Cédula:</strong> {cedula}</span>}
-                <span style={{ color: "#05876E", fontWeight: 700 }}>Foro de Abogados / Judicatura</span>
+                <span style={{ color: "#0E6648", fontWeight: 700 }}>Foro de Abogados / Judicatura</span>
               </div>
             </div>
           </div>
         )}
 
         {/* Checklist de Criterios de Calidad y Legibilidad del Carnet */}
-        <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "var(--exito-texto)" }}>
-          <strong style={{ display: "block", marginBottom: "4px", color: "#05876E" }}>Requisitos de Legibilidad del Carnet Profesional:</strong>
+        <div style={{ background: "rgba(14, 102, 72, 0.04)", border: "1px solid rgba(14, 102, 72, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "var(--exito-texto)" }}>
+          <strong style={{ display: "block", marginBottom: "4px", color: "#0E6648" }}>Requisitos de Legibilidad del Carnet Profesional:</strong>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px" }}>
             <span>Fotografía clara y frontal del carnet sin esquinas recortadas.</span>
             <span>Matrícula No., Cédula y Nombres 100% nítidos y legibles.</span>
@@ -2641,13 +2641,13 @@ Como socio acreditado tendrás:
         )}
 
         {carnetExistente && carnetArchivos.length === 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
-            <Scale size={18} color="#05876E" />
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(14, 102, 72, 0.04)", border: "1px solid rgba(14, 102, 72, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
+            <Scale size={18} color="#0E6648" />
             <div>
               <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Carnet Profesional actual registrado</span>
               <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{carnetExistente.dcs_nombre_archivo}</span>
             </div>
-            <a href={carnetExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <a href={carnetExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#0E6648", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
             </a>
           </div>
@@ -2815,13 +2815,13 @@ Como socio acreditado tendrás:
         )}
 
         {identificacionExistente && identificacionArchivos.length === 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
-            <FileText size={18} color="#05876E" />
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(14, 102, 72, 0.04)", border: "1px solid rgba(14, 102, 72, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
+            <FileText size={18} color="#0E6648" />
             <div>
               <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Documento de Identificación actual cargado</span>
               <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{identificacionExistente.dcs_nombre_archivo}</span>
             </div>
-            <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#0E6648", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
             </a>
           </div>
@@ -2961,7 +2961,7 @@ Como socio acreditado tendrás:
               />
             </label>
 
-            <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "12px", marginTop: "4px" }}>
+            <div style={{ background: "rgba(14, 102, 72, 0.04)", border: "1px solid rgba(14, 102, 72, 0.2)", borderRadius: "10px", padding: "12px", marginTop: "4px" }}>
               <label className="campo-check" style={{ margin: 0 }}>
                 <input type="checkbox" checked={senescytVerificado} onChange={(e) => setSenescytVerificado(e.target.checked)} />
                 Verifiqué mi título en el portal oficial de la{" "}
@@ -3080,8 +3080,8 @@ Como socio acreditado tendrás:
             {/* Opción Destacada: No tengo experiencia laboral / Primera oportunidad */}
             <div
               style={{
-                background: sinExperienciaPrevia ? "rgba(5, 135, 110, 0.08)" : "rgba(80, 0, 186, 0.04)",
-                border: sinExperienciaPrevia ? "1.5px solid #05876E" : "1px solid rgba(80, 0, 186, 0.2)",
+                background: sinExperienciaPrevia ? "rgba(14, 102, 72, 0.08)" : "rgba(80, 0, 186, 0.04)",
+                border: sinExperienciaPrevia ? "1.5px solid #0E6648" : "1px solid rgba(80, 0, 186, 0.2)",
                 borderRadius: "12px",
                 padding: "14px 16px",
                 transition: "all 0.2s ease",
@@ -3098,10 +3098,10 @@ Como socio acreditado tendrás:
                       setAnosExperiencia("0");
                     }
                   }}
-                  style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "#05876E" }}
+                  style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "#0E6648" }}
                 />
                 <div>
-                  <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: sinExperienciaPrevia ? "#05876E" : "#5000BA", fontSize: "0.88rem" }}>
+                  <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: sinExperienciaPrevia ? "#0E6648" : "#5000BA", fontSize: "0.88rem" }}>
                     <GraduationCap size={17} /> No tengo experiencia laboral previa (estoy buscando mi primera oportunidad)
                   </strong>
                   <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "#555555", lineHeight: 1.4 }}>

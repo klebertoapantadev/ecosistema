@@ -243,7 +243,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
       {toastExito && (
         <div
           style={{
-            background: "#05876E",
+            background: "#0E6648",
             color: "#FFFFFF",
             padding: "12px 20px",
             borderRadius: "10px",

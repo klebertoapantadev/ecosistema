@@ -81,7 +81,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Servidor SMTP & Plantillas Vault",
     subtitulo: "Credenciales cifradas, puerto TLS y plantilla HTML",
     icono: Mail,
-    colorIcono: "var(--esmeralda, #05876E)",
+    colorIcono: "var(--esmeralda, #0E6648)",
     categoria: "Servicios de Despacho",
     soloAdmin: true
   },
