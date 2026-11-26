@@ -1087,7 +1087,7 @@ Vista dedicada e informativa que replica íntegramente la estructura, propuesta 
 4. **App Móvil de Gestión Legal:**
    - Visualización de la herramienta de despacho virtual en el smartphone (agenda, pagos, seguimiento de trámites en curso).
 5. **Lámina de Activación y Soporte (Cierre):**
-   - Réplica fiel del contenedor verde esmeralda con el checklist de activación rápida y soporte integral.
-   - **Botón Obligatorio de Registro:** Conexión directa al flujo de auto-registro y solicitud de socio (`/registro?intencion=abogado&destino=/panel/solicitud-socio`).
-   - Formulario de contacto asistido con **validación estricta de correo electrónico** (`validarCorreoEstructurado` de `@eco/primitivas`), detección de typos comunes (`@gmailc.om`, `.con`) y sugerencia de corrección con un solo clic.
+   - Contenedor en el verde principal del brandbook (`#0E6648`) con el checklist de activación rápida y soporte integral.
+   - **Botón Obligatorio de Registro:** Conexión directa al flujo de auto-registro y solicitud de socio (`/registro?intencion=abogado&destino=/panel/solicitud-socio`). Es la **única vía** de ingreso que ofrece el bloque.
+   - *Retirado en TRQ-035 (26-nov-2026), por observación de negocio:* la foto y el formulario «O solicita que un asesor te contacte» (con `validarCorreoEstructurado`). Juntos daban a entender que había dos formas de entrar a la red.
 

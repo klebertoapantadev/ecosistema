@@ -33,7 +33,7 @@ export const metadata: Metadata = { title: "Panel — tranqi" };
 const NEGOCIO = "tranqi";
 
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
-  { icono: ShoppingBag, nombre: "Productos Servicios", detalle: "Planes, consultas y trámites individuales", href: "/panel/productos-servicios" },
+  { icono: ShoppingBag, nombre: "Productos Servicios", detalle: "Planes de protección jurídica", href: "/panel/productos-servicios" },
   { icono: Receipt, nombre: "Historial de Pagos", detalle: "Pagos realizados y descarga de factura SRI", href: "/panel/herramientas?widget=historial_pagos" },
   { icono: Bell, nombre: "Avisos & Alertas", detalle: "Novedades y alertas legales", href: "/panel/herramientas?widget=muro_informativo_comunidad" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos con OCR y TTL", href: "/panel/billetera-documentos" },

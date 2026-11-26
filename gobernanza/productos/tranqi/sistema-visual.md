@@ -43,6 +43,11 @@ oscura de GitHub en estilos inline).
 | `--negro` | `#111111` | Texto y rail del panel administrativo |
 | `--blanco` | `#FFFFFF` | Superficies |
 
+**Verde del brandbook.** La lámina «Paleta de Color» del brandbook (14-nov-2026) trae como verde
+principal `#0E6648`, más hondo que `--esmeralda`. Desde TRQ-035 lo usa el bloque de cierre de
+`/abogados` (antes `#085e54`, que no era de marca). El token `--esmeralda` no se ha tocado: alinearlo
+con el brandbook afecta a todo el lado abogado y queda como decisión pendiente.
+
 Tipografía: **Inter**, la del brandbook (antes Archivo; cambio de TRQ-023, 16-nov-2026), pesos 400–900. Cifras con
 `font-variant-numeric: tabular-nums` en tablas y métricas.
 
