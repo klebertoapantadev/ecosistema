@@ -20,6 +20,9 @@ interface FilaCfgAria {
   ari_whatsapp_agente_secreto_id?: string | null;
   ari_stt_secreto_id?: string | null;
   ari_estudio_ia_secreto_id?: string | null;
+  ari_meta_page_token_secreto_id?: string | null;
+  ari_meta_ig_token_secreto_id?: string | null;
+  ari_meta_app_secret_secreto_id?: string | null;
   ari_detalle_aria?: Record<string, unknown> | null;
   ari_activo: boolean;
   ari_actualizado_en: string | null;
@@ -98,6 +101,7 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
     tieneGateKey: data.ari_gate_secreto_id != null,
     actualizadoEn: data.ari_actualizado_en,
     ycloudHabilitado: Boolean(det.ycloud_habilitado),
+    ycloudModoManualDefecto: Boolean(det.ycloud_modo_manual_defecto),
     ycloudNumeroEmisor:
       typeof det.ycloud_numero_emisor === "string"
         ? det.ycloud_numero_emisor
@@ -124,6 +128,28 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
     tieneYcloudWebhookSecret: data.ari_ycloud_webhook_secreto_id != null,
     tieneWhatsappAgenteKey: data.ari_whatsapp_agente_secreto_id != null,
     tieneSttApiKey: data.ari_stt_secreto_id != null,
+    metaFbHabilitado: Boolean(det.meta_fb_habilitado),
+    metaIgHabilitado: Boolean(det.meta_ig_habilitado),
+    metaModoManualDefecto: det.meta_modo_manual_defecto !== false,
+    metaPageId:
+      typeof det.meta_page_id === "string" && det.meta_page_id.trim()
+        ? det.meta_page_id.trim()
+        : negNorm === "tinkay"
+          ? "109525757999859"
+          : "",
+    metaIgAccountId:
+      typeof det.meta_ig_account_id === "string" && det.meta_ig_account_id.trim()
+        ? det.meta_ig_account_id.trim()
+        : negNorm === "tinkay"
+          ? "17841448407645348"
+          : "",
+    metaWebhookToken:
+      typeof det.meta_webhook_token === "string" ? det.meta_webhook_token : "",
+    metaVerifyToken:
+      typeof det.meta_webhook_verify_token === "string" ? det.meta_webhook_verify_token : "",
+    tieneMetaPageToken: data.ari_meta_page_token_secreto_id != null,
+    tieneMetaIgToken: data.ari_meta_ig_token_secreto_id != null,
+    tieneMetaAppSecret: data.ari_meta_app_secret_secreto_id != null,
     estudioIaProveedor,
     estudioIaModelo,
     estudioIaActivo: Boolean(est.activo),

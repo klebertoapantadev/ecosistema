@@ -10,6 +10,7 @@ import {
   construirMensajeProductoCatalogoOmnicanal,
   describirCalificacionCliente,
   emparejarComprasConConversacion,
+  etiquetaCanalMensajeria,
   extraerCodigoRefWebDeTexto,
   extraerCodigoRefWhatsappDeUrl,
   extraerSegmentosMultimediaMensaje,
@@ -24,6 +25,7 @@ import {
   normalizarTelefonoOmnicanal,
   obtenerDefinicionMotivoCierre,
   resolverConversacionPorContextoReenvio,
+  resolverEstadoAtencionMetaEntrante,
   type ContactoUnificadoOmnicanal,
   type ConversacionOmnicanal,
 } from "./omnicanal";
@@ -480,5 +482,71 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
     expect(grupoMartin.correo).toBe("tinkay.uio@gmail.com");
     expect(grupoMartin.noLeidosTotal).toBe(3);
     expect(grupoMartin.conversacionPrincipal.id).toBe("conv-wa-1");
+  });
+
+  it("mantiene modo Manual por defecto en Facebook/Instagram y activa IA ARIA solo en chats individuales con BOT_ACTIVO", () => {
+    expect(etiquetaCanalMensajeria("facebook")).toBe("Facebook Messenger");
+    expect(etiquetaCanalMensajeria("instagram")).toBe("Instagram Direct");
+
+    // 1. Chat nuevo con modo manual por defecto -> entra en EN_ATENCION_ASESORA y NO dispara ARIA
+    expect(
+      resolverEstadoAtencionMetaEntrante({
+        modoManualDefecto: true,
+        canalHabilitado: true,
+        estadoPrevio: null,
+      })
+    ).toEqual({
+      estadoAtencion: "EN_ATENCION_ASESORA",
+      debeInvocarAria: false,
+    });
+
+    // 2. Chat individual donde la asesora pulsó "Activar IA" (BOT_ACTIVO) -> ARIA SÍ responde
+    expect(
+      resolverEstadoAtencionMetaEntrante({
+        modoManualDefecto: true,
+        canalHabilitado: true,
+        estadoPrevio: "BOT_ACTIVO",
+      })
+    ).toEqual({
+      estadoAtencion: "BOT_ACTIVO",
+      debeInvocarAria: true,
+    });
+
+    // 3. Chat cerrado que se reabre con modo manual por defecto -> regresa a Manual
+    expect(
+      resolverEstadoAtencionMetaEntrante({
+        modoManualDefecto: true,
+        canalHabilitado: true,
+        estadoPrevio: "CERRADO",
+      })
+    ).toEqual({
+      estadoAtencion: "EN_ATENCION_ASESORA",
+      debeInvocarAria: false,
+    });
+
+    // 4. Si el cliente en un chat con IA activa pide atención humana -> escala y silencia IA
+    expect(
+      resolverEstadoAtencionMetaEntrante({
+        modoManualDefecto: true,
+        canalHabilitado: true,
+        pideHumano: true,
+        estadoPrevio: "BOT_ACTIVO",
+      })
+    ).toEqual({
+      estadoAtencion: "ESCALADO_HUMANO",
+      debeInvocarAria: false,
+    });
+
+    // 5. Si el canal está apagado (solo monitoreo) -> nunca dispara ARIA aunque estuviera BOT_ACTIVO
+    expect(
+      resolverEstadoAtencionMetaEntrante({
+        modoManualDefecto: false,
+        canalHabilitado: false,
+        estadoPrevio: "BOT_ACTIVO",
+      })
+    ).toEqual({
+      estadoAtencion: "BOT_ACTIVO",
+      debeInvocarAria: false,
+    });
   });
 });

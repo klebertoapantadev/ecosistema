@@ -2148,8 +2148,9 @@ export function ConsolaVentasOmnicanal({
       return;
     }
 
-    if (res.avisoWhatsApp) {
-      setErrorMsg(`Aviso de envío WhatsApp: ${res.avisoWhatsApp}`);
+    const avisoEnvio = res.avisoCanal || res.avisoWhatsApp;
+    if (avisoEnvio) {
+      setErrorMsg(`Aviso de envío (${nombreLegibleCanal(conversacionActiva.canal)}): ${avisoEnvio}`);
     }
 
     setTextoRespuesta("");
@@ -2221,8 +2222,9 @@ export function ConsolaVentasOmnicanal({
       setErrorMsg(res.error);
       return;
     }
-    if (res.avisoWhatsApp) {
-      setErrorMsg(`Aviso de envío WhatsApp: ${res.avisoWhatsApp}`);
+    const avisoEnvio = res.avisoCanal || res.avisoWhatsApp;
+    if (avisoEnvio) {
+      setErrorMsg(`Aviso de envío (${nombreLegibleCanal(conversacionActiva.canal)}): ${avisoEnvio}`);
     }
 
     setModalCatalogoChatAbierto(false);
@@ -2300,8 +2302,9 @@ export function ConsolaVentasOmnicanal({
       setErrorMsg(res.error);
       return;
     }
-    if (res.avisoWhatsApp) {
-      setErrorMsg(`Aviso de envío WhatsApp: ${res.avisoWhatsApp}`);
+    const avisoEnvio = res.avisoCanal || res.avisoWhatsApp;
+    if (avisoEnvio) {
+      setErrorMsg(`Aviso de envío (${nombreLegibleCanal(conversacionActiva.canal)}): ${avisoEnvio}`);
     }
 
     setQrDeunaSugeridoUrl(null);
@@ -4407,7 +4410,7 @@ export function ConsolaVentasOmnicanal({
                                     border: "1px solid #E6E2DA",
                                   }}
                                 >
-                                  {conv.asesoraNombre?.split(" ")[0] || "Humano"}
+                                  {conv.asesoraNombre?.split(" ")[0] || "Manual"}
                                 </span>
                               )}
 

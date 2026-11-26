@@ -23,6 +23,7 @@ export interface ConfiguracionAriaVista {
   actualizadoEn: string | null;
   // Configuración Canal WhatsApp Business (YCloud)
   ycloudHabilitado?: boolean;
+  ycloudModoManualDefecto?: boolean;
   ycloudNumeroEmisor?: string;
   ycloudNumerosPermitidos?: string;
   whatsappAgenteId?: string;
@@ -32,6 +33,17 @@ export interface ConfiguracionAriaVista {
   tieneYcloudWebhookSecret?: boolean;
   tieneWhatsappAgenteKey?: boolean;
   tieneSttApiKey?: boolean;
+  // Configuración Canal Redes Sociales Meta (Facebook Messenger e Instagram Direct)
+  metaFbHabilitado?: boolean;
+  metaIgHabilitado?: boolean;
+  metaModoManualDefecto?: boolean;
+  metaPageId?: string;
+  metaIgAccountId?: string;
+  metaWebhookToken?: string;
+  metaVerifyToken?: string;
+  tieneMetaPageToken?: boolean;
+  tieneMetaIgToken?: boolean;
+  tieneMetaAppSecret?: boolean;
   // Configuración Estudio IA (Generador de Fotos OpenRouter / Gemini en Vault)
   estudioIaProveedor?: ProveedorEstudioIa;
   estudioIaModelo?: string;

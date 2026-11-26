@@ -143,14 +143,32 @@ export async function probarEventoMetaCapiAction(
   negocio: string,
   testEventCodeOpcional?: string
 ): Promise<Resultado<{ mensaje: string }>> {
+  let correoAdmin: string | undefined;
+  let usuarioIdAdmin: string | undefined;
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    correoAdmin = user?.email ?? undefined;
+    usuarioIdAdmin = user?.id ?? undefined;
+  } catch {
+    // Continuar con respaldo seguro
+  }
+
   const res = await enviarEventoConversionMetaServidorAction({
     negocio,
     eventName: "ViewContent",
     eventId: `test-capi-${negocio}-${Date.now()}`,
     valorUsd: 60,
     moneda: "USD",
-    contentIds: ["TEST-SKU-001"],
+    contentIds: ["TIN-VAR-7"],
     contentName: "Prueba de Integración Meta CAPI",
+    comprador: {
+      email: correoAdmin || "prueba@tinkay.net",
+      usuarioId: usuarioIdAdmin,
+    },
     esPrueba: true,
     testEventCodeOverride: testEventCodeOpcional?.trim() || undefined,
   });

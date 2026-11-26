@@ -408,7 +408,9 @@ export function autoCompletarDatosVentaDesdeMensajes(
   if (
     !base.nombreCliente &&
     conversacion?.remitenteNombre &&
-    !/^(Visitante Web|WhatsApp\s*\+)/i.test(conversacion.remitenteNombre)
+    !/^(Visitante Web|WhatsApp\s*\+|Facebook\s+\d+|Instagram\s+\d+)/i.test(
+      conversacion.remitenteNombre
+    )
   ) {
     base.nombreCliente = conversacion.remitenteNombre;
   }
@@ -1569,7 +1571,69 @@ const ORDEN_PRIORIDAD_CANAL: Record<string, number> = {
 function esNombreGenericoOmnicanal(nombre?: string | null): boolean {
   const n = String(nombre || "").trim();
   if (!n) return true;
-  return /^(whatsapp\s*\+?\d*|visitante\s+web.*|cliente(\s+web|\s+whatsapp)?)$/i.test(n);
+  return /^(whatsapp\s*\+?\d*|facebook\s+\d+|instagram\s+\d+|visitante\s+web.*|cliente(\s+web|\s+whatsapp|\s+facebook|\s+instagram)?)$/i.test(
+    n
+  );
+}
+
+export function etiquetaCanalMensajeria(canal: CanalOmnicanal | string): string {
+  switch (String(canal || "").trim().toLowerCase()) {
+    case "whatsapp":
+      return "WhatsApp";
+    case "facebook":
+      return "Facebook Messenger";
+    case "instagram":
+      return "Instagram Direct";
+    case "telegram":
+      return "Telegram";
+    case "tiktok":
+      return "TikTok";
+    default:
+      return "Chat Web";
+  }
+}
+
+/**
+ * Regla determinística del modo inicial Manual vs. IA ARIA individual por chat
+ * (espejo exacto de `com_fn_omnicanal_procesar_webhook_meta` y `ycloud`):
+ * - Si `modoManualDefecto = true`, todo chat nuevo o reabierto inicia en `EN_ATENCION_ASESORA` (Manual).
+ * - Si el asesor activó IA individualmente en ese chat (`estadoPrevio = 'BOT_ACTIVO'`),
+ *   el hilo conserva `BOT_ACTIVO` y permite la respuesta automática de ARIA.
+ */
+export function resolverEstadoAtencionMetaEntrante(entrada: {
+  modoManualDefecto: boolean;
+  canalHabilitado: boolean;
+  pideHumano?: boolean;
+  estadoPrevio?: EstadoAtencionOmnicanal | null;
+}): {
+  estadoAtencion: EstadoAtencionOmnicanal;
+  debeInvocarAria: boolean;
+} {
+  const { modoManualDefecto, canalHabilitado, pideHumano = false, estadoPrevio = null } = entrada;
+
+  let estadoAtencion: EstadoAtencionOmnicanal;
+  if (!estadoPrevio) {
+    if (pideHumano) {
+      estadoAtencion = "ESCALADO_HUMANO";
+    } else if (modoManualDefecto || !canalHabilitado) {
+      estadoAtencion = "EN_ATENCION_ASESORA";
+    } else {
+      estadoAtencion = "BOT_ACTIVO";
+    }
+  } else if (estadoPrevio === "EN_ATENCION_ASESORA") {
+    estadoAtencion = "EN_ATENCION_ASESORA";
+  } else if (pideHumano) {
+    estadoAtencion = "ESCALADO_HUMANO";
+  } else if (estadoPrevio === "CERRADO") {
+    estadoAtencion = modoManualDefecto || !canalHabilitado ? "EN_ATENCION_ASESORA" : "BOT_ACTIVO";
+  } else {
+    estadoAtencion = estadoPrevio;
+  }
+
+  return {
+    estadoAtencion,
+    debeInvocarAria: canalHabilitado && estadoAtencion === "BOT_ACTIVO",
+  };
 }
 
 /**

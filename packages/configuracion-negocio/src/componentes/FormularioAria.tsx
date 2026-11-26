@@ -13,14 +13,17 @@ import {
   MessageCircle,
   RotateCcw,
   Save,
+  Share2,
   Sparkles,
   Trash2,
 } from "lucide-react";
 import {
   borrarClaveAria,
   borrarClaveEstudioIaAction,
+  borrarClaveMetaMensajeriaAction,
   guardarAria,
   guardarEstudioIaAction,
+  guardarMetaMensajeriaAction,
   guardarWhatsappYcloudAction,
   probarConexionAria,
   probarEstudioIaAction,
@@ -111,6 +114,9 @@ export function FormularioAria({
   const [ycloudHabilitado, setYcloudHabilitado] = useState<boolean>(
     inicial?.ycloudHabilitado ?? false
   );
+  const [ycloudModoManualDefecto, setYcloudModoManualDefecto] = useState<boolean>(
+    inicial?.ycloudModoManualDefecto ?? false
+  );
   const [ycloudNumeroEmisor, setYcloudNumeroEmisor] = useState<string>(
     inicial?.ycloudNumeroEmisor || (codigoNegocio === "tinkay" ? "+593996438873" : "")
   );
@@ -143,6 +149,47 @@ export function FormularioAria({
     null
   );
 
+  // Estado Canal Redes Sociales Meta (Facebook Messenger e Instagram Direct)
+  const [metaFbHabilitado, setMetaFbHabilitado] = useState<boolean>(
+    inicial?.metaFbHabilitado ?? false
+  );
+  const [metaIgHabilitado, setMetaIgHabilitado] = useState<boolean>(
+    inicial?.metaIgHabilitado ?? false
+  );
+  const [metaModoManualDefecto, setMetaModoManualDefecto] = useState<boolean>(
+    inicial?.metaModoManualDefecto ?? true
+  );
+  const [metaPageId, setMetaPageId] = useState<string>(
+    inicial?.metaPageId || (codigoNegocio === "tinkay" ? "109525757999859" : "")
+  );
+  const [metaIgAccountId, setMetaIgAccountId] = useState<string>(
+    inicial?.metaIgAccountId || (codigoNegocio === "tinkay" ? "17841448407645348" : "")
+  );
+  const [metaPageAccessToken, setMetaPageAccessToken] = useState<string>("");
+  const [metaIgAccessToken, setMetaIgAccessToken] = useState<string>("");
+  const [metaAppSecret, setMetaAppSecret] = useState<string>("");
+  const [metaWebhookToken, setMetaWebhookToken] = useState<string>(
+    inicial?.metaWebhookToken ?? ""
+  );
+  const [metaVerifyToken, setMetaVerifyToken] = useState<string>(
+    inicial?.metaVerifyToken ?? ""
+  );
+  const [tieneMetaPageToken, setTieneMetaPageToken] = useState<boolean>(
+    inicial?.tieneMetaPageToken ?? false
+  );
+  const [tieneMetaIgToken, setTieneMetaIgToken] = useState<boolean>(
+    inicial?.tieneMetaIgToken ?? false
+  );
+  const [tieneMetaAppSecret, setTieneMetaAppSecret] = useState<boolean>(
+    inicial?.tieneMetaAppSecret ?? false
+  );
+  const [mostrarAvanzadasMeta, setMostrarAvanzadasMeta] = useState<boolean>(false);
+  const [guardandoMeta, setGuardandoMeta] = useState<boolean>(false);
+  const [borrandoMeta, setBorrandoMeta] = useState<boolean>(false);
+  const [mensajeMeta, setMensajeMeta] = useState<{ tipo: "ok" | "error"; texto: string } | null>(
+    null
+  );
+
   // Estado Estudio IA (Generador de Fotos Estudio + Taller vía OpenRouter / Gemini en Vault)
   const [estudioIaProveedor, setEstudioIaProveedor] = useState<ProveedorEstudioIa>(
     inicial?.estudioIaProveedor === "gemini" ? "gemini" : "openrouter"
@@ -164,9 +211,11 @@ export function FormularioAria({
     tipo: "ok" | "error";
     texto: string;
   } | null>(null);
-  const [copiadoTipo, setCopiadoTipo] = useState<"nuevo" | "anterior" | null>(null);
+  const [copiadoTipo, setCopiadoTipo] = useState<
+    "nuevo" | "anterior" | "meta_url" | "meta_verify" | null
+  >(null);
   const [origenActual, setOrigenActual] = useState<string>(
-    codigoNegocio === "tinkay" ? "https://tinkay-web.vercel.app" : ""
+    codigoNegocio === "tinkay" ? "https://www.tinkay.net" : ""
   );
 
   useEffect(() => {
@@ -392,13 +441,19 @@ export function FormularioAria({
   const tonoEstado = tieneApiKey && activo ? "activo" : tieneApiKey ? "guardado" : "pendiente";
 
   const urlWebhookTinkay = webhookToken
-    ? `${origenActual || "https://tinkay-web.vercel.app"}/api/webhooks/ycloud/${webhookToken}`
+    ? `${origenActual || "https://www.tinkay.net"}/api/webhooks/ycloud/${webhookToken}`
+    : "";
+  const urlWebhookMeta = metaWebhookToken
+    ? `${origenActual || "https://www.tinkay.net"}/api/webhooks/meta/${metaWebhookToken}`
     : "";
   const urlRespaldoAriaPrevio =
     inicial?.respaldoWebhookAriaPrevio ||
     "https://aria.midomo.site/v1/channels/whatsapp/webhook/c023d946ca1549a5899c6d6faf883ebf";
 
-  async function copiarAlPortapapeles(texto: string, tipo: "nuevo" | "anterior") {
+  async function copiarAlPortapapeles(
+    texto: string,
+    tipo: "nuevo" | "anterior" | "meta_url" | "meta_verify"
+  ) {
     try {
       await navigator.clipboard.writeText(texto);
       setCopiadoTipo(tipo);
@@ -416,6 +471,7 @@ export function FormularioAria({
     const res = await guardarWhatsappYcloudAction(
       {
         habilitado: ycloudHabilitado,
+        modoManualDefecto: ycloudModoManualDefecto,
         numeroEmisor: ycloudNumeroEmisor,
         numerosPermitidos: ycloudNumerosPermitidos,
         whatsappAgenteId,
@@ -434,6 +490,7 @@ export function FormularioAria({
     }
 
     if (res.data.webhookToken) setWebhookToken(res.data.webhookToken);
+    setYcloudModoManualDefecto(res.data.modoManualDefecto);
     setTieneYcloudApiKey(res.data.tieneYcloudApiKey);
     setTieneWebhookSecret(res.data.tieneWebhookSecret);
     setTieneWhatsappAgenteKey(res.data.tieneWhatsappAgenteKey);
@@ -445,8 +502,85 @@ export function FormularioAria({
     setMensajeYcloud({
       tipo: "ok",
       texto: ycloudHabilitado
-        ? "Canal WhatsApp YCloud guardado y habilitado. Copia el Endpoint URL de abajo y pégalo en YCloud."
+        ? ycloudModoManualDefecto
+          ? "Canal WhatsApp YCloud guardado en modo Manual por defecto (activa IA individualmente en cada chat)."
+          : "Canal WhatsApp YCloud guardado y habilitado. Copia el Endpoint URL de abajo y pégalo en YCloud."
         : "Parámetros de WhatsApp YCloud guardados (modo monitoreo pasivo: sin auto-respuesta IA).",
+    });
+  }
+
+  const ocupadoMeta = guardandoMeta || borrandoMeta;
+  const tonoEstadoMeta =
+    (metaFbHabilitado || metaIgHabilitado) && (tieneMetaPageToken || tieneMetaIgToken)
+      ? "activo"
+      : tieneMetaPageToken || tieneMetaIgToken
+        ? "guardado"
+        : "pendiente";
+
+  async function alGuardarMeta(e: React.FormEvent) {
+    e.preventDefault();
+    setMensajeMeta(null);
+    setGuardandoMeta(true);
+
+    const res = await guardarMetaMensajeriaAction(
+      {
+        fbHabilitado: metaFbHabilitado,
+        igHabilitado: metaIgHabilitado,
+        modoManualDefecto: metaModoManualDefecto,
+        pageId: metaPageId,
+        igAccountId: metaIgAccountId,
+        pageAccessToken: metaPageAccessToken,
+        igAccessToken: metaIgAccessToken,
+        appSecret: metaAppSecret,
+        verifyToken: metaVerifyToken,
+      },
+      codigoNegocio
+    );
+    setGuardandoMeta(false);
+
+    if (!res.ok) {
+      setMensajeMeta({ tipo: "error", texto: res.error });
+      return;
+    }
+
+    if (res.data.webhookToken) setMetaWebhookToken(res.data.webhookToken);
+    if (res.data.verifyToken) setMetaVerifyToken(res.data.verifyToken);
+    setMetaFbHabilitado(res.data.fbHabilitado);
+    setMetaIgHabilitado(res.data.igHabilitado);
+    setMetaModoManualDefecto(res.data.modoManualDefecto);
+    setTieneMetaPageToken(res.data.tienePageToken);
+    setTieneMetaIgToken(res.data.tieneIgToken);
+    setTieneMetaAppSecret(res.data.tieneAppSecret);
+    setMetaPageAccessToken("");
+    setMetaIgAccessToken("");
+    setMetaAppSecret("");
+    setMensajeMeta({
+      tipo: "ok",
+      texto: res.data.modoManualDefecto
+        ? "Configuración de Facebook e Instagram guardada en Supabase Vault. Todos los chats nuevos entrarán en modo Manual."
+        : "Configuración de Facebook e Instagram guardada en Supabase Vault con respuesta automática de Mía (ARIA).",
+    });
+  }
+
+  async function alEliminarClavesMeta() {
+    setMensajeMeta(null);
+    setBorrandoMeta(true);
+    const res = await borrarClaveMetaMensajeriaAction(codigoNegocio, "todas");
+    setBorrandoMeta(false);
+
+    if (!res.ok) {
+      setMensajeMeta({ tipo: "error", texto: res.error });
+      return;
+    }
+
+    setTieneMetaPageToken(false);
+    setTieneMetaIgToken(false);
+    setTieneMetaAppSecret(false);
+    setMetaFbHabilitado(false);
+    setMetaIgHabilitado(false);
+    setMensajeMeta({
+      tipo: "ok",
+      texto: "Credenciales de Facebook e Instagram eliminadas de Supabase Vault.",
     });
   }
 
@@ -1094,7 +1228,30 @@ export function FormularioAria({
               Habilitar respuesta automática de Mía (ARIA) en WhatsApp vía Tinkay
             </div>
             <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
-              Cuando una asesora pulsa «Tomar Control» en una conversación o responde desde el celular, Mía se silencia automáticamente en ese chat.
+              Cuando una asesora pulsa «Pausar IA» en una conversación o responde desde el celular, Mía se silencia automáticamente en ese chat.
+            </div>
+          </div>
+        </label>
+
+        <label
+          style={{
+            ...estiloCajaToggle,
+            background: ycloudModoManualDefecto ? "#FAF6EE" : "#F8F7F4",
+            borderColor: ycloudModoManualDefecto ? "#E5D7BC" : "#E6E2DA",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={ycloudModoManualDefecto}
+            onChange={(e) => setYcloudModoManualDefecto(e.target.checked)}
+            style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+              Iniciar chats nuevos de WhatsApp en modo Manual (activar IA individual por chat)
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+              Si lo marcas, los clientes nuevos llegan en modo Manual para tus asesoras y Mía (ARIA) solo responderá en los chats donde pulses «Activar IA».
             </div>
           </div>
         </label>
@@ -1184,6 +1341,427 @@ export function FormularioAria({
           <Save size={15} />
           <span className="btn-texto-responsive">
             {guardandoYcloud ? "Guardando…" : "Guardar WhatsApp"}
+          </span>
+        </button>
+      </div>
+    </form>
+
+    {/* ========================================================================
+        TARJETA 2B: CANAL FACEBOOK MESSENGER E INSTAGRAM DIRECT (META GRAPH API)
+    ======================================================================== */}
+    <form id="meta-mensajeria" onSubmit={alGuardarMeta} style={estiloTarjetaConfig}>
+      <div style={estiloCabeceraTarjeta}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div
+            style={{
+              ...estiloCajaIconoCabecera,
+              background: "#EEF4FD",
+              color: "#1877F2",
+              borderColor: "#C7DCFA",
+            }}
+          >
+            <Share2 size={19} />
+          </div>
+          <div>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+              Canal Facebook Messenger e Instagram Direct (Meta API · $0/msg)
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+              Recibe y responde chats de Facebook e Instagram directo en <code>/panel/conversaciones</code> con modo Manual por defecto y activación individual de Mía (ARIA).
+            </div>
+          </div>
+        </div>
+
+        <span style={estiloPastillaEstado(tonoEstadoMeta)}>
+          <KeyRound size={13} />
+          {metaFbHabilitado && metaIgHabilitado && (tieneMetaPageToken || tieneMetaIgToken)
+            ? "FB + IG Activos"
+            : metaFbHabilitado && tieneMetaPageToken
+              ? "Facebook Activo"
+              : metaIgHabilitado && (tieneMetaPageToken || tieneMetaIgToken)
+                ? "Instagram Activo"
+                : tieneMetaPageToken || tieneMetaIgToken
+                  ? "Token en Vault"
+                  : "Pendiente Meta Token"}
+        </span>
+      </div>
+
+      <div style={estiloCuerpoTarjeta}>
+        {/* URL DEL WEBHOOK Y VERIFY TOKEN PARA META FOR DEVELOPERS */}
+        <div
+          style={{
+            padding: "14px 16px",
+            borderRadius: "10px",
+            background: "#F4F7FC",
+            border: "1px solid #D3E1F7",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
+            <strong style={{ fontSize: "0.84rem", color: "#1E3A8A" }}>
+              1. Callback URL y Verify Token para Meta for Developers → Webhooks (Messenger & Instagram)
+            </strong>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              {urlWebhookMeta && (
+                <button
+                  type="button"
+                  onClick={() => void copiarAlPortapapeles(urlWebhookMeta, "meta_url")}
+                  title="Copiar Callback URL del Webhook de Meta"
+                  aria-label="Copiar URL"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 11px",
+                    borderRadius: "8px",
+                    border: "1px solid #1877F2",
+                    background: "#FFFFFF",
+                    color: "#1877F2",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {copiadoTipo === "meta_url" ? <Check size={13} /> : <Copy size={13} />}
+                  <span>{copiadoTipo === "meta_url" ? "Copiado" : "Copiar URL"}</span>
+                </button>
+              )}
+              {metaVerifyToken && (
+                <button
+                  type="button"
+                  onClick={() => void copiarAlPortapapeles(metaVerifyToken, "meta_verify")}
+                  title="Copiar Verify Token para verificación GET de Meta"
+                  aria-label="Copiar Verify Token"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 11px",
+                    borderRadius: "8px",
+                    border: "1px solid #1E3A8A",
+                    background: "#FFFFFF",
+                    color: "#1E3A8A",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {copiadoTipo === "meta_verify" ? <Check size={13} /> : <Copy size={13} />}
+                  <span>{copiadoTipo === "meta_verify" ? "Copiado" : "Copiar Verify"}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <code
+            style={{
+              display: "block",
+              padding: "8px 10px",
+              borderRadius: "7px",
+              background: "#FFFFFF",
+              border: "1px solid #C7DCFA",
+              fontSize: "0.79rem",
+              color: "#1F1C19",
+              wordBreak: "break-all",
+            }}
+          >
+            {urlWebhookMeta ||
+              "Pulsa «Guardar Meta» una vez para generar tu Callback URL única con token."}
+          </code>
+
+          {metaVerifyToken && (
+            <div style={{ fontSize: "0.77rem", color: "#1E3A8A", wordBreak: "break-all" }}>
+              <strong>Verify Token:</strong> <code>{metaVerifyToken}</code>
+            </div>
+          )}
+
+          <span style={{ fontSize: "0.76rem", color: "#334155" }}>
+            Suscribe los campos <code>messages</code>, <code>messaging_postbacks</code>, <code>messaging_referrals</code> y <code>message_echoes</code> en tu App de Meta (`developers.facebook.com`).
+          </span>
+        </div>
+
+        <div style={estiloGrillaDosColumnas}>
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`meta-page-id-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>Facebook Page ID</span>
+              <span style={estiloCodigoBadge}>Messenger</span>
+            </label>
+            <input
+              id={`meta-page-id-${codigoNegocio}`}
+              style={estiloInputMonoespaciado}
+              value={metaPageId}
+              onChange={(e) => setMetaPageId(e.target.value)}
+              disabled={ocupadoMeta}
+              placeholder="Ej. 109525757999859"
+            />
+            <span style={estiloTextoAyuda}>
+              ID numérico de la Página de Facebook vinculada a este negocio.
+            </span>
+          </div>
+
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`meta-ig-id-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>Instagram Business Account ID</span>
+              <span style={estiloCodigoBadge}>Instagram</span>
+            </label>
+            <input
+              id={`meta-ig-id-${codigoNegocio}`}
+              style={estiloInputMonoespaciado}
+              value={metaIgAccountId}
+              onChange={(e) => setMetaIgAccountId(e.target.value)}
+              disabled={ocupadoMeta}
+              placeholder="Ej. 17841448407645348"
+            />
+            <span style={estiloTextoAyuda}>
+              ID de la cuenta profesional de Instagram enlazada a la Página.
+            </span>
+          </div>
+        </div>
+
+        <div style={estiloGrillaDosColumnas}>
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`meta-page-token-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>Page / System User Access Token</span>
+              <span style={estiloCodigoBadge}>Vault</span>
+            </label>
+            <input
+              id={`meta-page-token-${codigoNegocio}`}
+              style={estiloInputCampo}
+              type="password"
+              autoComplete="new-password"
+              value={metaPageAccessToken}
+              onChange={(e) => setMetaPageAccessToken(e.target.value)}
+              disabled={ocupadoMeta}
+              placeholder={
+                tieneMetaPageToken
+                  ? "Guardado en Vault — escribe solo para reemplazarlo"
+                  : "Pega tu token permanente (EAA...) con pages_messaging e instagram_manage_messages"
+              }
+            />
+            <span style={estiloTextoAyuda}>
+              Un solo System User Token del Business Manager sirve tanto para Facebook Messenger como para Instagram Direct.
+            </span>
+          </div>
+
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`meta-app-secret-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>Meta App Secret</span>
+              <span style={estiloCodigoBadge}>HMAC-SHA256</span>
+            </label>
+            <input
+              id={`meta-app-secret-${codigoNegocio}`}
+              style={estiloInputCampo}
+              type="password"
+              autoComplete="new-password"
+              value={metaAppSecret}
+              onChange={(e) => setMetaAppSecret(e.target.value)}
+              disabled={ocupadoMeta}
+              placeholder={
+                tieneMetaAppSecret
+                  ? "Guardado en Vault — escribe solo para reemplazarlo"
+                  : "App Secret (Configuración básica en developers.facebook.com)"
+              }
+            />
+            <span style={estiloTextoAyuda}>
+              Verifica criptográficamente la cabecera <code>X-Hub-Signature-256</code> de cada webhook entrante.
+            </span>
+          </div>
+        </div>
+
+        {/* Acordeón opcional: Instagram Login Token dedicado y Verify Token */}
+        <div
+          style={{
+            border: "1px solid #E6E2DA",
+            borderRadius: "10px",
+            background: "#FFFFFF",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setMostrarAvanzadasMeta((v) => !v)}
+            style={{
+              width: "100%",
+              padding: "11px 16px",
+              background: "#F8F7F4",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: "0.83rem",
+              fontWeight: 600,
+              color: "#57524C",
+            }}
+          >
+            <span>Opcional: Token dedicado Instagram Login (IGA...) y Verify Token personalizado</span>
+            {mostrarAvanzadasMeta ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {mostrarAvanzadasMeta && (
+            <div
+              style={{
+                padding: "16px",
+                borderTop: "1px solid #E6E2DA",
+                ...estiloGrillaDosColumnas,
+              }}
+            >
+              <div style={estiloGrupoCampo}>
+                <label style={estiloEtiquetaCampo}>
+                  <span>Token Instagram dedicado (opcional)</span>
+                  <span style={estiloCodigoBadge}>Vault</span>
+                </label>
+                <input
+                  style={estiloInputCampo}
+                  type="password"
+                  autoComplete="new-password"
+                  value={metaIgAccessToken}
+                  onChange={(e) => setMetaIgAccessToken(e.target.value)}
+                  disabled={ocupadoMeta}
+                  placeholder={
+                    tieneMetaIgToken
+                      ? "Guardado en Vault — escribe para reemplazar"
+                      : "Vacío = reutiliza Page / System User Token"
+                  }
+                />
+              </div>
+
+              <div style={estiloGrupoCampo}>
+                <label style={estiloEtiquetaCampo}>
+                  <span>Verify Token personalizado</span>
+                </label>
+                <input
+                  style={estiloInputMonoespaciado}
+                  value={metaVerifyToken}
+                  onChange={(e) => setMetaVerifyToken(e.target.value)}
+                  disabled={ocupadoMeta}
+                  placeholder="Se autogenera si lo dejas vacío"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Interruptor clave: MODO MANUAL POR DEFECTO */}
+        <label
+          style={{
+            ...estiloCajaToggle,
+            background: metaModoManualDefecto ? "#FAF6EE" : "#F2F6F3",
+            borderColor: metaModoManualDefecto ? "#E5D7BC" : "#BBF7D0",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={metaModoManualDefecto}
+            onChange={(e) => setMetaModoManualDefecto(e.target.checked)}
+            disabled={ocupadoMeta}
+            style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+              Modo Manual por defecto en Facebook e Instagram (Recomendado)
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+              Todos los chats nuevos entran en modo <strong>Manual</strong> para tus asesoras sin respuesta automática. En cualquier conversación individual podrás pulsar <strong>«Activar IA»</strong> para que Mía (ARIA) atienda solo ese chat.
+            </div>
+          </div>
+        </label>
+
+        <div style={estiloGrillaDosColumnas}>
+          <label
+            style={{
+              ...estiloCajaToggle,
+              background: metaFbHabilitado ? "#EEF4FD" : "#F8F7F4",
+              borderColor: metaFbHabilitado ? "#BFDBFE" : "#E6E2DA",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={metaFbHabilitado}
+              onChange={(e) => setMetaFbHabilitado(e.target.checked)}
+              disabled={ocupadoMeta}
+              style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+            />
+            <div>
+              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+                Activar Facebook Messenger
+              </div>
+              <div style={{ fontSize: "0.77rem", color: "#847D74", marginTop: "2px" }}>
+                Recibe chats de la Página en vivo y habilita respuestas directas + IA individual.
+              </div>
+            </div>
+          </label>
+
+          <label
+            style={{
+              ...estiloCajaToggle,
+              background: metaIgHabilitado ? "#FDF2F8" : "#F8F7F4",
+              borderColor: metaIgHabilitado ? "#FBCFE8" : "#E6E2DA",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={metaIgHabilitado}
+              onChange={(e) => setMetaIgHabilitado(e.target.checked)}
+              disabled={ocupadoMeta}
+              style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+            />
+            <div>
+              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+                Activar Instagram Direct
+              </div>
+              <div style={{ fontSize: "0.77rem", color: "#847D74", marginTop: "2px" }}>
+                Recibe mensajes directos e historias en vivo con respuesta directa + IA individual.
+              </div>
+            </div>
+          </label>
+        </div>
+
+        {mensajeMeta && <div style={estiloAlertaMensaje(mensajeMeta.tipo)}>{mensajeMeta.texto}</div>}
+      </div>
+
+      <div style={estiloPieTarjeta}>
+        <div>
+          {(tieneMetaPageToken || tieneMetaIgToken || tieneMetaAppSecret) && (
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              onClick={alEliminarClavesMeta}
+              disabled={ocupadoMeta}
+              title="Eliminar credenciales de Facebook e Instagram en Vault"
+              aria-label="Eliminar Claves"
+              style={{ ...estiloBotonPeligroSuave, opacity: ocupadoMeta ? 0.65 : 1 }}
+            >
+              <Trash2 size={14} />
+              <span className="btn-texto-responsive">
+                {borrandoMeta ? "Eliminando…" : "Eliminar Claves"}
+              </span>
+            </button>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          className="btn-responsive-accion"
+          disabled={ocupadoMeta}
+          title="Guardar configuración de Facebook Messenger e Instagram Direct"
+          aria-label="Guardar Meta"
+          style={{ ...estiloBotonPrimario, opacity: ocupadoMeta ? 0.65 : 1 }}
+        >
+          <Save size={15} />
+          <span className="btn-texto-responsive">
+            {guardandoMeta ? "Guardando…" : "Guardar Meta"}
           </span>
         </button>
       </div>

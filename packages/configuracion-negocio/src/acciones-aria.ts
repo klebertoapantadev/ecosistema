@@ -207,6 +207,7 @@ export async function probarConexionAria(
 export async function guardarWhatsappYcloudAction(
   datos: {
     habilitado: boolean;
+    modoManualDefecto?: boolean;
     numeroEmisor: string;
     numerosPermitidos: string;
     whatsappAgenteId?: string;
@@ -220,6 +221,7 @@ export async function guardarWhatsappYcloudAction(
 ): Promise<
   Resultado<{
     webhookToken: string;
+    modoManualDefecto: boolean;
     tieneYcloudApiKey: boolean;
     tieneWebhookSecret: boolean;
     tieneWhatsappAgenteKey: boolean;
@@ -269,6 +271,29 @@ export async function guardarWhatsappYcloudAction(
       return { ok: false, error: String(data?.error || "No se pudo guardar la configuración de YCloud") };
     }
 
+    let modoManualGuardado = Boolean(datos.modoManualDefecto);
+    if (datos.modoManualDefecto !== undefined) {
+      const { data: resModo, error: errModo } = await esquemaCfg.rpc(
+        "cfg_fn_guardar_modo_manual_ycloud",
+        {
+          p_negocio: codigoNegocio,
+          p_modo_manual_defecto: Boolean(datos.modoManualDefecto),
+        }
+      );
+      if (errModo) {
+        return {
+          ok: false,
+          error: errModo.message.includes("cfg_fn_guardar_modo_manual_ycloud")
+            ? "Ejecuta primero la migración 20261126000006_omnicanal_meta_messenger_instagram_y_modo_manual.sql en Supabase."
+            : errModo.message,
+        };
+      }
+      if (resModo && resModo.ok === false) {
+        return { ok: false, error: String(resModo.error || "No se pudo guardar el modo manual de WhatsApp") };
+      }
+      modoManualGuardado = Boolean(resModo?.modoManualDefecto ?? datos.modoManualDefecto);
+    }
+
     revalidatePath("/panel/aria");
     revalidatePath("/panel/configuracion");
     revalidatePath("/panel/conversaciones");
@@ -277,6 +302,7 @@ export async function guardarWhatsappYcloudAction(
       ok: true,
       data: {
         webhookToken: String(data.webhookToken || ""),
+        modoManualDefecto: modoManualGuardado,
         tieneYcloudApiKey: Boolean(data.tieneYcloudApiKey),
         tieneWebhookSecret: Boolean(data.tieneWebhookSecret),
         tieneWhatsappAgenteKey: Boolean(data.tieneWhatsappAgenteKey),
@@ -287,6 +313,129 @@ export async function guardarWhatsappYcloudAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error inesperado guardando canal WhatsApp YCloud",
+    };
+  }
+}
+
+export async function guardarMetaMensajeriaAction(
+  datos: {
+    fbHabilitado: boolean;
+    igHabilitado: boolean;
+    modoManualDefecto: boolean;
+    pageId: string;
+    igAccountId: string;
+    pageAccessToken?: string;
+    igAccessToken?: string;
+    appSecret?: string;
+    verifyToken?: string;
+    regenerarTokenUrl?: boolean;
+  },
+  negocio: string
+): Promise<
+  Resultado<{
+    webhookToken: string;
+    verifyToken: string;
+    fbHabilitado: boolean;
+    igHabilitado: boolean;
+    modoManualDefecto: boolean;
+    tienePageToken: boolean;
+    tieneIgToken: boolean;
+    tieneAppSecret: boolean;
+  }>
+> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaCfg = supabase.schema("comun_configuracion") as any;
+    const codigoNegocio = negocio.trim().toLowerCase();
+
+    const { data, error } = await esquemaCfg.rpc("cfg_fn_guardar_meta_mensajeria", {
+      p_negocio: codigoNegocio,
+      p_fb_habilitado: Boolean(datos.fbHabilitado),
+      p_ig_habilitado: Boolean(datos.igHabilitado),
+      p_modo_manual_defecto: Boolean(datos.modoManualDefecto),
+      p_page_id: datos.pageId.trim(),
+      p_ig_account_id: datos.igAccountId.trim(),
+      p_page_access_token: datos.pageAccessToken?.trim() || null,
+      p_ig_access_token: datos.igAccessToken?.trim() || null,
+      p_app_secret: datos.appSecret?.trim() || null,
+      p_verify_token: datos.verifyToken?.trim() || null,
+      p_regenerar_token_url: Boolean(datos.regenerarTokenUrl),
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message.includes("cfg_fn_guardar_meta_mensajeria")
+          ? "Ejecuta primero la migración 20261126000006_omnicanal_meta_messenger_instagram_y_modo_manual.sql en Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se pudo guardar la configuración de Facebook e Instagram"),
+      };
+    }
+
+    revalidatePath("/panel/aria");
+    revalidatePath("/panel/configuracion");
+    revalidatePath("/panel/conversaciones");
+
+    return {
+      ok: true,
+      data: {
+        webhookToken: String(data.webhookToken || ""),
+        verifyToken: String(data.verifyToken || ""),
+        fbHabilitado: Boolean(data.fbHabilitado),
+        igHabilitado: Boolean(data.igHabilitado),
+        modoManualDefecto: data.modoManualDefecto !== false,
+        tienePageToken: Boolean(data.tienePageToken),
+        tieneIgToken: Boolean(data.tieneIgToken),
+        tieneAppSecret: Boolean(data.tieneAppSecret),
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error inesperado guardando configuración de Facebook e Instagram",
+    };
+  }
+}
+
+export async function borrarClaveMetaMensajeriaAction(
+  negocio: string,
+  tipo: "page_token" | "ig_token" | "app_secret" | "todas" = "todas"
+): Promise<Resultado> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaCfg = supabase.schema("comun_configuracion") as any;
+
+    const { data, error } = await esquemaCfg.rpc("cfg_fn_borrar_meta_mensajeria_clave", {
+      p_negocio: negocio.trim().toLowerCase(),
+      p_tipo: tipo,
+    });
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error || "No se pudo eliminar la credencial de Meta") };
+    }
+
+    revalidatePath("/panel/aria");
+    revalidatePath("/panel/configuracion");
+    revalidatePath("/panel/conversaciones");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al eliminar credencial de Meta",
     };
   }
 }

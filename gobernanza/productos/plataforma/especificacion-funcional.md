@@ -28,7 +28,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio, WhatsApp Oficial de Tienda & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-009`** | Catálogo Comercial Unificado (Productos, Pago Directo Floristería, Compra Rápida < $50, Transferencia + QR DeUna + Comprobantes, Sets/Combos, Proformas Eventos, Pasarela PLUX / Payphone, Copiado de Configuración y Exportación/Importación Masiva MD/Excel para IA) | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-010`** | **Centro de Ventas Omnicanal & Reemplazo de ManyChat (Fase 1-2 Operativas con Chat Web HITL + WhatsApp YCloud, Trazabilidad IA vs. Humano, Etiquetas, `/Atajos`, Herramientas de Cobro `/LinkPago` y `/DatosPago` con Link DeUna + Bancos + Tarjeta PLUX, Campos de Venta a Taller, Usuarios y Compras/Proformas Web 360°; Meta Graph API IG/FB y TikTok planificadas)** | 🟡 En Desarrollo | **88%** | Kleber Toapanta / Jesus Navarrete |
+| **`PLT-010`** | **Centro de Ventas Omnicanal & Reemplazo de ManyChat (Fases 1-3 Implementadas: Chat Web HITL + WhatsApp YCloud + Facebook Messenger & Instagram Direct vía Meta Graph API v21.0 `$0/msg` con Modo Manual por defecto y activación individual de IA ARIA por chat, Trazabilidad IA vs. Humano, Etiquetas, `/Atajos`, `/LinkPago` y `/DatosPago`, Campos de Venta a Taller, Usuarios y Compras/Proformas Web 360°; TikTok Fase 4 planificada)** | 🟡 En Desarrollo | **93%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -43,7 +43,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-022`** | **Tokens de Acceso MCP e Integraciones Agénticas por Negocio** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-023`** | **Convenios Corporativos B2B2C, Paquetes de Beneficios y Enlace de Afiliación** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-024`** | **Campañas Informativas, Alertas Institucionales y Paquete de Beneficios** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-025`** | **Marketing Digital, Meta Pixel + Conversions API (CAPI), Catálogo Facebook/WhatsApp y Atribución IA ARIA** *(Código 100% listo; pendiente conexión operativa en Meta Business Suite)* | 🟡 En Desarrollo | **85%** | Kleber Toapanta |
+| **`PLT-025`** | **Marketing Digital, Meta Pixel + Conversions API (CAPI), Catálogo Facebook/WhatsApp y Atribución IA ARIA** *(Activo y verificado en vivo en `www.tinkay.net`)* | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
 
@@ -1713,15 +1713,15 @@ Infraestructura transversal multi-negocio (`tranqi`, `fastfix`, `tinkay`, `marga
    - **WhatsApp Click-to-WhatsApp Ads (`inboundWa.referral` en YCloud):** El webhook omnicanal extrae `headline`, `body`, `source_url` y `ctwa_clid` del anuncio de Meta, lo persiste en la conversación para visibilidad de las asesoras humanas y se lo inyecta a ARIA desde el primer mensaje del cliente.
    - **Prioridad de la voz del cliente:** La atribución guía la apertura cuando el mensaje es general (*"Hola, precios"*), pero si el cliente expresa otra necesidad explícita, ARIA prioriza de inmediato lo solicitado por el cliente.
 
-### 3. Estado de Implementación y Pendientes de Conexión en Vivo con Meta
+### 3. Estado de Implementación y Despliegue Operativo con Meta
 
 | Ítem / Fase | Estado | Detalle |
 | :--- | :---: | :--- |
 | 1 · Motor en código (`@eco/comercio`, `@eco/configuracion-negocio` y 4 apps) | ✅ Implementado | Pixel + CAPI deduplicado, Feed XML `/api/catalogo/meta-feed.xml`, atribución web + `referral` YCloud para ARIA y widget `/panel/marketing-meta` |
-| 2 · Ejecución de migración SQL en Supabase remoto (`ecosistema`) | ⏳ Pendiente | Ejecutar `supabase/migrations/20261119000008_cfg_marketing_meta_capi_catalogo_y_widget.sql` en SQL Editor |
-| 3 · Conexión y configuración directa en Meta Business Suite (sin agencia externa) | ⏳ Pendiente | Crear/obtener `Pixel ID` + `Token CAPI`, verificar dominio, cargar credenciales en `/panel/marketing-meta` y validar con `Probar CAPI` |
-| 4 · Sincronización del Catálogo Facebook / Instagram / WhatsApp Business | ⏳ Pendiente | Conectar lista programada `/api/catalogo/meta-feed.xml` en Meta Commerce Manager y vincular el catálogo a la cuenta WABA de WhatsApp Business |
-| 5 · Plantilla de atribución UTM en anuncios activos / nuevos | ⏳ Pendiente | Configurar `utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}` en Meta Ads Manager |
+| 2 · Ejecución de migración SQL en Supabase remoto (`ecosistema`) | ✅ Implementado | `20261119000008_cfg_marketing_meta_capi_catalogo_y_widget.sql` aplicada y verificada en `oaybbpdxhlxjbpwnoymy` |
+| 3 · Conexión en vivo con Meta Business Suite (Tinkay — `www.tinkay.net`) | ✅ Implementado | Portafolio `Tinkay Quito` (`530109755033626`), dominio `tinkay.net` verificado, Pixel `4679318432213846` + Token CAPI en Vault verificados (`HTTP 200 · events_received: 1` y eventos `PageView` / `ViewContent` `TIN-VAR-7` procesados en vivo) |
+| 4 · Sincronización del Catálogo Facebook / Instagram / WhatsApp Business | ✅ Implementado | Catálogo `1506168184709464` conectado a `https://www.tinkay.net/api/catalogo/meta-feed.xml` (41 productos sin errores, cada hora), enlazado al Pixel y a WABA `+593 99 643 8873` (`3151843331674615`) |
+| 5 · Plantilla de atribución UTM para campañas nuevas | ✅ Implementado | Copiable en `/panel/marketing-meta`: `utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}` |
 
 ---
 

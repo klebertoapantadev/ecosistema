@@ -19,8 +19,8 @@ Sustituir por completo la suscripción y dependencia operativa de **ManyChat** m
    - **Toma de control bidireccional en vivo (*Human-in-the-Loop*):** cuando un vendedor toma una conversación (`EN_ATENCION_ASESORA`) o envía una respuesta humana, ARIA se silencia automáticamente en ese hilo y el comprador en la tienda web recibe en vivo los mensajes del asesor con su nombre; cuando el asesor pulsa **Reactivar IA**, ARIA retoma la atención autónoma.
    - **Visión 360° de Usuarios y Compras Web:** directorio unificado de **Usuarios Registrados en la Web** (`seg_membresia` / `seg_usuario`) + **Compradores No Registrados / Invitados** (`com_cliente` / `USUARIO_NO_AUTORIZADO`), cruzado automáticamente por correo, WhatsApp normalizado (`+593...`) o sesión de chat con todas las **Compras y Proformas de Eventos** (`com_proforma`).
    - **Paridad Operativa con ManyChat:** bandeja lateral con vistas rápidas (*Todos*, *No asignado*, *Asignado a mí*, *Escalados*, *IA ARIA Activa*, *Recordatorios*, *Cerrados*), **Etiquetas personalizables** (*Seguimiento*, *Pagado*, *Hoy*, *Evento*, *SUR*, *Condolencias*, *VIP*), **Equipo de Ventas con asignación por asesor**, **Mensajes Predeterminados (`/atajos` con variables `{{nombre}}` y `{{asesor}}`)**, **Notas Internas** y **Recordatorios de Seguimiento**.
-2. **WhatsApp Business Cloud API vía YCloud + Motor de Flujos (Fase 2).**
-3. **Facebook Messenger + Instagram Direct / Comentarios / Historias vía Meta Graph API Directa (Fase 3 — $0 costo de intermediarios SaaS).**
+2. **WhatsApp Business Cloud API vía YCloud + Motor de Flujos (Fase 2 — Implementado y Activo).**
+3. **Facebook Messenger + Instagram Direct / Historias vía Meta Graph API v21.0 Directa (Fase 3 — Implementado, `$0` costo de intermediarios SaaS; migración `20261126000006`, modo Manual por defecto con activación individual de IA ARIA por chat).**
 4. **TikTok (Bio/Ads Attribution, Lead Generation Webhook API y Business Messaging API — Fase 4).**
 
 ---

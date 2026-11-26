@@ -357,12 +357,90 @@ export function extraerReferralMetaDePayloadYcloud(
   };
 }
 
+export function extraerReferralMetaDeEventoMessenger(
+  referralRaw: unknown
+): ReferralMetaWhatsapp | null {
+  if (!referralRaw || typeof referralRaw !== "object") return null;
+  const ref: any = referralRaw;
+  const adsCtx: any = ref.ads_context_data && typeof ref.ads_context_data === "object"
+    ? ref.ads_context_data
+    : null;
+
+  const sourceType =
+    typeof ref.source === "string" && ref.source.trim()
+      ? ref.source.trim()
+      : typeof ref.source_type === "string" && ref.source_type.trim()
+        ? ref.source_type.trim()
+        : undefined;
+  const sourceId =
+    typeof ref.ad_id === "string" && ref.ad_id.trim()
+      ? ref.ad_id.trim()
+      : typeof ref.source_id === "string" && ref.source_id.trim()
+        ? ref.source_id.trim()
+        : undefined;
+  const sourceUrl =
+    typeof ref.source_url === "string" && ref.source_url.trim()
+      ? ref.source_url.trim()
+      : typeof adsCtx?.photo_url === "string" && adsCtx.photo_url.trim()
+        ? adsCtx.photo_url.trim()
+        : undefined;
+  const headline =
+    typeof adsCtx?.ad_title === "string" && adsCtx.ad_title.trim()
+      ? adsCtx.ad_title.trim()
+      : typeof ref.headline === "string" && ref.headline.trim()
+        ? ref.headline.trim()
+        : undefined;
+  const body =
+    typeof ref.body === "string" && ref.body.trim()
+      ? ref.body.trim()
+      : typeof ref.ref === "string" && ref.ref.trim()
+        ? ref.ref.trim()
+        : undefined;
+  const ctwaClid =
+    typeof ref.ctwa_clid === "string" && ref.ctwa_clid.trim()
+      ? ref.ctwa_clid.trim()
+      : sourceId;
+
+  if (!sourceType && !sourceId && !headline && !body && !sourceUrl) {
+    return null;
+  }
+
+  const intencionDetectada = detectarIntencionPublicitaria({
+    headlineAnuncio: headline,
+    textoAnuncio: body,
+    rutaActual: sourceUrl,
+  });
+
+  return {
+    sourceType,
+    sourceId,
+    sourceUrl,
+    headline,
+    body,
+    ctwaClid,
+    intencionDetectada,
+  };
+}
+
 export function construirBloqueReferralWhatsappParaAria(
-  referral?: ReferralMetaWhatsapp | null
+  referral?: ReferralMetaWhatsapp | null,
+  canal: "whatsapp" | "facebook" | "instagram" = "whatsapp"
 ): string {
   if (!referral) return "";
+  const etiquetaOrigen =
+    canal === "instagram"
+      ? "Anuncio Meta Click-to-Instagram"
+      : canal === "facebook"
+        ? "Anuncio Meta Click-to-Messenger"
+        : "Anuncio Meta Click-to-WhatsApp";
+  const canalMayus =
+    canal === "instagram"
+      ? "INSTAGRAM DIRECT"
+      : canal === "facebook"
+        ? "FACEBOOK MESSENGER"
+        : "WHATSAPP";
   const partes: string[] = [
-    `Origen=Anuncio Meta Click-to-WhatsApp (${referral.sourceType || "ad"})`,
+    `Origen=${etiquetaOrigen} (${referral.sourceType || "ad"})`,
     `Intención detectada=${etiquetaIntencionLegible(referral.intencionDetectada)}`,
   ];
   if (referral.headline) partes.push(`Título del anuncio="${referral.headline.slice(0, 160)}"`);
@@ -370,7 +448,7 @@ export function construirBloqueReferralWhatsappParaAria(
   if (referral.sourceUrl) partes.push(`URL anuncio=${referral.sourceUrl}`);
 
   return (
-    `\n[ORIGEN PUBLICITARIO META ADS EN WHATSAPP: ${partes.join(" | ")}. ` +
+    `\n[ORIGEN PUBLICITARIO META ADS EN ${canalMayus}: ${partes.join(" | ")}. ` +
     `${guiaTonoAriaPorIntencion(referral.intencionDetectada, referral.headline)} ` +
     `Aunque el cliente escriba solo "Hola" o "Precio", responde conectando directamente con lo anunciado. ` +
     `Si el cliente pide explícitamente algo distinto al anuncio, atiende de inmediato lo que él solicite.]`
@@ -627,8 +705,13 @@ export function generarXmlCatalogoMeta(params: {
   const nodosItems = params.items
     .filter((it) => it.idVarianteSku && it.titulo && it.imagenPrincipalUrl && it.precioRegularUsd > 0)
     .map((it) => {
-      const adicionales = (it.imagenesAdicionalesUrls ?? [])
-        .filter((u) => /^https?:\/\//i.test(u) && u !== it.imagenPrincipalUrl)
+      const adicionales = Array.from(
+        new Set(
+          (it.imagenesAdicionalesUrls ?? [])
+            .map((u) => u.trim())
+            .filter((u) => /^https?:\/\//i.test(u) && u !== it.imagenPrincipalUrl)
+        )
+      )
         .slice(0, 8)
         .map((u) => `      <g:additional_image_link>${escaparXml(u)}</g:additional_image_link>`)
         .join("\n");

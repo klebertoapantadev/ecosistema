@@ -1416,6 +1416,7 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
       asesoraAsignadaId?: string | null;
       mensajesHumanoConteo: number;
       avisoWhatsApp?: string | null;
+      avisoCanal?: string | null;
     }
   | { ok: false; error: string }
 > {
@@ -1478,6 +1479,11 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
           asesoraAsignadaId: data.asesoraAsignadaId ? String(data.asesoraAsignadaId) : null,
           mensajesHumanoConteo: Number(data.mensajesHumanoConteo) || 1,
           avisoWhatsApp: data.avisoWhatsApp ? String(data.avisoWhatsApp) : null,
+          avisoCanal: data.avisoCanal
+            ? String(data.avisoCanal)
+            : data.avisoWhatsApp
+              ? String(data.avisoWhatsApp)
+              : null,
         };
       }
       if (error && !esFuncionRpcPendienteMigracion(error.message)) {
@@ -2929,6 +2935,561 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       ok: false,
       status: 500,
       error: err instanceof Error ? err.message : "Error interno en webhook YCloud",
+    };
+  }
+}
+
+/**
+ * Verificación GET oficial del Webhook de Meta (Facebook Messenger & Instagram Direct).
+ * Valida `hub.mode=subscribe` y `hub.verify_token` contra `comun_configuracion.cfg_aria`.
+ */
+export async function verificarWebhookMetaOmnicanalAction(entrada: {
+  token?: string | null;
+  mode?: string | null;
+  verifyToken?: string | null;
+  challenge?: string | null;
+}): Promise<{ ok: boolean; status: number; challenge?: string; negocio?: string; error?: string }> {
+  try {
+    if ((entrada.mode || "").trim() !== "subscribe") {
+      return { ok: false, status: 400, error: "hub.mode debe ser subscribe." };
+    }
+    const verifyToken = (entrada.verifyToken || "").trim();
+    const challenge = (entrada.challenge || "").trim();
+    if (!verifyToken || !challenge) {
+      return { ok: false, status: 400, error: "Faltan hub.verify_token o hub.challenge." };
+    }
+
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase: any = crearClienteAdmin() ?? (await crearClienteServidor());
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_verificar_webhook_meta",
+      {
+        p_token: entrada.token?.trim() || null,
+        p_verify_token: verifyToken,
+      }
+    );
+
+    if (error) {
+      return { ok: false, status: 500, error: error.message };
+    }
+    if (!data?.ok) {
+      return {
+        ok: false,
+        status: 403,
+        error: String(data?.error || "Verify token de Meta inválido."),
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      challenge,
+      negocio: data.negocio ? String(data.negocio) : undefined,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 500,
+      error: err instanceof Error ? err.message : "Error verificando webhook Meta",
+    };
+  }
+}
+
+/**
+ * Procesador de eventos entrantes POST desde Meta Graph API (Facebook Messenger e Instagram Direct).
+ * - Por defecto todo chat nuevo entra en modo Manual (`EN_ATENCION_ASESORA`) para que las asesoras
+ *   respondan directamente desde `/panel/conversaciones`.
+ * - Si la asesora activa IA individualmente (`Activar IA` -> `BOT_ACTIVO`) en un chat específico,
+ *   Mía (ARIA) responderá automáticamente únicamente a ese hilo.
+ */
+export async function procesarWebhookMetaOmnicanalAction(entrada: {
+  token?: string | null;
+  firmaSha256?: string | null;
+  cuerpoRaw: string;
+  payload: Record<string, unknown>;
+  origenTiendaUrl?: string;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  accion?: string;
+  procesados?: number;
+  error?: string;
+}> {
+  try {
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase: any = crearClienteAdmin() ?? (await crearClienteServidor());
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data: rec, error: errRec } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_procesar_webhook_meta",
+      {
+        p_token: entrada.token?.trim() || null,
+        p_firma_sha256: entrada.firmaSha256 ?? null,
+        p_cuerpo_raw: entrada.cuerpoRaw,
+        p_payload: entrada.payload,
+      }
+    );
+
+    if (errRec) {
+      return { ok: false, status: 500, error: errRec.message };
+    }
+    if (!rec?.ok) {
+      return {
+        ok: false,
+        status: Number(rec?.status) || 401,
+        error: String(rec?.error || "Webhook Meta no autorizado."),
+      };
+    }
+
+    const negocio = String(rec.negocio || "tinkay");
+    const tokenWebhook = String(rec.tokenWebhook || entrada.token || "");
+    const eventos = Array.isArray(rec.eventos) ? (rec.eventos as Array<Record<string, any>>) : [];
+
+    if (eventos.length === 0) {
+      return { ok: true, status: 200, accion: String(rec.accion || "SIN_EVENTOS"), procesados: 0 };
+    }
+
+    const {
+      construirBloqueReferralWhatsappParaAria,
+      etiquetaIntencionLegible,
+      extraerReferralMetaDeEventoMessenger,
+    } = await import("./marketing-meta");
+    const adminClient: any = crearClienteAdmin();
+    const origenTienda = (entrada.origenTiendaUrl || "https://www.tinkay.net").replace(/\/+$/, "");
+
+    for (const ev of eventos) {
+      const accion = String(ev.accion || "SILENCIADO_HUMANO");
+      const canalEv: "facebook" | "instagram" =
+        ev.canal === "instagram" ? "instagram" : "facebook";
+      const etiquetaCanal = canalEv === "instagram" ? "Instagram" : "Facebook";
+      const conversacionId = ev.conversacionId ? String(ev.conversacionId) : "";
+      const mensajeId = ev.mensajeId ? String(ev.mensajeId) : "";
+      const claveHilo = String(ev.claveHilo || "");
+      const remitenteNombre = String(ev.remitenteNombre || `Cliente ${etiquetaCanal}`);
+      const estadoAtencion =
+        (ev.estadoAtencion as EstadoAtencionOmnicanal) || "EN_ATENCION_ASESORA";
+
+      let imagenUrlCliente: string | null = ev.imagenUrl ? String(ev.imagenUrl) : null;
+      let audioUrlCliente: string | null = ev.audioUrl ? String(ev.audioUrl) : null;
+      let audioMimeCliente: string | null = ev.audioMime ? String(ev.audioMime) : null;
+      let documentoUrlCliente: string | null = ev.documentoUrl ? String(ev.documentoUrl) : null;
+      const documentoNombreCliente: string | null = ev.documentoNombre
+        ? String(ev.documentoNombre)
+        : null;
+      let contenidoCliente = String(ev.contenido || "");
+      let bytesAudioDescargados: Buffer | null = null;
+
+      // 1. Espejado permanente de imagen entrante en comun-publico
+      if (imagenUrlCliente && mensajeId && adminClient && tokenWebhook) {
+        try {
+          const respImg = await fetch(imagenUrlCliente, {
+            headers: { Accept: "image/*,*/*;q=0.8" },
+            signal: AbortSignal.timeout(15000),
+          });
+          if (respImg.ok) {
+            const mime = (respImg.headers.get("content-type") || "image/jpeg")
+              .split(";")[0]!
+              .trim();
+            if (mime.startsWith("image/")) {
+              const ext = extensionDesdeMimeMultimedia(mime, "jpg");
+              const rutaStorage = `omnicanal-media/${negocio}/${mensajeId}.${ext}`;
+              const bytes = Buffer.from(await respImg.arrayBuffer());
+              const { error: errUp } = await adminClient.storage
+                .from("comun-publico")
+                .upload(rutaStorage, bytes, { contentType: mime, upsert: true });
+              if (!errUp) {
+                const { data: pub } = adminClient.storage
+                  .from("comun-publico")
+                  .getPublicUrl(rutaStorage);
+                if (pub?.publicUrl) {
+                  await esquemaComercio.rpc("com_fn_omnicanal_actualizar_imagen_mensaje", {
+                    p_token: tokenWebhook,
+                    p_mensaje_id: mensajeId,
+                    p_imagen_publica_url: pub.publicUrl,
+                  });
+                  contenidoCliente = contenidoCliente.split(imagenUrlCliente).join(pub.publicUrl);
+                  imagenUrlCliente = pub.publicUrl;
+                }
+              }
+            }
+          }
+        } catch {
+          // Conservar URL original de Meta CDN
+        }
+      }
+
+      // 2. Descargar y espejar audio entrante (notas de voz de Messenger / Instagram)
+      if (audioUrlCliente) {
+        try {
+          const respAud = await fetch(audioUrlCliente, {
+            headers: { Accept: "audio/*,video/mp4,*/*;q=0.8" },
+            signal: AbortSignal.timeout(20000),
+          });
+          if (respAud.ok) {
+            const mimeResp = (
+              respAud.headers.get("content-type") ||
+              audioMimeCliente ||
+              "audio/mp4"
+            )
+              .split(";")[0]!
+              .trim();
+            const buf = Buffer.from(await respAud.arrayBuffer());
+            if (buf.byteLength > 0 && buf.byteLength <= 10 * 1024 * 1024) {
+              bytesAudioDescargados = buf;
+              audioMimeCliente = mimeResp;
+              if (adminClient && mensajeId && tokenWebhook) {
+                const ext = extensionDesdeMimeMultimedia(mimeResp, "m4a");
+                const rutaStorage = `omnicanal-media/${negocio}/${mensajeId}.${ext}`;
+                const { error: errUpAud } = await adminClient.storage
+                  .from("comun-publico")
+                  .upload(rutaStorage, buf, { contentType: mimeResp, upsert: true });
+                if (!errUpAud) {
+                  const { data: pubAud } = adminClient.storage
+                    .from("comun-publico")
+                    .getPublicUrl(rutaStorage);
+                  if (pubAud?.publicUrl) {
+                    await esquemaComercio
+                      .rpc("com_fn_omnicanal_actualizar_media_mensaje", {
+                        p_token: tokenWebhook,
+                        p_mensaje_id: mensajeId,
+                        p_audio_url: pubAud.publicUrl,
+                      })
+                      .catch(() => {});
+                    audioUrlCliente = pubAud.publicUrl;
+                  }
+                }
+              }
+            }
+          }
+        } catch {
+          // Conservar URL original de Meta CDN
+        }
+      }
+
+      // 3. Espejar documento entrante en comun-publico
+      if (documentoUrlCliente && mensajeId && adminClient && tokenWebhook) {
+        try {
+          const respDoc = await fetch(documentoUrlCliente, {
+            signal: AbortSignal.timeout(20000),
+          });
+          if (respDoc.ok) {
+            const mimeDoc = (respDoc.headers.get("content-type") || "application/pdf")
+              .split(";")[0]!
+              .trim();
+            const bufDoc = Buffer.from(await respDoc.arrayBuffer());
+            if (bufDoc.byteLength > 0 && bufDoc.byteLength <= 15 * 1024 * 1024) {
+              const extDoc = extensionDesdeMimeMultimedia(mimeDoc, "pdf");
+              const rutaStorage = `omnicanal-media/${negocio}/${mensajeId}.${extDoc}`;
+              const { error: errUpDoc } = await adminClient.storage
+                .from("comun-publico")
+                .upload(rutaStorage, bufDoc, { contentType: mimeDoc, upsert: true });
+              if (!errUpDoc) {
+                const { data: pubDoc } = adminClient.storage
+                  .from("comun-publico")
+                  .getPublicUrl(rutaStorage);
+                if (pubDoc?.publicUrl) {
+                  await esquemaComercio
+                    .rpc("com_fn_omnicanal_actualizar_media_mensaje", {
+                      p_token: tokenWebhook,
+                      p_mensaje_id: mensajeId,
+                      p_documento_url: pubDoc.publicUrl,
+                    })
+                    .catch(() => {});
+                  documentoUrlCliente = pubDoc.publicUrl;
+                }
+              }
+            }
+          }
+        } catch {
+          // Conservar URL original
+        }
+      }
+
+      // 4. Broadcast en tiempo real (<50ms) hacia /panel/conversaciones + Push + Campana
+      if (conversacionId) {
+        const eventoEntrada: EventoBroadcastChatWeb = {
+          eventoId: mensajeId || `meta-in-${Date.now()}`,
+          claveHilo,
+          conversacionId,
+          canal: canalEv,
+          fase: accion === "ECO_MOVIL_REGISTRADO" ? "INTERVENCION_HUMANA" : "ENTRADA_CLIENTE",
+          contenido: contenidoCliente,
+          imagenUrl: imagenUrlCliente,
+          audioUrl: audioUrlCliente,
+          audioMime: audioMimeCliente,
+          documentoUrl: documentoUrlCliente,
+          documentoNombre: documentoNombreCliente,
+          autorNombre:
+            accion === "ECO_MOVIL_REGISTRADO"
+              ? `${etiquetaCanal} App Tienda`
+              : remitenteNombre,
+          remitenteNombre,
+          remitenteTelefono: null,
+          estadoAtencion,
+          creadoEn: new Date().toISOString(),
+        };
+        await emitirBroadcastServidorOmnicanal(
+          supabase,
+          negocio,
+          "actividad_chat_web",
+          eventoEntrada as unknown as Record<string, unknown>
+        );
+
+        if (accion !== "ECO_MOVIL_REGISTRADO" && tokenWebhook) {
+          const resumenMsg = contenidoCliente
+            .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "Imagen")
+            .slice(0, 150);
+          await despacharPushYCampanaStaffOmnicanal({
+            supabase,
+            negocio,
+            tokenWebhook,
+            soloVentas: true,
+            titulo: `${remitenteNombre} · ${etiquetaCanal}`,
+            cuerpoPlano: resumenMsg || "Nuevo mensaje recibido",
+            contenidoHtml: `<p><strong>${remitenteNombre} (${etiquetaCanal}):</strong> ${resumenMsg || "Nuevo mensaje recibido"}</p>`,
+            tag: `${canalEv}-conv-${conversacionId}`,
+            claveRefBase: `msg-${canalEv}-${mensajeId || Date.now()}`,
+            resolverUrlPorRol: () =>
+              `/panel/conversaciones?chat=${encodeURIComponent(conversacionId)}&msg=${encodeURIComponent(mensajeId || String(Date.now()))}`,
+          });
+        }
+      }
+
+      // 5. Transcripción automática de notas de voz de Messenger / Instagram como Nota Interna
+      let transcripcionNotaVoz: string | null = null;
+      if (
+        audioUrlCliente &&
+        conversacionId &&
+        tokenWebhook &&
+        accion !== "ECO_MOVIL_REGISTRADO" &&
+        bytesAudioDescargados &&
+        bytesAudioDescargados.byteLength <= 8 * 1024 * 1024
+      ) {
+        try {
+          const textoEnv = await transcribirAudioConEnvOpcional(
+            bytesAudioDescargados,
+            audioMimeCliente || "audio/mp4"
+          );
+          const audioBase64 = textoEnv ? null : bytesAudioDescargados.toString("base64");
+          const { data: resStt } = await esquemaComercio.rpc(
+            "com_fn_omnicanal_transcribir_y_guardar_nota_voz",
+            {
+              p_negocio: negocio,
+              p_conversacion_id: conversacionId,
+              p_mensaje_audio_id: mensajeId || null,
+              p_audio_base64: audioBase64,
+              p_mime_type: audioMimeCliente || "audio/mp4",
+              p_transcripcion_precalculada: textoEnv,
+              p_token_webhook: tokenWebhook,
+            }
+          );
+
+          if (resStt?.ok && resStt.transcripcion) {
+            transcripcionNotaVoz = String(resStt.transcripcion).trim();
+            const notaInternaMsg = resStt.notaInterna as MensajeOmnicanal | undefined;
+            const eventoNotaVoz: EventoBroadcastChatWeb = {
+              eventoId: String(notaInternaMsg?.id || `stt-meta-${Date.now()}`),
+              claveHilo,
+              conversacionId,
+              canal: canalEv,
+              fase: "NOTA_INTERNA",
+              contenido:
+                notaInternaMsg?.contenido ||
+                `🎙️ Transcripción de nota de voz: «${transcripcionNotaVoz}»`,
+              autorNombre: notaInternaMsg?.autorNombre || "ARIA · Transcripción de Voz",
+              remitenteNombre,
+              remitenteTelefono: null,
+              estadoAtencion,
+              creadoEn: notaInternaMsg?.creadoEn || new Date().toISOString(),
+            };
+            await emitirBroadcastServidorOmnicanal(
+              supabase,
+              negocio,
+              "actividad_chat_web",
+              eventoNotaVoz as unknown as Record<string, unknown>
+            );
+          }
+        } catch {
+          // Continuar sin bloquear webhook si STT no está configurado
+        }
+      }
+
+      // 6. Atribución de anuncio Meta Ads (si el cliente llegó desde un anuncio FB/IG)
+      const referralMeta = extraerReferralMetaDeEventoMessenger(ev.referralMeta);
+      if (referralMeta && conversacionId && accion !== "ECO_MOVIL_REGISTRADO") {
+        const resumenRef = [
+          `📢 Meta Ads · ${etiquetaCanal} (${etiquetaIntencionLegible(referralMeta.intencionDetectada)})`,
+          referralMeta.headline ? `"${referralMeta.headline}"` : null,
+          referralMeta.sourceId ? `Ad ID: ${referralMeta.sourceId}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        await emitirBroadcastServidorOmnicanal(supabase, negocio, "actividad_chat_web", {
+          eventoId: `ref-meta-${canalEv}-${mensajeId || Date.now()}`,
+          claveHilo,
+          conversacionId,
+          canal: canalEv,
+          fase: "NOTA_INTERNA",
+          contenido: resumenRef,
+          autorNombre: "Atribución Meta Ads",
+          remitenteNombre,
+          remitenteTelefono: null,
+          estadoAtencion,
+          creadoEn: new Date().toISOString(),
+        });
+      }
+
+      // 7. Invocar a ARIA ÚNICAMENTE si este chat específico está en BOT_ACTIVO
+      if (accion !== "INVOCAR_ARIA" || !conversacionId || !tokenWebhook) {
+        continue;
+      }
+
+      const nombreCorto = remitenteNombre.slice(0, 48);
+      const remitenteExtId = String(ev.remitenteId || claveHilo);
+      const textoCliente = transcripcionNotaVoz
+        ? `[NOTA DE VOZ ENVIADA POR EL CLIENTE — TRANSCRIPCIÓN]: ${transcripcionNotaVoz}`
+        : audioUrlCliente
+          ? `[SISTEMA: El cliente envió una nota de voz por ${etiquetaCanal} pero la transcripción automática no pudo ejecutarse. Pídele amablemente en 1 línea si te puede escribir brevemente su consulta o indícale que una asesora escuchará su audio enseguida.]`
+          : contenidoCliente;
+
+      const encabezadoUsuario = `[USUARIO ACTUAL: chat_id=${remitenteExtId} | canal=${canalEv} | nombre_corto=${nombreCorto}]`;
+
+      let bloqueInmediata = "";
+      try {
+        const { listarEntregaInmediataAction } = await import("./acciones-operaciones-taller");
+        const resInm = await listarEntregaInmediataAction(negocio, false);
+        if (resInm.ok && resInm.items.length > 0) {
+          const lista = resInm.items
+            .slice(0, 6)
+            .map(
+              (i) =>
+                `"${i.nombre}" a $${Number(i.precio).toFixed(2)} USD (${i.tiempoEntregaTexto}${
+                  i.imagenUrl && /^https?:\/\//i.test(i.imagenUrl)
+                    ? `, foto markdown para adjuntar: ![${i.nombre}](${i.imagenUrl})`
+                    : ""
+                }, link tienda: ${origenTienda}/producto/${i.slug})`
+            )
+            .join("; ");
+          bloqueInmediata = `\n[ARREGLOS LISTOS EN TIENDA PARA ENTREGA INMEDIATA 1-2h: ${lista}. Cuando recomiendes uno incluye su foto markdown ![Nombre](url) para enviarle la fotografía real. Catálogo inmediato: ${origenTienda}/categoria/entrega-inmediata]`;
+        }
+      } catch {
+        // Ignorar
+      }
+
+      let bloqueCotizacionGps = "";
+      try {
+        const { cotizarEnvioDesdeEntradaAction } = await import("./acciones-logistica");
+        const { extraerCoordenadasDeTextoOUrl, extraerPrimeraUrlDeTexto } = await import(
+          "./logistica"
+        );
+        const latPin = ev.latitud != null ? Number(ev.latitud) : null;
+        const lngPin = ev.longitud != null ? Number(ev.longitud) : null;
+        const urlMapa = extraerPrimeraUrlDeTexto(textoCliente);
+        const tieneMapa =
+          (latPin != null && lngPin != null && !Number.isNaN(latPin) && !Number.isNaN(lngPin)) ||
+          Boolean(
+            urlMapa &&
+              /(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google|waze\.com)/i.test(
+                urlMapa
+              )
+          ) ||
+          Boolean(extraerCoordenadasDeTextoOUrl(textoCliente));
+
+        if (tieneMapa) {
+          const entradaUbicacion =
+            latPin != null && lngPin != null && !Number.isNaN(latPin) && !Number.isNaN(lngPin)
+              ? `${latPin},${lngPin}`
+              : urlMapa ?? textoCliente;
+          const cot = await cotizarEnvioDesdeEntradaAction({
+            negocio,
+            enlaceOTexto: entradaUbicacion,
+          });
+          if (cot.ok) {
+            const c = cot.cotizacion;
+            const dirRef =
+              c.detalleDireccion?.resumenDireccion || cot.direccionDetectada || "Pin GPS verificado";
+            bloqueCotizacionGps = `\n[COTIZACIÓN OFICIAL DE ENVÍO CALCULADA POR SISTEMA: ${c.etiquetaResumen}. Costo final de envío: $${c.costoTotalEnvio.toFixed(2)} USD. Dirección referencial: ${dirRef}. Usa exactamente este costo final al responder al cliente.]`;
+
+            const linkGuardar =
+              urlMapa ||
+              (latPin != null && lngPin != null
+                ? `https://www.google.com/maps?q=${latPin},${lngPin}`
+                : null);
+            await esquemaComercio
+              .rpc("com_fn_omnicanal_fusionar_datos_venta_webhook", {
+                p_token: tokenWebhook,
+                p_conversacion_id: conversacionId,
+                p_parcial: {
+                  ubicacionUrl: linkGuardar,
+                  costoEnvio: c.costoTotalEnvio,
+                  sector:
+                    c.zonaDetectada?.nombre || c.detalleDireccion?.parroquia || c.etiquetaResumen,
+                  direccionReferencia: dirRef,
+                },
+              })
+              .catch(() => {});
+          }
+        }
+      } catch {
+        // Ignorar
+      }
+
+      const bloqueReferralMeta = construirBloqueReferralWhatsappParaAria(referralMeta, canalEv);
+      const promptCompleto =
+        `${encabezadoUsuario}${bloqueReferralMeta}\n${textoCliente}\n\n` +
+        `[ENLACES DIRECTOS E-COMMERCE: Categorías ${origenTienda}/categoria/{slug}, Entrega Inmediata ${origenTienda}/categoria/entrega-inmediata, Producto ${origenTienda}/producto/{slug}]` +
+        bloqueInmediata +
+        bloqueCotizacionGps;
+
+      const { data: resAria } = await esquemaComercio.rpc(
+        "com_fn_omnicanal_responder_meta_con_aria",
+        {
+          p_token: tokenWebhook,
+          p_conversacion_id: conversacionId,
+          p_prompt: promptCompleto,
+          p_imagen_url: imagenUrlCliente,
+        }
+      );
+
+      if (resAria?.ok && !resAria?.silenciado && resAria?.respuestaAria) {
+        const eventoBot: EventoBroadcastChatWeb = {
+          eventoId: String(resAria.mensajeId || `meta-bot-${Date.now()}`),
+          claveHilo: String(resAria.claveHilo || claveHilo),
+          conversacionId: String(resAria.conversacionId || conversacionId),
+          canal: canalEv,
+          fase: "RESPUESTA_ARIA",
+          contenido: String(resAria.respuestaAria),
+          imagenesUrls: Array.isArray(resAria.imagenesUrls)
+            ? resAria.imagenesUrls.map((u: unknown) => String(u))
+            : undefined,
+          autorNombre: String(resAria.autorNombre || "Mía · ARIA"),
+          remitenteNombre,
+          remitenteTelefono: null,
+          estadoAtencion: (resAria.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+          creadoEn: new Date().toISOString(),
+        };
+        await emitirBroadcastServidorOmnicanal(
+          supabase,
+          negocio,
+          "actividad_chat_web",
+          eventoBot as unknown as Record<string, unknown>
+        );
+      }
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      accion: "PROCESADO_META",
+      procesados: eventos.length,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 500,
+      error: err instanceof Error ? err.message : "Error interno en webhook Meta",
     };
   }
 }

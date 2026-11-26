@@ -4,6 +4,7 @@ import {
   construirBloqueReferralWhatsappParaAria,
   construirMensajeWhatsappContextual,
   detectarIntencionPublicitaria,
+  extraerReferralMetaDeEventoMessenger,
   extraerReferralMetaDePayloadYcloud,
   generarXmlCatalogoMeta,
   obtenerSaludoInicialChatPorIntencion,
@@ -122,5 +123,26 @@ describe("PLT-025 — Marketing Meta, Catálogo XML y Atribución ARIA", () => {
     expect(xml).toContain("<g:price>70.00 USD</g:price>");
     expect(xml).toContain("<g:sale_price>60.00 USD</g:sale_price>");
     expect(xml).toContain("Tinkay Flores &amp; Eventos");
+  });
+
+  it("extrae atribución publicitaria de anuncios Click-to-Messenger e Instagram Direct para ARIA", () => {
+    const refMessenger = extraerReferralMetaDeEventoMessenger({
+      source: "ADS",
+      type: "OPEN_THREAD",
+      ad_id: "12021499887766",
+      ads_context_data: {
+        ad_title: "Coronas de Condolencias con entrega inmediata en Quito",
+        photo_url: "https://www.tinkay.net/catalogo/corona-blanca.jpg",
+      },
+    });
+
+    expect(refMessenger).not.toBeNull();
+    expect(refMessenger?.sourceId).toBe("12021499887766");
+    expect(refMessenger?.intencionDetectada).toBe("CONDOLENCIAS");
+
+    const bloqueIg = construirBloqueReferralWhatsappParaAria(refMessenger, "instagram");
+    expect(bloqueIg).toContain("ORIGEN PUBLICITARIO META ADS EN INSTAGRAM DIRECT");
+    expect(bloqueIg).toContain("Click-to-Instagram");
+    expect(bloqueIg).toContain("PROHIBIDO usar emojis festivos");
   });
 });
