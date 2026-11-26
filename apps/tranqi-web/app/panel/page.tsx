@@ -316,7 +316,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
     <>
       <div className="saludo-inicio">
         <div>
-          <h1>{saludo ?? `Hola de nuevo, ${nombre}`}. Estás <i>tranqi</i>.</h1>
+          <h1>{saludo ?? `Hola de nuevo, ${nombre}`}. Estás <i>Tranqi</i>.</h1>
           <p className="inicio-cliente-sub">{subtitulo}</p>
         </div>
         <Link href="/panel/agendamiento?widget=agendar_cita" className="btn btn-primario btn-agendar">

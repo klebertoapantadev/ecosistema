@@ -27,14 +27,14 @@ export const viewport: Viewport = {
 export async function generateMetadata(): Promise<Metadata> {
   const mkm = await obtenerConfiguracionMarketingPublicaAction("tranqi").catch(() => null);
   return {
-    title: "tranqi — Lo legal, para todos",
+    title: "Tranqi — Lo legal, para todos",
     description:
       "Plataforma digital de protección jurídica continua, agendamiento legal con ARIA y billetera de documentos.",
     manifest: "/manifest.webmanifest",
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
-      title: "tranqi",
+      title: "Tranqi",
     },
     icons: {
       icon: [

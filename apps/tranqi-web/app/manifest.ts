@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/panel",
-    name: "tranqi — Tu respaldo legal de confianza",
-    short_name: "tranqi",
+    name: "Tranqi — Tu respaldo legal de confianza",
+    short_name: "Tranqi",
     description:
       "Plataforma digital de protección jurídica continua, agendamiento legal con ARIA y billetera de documentos.",
     start_url: "/panel",
