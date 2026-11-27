@@ -969,39 +969,58 @@ export async function aplicarLoteOperacionesGooglePeople(params: {
   }
 
   // 2. ELIMINAR_DUPLICADO en 1 sola llamada `people:batchDeleteContacts` (hasta 500 por llamada)
+  // INVARIANTE DE SEGURIDAD: jamás eliminar un resourceName que también esté siendo actualizado o etiquetado
   if (opsEliminarDup.length > 0) {
-    const idsEliminar = Array.from(new Set(opsEliminarDup.map((o) => o.resourceName)));
-    const delRes = await fetchGoogleConReintento(
-      "https://people.googleapis.com/v1/people:batchDeleteContacts",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${params.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ resourceNames: idsEliminar }),
-      }
+    const recursosProtegidos = new Set<string>([
+      ...opsActualizar.map((o) => o.resourceName),
+      ...opsSoloEtiqueta.map((o) => o.resourceName),
+    ]);
+    const idsEliminar = Array.from(
+      new Set(
+        opsEliminarDup
+          .map((o) => o.resourceName)
+          .filter((rn) => Boolean(rn) && !recursosProtegidos.has(rn))
+      )
     );
-    if (delRes.status === 429) {
-      registrar429(delRes, [...opsEliminarDup, ...opsSoloEtiqueta, ...opsEtiquetarDup]);
-      return {
-        actualizados,
-        etiquetadosCategoria,
-        etiquetadosDuplicados,
-        eliminadosPapelera,
-        errores,
-        detallesLog,
-        rateLimited,
-        retryAfterSegundos,
-        operacionesPendientes429,
-      };
-    }
-    if (delRes.ok) {
-      eliminadosPapelera += idsEliminar.length;
-      detallesLog.push(`🗑️ Movidos ${idsEliminar.length} duplicado(s) a Papelera (batch)`);
+    if (idsEliminar.length === 0) {
+      detallesLog.push(
+        "🛡️ Protección activa: se omitió borrado porque coincidía con fichas principales."
+      );
     } else {
-      const errTxt = await delRes.text();
-      errores.push(`Error moviendo duplicados a Papelera (HTTP ${delRes.status}): ${errTxt.slice(0, 110)}`);
+      const delRes = await fetchGoogleConReintento(
+        "https://people.googleapis.com/v1/people:batchDeleteContacts",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${params.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ resourceNames: idsEliminar }),
+        }
+      );
+      if (delRes.status === 429) {
+        registrar429(delRes, [...opsEliminarDup, ...opsSoloEtiqueta, ...opsEtiquetarDup]);
+        return {
+          actualizados,
+          etiquetadosCategoria,
+          etiquetadosDuplicados,
+          eliminadosPapelera,
+          errores,
+          detallesLog,
+          rateLimited,
+          retryAfterSegundos,
+          operacionesPendientes429,
+        };
+      }
+      if (delRes.ok) {
+        eliminadosPapelera += idsEliminar.length;
+        detallesLog.push(`🗑️ Movidos ${idsEliminar.length} duplicado(s) a Papelera (batch)`);
+      } else {
+        const errTxt = await delRes.text();
+        errores.push(
+          `Error moviendo duplicados a Papelera (HTTP ${delRes.status}): ${errTxt.slice(0, 110)}`
+        );
+      }
     }
   }
 

@@ -774,19 +774,40 @@ function construirFichaDepuradaDesdeGrupo(
     auto.motivo
   );
 
-  // 5. Trazabilidad Google Contacts (principal + duplicados a limpiar/etiquetar)
-  const fichasConGoogle = grupoFichas.filter((f) => Boolean(f.googleResourceName));
-  // Preferir como ficha principal la que tenga más campos o nombre coincidente
+  // 5. Trazabilidad Google Contacts (principal + duplicados REALES con distinto resourceName)
+  // Deduplicar primero por googleResourceName para que leer la misma cuenta dos veces
+  // JAMÁS marque el mismo resourceName como principal y como duplicado a la vez.
+  const mapaGoogleUnicos = new Map<string, FichaAgendaCruda>();
+  for (const f of grupoFichas) {
+    const rn = f.googleResourceName?.trim();
+    if (!rn) continue;
+    const prev = mapaGoogleUnicos.get(rn);
+    if (!prev) {
+      mapaGoogleUnicos.set(rn, f);
+    } else {
+      const scoreF =
+        f.telefonos.length * 3 + f.correos.length * 2 + (f.empresa ? 1 : 0) + (f.notas ? 1 : 0);
+      const scorePrev =
+        prev.telefonos.length * 3 +
+        prev.correos.length * 2 +
+        (prev.empresa ? 1 : 0) +
+        (prev.notas ? 1 : 0);
+      if (scoreF > scorePrev) mapaGoogleUnicos.set(rn, f);
+    }
+  }
+  const fichasConGoogle = Array.from(mapaGoogleUnicos.values());
+  // Preferir como ficha principal la que tenga más campos
   fichasConGoogle.sort((a, b) => {
     const score = (f: FichaAgendaCruda) =>
       f.telefonos.length * 3 + f.correos.length * 2 + (f.empresa ? 1 : 0) + (f.notas ? 1 : 0);
     return score(b) - score(a);
   });
   const principalGoogle = fichasConGoogle[0] ?? null;
+  const rnPrincipal = principalGoogle?.googleResourceName?.trim() || null;
   const duplicadosGoogle = fichasConGoogle
     .slice(1)
-    .map((f) => f.googleResourceName!)
-    .filter(Boolean);
+    .map((f) => f.googleResourceName?.trim() || "")
+    .filter((rn) => Boolean(rn) && rn !== rnPrincipal);
 
   const algunTelefonoCorregido = telefonos.some((t) => t.fueCorregido);
   const algunTelefonoPre2012 = telefonos.some((t) => t.fuePre2012Ecuador);

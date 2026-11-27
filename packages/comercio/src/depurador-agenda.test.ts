@@ -140,4 +140,58 @@ describe("depurador-agenda · motor 2D, estandarización y exportadores", () => 
     expect(csvOut).toContain("+593 99 343 4305");
     expect(csvOut).toContain("+593 99 526 3033");
   });
+
+  it("jamás marca el mismo googleResourceName como principal y como duplicado aunque se lea la cuenta dos veces", () => {
+    const mismaCuentaDosVeces = [
+      {
+        idLocal: "g-1",
+        origen: "GOOGLE_CONTACTS" as const,
+        googleResourceName: "people/c1001",
+        googleEtag: "etag-1",
+        nombreOriginal: "César Betancurth Cliente",
+        telefonos: [{ valor: "+593991234567", tipo: "mobile" }],
+        correos: [],
+        etiquetas: [],
+        esAgendaPersonal: true,
+      },
+      {
+        idLocal: "g-1-repetido",
+        origen: "GOOGLE_CONTACTS" as const,
+        googleResourceName: "people/c1001",
+        googleEtag: "etag-1",
+        nombreOriginal: "César Betancurth Cliente",
+        telefonos: [{ valor: "0991234567", tipo: "mobile" }],
+        correos: [],
+        etiquetas: [],
+        esAgendaPersonal: true,
+      },
+      {
+        idLocal: "g-2-real-dup",
+        origen: "GOOGLE_CONTACTS" as const,
+        googleResourceName: "people/c2002",
+        googleEtag: "etag-2",
+        nombreOriginal: "Cesar",
+        telefonos: [{ valor: "0991234567", tipo: "mobile" }],
+        correos: [],
+        etiquetas: [],
+        esAgendaPersonal: true,
+      },
+    ];
+
+    const { fichas } = depurarAgenda2D(mismaCuentaDosVeces, OPCIONES_DEPURADOR_DEFECTO);
+    expect(fichas).toHaveLength(1);
+    expect(fichas[0]?.googleResourceNamePrincipal).toBe("people/c1001");
+    // Solo people/c2002 es duplicado real; people/c1001 JAMÁS puede aparecer en duplicados
+    expect(fichas[0]?.googleResourceNamesDuplicados).toEqual(["people/c2002"]);
+    expect(fichas[0]?.googleResourceNamesDuplicados).not.toContain("people/c1001");
+
+    // Y si solo está repetido people/c1001 sin otro resourceName real, duplicados debe ser []
+    const { fichas: fichasSinDupReal } = depurarAgenda2D(
+      mismaCuentaDosVeces.slice(0, 2),
+      OPCIONES_DEPURADOR_DEFECTO
+    );
+    expect(fichasSinDupReal).toHaveLength(1);
+    expect(fichasSinDupReal[0]?.googleResourceNamePrincipal).toBe("people/c1001");
+    expect(fichasSinDupReal[0]?.googleResourceNamesDuplicados).toEqual([]);
+  });
 });

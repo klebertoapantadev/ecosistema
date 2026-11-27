@@ -625,11 +625,25 @@ export function DepuradorAgendaGooglePanel({
         return;
       }
 
+      const etiquetaFuenteGoogle = `Google (${res.correoGoogle})`;
+      const nombreResumenGoogle = `Google: ${res.correoGoogle}`;
+      const nuevosRecursos = new Set(
+        res.fichas.map((f) => f.googleResourceName).filter(Boolean)
+      );
+
       setConexionActivaId(con.id);
-      setFichasCrudas((prev) => [...prev, ...res.fichas]);
+      // Reemplazar lecturas anteriores de la misma cuenta Google (jamás duplicar el mismo resourceName)
+      setFichasCrudas((prev) => [
+        ...prev.filter(
+          (f) =>
+            f.etiquetaFuente !== etiquetaFuenteGoogle &&
+            (!f.googleResourceName || !nuevosRecursos.has(f.googleResourceName))
+        ),
+        ...res.fichas,
+      ]);
       setFuentesResumen((prev) => [
-        ...prev,
-        { nombre: `Google: ${res.correoGoogle}`, total: res.fichas.length },
+        ...prev.filter((s) => s.nombre !== nombreResumenGoogle),
+        { nombre: nombreResumenGoogle, total: res.fichas.length },
       ]);
       setModalSync(null);
       setMensaje({
@@ -1054,10 +1068,23 @@ export function DepuradorAgendaGooglePanel({
   };
 
   const ejecutarLoopSyncGoogle = async (jobInicial: CheckpointSyncGoogle) => {
+    // Blindaje extra para checkpoints guardados antes del fix: nunca borrar un resourceName que figure como principal
+    const recursosProtegidosJob = new Set<string>(
+      jobInicial.operaciones
+        .filter((o) => o.tipo === "ACTUALIZAR" || o.tipo === "ASIGNAR_ETIQUETA")
+        .map((o) => o.resourceName)
+    );
+    const operacionesSaneadas = jobInicial.operaciones.filter(
+      (o, idx) =>
+        idx < jobInicial.siguienteIndice ||
+        o.tipo !== "ELIMINAR_DUPLICADO" ||
+        !recursosProtegidosJob.has(o.resourceName)
+    );
+
     let job: CheckpointSyncGoogle = {
       ...jobInicial,
       etiquetadosCategoria: jobInicial.etiquetadosCategoria ?? 0,
-      operaciones: [...jobInicial.operaciones],
+      operaciones: operacionesSaneadas,
       errores: [...jobInicial.errores],
       logs: [...jobInicial.logs],
     };
@@ -1408,6 +1435,14 @@ export function DepuradorAgendaGooglePanel({
 
     const operaciones: OperacionEscrituraGoogleContacts[] = [];
     const gruposNecesarios = new Set<string>();
+    // Invariante de seguridad: jamás permitir que un resourceName principal sea etiquetado o enviado a Papelera como duplicado
+    const recursosPrincipalesProtegidos = new Set<string>();
+    for (const f of fichasDepuradas) {
+      if (f.googleResourceNamePrincipal) {
+        recursosPrincipalesProtegidos.add(f.googleResourceNamePrincipal.trim());
+      }
+    }
+    const duplicadosYaEncolados = new Set<string>();
 
     for (const f of fichasDepuradas) {
       if (!f.seleccionado || !f.googleResourceNamePrincipal) continue;
@@ -1456,7 +1491,17 @@ export function DepuradorAgendaGooglePanel({
         });
       }
 
-      for (const dupRes of f.googleResourceNamesDuplicados) {
+      for (const rawDupRes of f.googleResourceNamesDuplicados) {
+        const dupRes = rawDupRes.trim();
+        if (
+          !dupRes ||
+          dupRes === f.googleResourceNamePrincipal.trim() ||
+          recursosPrincipalesProtegidos.has(dupRes) ||
+          duplicadosYaEncolados.has(dupRes)
+        ) {
+          continue;
+        }
+        duplicadosYaEncolados.add(dupRes);
         if (modoDuplicadosGoogle === "PAPELERA") {
           operaciones.push({
             tipo: "ELIMINAR_DUPLICADO",
