@@ -6,7 +6,9 @@
  * - Recepción de Notificaciones Web Push en segundo plano (incluso con el navegador cerrado)
  */
 
-const SW_VERSION = "tranqi-pwa-v1.2";
+// v1.3 (TRQ-038): íconos nuevos con el símbolo «a»; el cambio de versión
+// descarta la caché que guardaba los de la «t».
+const SW_VERSION = "tranqi-pwa-v1.3";
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_PAGES = `${SW_VERSION}-pages`;
 const CACHE_API = `${SW_VERSION}-api`;
@@ -141,7 +143,7 @@ self.addEventListener("fetch", (event) => {
 // ── NOTIFICACIONES PUSH EN SEGUNDO PLANO (CON NAVEGADOR CERRADO) ──────────
 self.addEventListener("push", (event) => {
   let payload = {
-    title: "tranqi — Nueva notificación",
+    title: "Tranqi — Nueva notificación",
     body: "Tienes una actualización importante en tu portal jurídico.",
     url: "/panel",
     icon: "/icons/icon-192.png",

@@ -51,6 +51,12 @@ rail del abogado va en `--esmeralda-tinta` `#083D2C`, el mismo verde llevado a t
 `#0E6648` directo los rótulos tenues del menú no alcanzan contraste; el verde exacto marca la opción
 activa, la tarjeta del portal y los botones.
 
+**Ícono de la app.** El ícono de la app instalada, el de la pestaña y el de las notificaciones es el
+símbolo «a» del brandbook sobre violeta (`public/icons/`, TRQ-038, 26-nov-2026; archivo entregado por
+negocio). Sustituye a la «t» dentro de un círculo amarillo, que no era de marca. Va a sangre, sin
+transparencia, y la «a» cabe en la zona segura de los íconos adaptables de Android. Al cambiarlo hay
+que subir `SW_VERSION` en `public/sw.js` para que no se sirva el anterior desde la caché.
+
 Tipografía: **Inter**, la del brandbook (antes Archivo; cambio de TRQ-023, 16-nov-2026), pesos 400–900. Cifras con
 `font-variant-numeric: tabular-nums` en tablas y métricas.
 
