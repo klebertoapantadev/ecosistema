@@ -249,6 +249,7 @@ export async function aplicarLoteDepuracionGoogleAction(entrada: {
       etiquetadosDuplicados: number;
       eliminadosPapelera: number;
       errores: string[];
+      detallesLog: string[];
     }
   | { ok: false; error: string }
 > {

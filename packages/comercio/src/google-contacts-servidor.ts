@@ -398,14 +398,17 @@ export async function refrescarAccessTokenGoogle(params: {
 async function fetchGoogleConReintento(
   url: string,
   init: RequestInit,
-  intentos = 3
+  intentos = 4
 ): Promise<Response> {
   let ultimaResp: Response | null = null;
   for (let i = 0; i < intentos; i++) {
     const resp = await fetch(url, init);
     ultimaResp = resp;
-    if (resp.status !== 429 && resp.status !== 503) return resp;
-    await new Promise((r) => setTimeout(r, 450 * (i + 1)));
+    if (resp.status !== 429 && resp.status !== 500 && resp.status !== 502 && resp.status !== 503) {
+      return resp;
+    }
+    const esperaMs = 450 * Math.pow(2, i) + Math.floor(Math.random() * 180);
+    await new Promise((r) => setTimeout(r, esperaMs));
   }
   return ultimaResp!;
 }
@@ -617,7 +620,10 @@ export async function asegurarGruposGoogleContacts(
 
 /**
  * Aplica un lote de operaciones de depuración sobre Google Contacts (People API).
- * Diseñado para ejecutarse en bloques de 15–25 operaciones desde el cliente con barra de progreso.
+ * Optimizado para móvil y lotes grandes:
+ * - Usa el `etag` ya leído primero y solo hace GET de respaldo si Google devuelve 400/409/412.
+ * - Ejecuta PATCH/DELETE en sub-lotes concurrentes de 4 para acelerar ~3x sin disparar 429.
+ * - Agrupa todas las asignaciones de etiquetas (`members:modify`) en 1 sola llamada por grupo.
  */
 export async function aplicarLoteOperacionesGooglePeople(params: {
   accessToken: string;
@@ -628,11 +634,25 @@ export async function aplicarLoteOperacionesGooglePeople(params: {
   etiquetadosDuplicados: number;
   eliminadosPapelera: number;
   errores: string[];
+  detallesLog: string[];
 }> {
   let actualizados = 0;
   let etiquetadosDuplicados = 0;
   let eliminadosPapelera = 0;
   const errores: string[] = [];
+  const detallesLog: string[] = [];
+
+  const gruposPorAsignar = new Map<string, { nombreGrupo: string; resourceNames: Set<string> }>();
+  const encolarGrupo = (nombreGrupo: string, resourceName: string) => {
+    const grpRes = params.mapaGrupos[nombreGrupo];
+    if (!grpRes) return;
+    let bucket = gruposPorAsignar.get(grpRes);
+    if (!bucket) {
+      bucket = { nombreGrupo, resourceNames: new Set<string>() };
+      gruposPorAsignar.set(grpRes, bucket);
+    }
+    bucket.resourceNames.add(resourceName);
+  };
 
   const obtenerPersonaActual = async (resourceName: string) => {
     const res = await fetchGoogleConReintento(
@@ -643,7 +663,56 @@ export async function aplicarLoteOperacionesGooglePeople(params: {
     return (await res.json()) as Record<string, any>;
   };
 
+  const construirPayloadActualizacion = (
+    op: OperacionEscrituraGoogleContacts,
+    etag: string,
+    actual?: Record<string, any> | null
+  ) => {
+    const camposActualizar = new Set<string>(["names", "phoneNumbers"]);
+    const payload: Record<string, unknown> = {
+      etag,
+      names: [{ givenName: op.nombreLimpio || actual?.names?.[0]?.givenName || "" }],
+      phoneNumbers: (op.telefonos ?? []).map((t) => ({
+        value: t.valorFormateado,
+        type: t.tipo === "WORK" ? "work" : t.tipo === "HOME" ? "home" : "mobile",
+      })),
+    };
+
+    if (op.correos && op.correos.length > 0) {
+      camposActualizar.add("emailAddresses");
+      payload.emailAddresses = op.correos.map((em) => ({ value: em, type: "other" }));
+    }
+
+    if (op.empresa || op.cargo) {
+      camposActualizar.add("organizations");
+      payload.organizations = [
+        {
+          name: op.empresa || actual?.organizations?.[0]?.name || undefined,
+          title: op.cargo || actual?.organizations?.[0]?.title || undefined,
+        },
+      ];
+    }
+
+    if (op.notas) {
+      camposActualizar.add("biographies");
+      payload.biographies = [{ value: op.notas, contentType: "TEXT_PLAIN" }];
+    }
+
+    return { camposActualizar, payload };
+  };
+
+  const duplicadosPorEtiquetar: OperacionEscrituraGoogleContacts[] = [];
+  const opsIndividuales: OperacionEscrituraGoogleContacts[] = [];
+
   for (const op of params.operaciones) {
+    if (op.tipo === "ETIQUETAR_DUPLICADO") {
+      duplicadosPorEtiquetar.push(op);
+    } else {
+      opsIndividuales.push(op);
+    }
+  }
+
+  const ejecutarOpIndividual = async (op: OperacionEscrituraGoogleContacts) => {
     try {
       if (op.tipo === "ELIMINAR_DUPLICADO") {
         const res = await fetchGoogleConReintento(
@@ -655,114 +724,126 @@ export async function aplicarLoteOperacionesGooglePeople(params: {
         );
         if (res.ok || res.status === 404) {
           eliminadosPapelera++;
+          detallesLog.push(`🗑️ Papelera: ${op.nombreLimpio || op.resourceName}`);
         } else {
           errores.push(`No se pudo mover a papelera ${op.resourceName} (HTTP ${res.status})`);
         }
-        continue;
+        return;
       }
 
-      if (op.tipo === "ETIQUETAR_DUPLICADO") {
-        const grpRes = params.mapaGrupos["Duplicado - Revisar"];
-        if (!grpRes) continue;
-        const res = await fetchGoogleConReintento(
-          `https://people.googleapis.com/v1/${grpRes}/members:modify`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${params.accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ resourceNamesToAdd: [op.resourceName] }),
-          }
-        );
-        if (res.ok) {
-          etiquetadosDuplicados++;
-        } else {
-          errores.push(`No se pudo etiquetar duplicado ${op.resourceName} (HTTP ${res.status})`);
-        }
-        continue;
-      }
-
-      // ACTUALIZAR ficha maestra en Google Contacts
-      const actual = await obtenerPersonaActual(op.resourceName);
-      if (!actual || !actual.etag) {
-        errores.push(`Contacto ${op.resourceName} no encontrado en Google.`);
-        continue;
-      }
-
-      const camposActualizar = new Set<string>(["names", "phoneNumbers"]);
-      const payload: Record<string, unknown> = {
-        etag: actual.etag,
-        names: [{ givenName: op.nombreLimpio || actual.names?.[0]?.givenName || "" }],
-        phoneNumbers: (op.telefonos ?? []).map((t) => ({
-          value: t.valorFormateado,
-          type: t.tipo === "WORK" ? "work" : t.tipo === "HOME" ? "home" : "mobile",
-        })),
+      // ACTUALIZAR ficha maestra: intentar primero con etag cacheado para ahorrar 1 GET por contacto
+      const intentarPatch = async (etag: string, actual?: Record<string, any> | null) => {
+        const { camposActualizar, payload } = construirPayloadActualizacion(op, etag, actual);
+        const patchUrl = `https://people.googleapis.com/v1/${op.resourceName}:updateContact?updatePersonFields=${Array.from(
+          camposActualizar
+        ).join(",")}`;
+        return fetchGoogleConReintento(patchUrl, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${params.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
       };
 
-      if (op.correos && op.correos.length > 0) {
-        camposActualizar.add("emailAddresses");
-        payload.emailAddresses = op.correos.map((em) => ({ value: em, type: "other" }));
+      let patchRes: Response | null = null;
+      if (op.etag && op.nombreLimpio) {
+        patchRes = await intentarPatch(op.etag, null);
       }
 
-      if (op.empresa || op.cargo) {
-        camposActualizar.add("organizations");
-        payload.organizations = [
-          {
-            name: op.empresa || actual.organizations?.[0]?.name || undefined,
-            title: op.cargo || actual.organizations?.[0]?.title || undefined,
-          },
-        ];
+      if (!patchRes || patchRes.status === 400 || patchRes.status === 409 || patchRes.status === 412) {
+        const actual = await obtenerPersonaActual(op.resourceName);
+        if (!actual || !actual.etag) {
+          errores.push(`Contacto ${op.nombreLimpio || op.resourceName} no encontrado en Google.`);
+          return;
+        }
+        patchRes = await intentarPatch(String(actual.etag), actual);
       }
-
-      if (op.notas) {
-        camposActualizar.add("biographies");
-        payload.biographies = [{ value: op.notas, contentType: "TEXT_PLAIN" }];
-      }
-
-      const patchUrl = `https://people.googleapis.com/v1/${op.resourceName}:updateContact?updatePersonFields=${Array.from(
-        camposActualizar
-      ).join(",")}`;
-      const patchRes = await fetchGoogleConReintento(patchUrl, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${params.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
 
       if (!patchRes.ok) {
         const errBody = await patchRes.text();
         errores.push(
           `Error actualizando ${op.nombreLimpio || op.resourceName} (HTTP ${patchRes.status}): ${errBody.slice(0, 120)}`
         );
-        continue;
+        return;
       }
 
-      // Asignar etiqueta de categoría si corresponde
-      if (op.etiquetaGrupo && params.mapaGrupos[op.etiquetaGrupo]) {
-        const grpRes = params.mapaGrupos[op.etiquetaGrupo]!;
-        await fetchGoogleConReintento(
-          `https://people.googleapis.com/v1/${grpRes}/members:modify`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${params.accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ resourceNamesToAdd: [op.resourceName] }),
-          }
-        );
+      if (op.etiquetaGrupo) {
+        encolarGrupo(op.etiquetaGrupo, op.resourceName);
       }
 
       actualizados++;
+      const telResumen = op.telefonos?.[0]?.valorFormateado
+        ? ` (${op.telefonos[0].valorFormateado})`
+        : "";
+      detallesLog.push(`✓ ${op.nombreLimpio || op.resourceName}${telResumen}`);
     } catch (err) {
       errores.push(
-        `Excepción en ${op.resourceName}: ${err instanceof Error ? err.message : "error"}`
+        `Excepción en ${op.nombreLimpio || op.resourceName}: ${err instanceof Error ? err.message : "error"}`
+      );
+    }
+  };
+
+  // Ejecutar operaciones individuales en sub-lotes concurrentes de 4
+  const CONCURRENCIA = 4;
+  for (let i = 0; i < opsIndividuales.length; i += CONCURRENCIA) {
+    const subLote = opsIndividuales.slice(i, i + CONCURRENCIA);
+    await Promise.all(subLote.map((op) => ejecutarOpIndividual(op)));
+  }
+
+  // Agrupar duplicados a etiquetar en 1 sola llamada members:modify
+  if (duplicadosPorEtiquetar.length > 0) {
+    const grpDup = params.mapaGrupos["Duplicado - Revisar"];
+    if (grpDup) {
+      const ids = Array.from(new Set(duplicadosPorEtiquetar.map((d) => d.resourceName)));
+      const res = await fetchGoogleConReintento(
+        `https://people.googleapis.com/v1/${grpDup}/members:modify`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${params.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ resourceNamesToAdd: ids }),
+        }
+      );
+      if (res.ok) {
+        etiquetadosDuplicados += ids.length;
+        detallesLog.push(`🏷️ Etiquetados ${ids.length} duplicado(s) en «Duplicado - Revisar»`);
+      } else {
+        errores.push(`No se pudo etiquetar lote de duplicados (HTTP ${res.status})`);
+      }
+    }
+  }
+
+  // Aplicar etiquetas de categoría en bloque (1 HTTP POST por etiqueta)
+  for (const [grpRes, info] of gruposPorAsignar.entries()) {
+    const ids = Array.from(info.resourceNames);
+    if (ids.length === 0) continue;
+    try {
+      const res = await fetchGoogleConReintento(
+        `https://people.googleapis.com/v1/${grpRes}/members:modify`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${params.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ resourceNamesToAdd: ids }),
+        }
+      );
+      if (res.ok) {
+        detallesLog.push(`🏷️ Etiqueta «${info.nombreGrupo}» asignada a ${ids.length} ficha(s)`);
+      } else {
+        errores.push(`No se pudo asignar etiqueta «${info.nombreGrupo}» (HTTP ${res.status})`);
+      }
+    } catch (err) {
+      errores.push(
+        `Error asignando etiqueta «${info.nombreGrupo}»: ${err instanceof Error ? err.message : "error"}`
       );
     }
   }
 
-  return { actualizados, etiquetadosDuplicados, eliminadosPapelera, errores };
+  return { actualizados, etiquetadosDuplicados, eliminadosPapelera, errores, detallesLog };
 }

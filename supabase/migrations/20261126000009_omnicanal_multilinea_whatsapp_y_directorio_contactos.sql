@@ -1406,6 +1406,10 @@ begin
                when v_vis = 'EQUIPO_VENTAS' then 'EQUIPO_VENTAS'
                else 'SOLO_ADMIN'
              end,
+             cnv_eliminado_en = case
+               when v_vis = 'IGNORAR_TOTAL' then coalesce(cv.cnv_eliminado_en, now())
+               else cv.cnv_eliminado_en
+             end,
              cnv_titular_privado_id = coalesce(cv.cnv_titular_privado_id, v_uid),
              cnv_actualizado_en = now()
        where cv.cnv_negocio = v_negocio
@@ -1538,6 +1542,7 @@ begin
        set cnv_ia_bloqueada_permanente = true,
            cnv_estado_atencion = 'EN_ATENCION_ASESORA',
            cnv_visibilidad = case when v_vis = 'SOLO_TITULAR' then 'SOLO_TITULAR' when v_vis = 'EQUIPO_VENTAS' then 'EQUIPO_VENTAS' else 'SOLO_ADMIN' end,
+           cnv_eliminado_en = case when v_vis = 'IGNORAR_TOTAL' then coalesce(cnv_eliminado_en, now()) else cnv_eliminado_en end,
            cnv_actualizado_en = now()
      where cnv_negocio = v_negocio
        and cnv_canal = 'whatsapp'

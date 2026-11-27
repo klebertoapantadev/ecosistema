@@ -13,13 +13,19 @@ import {
   FileSpreadsheet,
   KeyRound,
   Link2,
+  Loader2,
+  Pause,
+  Play,
   RefreshCw,
   Save,
   Shield,
+  Smartphone,
   Sparkles,
   Split,
+  Terminal,
   Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import {
   aplicarLoteDepuracionGoogleAction,
@@ -65,6 +71,128 @@ type FiltroDepurador =
   | "personales"
   | "proveedores"
   | "equipo";
+
+interface EntradaLogSync {
+  hora: string;
+  nivel: "info" | "ok" | "aviso" | "error";
+  texto: string;
+}
+
+interface CheckpointSyncGoogle {
+  version: 1;
+  conexionId: string;
+  correoGoogle: string;
+  modoDuplicados: "ETIQUETAR" | "PAPELERA";
+  mapaGrupos: Record<string, string>;
+  operaciones: OperacionEscrituraGoogleContacts[];
+  siguienteIndice: number;
+  actualizados: number;
+  etiquetadosDuplicados: number;
+  eliminadosPapelera: number;
+  errores: string[];
+  logs: EntradaLogSync[];
+  iniciadoEn: string;
+  actualizadoEn: string;
+}
+
+interface CheckpointSyncApp {
+  version: 1;
+  origen: "GOOGLE_CONTACTS" | "VCF";
+  contactos: ReturnType<typeof expandirFichasDepuradasParaDirectorio>;
+  siguienteIndice: number;
+  creados: number;
+  actualizados: number;
+  hilosProtegidos: number;
+  errores: string[];
+  logs: EntradaLogSync[];
+  iniciadoEn: string;
+  actualizadoEn: string;
+}
+
+interface EstadoModalSync {
+  abierto: boolean;
+  modo: "google" | "app" | "lectura_google";
+  estado: "ejecutando" | "pausando" | "pausado" | "error" | "completado";
+  titulo: string;
+  subtitulo: string;
+  hechos: number;
+  total: number;
+  loteActual: number;
+  totalLotes: number;
+  etapaActual: string;
+  iniciadoMs: number;
+  hechosAlInicioSesion: number;
+  kpis: Array<{ label: string; valor: number; color: string }>;
+  logs: EntradaLogSync[];
+  errorMensaje: string | null;
+  wakeLockActivo: boolean;
+}
+
+interface WakeLockSentinelLike {
+  release: () => Promise<void>;
+}
+
+const TAMANO_LOTE_GOOGLE = 20;
+const TAMANO_LOTE_APP = 150;
+const MAX_LOGS_SYNC = 120;
+
+function crearEntradaLog(nivel: EntradaLogSync["nivel"], texto: string): EntradaLogSync {
+  const ahora = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    hora: `${pad(ahora.getHours())}:${pad(ahora.getMinutes())}:${pad(ahora.getSeconds())}`,
+    nivel,
+    texto,
+  };
+}
+
+function anexarLogs(actuales: EntradaLogSync[], nuevas: EntradaLogSync[]): EntradaLogSync[] {
+  const combinados = [...actuales, ...nuevas];
+  return combinados.length > MAX_LOGS_SYNC
+    ? combinados.slice(combinados.length - MAX_LOGS_SYNC)
+    : combinados;
+}
+
+function formatearDuracionSeg(segundos: number): string {
+  const segs = Math.max(0, Math.round(segundos));
+  const m = Math.floor(segs / 60);
+  const s = segs % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m ${String(s).padStart(2, "0")}s`;
+}
+
+function guardarCheckpointLocal<T>(clave: string, valor: T): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(clave, JSON.stringify(valor));
+  } catch {
+    // Ignorar si el navegador bloquea storage o excede cuota
+  }
+}
+
+function leerCheckpointLocal<T>(clave: string): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(clave);
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function borrarCheckpointLocal(clave: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(clave);
+  } catch {
+    // noop
+  }
+}
+
+function esperarMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 const ESTILO_CAT: Record<
   ClasificacionContacto,
@@ -164,7 +292,7 @@ export function DepuradorAgendaGooglePanel({
   const [pagina, setPagina] = useState<number>(1);
   const [porPagina, setPorPagina] = useState<number>(50);
 
-  // Escritura en Google / Tinkay
+  // Escritura en Google / Tinkay + Checkpoint reanudable + Modal bloqueante
   const [modoDuplicadosGoogle, setModoDuplicadosGoogle] = useState<"ETIQUETAR" | "PAPELERA">(
     "ETIQUETAR"
   );
@@ -173,9 +301,142 @@ export function DepuradorAgendaGooglePanel({
   const [guardandoTinkay, setGuardandoTinkay] = useState<boolean>(false);
   const [progresoTinkay, setProgresoTinkay] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
+  const [checkpointGoogle, setCheckpointGoogle] = useState<CheckpointSyncGoogle | null>(null);
+  const [checkpointApp, setCheckpointApp] = useState<CheckpointSyncApp | null>(null);
+  const [modalSync, setModalSync] = useState<EstadoModalSync | null>(null);
+  const [ahoraMs, setAhoraMs] = useState<number>(() => Date.now());
 
   const inputArchivoRef = useRef<HTMLInputElement>(null);
   const resultadosRef = useRef<HTMLDivElement>(null);
+  const logBoxRef = useRef<HTMLDivElement>(null);
+  const pausarSyncRef = useRef<boolean>(false);
+  const syncEnCursoRef = useRef<boolean>(false);
+  const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
+
+  const claveCheckpointGoogle = `eco_gcontacts_sync_job_${negNorm}`;
+  const claveCheckpointApp = `eco_app_dir_sync_job_${negNorm}`;
+
+  const activarWakeLock = useCallback(async (): Promise<boolean> => {
+    if (typeof navigator === "undefined") return false;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinelLike> };
+    };
+    if (!nav.wakeLock) return false;
+    try {
+      const sentinel = await nav.wakeLock.request("screen");
+      wakeLockRef.current = sentinel;
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const liberarWakeLock = useCallback(async () => {
+    if (!wakeLockRef.current) return;
+    try {
+      await wakeLockRef.current.release();
+    } catch {
+      // noop
+    } finally {
+      wakeLockRef.current = null;
+    }
+  }, []);
+
+  // Cargar checkpoints pendientes desde localStorage al montar
+  useEffect(() => {
+    const savedGoogle = leerCheckpointLocal<CheckpointSyncGoogle>(claveCheckpointGoogle);
+    if (
+      savedGoogle &&
+      savedGoogle.version === 1 &&
+      Array.isArray(savedGoogle.operaciones) &&
+      savedGoogle.siguienteIndice < savedGoogle.operaciones.length
+    ) {
+      setCheckpointGoogle(savedGoogle);
+    }
+    const savedApp = leerCheckpointLocal<CheckpointSyncApp>(claveCheckpointApp);
+    if (
+      savedApp &&
+      savedApp.version === 1 &&
+      Array.isArray(savedApp.contactos) &&
+      savedApp.siguienteIndice < savedApp.contactos.length
+    ) {
+      setCheckpointApp(savedApp);
+    }
+  }, [claveCheckpointGoogle, claveCheckpointApp]);
+
+  // Cronómetro en vivo mientras sincroniza
+  useEffect(() => {
+    if (
+      !modalSync?.abierto ||
+      (modalSync.estado !== "ejecutando" && modalSync.estado !== "pausando")
+    ) {
+      return;
+    }
+    setAhoraMs(Date.now());
+    const id = window.setInterval(() => setAhoraMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [modalSync?.abierto, modalSync?.estado]);
+
+  // Auto-scroll del log en vivo
+  useEffect(() => {
+    if (logBoxRef.current) {
+      logBoxRef.current.scrollTop = logBoxRef.current.scrollHeight;
+    }
+  }, [modalSync?.logs.length]);
+
+  // Bloquear scroll del fondo mientras el modal bloqueante está abierto
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (!modalSync?.abierto) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [modalSync?.abierto]);
+
+  // Detectar bloqueo de pantalla / cambio de app en móvil y re-adquirir Wake Lock
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisibility = () => {
+      if (!syncEnCursoRef.current) return;
+      if (document.visibilityState === "hidden") {
+        setModalSync((prev) =>
+          prev
+            ? {
+                ...prev,
+                wakeLockActivo: false,
+                logs: anexarLogs(prev.logs, [
+                  crearEntradaLog(
+                    "aviso",
+                    "📱 Pantalla bloqueada o cambiaste de app — el progreso queda guardado lote a lote para reanudar sin reiniciar."
+                  ),
+                ]),
+              }
+            : prev
+        );
+      } else if (document.visibilityState === "visible") {
+        void activarWakeLock().then((activo) => {
+          setModalSync((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  wakeLockActivo: activo,
+                  logs: anexarLogs(prev.logs, [
+                    crearEntradaLog("info", "📱 Volviste a la app — verificando lote en curso…"),
+                  ]),
+                }
+              : prev
+          );
+        });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      void liberarWakeLock();
+    };
+  }, [activarWakeLock, liberarWakeLock]);
 
   const opcionesActuales = useMemo<OpcionesDepuradorAgenda>(
     () => ({
@@ -317,30 +578,83 @@ export function DepuradorAgendaGooglePanel({
   const handleLeerDesdeGoogle = async (con: ConexionGoogleContactsInfo) => {
     setLeyendoGoogleId(con.id);
     setMensaje(null);
-    const res = await leerContactosDesdeGoogleAction({
-      negocio: negNorm,
-      conexionId: con.id,
-      esAgendaPersonal: true,
+    const wakeOk = await activarWakeLock();
+    setModalSync({
+      abierto: true,
+      modo: "lectura_google",
+      estado: "ejecutando",
+      titulo: "Leyendo Google Contacts",
+      subtitulo: con.correoGoogle,
+      hechos: 0,
+      total: 0,
+      loteActual: 1,
+      totalLotes: 1,
+      etapaActual: "Conectando con Google People API y descargando contactos y etiquetas…",
+      iniciadoMs: Date.now(),
+      hechosAlInicioSesion: 0,
+      kpis: [],
+      logs: [
+        crearEntradaLog("info", `Conectando con ${con.correoGoogle}…`),
+        crearEntradaLog("info", "Paginando contactos y grupos desde Google People API…"),
+      ],
+      errorMensaje: null,
+      wakeLockActivo: wakeOk,
     });
-    setLeyendoGoogleId(null);
 
-    if (!res.ok) {
-      setMensaje({ tipo: "error", texto: res.error });
-      return;
+    try {
+      const res = await leerContactosDesdeGoogleAction({
+        negocio: negNorm,
+        conexionId: con.id,
+        esAgendaPersonal: true,
+      });
+
+      if (!res.ok) {
+        setModalSync((prev) =>
+          prev
+            ? {
+                ...prev,
+                estado: "error",
+                etapaActual: "No se pudo leer tu cuenta de Google.",
+                errorMensaje: res.error,
+                logs: anexarLogs(prev.logs, [crearEntradaLog("error", res.error)]),
+              }
+            : null
+        );
+        setMensaje({ tipo: "error", texto: res.error });
+        return;
+      }
+
+      setConexionActivaId(con.id);
+      setFichasCrudas((prev) => [...prev, ...res.fichas]);
+      setFuentesResumen((prev) => [
+        ...prev,
+        { nombre: `Google: ${res.correoGoogle}`, total: res.fichas.length },
+      ]);
+      setModalSync(null);
+      setMensaje({
+        tipo: "ok",
+        texto: `Se leyeron ${res.fichas.length} contactos en vivo desde ${res.correoGoogle}. Revisa la depuración abajo.`,
+      });
+      await cargarEstadoGoogle();
+      desplazarAResultados();
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Error de red leyendo Google Contacts.";
+      setModalSync((prev) =>
+        prev
+          ? {
+              ...prev,
+              estado: "error",
+              etapaActual: "Conexión interrumpida al leer Google Contacts.",
+              errorMensaje: errMsg,
+              logs: anexarLogs(prev.logs, [crearEntradaLog("error", errMsg)]),
+            }
+          : null
+      );
+      setMensaje({ tipo: "error", texto: errMsg });
+    } finally {
+      setLeyendoGoogleId(null);
+      await liberarWakeLock();
     }
-
-    setConexionActivaId(con.id);
-    setFichasCrudas((prev) => [...prev, ...res.fichas]);
-    setFuentesResumen((prev) => [
-      ...prev,
-      { nombre: `Google: ${res.correoGoogle}`, total: res.fichas.length },
-    ]);
-    setMensaje({
-      tipo: "ok",
-      texto: `Se leyeron ${res.fichas.length} contactos en vivo desde ${res.correoGoogle}. Revisa la depuración abajo.`,
-    });
-    await cargarEstadoGoogle();
-    desplazarAResultados();
   };
 
   const handleSubirArchivos = async (files: FileList | null) => {
@@ -470,6 +784,245 @@ export function DepuradorAgendaGooglePanel({
     ]);
   };
 
+  const handlePausarSync = () => {
+    pausarSyncRef.current = true;
+    setModalSync((prev) =>
+      prev && prev.estado === "ejecutando"
+        ? {
+            ...prev,
+            estado: "pausando",
+            etapaActual: "Pausando de forma segura al terminar el lote actual…",
+            logs: anexarLogs(prev.logs, [
+              crearEntradaLog(
+                "aviso",
+                "⏸️ Pausa solicitada — esperando fin del lote actual para guardar punto exacto…"
+              ),
+            ]),
+          }
+        : prev
+    );
+  };
+
+  const ejecutarLoopSyncApp = async (jobInicial: CheckpointSyncApp) => {
+    let job: CheckpointSyncApp = {
+      ...jobInicial,
+      errores: [...jobInicial.errores],
+      logs: [...jobInicial.logs],
+    };
+    const total = job.contactos.length;
+    const totalLotes = Math.max(1, Math.ceil(total / TAMANO_LOTE_APP));
+    const inicioLote = Math.floor(job.siguienteIndice / TAMANO_LOTE_APP);
+    const inicioSesionMs = Date.now();
+    const hechosInicioSesion = job.siguienteIndice;
+
+    pausarSyncRef.current = false;
+    syncEnCursoRef.current = true;
+    setGuardandoTinkay(true);
+    setMensaje(null);
+
+    const wakeOk = await activarWakeLock();
+    const logInicio = crearEntradaLog(
+      "info",
+      job.siguienteIndice > 0
+        ? `▶ Reanudando guardado en Directorio desde contacto ${job.siguienteIndice + 1}/${total} (lote ${inicioLote + 1}/${totalLotes})…`
+        : `▶ Iniciando guardado de ${total} contactos en ${totalLotes} lote(s) (bloqueando chats personales)…`
+    );
+    job.logs = anexarLogs(job.logs, [logInicio]);
+    guardarCheckpointLocal(claveCheckpointApp, job);
+    setCheckpointApp(job);
+
+    const actualizarModalApp = (
+      estado: EstadoModalSync["estado"],
+      loteActual: number,
+      etapaActual: string,
+      errorMensaje: string | null = null
+    ) => {
+      setModalSync({
+        abierto: true,
+        modo: "app",
+        estado,
+        titulo: "Guardando en Directorio WhatsApp",
+        subtitulo: `Oculta chats personales y protege IA en ${negNorm}`,
+        hechos: job.siguienteIndice,
+        total,
+        loteActual,
+        totalLotes,
+        etapaActual,
+        iniciadoMs: inicioSesionMs,
+        hechosAlInicioSesion: hechosInicioSesion,
+        kpis: [
+          { label: "Nuevos", valor: job.creados, color: "#15803D" },
+          { label: "Actualizados", valor: job.actualizados, color: "#1D4ED8" },
+          { label: "Chats ocultados", valor: job.hilosProtegidos, color: "#7C3AED" },
+          { label: "Errores", valor: job.errores.length, color: "#B91C1C" },
+        ],
+        logs: job.logs,
+        errorMensaje,
+        wakeLockActivo: wakeOk,
+      });
+    };
+
+    actualizarModalApp(
+      "ejecutando",
+      inicioLote + 1,
+      `Procesando lote ${inicioLote + 1} de ${totalLotes}…`
+    );
+
+    try {
+      for (let i = inicioLote; i < totalLotes; i++) {
+        if (pausarSyncRef.current) {
+          job.actualizadoEn = new Date().toISOString();
+          job.logs = anexarLogs(job.logs, [
+            crearEntradaLog(
+              "aviso",
+              `⏸️ Pausado en ${job.siguienteIndice}/${total}. Puedes reanudar exactamente desde el lote ${i + 1}/${totalLotes}.`
+            ),
+          ]);
+          guardarCheckpointLocal(claveCheckpointApp, job);
+          setCheckpointApp(job);
+          actualizarModalApp(
+            "pausado",
+            i + 1,
+            `Pausado en ${job.siguienteIndice} de ${total} contactos.`
+          );
+          return;
+        }
+
+        const inicioIdx = i * TAMANO_LOTE_APP;
+        const chunk = job.contactos.slice(inicioIdx, inicioIdx + TAMANO_LOTE_APP);
+        const progresoTxt = `Lote ${i + 1}/${totalLotes} (${Math.min(inicioIdx + chunk.length, total)}/${total})`;
+        setProgresoTinkay(progresoTxt);
+        job.logs = anexarLogs(job.logs, [
+          crearEntradaLog("info", `Enviando lote ${i + 1}/${totalLotes} (${chunk.length} contactos)…`),
+        ]);
+        actualizarModalApp(
+          pausarSyncRef.current ? "pausando" : "ejecutando",
+          i + 1,
+          `Guardando lote ${i + 1} de ${totalLotes} (${chunk.length} contactos)…`
+        );
+
+        let respuestaOk: {
+          creados: number;
+          actualizados: number;
+          hilosProtegidos: number;
+        } | null = null;
+        let ultimoError = "";
+
+        for (let intento = 0; intento < 3; intento++) {
+          try {
+            const res = await importarContactosDirectorioLoteAction({
+              negocio: negNorm,
+              origen: job.origen,
+              ocultarChatsPersonalesExistentes: true,
+              contactos: chunk,
+            });
+            if (res.ok) {
+              respuestaOk = {
+                creados: res.creados,
+                actualizados: res.actualizados,
+                hilosProtegidos: res.hilosProtegidos,
+              };
+              break;
+            }
+            ultimoError = res.error;
+          } catch (err) {
+            ultimoError =
+              err instanceof Error
+                ? err.message
+                : "Conexión interrumpida (pantalla bloqueada o red móvil).";
+          }
+
+          if (intento < 2) {
+            const esperaSeg = intento === 0 ? 1.5 : 3;
+            job.logs = anexarLogs(job.logs, [
+              crearEntradaLog(
+                "aviso",
+                `⚠️ Reintentando lote ${i + 1}/${totalLotes} en ${esperaSeg}s (${ultimoError.slice(0, 90)})…`
+              ),
+            ]);
+            actualizarModalApp(
+              "ejecutando",
+              i + 1,
+              `Reintentando lote ${i + 1}/${totalLotes} tras corte temporal…`
+            );
+            await esperarMs(esperaSeg * 1000);
+          }
+        }
+
+        if (!respuestaOk) {
+          job.errores = [...job.errores, `Lote ${i + 1}: ${ultimoError}`];
+          job.actualizadoEn = new Date().toISOString();
+          job.logs = anexarLogs(job.logs, [
+            crearEntradaLog(
+              "error",
+              `❌ Detenido en lote ${i + 1}/${totalLotes}: ${ultimoError}. Progreso guardado en ${job.siguienteIndice}/${total} para reanudar.`
+            ),
+          ]);
+          guardarCheckpointLocal(claveCheckpointApp, job);
+          setCheckpointApp(job);
+          actualizarModalApp(
+            "error",
+            i + 1,
+            `Pausado por corte en lote ${i + 1}/${totalLotes}. Pulsa «Reanudar» para continuar sin repetir.`,
+            ultimoError
+          );
+          setMensaje({
+            tipo: "error",
+            texto: `Guardado detenido en lote ${i + 1}/${totalLotes} (${job.siguienteIndice}/${total} guardados). Pulsa «Reanudar» para continuar desde ahí.`,
+          });
+          return;
+        }
+
+        job.creados += respuestaOk.creados;
+        job.actualizados += respuestaOk.actualizados;
+        job.hilosProtegidos += respuestaOk.hilosProtegidos;
+        job.siguienteIndice = Math.min(inicioIdx + chunk.length, total);
+        job.actualizadoEn = new Date().toISOString();
+        job.logs = anexarLogs(job.logs, [
+          crearEntradaLog(
+            "ok",
+            `✓ Lote ${i + 1}/${totalLotes}: +${respuestaOk.creados} nuevos, ${respuestaOk.actualizados} actualizados` +
+              (respuestaOk.hilosProtegidos > 0
+                ? `, ${respuestaOk.hilosProtegidos} chat(s) personales ocultados`
+                : "")
+          ),
+        ]);
+        guardarCheckpointLocal(claveCheckpointApp, job);
+        setCheckpointApp({ ...job });
+        actualizarModalApp(
+          pausarSyncRef.current ? "pausando" : "ejecutando",
+          i + 1,
+          `Completado lote ${i + 1} de ${totalLotes} (${job.siguienteIndice}/${total}).`
+        );
+      }
+
+      // Completado al 100%
+      borrarCheckpointLocal(claveCheckpointApp);
+      setCheckpointApp(null);
+      job.logs = anexarLogs(job.logs, [
+        crearEntradaLog(
+          "ok",
+          `🎉 Directorio actualizado al 100%: ${job.creados} nuevos, ${job.actualizados} actualizados, ${job.hilosProtegidos} chat(s) personales protegidos/ocultados.`
+        ),
+      ]);
+      actualizarModalApp(
+        "completado",
+        totalLotes,
+        "Guardado completado al 100%. Los chats personales ya están ocultos del chat en vivo."
+      );
+      setMensaje({
+        tipo: "ok",
+        texto: `Directorio WhatsApp actualizado: ${job.creados} nuevos, ${job.actualizados} actualizados, ${job.hilosProtegidos} chat(s) personales protegidos/ocultados.`,
+      });
+      await onDirectorioActualizado?.();
+    } finally {
+      syncEnCursoRef.current = false;
+      setGuardandoTinkay(false);
+      setProgresoTinkay(null);
+      await liberarWakeLock();
+    }
+  };
+
   const handleGuardarEnDirectorioTinkay = async () => {
     const lote = expandirFichasDepuradasParaDirectorio(fichasDepuradas);
     if (lote.length === 0) {
@@ -477,43 +1030,286 @@ export function DepuradorAgendaGooglePanel({
       return;
     }
 
-    setGuardandoTinkay(true);
-    setProgresoTinkay(null);
+    const ahoraIso = new Date().toISOString();
+    const nuevoJob: CheckpointSyncApp = {
+      version: 1,
+      origen: conexionActivaId ? "GOOGLE_CONTACTS" : "VCF",
+      contactos: lote,
+      siguienteIndice: 0,
+      creados: 0,
+      actualizados: 0,
+      hilosProtegidos: 0,
+      errores: [],
+      logs: [],
+      iniciadoEn: ahoraIso,
+      actualizadoEn: ahoraIso,
+    };
+    await ejecutarLoopSyncApp(nuevoJob);
+  };
+
+  const handleReanudarSyncApp = async () => {
+    if (!checkpointApp) return;
+    await ejecutarLoopSyncApp(checkpointApp);
+  };
+
+  const ejecutarLoopSyncGoogle = async (jobInicial: CheckpointSyncGoogle) => {
+    let job: CheckpointSyncGoogle = {
+      ...jobInicial,
+      errores: [...jobInicial.errores],
+      logs: [...jobInicial.logs],
+    };
+    const total = job.operaciones.length;
+    const totalLotes = Math.max(1, Math.ceil(total / TAMANO_LOTE_GOOGLE));
+    const inicioLote = Math.floor(job.siguienteIndice / TAMANO_LOTE_GOOGLE);
+    const inicioSesionMs = Date.now();
+    const hechosInicioSesion = job.siguienteIndice;
+
+    pausarSyncRef.current = false;
+    syncEnCursoRef.current = true;
+    setAplicandoGoogle(true);
     setMensaje(null);
 
-    const TAMANO = 150;
-    const totalLotes = Math.ceil(lote.length / TAMANO);
-    let creados = 0;
-    let actualizados = 0;
-    let hilosProtegidos = 0;
+    const wakeOk = await activarWakeLock();
+    job.logs = anexarLogs(job.logs, [
+      crearEntradaLog(
+        "info",
+        job.siguienteIndice > 0
+          ? `▶ Reanudando Google Contacts desde ${job.siguienteIndice + 1}/${total} (lote ${inicioLote + 1}/${totalLotes}) sin repetir los ya aplicados…`
+          : `▶ Sincronizando ${total} operación(es) en ${totalLotes} lote(s) con ${job.correoGoogle || "Google Contacts"}…`
+      ),
+    ]);
+    guardarCheckpointLocal(claveCheckpointGoogle, job);
+    setCheckpointGoogle(job);
 
-    for (let i = 0; i < totalLotes; i++) {
-      const chunk = lote.slice(i * TAMANO, (i + 1) * TAMANO);
-      setProgresoTinkay(`Lote ${i + 1}/${totalLotes} (${Math.min((i + 1) * TAMANO, lote.length)}/${lote.length})`);
-      const res = await importarContactosDirectorioLoteAction({
-        negocio: negNorm,
-        origen: conexionActivaId ? "GOOGLE_CONTACTS" : "VCF",
-        ocultarChatsPersonalesExistentes: true,
-        contactos: chunk,
+    const actualizarModalGoogle = (
+      estado: EstadoModalSync["estado"],
+      loteActual: number,
+      etapaActual: string,
+      errorMensaje: string | null = null
+    ) => {
+      setModalSync({
+        abierto: true,
+        modo: "google",
+        estado,
+        titulo: "Sincronizando Google Contacts",
+        subtitulo: job.correoGoogle || "Cuenta Google conectada",
+        hechos: job.siguienteIndice,
+        total,
+        loteActual,
+        totalLotes,
+        etapaActual,
+        iniciadoMs: inicioSesionMs,
+        hechosAlInicioSesion: hechosInicioSesion,
+        kpis: [
+          { label: "Actualizados", valor: job.actualizados, color: "#15803D" },
+          {
+            label: job.modoDuplicados === "PAPELERA" ? "A Papelera" : "Etiquetados",
+            valor:
+              job.modoDuplicados === "PAPELERA"
+                ? job.eliminadosPapelera
+                : job.etiquetadosDuplicados,
+            color: "#7C3AED",
+          },
+          { label: "Pendientes", valor: Math.max(0, total - job.siguienteIndice), color: "#1D4ED8" },
+          { label: "Avisos", valor: job.errores.length, color: "#B91C1C" },
+        ],
+        logs: job.logs,
+        errorMensaje,
+        wakeLockActivo: wakeOk,
       });
-      if (!res.ok) {
-        setGuardandoTinkay(false);
-        setProgresoTinkay(null);
-        setMensaje({ tipo: "error", texto: `Error en lote ${i + 1}: ${res.error}` });
-        return;
-      }
-      creados += res.creados;
-      actualizados += res.actualizados;
-      hilosProtegidos += res.hilosProtegidos;
-    }
+    };
 
-    setGuardandoTinkay(false);
-    setProgresoTinkay(null);
-    setMensaje({
-      tipo: "ok",
-      texto: `Directorio WhatsApp actualizado: ${creados} nuevos, ${actualizados} actualizados, ${hilosProtegidos} chat(s) personales protegidos.`,
-    });
-    await onDirectorioActualizado?.();
+    actualizarModalGoogle(
+      "ejecutando",
+      inicioLote + 1,
+      `Enviando lote ${inicioLote + 1} de ${totalLotes}…`
+    );
+
+    try {
+      for (let i = inicioLote; i < totalLotes; i++) {
+        if (pausarSyncRef.current) {
+          job.actualizadoEn = new Date().toISOString();
+          job.logs = anexarLogs(job.logs, [
+            crearEntradaLog(
+              "aviso",
+              `⏸️ Pausado exactamente en ${job.siguienteIndice}/${total}. Cuando vuelvas, pulsa «Reanudar» para seguir en el lote ${i + 1}/${totalLotes}.`
+            ),
+          ]);
+          guardarCheckpointLocal(claveCheckpointGoogle, job);
+          setCheckpointGoogle(job);
+          actualizarModalGoogle(
+            "pausado",
+            i + 1,
+            `Pausado en ${job.siguienteIndice} de ${total} (lote ${i}/${totalLotes} completados).`
+          );
+          return;
+        }
+
+        const inicioIdx = i * TAMANO_LOTE_GOOGLE;
+        const bloque = job.operaciones.slice(inicioIdx, inicioIdx + TAMANO_LOTE_GOOGLE);
+        const hechosAlTerminar = Math.min(inicioIdx + bloque.length, total);
+        setProgresoGoogle(`Google ${hechosAlTerminar}/${total} (lote ${i + 1}/${totalLotes})`);
+
+        const primerNombre = bloque[0]?.nombreLimpio || bloque[0]?.resourceName || "";
+        job.logs = anexarLogs(job.logs, [
+          crearEntradaLog(
+            "info",
+            `Lote ${i + 1}/${totalLotes}: procesando ${bloque.length} ficha(s)${primerNombre ? ` (desde «${primerNombre}»)` : ""}…`
+          ),
+        ]);
+        actualizarModalGoogle(
+          pausarSyncRef.current ? "pausando" : "ejecutando",
+          i + 1,
+          `Aplicando lote ${i + 1} de ${totalLotes} (${bloque.length} cambios en paralelo)…`
+        );
+
+        let resLote: {
+          actualizados: number;
+          etiquetadosDuplicados: number;
+          eliminadosPapelera: number;
+          errores: string[];
+          detallesLog: string[];
+        } | null = null;
+        let ultimoError = "";
+
+        for (let intento = 0; intento < 3; intento++) {
+          try {
+            const res = await aplicarLoteDepuracionGoogleAction({
+              negocio: negNorm,
+              conexionId: job.conexionId,
+              mapaGrupos: job.mapaGrupos,
+              operaciones: bloque,
+              esUltimoLote: i === totalLotes - 1,
+              resumenFinal: {
+                actualizados: job.actualizados,
+                etiquetadosDuplicados: job.etiquetadosDuplicados,
+                eliminadosPapelera: job.eliminadosPapelera,
+              },
+            });
+            if (res.ok) {
+              resLote = {
+                actualizados: res.actualizados,
+                etiquetadosDuplicados: res.etiquetadosDuplicados,
+                eliminadosPapelera: res.eliminadosPapelera,
+                errores: res.errores,
+                detallesLog: res.detallesLog ?? [],
+              };
+              break;
+            }
+            ultimoError = res.error;
+          } catch (err) {
+            ultimoError =
+              err instanceof Error
+                ? err.message
+                : "Conexión interrumpida (teléfono bloqueado o cambio de aplicación).";
+          }
+
+          if (intento < 2) {
+            const esperaSeg = intento === 0 ? 1.5 : 3;
+            job.logs = anexarLogs(job.logs, [
+              crearEntradaLog(
+                "aviso",
+                `⚠️ Corte temporal en lote ${i + 1}/${totalLotes}. Reintentando en ${esperaSeg}s (${ultimoError.slice(0, 90)})…`
+              ),
+            ]);
+            actualizarModalGoogle(
+              "ejecutando",
+              i + 1,
+              `Reintentando lote ${i + 1}/${totalLotes} automáticamente…`
+            );
+            await esperarMs(esperaSeg * 1000);
+          }
+        }
+
+        if (!resLote) {
+          job.actualizadoEn = new Date().toISOString();
+          job.logs = anexarLogs(job.logs, [
+            crearEntradaLog(
+              "error",
+              `❌ Pausado por red/sesión en lote ${i + 1}/${totalLotes}: ${ultimoError}. Punto guardado en ${job.siguienteIndice}/${total}.`
+            ),
+          ]);
+          guardarCheckpointLocal(claveCheckpointGoogle, job);
+          setCheckpointGoogle(job);
+          actualizarModalGoogle(
+            "error",
+            i + 1,
+            `Se detuvo en lote ${i + 1}/${totalLotes} (${job.siguienteIndice}/${total} ya aplicados). Pulsa «Reanudar» para continuar exactamente aquí.`,
+            ultimoError
+          );
+          setMensaje({
+            tipo: "error",
+            texto: `Google Contacts pausado en ${job.siguienteIndice}/${total} (lote ${i + 1}/${totalLotes}). Pulsa «Reanudar» arriba para continuar donde quedó.`,
+          });
+          return;
+        }
+
+        job.actualizados += resLote.actualizados;
+        job.etiquetadosDuplicados += resLote.etiquetadosDuplicados;
+        job.eliminadosPapelera += resLote.eliminadosPapelera;
+        if (resLote.errores.length > 0) {
+          job.errores = [...job.errores, ...resLote.errores].slice(-80);
+        }
+        job.siguienteIndice = hechosAlTerminar;
+        job.actualizadoEn = new Date().toISOString();
+
+        const entradasLote: EntradaLogSync[] = [];
+        // Agregar resumen compacto + hasta 3 detalles representativos del lote
+        const muestra = resLote.detallesLog.slice(0, 3);
+        const etiquetasLog = resLote.detallesLog.filter((l) => l.startsWith("🏷️"));
+        entradasLote.push(
+          crearEntradaLog(
+            "ok",
+            `✓ Lote ${i + 1}/${totalLotes} (${hechosAlTerminar}/${total}): ${resLote.actualizados} act.` +
+              (resLote.etiquetadosDuplicados > 0 ? ` · ${resLote.etiquetadosDuplicados} etiq.` : "") +
+              (resLote.eliminadosPapelera > 0 ? ` · ${resLote.eliminadosPapelera} papelera` : "") +
+              (muestra.length > 0 ? ` — ${muestra.join(", ")}` : "")
+          )
+        );
+        for (const etq of etiquetasLog) {
+          entradasLote.push(crearEntradaLog("info", etq));
+        }
+        for (const errLinea of resLote.errores.slice(0, 2)) {
+          entradasLote.push(crearEntradaLog("aviso", `⚠️ ${errLinea}`));
+        }
+
+        job.logs = anexarLogs(job.logs, entradasLote);
+        guardarCheckpointLocal(claveCheckpointGoogle, job);
+        setCheckpointGoogle({ ...job });
+        actualizarModalGoogle(
+          pausarSyncRef.current ? "pausando" : "ejecutando",
+          i + 1,
+          `Guardado lote ${i + 1} de ${totalLotes} (${hechosAlTerminar}/${total}).`
+        );
+      }
+
+      // Completado al 100%
+      borrarCheckpointLocal(claveCheckpointGoogle);
+      setCheckpointGoogle(null);
+      const resumenFinalTxt =
+        `Google Contacts actualizado: ${job.actualizados} fichas actualizadas` +
+        (job.etiquetadosDuplicados > 0
+          ? `, ${job.etiquetadosDuplicados} duplicados etiquetados`
+          : "") +
+        (job.eliminadosPapelera > 0
+          ? `, ${job.eliminadosPapelera} duplicados enviados a Papelera (30 días)`
+          : "") +
+        (job.errores.length > 0 ? ` · ${job.errores.length} aviso(s)` : "") +
+        ".";
+
+      job.logs = anexarLogs(job.logs, [crearEntradaLog("ok", `🎉 ${resumenFinalTxt}`)]);
+      actualizarModalGoogle("completado", totalLotes, "¡Sincronización con Google Contacts completada!");
+      setMensaje({
+        tipo: job.errores.length > 0 && job.actualizados === 0 ? "error" : "ok",
+        texto: resumenFinalTxt,
+      });
+      await cargarEstadoGoogle();
+    } finally {
+      syncEnCursoRef.current = false;
+      setAplicandoGoogle(false);
+      setProgresoGoogle(null);
+      await liberarWakeLock();
+    }
   };
 
   const handleAplicarEnGoogleContacts = async () => {
@@ -559,10 +1355,18 @@ export function DepuradorAgendaGooglePanel({
 
       for (const dupRes of f.googleResourceNamesDuplicados) {
         if (modoDuplicadosGoogle === "PAPELERA") {
-          operaciones.push({ tipo: "ELIMINAR_DUPLICADO", resourceName: dupRes });
+          operaciones.push({
+            tipo: "ELIMINAR_DUPLICADO",
+            resourceName: dupRes,
+            nombreLimpio: f.nombreLimpio,
+          });
         } else {
           gruposNecesarios.add("Duplicado - Revisar");
-          operaciones.push({ tipo: "ETIQUETAR_DUPLICADO", resourceName: dupRes });
+          operaciones.push({
+            tipo: "ETIQUETAR_DUPLICADO",
+            resourceName: dupRes,
+            nombreLimpio: f.nombreLimpio,
+          });
         }
       }
     }
@@ -585,7 +1389,7 @@ export function DepuradorAgendaGooglePanel({
               ? "movidos a la Papelera de Google (recuperables 30 días)"
               : "etiquetados como «Duplicado - Revisar» (sin borrar nada)"
           }\n\n` +
-          `Primero se descargará automáticamente un respaldo .vcf de seguridad. ¿Continuar?`
+          `Primero se descargará automáticamente un respaldo .vcf de seguridad. Si se pausa o bloqueas el celular, podrás reanudar exactamente donde quedó. ¿Continuar?`
       );
     if (!okConfirm) return;
 
@@ -604,9 +1408,45 @@ export function DepuradorAgendaGooglePanel({
       "text/vcard;charset=utf-8;"
     );
 
+    const correoActivo =
+      conexionesGoogle.find((c) => c.id === conexionActivaId)?.correoGoogle || "Google Contacts";
+
     setAplicandoGoogle(true);
     setProgresoGoogle("Preparando etiquetas en Google…");
     setMensaje(null);
+    setModalSync({
+      abierto: true,
+      modo: "google",
+      estado: "ejecutando",
+      titulo: "Sincronizando Google Contacts",
+      subtitulo: correoActivo,
+      hechos: 0,
+      total: operaciones.length,
+      loteActual: 0,
+      totalLotes: Math.max(1, Math.ceil(operaciones.length / TAMANO_LOTE_GOOGLE)),
+      etapaActual: "Verificando y creando etiquetas en Google Contacts…",
+      iniciadoMs: Date.now(),
+      hechosAlInicioSesion: 0,
+      kpis: [
+        { label: "Actualizados", valor: 0, color: "#15803D" },
+        {
+          label: modoDuplicadosGoogle === "PAPELERA" ? "A Papelera" : "Etiquetados",
+          valor: 0,
+          color: "#7C3AED",
+        },
+        { label: "Pendientes", valor: operaciones.length, color: "#1D4ED8" },
+        { label: "Avisos", valor: 0, color: "#B91C1C" },
+      ],
+      logs: [
+        crearEntradaLog("ok", "✓ Respaldo .vcf de seguridad descargado."),
+        crearEntradaLog(
+          "info",
+          `Preparando ${gruposNecesarios.size} etiqueta(s) en ${correoActivo}…`
+        ),
+      ],
+      errorMensaje: null,
+      wakeLockActivo: false,
+    });
 
     const prep = await prepararGruposGoogleContactsAction({
       negocio: negNorm,
@@ -617,63 +1457,61 @@ export function DepuradorAgendaGooglePanel({
     if (!prep.ok) {
       setAplicandoGoogle(false);
       setProgresoGoogle(null);
+      setModalSync((prev) =>
+        prev
+          ? {
+              ...prev,
+              estado: "error",
+              etapaActual: "No se pudieron preparar las etiquetas en Google.",
+              errorMensaje: prep.error,
+              logs: anexarLogs(prev.logs, [crearEntradaLog("error", prep.error)]),
+            }
+          : null
+      );
       setMensaje({ tipo: "error", texto: prep.error });
       return;
     }
 
-    const TAMANO_LOTE = 20;
-    const totalLotes = Math.ceil(operaciones.length / TAMANO_LOTE);
-    let actTotal = 0;
-    let etqTotal = 0;
-    let delTotal = 0;
-    const errores: string[] = [];
+    const ahoraIso = new Date().toISOString();
+    const nuevoJob: CheckpointSyncGoogle = {
+      version: 1,
+      conexionId: conexionActivaId,
+      correoGoogle: correoActivo,
+      modoDuplicados: modoDuplicadosGoogle,
+      mapaGrupos: prep.mapaGrupos,
+      operaciones,
+      siguienteIndice: 0,
+      actualizados: 0,
+      etiquetadosDuplicados: 0,
+      eliminadosPapelera: 0,
+      errores: [],
+      logs: [
+        crearEntradaLog("ok", "✓ Respaldo .vcf de seguridad descargado."),
+        crearEntradaLog(
+          "ok",
+          `✓ Etiquetas listas en Google (${Object.keys(prep.mapaGrupos).length} grupos).`
+        ),
+      ],
+      iniciadoEn: ahoraIso,
+      actualizadoEn: ahoraIso,
+    };
 
-    for (let i = 0; i < totalLotes; i++) {
-      const bloque = operaciones.slice(i * TAMANO_LOTE, (i + 1) * TAMANO_LOTE);
-      const hechos = Math.min((i + 1) * TAMANO_LOTE, operaciones.length);
-      setProgresoGoogle(`Google ${hechos}/${operaciones.length} (lote ${i + 1}/${totalLotes})`);
+    await ejecutarLoopSyncGoogle(nuevoJob);
+  };
 
-      const res = await aplicarLoteDepuracionGoogleAction({
-        negocio: negNorm,
-        conexionId: conexionActivaId,
-        mapaGrupos: prep.mapaGrupos,
-        operaciones: bloque,
-        esUltimoLote: i === totalLotes - 1,
-        resumenFinal: {
-          actualizados: actTotal,
-          etiquetadosDuplicados: etqTotal,
-          eliminadosPapelera: delTotal,
-        },
-      });
+  const handleReanudarSyncGoogle = async () => {
+    if (!checkpointGoogle) return;
+    await ejecutarLoopSyncGoogle(checkpointGoogle);
+  };
 
-      if (!res.ok) {
-        setAplicandoGoogle(false);
-        setProgresoGoogle(null);
-        setMensaje({
-          tipo: "error",
-          texto: `Proceso detenido en lote ${i + 1}/${totalLotes} (${actTotal} actualizados): ${res.error}`,
-        });
-        return;
-      }
+  const handleDescartarCheckpointGoogle = () => {
+    borrarCheckpointLocal(claveCheckpointGoogle);
+    setCheckpointGoogle(null);
+  };
 
-      actTotal += res.actualizados;
-      etqTotal += res.etiquetadosDuplicados;
-      delTotal += res.eliminadosPapelera;
-      if (res.errores.length > 0) errores.push(...res.errores);
-    }
-
-    setAplicandoGoogle(false);
-    setProgresoGoogle(null);
-    setMensaje({
-      tipo: errores.length > 0 && actTotal === 0 ? "error" : "ok",
-      texto:
-        `Google Contacts actualizado: ${actTotal} fichas actualizadas` +
-        (etqTotal > 0 ? `, ${etqTotal} duplicados etiquetados` : "") +
-        (delTotal > 0 ? `, ${delTotal} duplicados enviados a Papelera (30 días)` : "") +
-        (errores.length > 0 ? ` · ${errores.length} aviso(s)` : "") +
-        ".",
-    });
-    await cargarEstadoGoogle();
+  const handleDescartarCheckpointApp = () => {
+    borrarCheckpointLocal(claveCheckpointApp);
+    setCheckpointApp(null);
   };
 
   const contadores = useMemo(() => {
@@ -749,8 +1587,185 @@ export function DepuradorAgendaGooglePanel({
     return fichasFiltradas.slice(ini, ini + porPagina);
   }, [fichasFiltradas, paginaSegura, porPagina]);
 
+  const porcentajeModal =
+    modalSync && modalSync.total > 0
+      ? Math.min(100, Math.round((modalSync.hechos / modalSync.total) * 100))
+      : 0;
+
+  const segundosTranscurridos = modalSync
+    ? Math.max(0, Math.floor((ahoraMs - modalSync.iniciadoMs) / 1000))
+    : 0;
+
+  const etaSegundos = (() => {
+    if (!modalSync || modalSync.total <= 0) return null;
+    const hechosEstaSesion = modalSync.hechos - modalSync.hechosAlInicioSesion;
+    const pendientes = modalSync.total - modalSync.hechos;
+    if (hechosEstaSesion <= 0 || pendientes <= 0 || segundosTranscurridos < 2) return null;
+    const ritmoPorSeg = hechosEstaSesion / segundosTranscurridos;
+    return ritmoPorSeg > 0 ? Math.ceil(pendientes / ritmoPorSeg) : null;
+  })();
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      <style>{`@keyframes ecoSyncSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+
+      {/* BANNER REANUDABLE: GOOGLE CONTACTS PENDIENTE */}
+      {checkpointGoogle && !modalSync?.abierto && (
+        <div
+          style={{
+            padding: "12px 14px",
+            borderRadius: "12px",
+            border: "1px solid #F59E0B",
+            background: "var(--cf-fffbeb, #FFFBEB)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "10px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "1 1 230px" }}>
+            <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#92400E" }}>
+              ⏸️ Sincronización Google pausada en {checkpointGoogle.siguienteIndice} /{" "}
+              {checkpointGoogle.operaciones.length} (
+              {Math.round(
+                (checkpointGoogle.siguienteIndice /
+                  Math.max(1, checkpointGoogle.operaciones.length)) *
+                  100
+              )}
+              %)
+            </div>
+            <div style={{ fontSize: "0.74rem", color: "#78350F", lineHeight: 1.4 }}>
+              Cuenta: <strong>{checkpointGoogle.correoGoogle}</strong> · Faltan{" "}
+              <strong>
+                {checkpointGoogle.operaciones.length - checkpointGoogle.siguienteIndice}
+              </strong>{" "}
+              ficha(s). Se continuará exactamente desde el lote{" "}
+              {Math.floor(checkpointGoogle.siguienteIndice / TAMANO_LOTE_GOOGLE) + 1}/
+              {Math.ceil(checkpointGoogle.operaciones.length / TAMANO_LOTE_GOOGLE)} sin repetir lo
+              ya aplicado.
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => void handleReanudarSyncGoogle()}
+              title="Reanudar sincronización con Google Contacts exactamente donde quedó"
+              aria-label="Reanudar"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "8px 13px",
+                borderRadius: "8px",
+                border: "1px solid #15803D",
+                background: "#15803D",
+                color: "#FFFFFF",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <Play size={14} />
+              <span>Reanudar</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleDescartarCheckpointGoogle}
+              title="Descartar esta sincronización pendiente"
+              aria-label="Descartar"
+              style={{
+                padding: "8px 10px",
+                borderRadius: "8px",
+                border: "1px solid #FCD34D",
+                background: "#FFFFFF",
+                color: "#92400E",
+                fontSize: "0.76rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Descartar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* BANNER REANUDABLE: GUARDADO EN DIRECTORIO APP PENDIENTE */}
+      {checkpointApp && !modalSync?.abierto && (
+        <div
+          style={{
+            padding: "12px 14px",
+            borderRadius: "12px",
+            border: "1px solid #3B82F6",
+            background: "var(--cf-eef4ff, #EFF6FF)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "10px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "1 1 230px" }}>
+            <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#1E40AF" }}>
+              ⏸️ Guardado en App pausado en {checkpointApp.siguienteIndice} /{" "}
+              {checkpointApp.contactos.length} (
+              {Math.round(
+                (checkpointApp.siguienteIndice / Math.max(1, checkpointApp.contactos.length)) * 100
+              )}
+              %)
+            </div>
+            <div style={{ fontSize: "0.74rem", color: "#1E3A8A" }}>
+              Faltan{" "}
+              <strong>{checkpointApp.contactos.length - checkpointApp.siguienteIndice}</strong>{" "}
+              contacto(s) por guardar en tu Directorio WhatsApp.
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => void handleReanudarSyncApp()}
+              title="Reanudar guardado en Directorio WhatsApp exactamente donde quedó"
+              aria-label="Reanudar App"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "8px 13px",
+                borderRadius: "8px",
+                border: "1px solid #1D4ED8",
+                background: "#1D4ED8",
+                color: "#FFFFFF",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <Play size={14} />
+              <span>Reanudar</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleDescartarCheckpointApp}
+              title="Descartar este guardado pendiente"
+              aria-label="Descartar App"
+              style={{
+                padding: "8px 10px",
+                borderRadius: "8px",
+                border: "1px solid #93C5FD",
+                background: "#FFFFFF",
+                color: "#1E40AF",
+                fontSize: "0.76rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Descartar
+            </button>
+          </div>
+        </div>
+      )}
+
       {mensaje && (
         <div
           style={{
@@ -1885,6 +2900,439 @@ export function DepuradorAgendaGooglePanel({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL BLOQUEANTE DE SINCRONIZACIÓN CON SPINNER, PROGRESO, LOG EN VIVO Y REANUDACIÓN */}
+      {modalSync?.abierto && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={modalSync.titulo}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(15, 23, 42, 0.72)",
+            backdropFilter: "blur(3px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "560px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              borderRadius: "16px",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E2E8F0)",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.35)",
+              padding: "18px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "13px",
+            }}
+          >
+            {/* Cabecera con Spinner / Estado */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "11px", minWidth: 0 }}>
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "12px",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background:
+                      modalSync.estado === "completado"
+                        ? "#DCFCE7"
+                        : modalSync.estado === "error"
+                          ? "#FEE2E2"
+                          : modalSync.estado === "pausado"
+                            ? "#FEF3C7"
+                            : "#DBEAFE",
+                    color:
+                      modalSync.estado === "completado"
+                        ? "#15803D"
+                        : modalSync.estado === "error"
+                          ? "#B91C1C"
+                          : modalSync.estado === "pausado"
+                            ? "#B45309"
+                            : "#1D4ED8",
+                  }}
+                >
+                  {modalSync.estado === "ejecutando" || modalSync.estado === "pausando" ? (
+                    <Loader2
+                      size={22}
+                      style={{ animation: "ecoSyncSpin 0.95s linear infinite" }}
+                    />
+                  ) : modalSync.estado === "completado" ? (
+                    <CheckCircle2 size={22} />
+                  ) : modalSync.estado === "pausado" ? (
+                    <Pause size={21} />
+                  ) : (
+                    <AlertTriangle size={22} />
+                  )}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: "0.96rem", fontWeight: 800, color: "var(--ct-1f1c19, #0F172A)" }}>
+                    {modalSync.titulo}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.76rem",
+                      color: "var(--ct-6e6861, #64748B)",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {modalSync.subtitulo}
+                  </div>
+                </div>
+              </div>
+
+              {(modalSync.estado === "completado" ||
+                modalSync.estado === "pausado" ||
+                modalSync.estado === "error") && (
+                <button
+                  type="button"
+                  onClick={() => setModalSync(null)}
+                  title="Cerrar ventana"
+                  aria-label="Cerrar"
+                  style={{
+                    padding: "6px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--cb-d5cfc4, #CBD5E1)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-3a3530, #475569)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Barra de Progreso + Lote + Tiempo / ETA */}
+            {modalSync.total > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    gap: "8px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--ct-1f1c19, #0F172A)" }}>
+                    {modalSync.hechos} / {modalSync.total} ({porcentajeModal}%)
+                  </span>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--ct-57524c, #475569)" }}>
+                    Lote {Math.max(1, modalSync.loteActual)} / {modalSync.totalLotes} ·{" "}
+                    {formatearDuracionSeg(segundosTranscurridos)}
+                    {etaSegundos !== null &&
+                      (modalSync.estado === "ejecutando" || modalSync.estado === "pausando") &&
+                      ` · ~${formatearDuracionSeg(etaSegundos)} rest.`}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    width: "100%",
+                    height: "11px",
+                    borderRadius: "999px",
+                    background: "var(--cf-e5e7eb, #E2E8F0)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${porcentajeModal}%`,
+                      height: "100%",
+                      borderRadius: "999px",
+                      transition: "width 0.3s ease",
+                      background:
+                        modalSync.estado === "error"
+                          ? "#DC2626"
+                          : modalSync.estado === "pausado"
+                            ? "#D97706"
+                            : "#15803D",
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #475569)", fontWeight: 500 }}>
+                  {modalSync.etapaActual}
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  background: "var(--cf-f8fafc, #F8FAFC)",
+                  border: "1px solid var(--cb-e6e2da, #E2E8F0)",
+                  fontSize: "0.79rem",
+                  color: "var(--ct-3a3530, #334155)",
+                  fontWeight: 600,
+                }}
+              >
+                {modalSync.etapaActual} · {formatearDuracionSeg(segundosTranscurridos)}
+              </div>
+            )}
+
+            {/* Aviso Wake Lock / Protección móvil */}
+            {(modalSync.estado === "ejecutando" || modalSync.estado === "pausando") && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  padding: "7px 10px",
+                  borderRadius: "9px",
+                  background: modalSync.wakeLockActivo ? "#F0FDF4" : "#EFF6FF",
+                  border: modalSync.wakeLockActivo ? "1px solid #BBF7D0" : "1px solid #BFDBFE",
+                  color: modalSync.wakeLockActivo ? "#166534" : "#1E40AF",
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
+                }}
+              >
+                <Smartphone size={14} style={{ flexShrink: 0 }} />
+                <span>
+                  {modalSync.wakeLockActivo
+                    ? "Pantalla protegida contra bloqueo (Wake Lock activo). Si cambias de app, el punto exacto queda guardado para reanudar."
+                    : "El progreso se guarda automáticamente tras cada lote; si bloqueas el teléfono o cambias de app podrás reanudar exactamente aquí."}
+                </span>
+              </div>
+            )}
+
+            {/* KPIs en vivo */}
+            {modalSync.kpis.length > 0 && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(105px, 1fr))",
+                  gap: "7px",
+                }}
+              >
+                {modalSync.kpis.map((k) => (
+                  <div
+                    key={k.label}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: "9px",
+                      background: "var(--cf-f8f7f4, #F8FAFC)",
+                      border: "1px solid var(--cb-eae6de, #E2E8F0)",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--ct-6e6861, #64748B)" }}>
+                      {k.label}
+                    </div>
+                    <div style={{ fontSize: "0.96rem", fontWeight: 800, color: k.color }}>
+                      {k.valor}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Error destacado si ocurrió corte */}
+            {modalSync.errorMensaje && (
+              <div
+                style={{
+                  padding: "9px 11px",
+                  borderRadius: "9px",
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  color: "#991B1B",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  wordBreak: "break-word",
+                }}
+              >
+                {modalSync.errorMensaje}
+              </div>
+            )}
+
+            {/* Consola / Log en tiempo real */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.73rem",
+                  fontWeight: 700,
+                  color: "var(--ct-57524c, #475569)",
+                }}
+              >
+                <Terminal size={13} />
+                <span>Registro en vivo ({modalSync.logs.length})</span>
+              </div>
+              <div
+                ref={logBoxRef}
+                style={{
+                  maxHeight: "200px",
+                  minHeight: "96px",
+                  overflowY: "auto",
+                  borderRadius: "10px",
+                  padding: "9px 11px",
+                  background: "#0F172A",
+                  color: "#E2E8F0",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                  fontSize: "0.71rem",
+                  lineHeight: 1.5,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px",
+                }}
+              >
+                {modalSync.logs.map((entry, idx) => (
+                  <div
+                    key={`${entry.hora}-${idx}`}
+                    style={{
+                      color:
+                        entry.nivel === "ok"
+                          ? "#86EFAC"
+                          : entry.nivel === "aviso"
+                            ? "#FDE68A"
+                            : entry.nivel === "error"
+                              ? "#FCA5A5"
+                              : "#CBD5E1",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    <span style={{ color: "#64748B", marginRight: "6px" }}>[{entry.hora}]</span>
+                    {entry.texto}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Botones de control del Modal */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
+              {(modalSync.estado === "ejecutando" || modalSync.estado === "pausando") &&
+                modalSync.modo !== "lectura_google" && (
+                  <button
+                    type="button"
+                    disabled={modalSync.estado === "pausando"}
+                    onClick={handlePausarSync}
+                    title="Pausar al finalizar el lote en curso y guardar el punto exacto para reanudar luego"
+                    aria-label="Pausar"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid #D97706",
+                      background: modalSync.estado === "pausando" ? "#FEF3C7" : "#D97706",
+                      color: modalSync.estado === "pausando" ? "#92400E" : "#FFFFFF",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      cursor: modalSync.estado === "pausando" ? "wait" : "pointer",
+                    }}
+                  >
+                    <Pause size={14} />
+                    <span>{modalSync.estado === "pausando" ? "Pausando…" : "Pausar"}</span>
+                  </button>
+                )}
+
+              {(modalSync.estado === "pausado" || modalSync.estado === "error") &&
+                modalSync.modo === "google" &&
+                checkpointGoogle && (
+                  <button
+                    type="button"
+                    onClick={() => void handleReanudarSyncGoogle()}
+                    title="Reanudar sincronización Google Contacts exactamente desde el último lote pendiente"
+                    aria-label="Reanudar"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 15px",
+                      borderRadius: "8px",
+                      border: "1px solid #15803D",
+                      background: "#15803D",
+                      color: "#FFFFFF",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Play size={14} />
+                    <span>Reanudar</span>
+                  </button>
+                )}
+
+              {(modalSync.estado === "pausado" || modalSync.estado === "error") &&
+                modalSync.modo === "app" &&
+                checkpointApp && (
+                  <button
+                    type="button"
+                    onClick={() => void handleReanudarSyncApp()}
+                    title="Reanudar guardado en Directorio WhatsApp desde el lote pendiente"
+                    aria-label="Reanudar"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 15px",
+                      borderRadius: "8px",
+                      border: "1px solid #1D4ED8",
+                      background: "#1D4ED8",
+                      color: "#FFFFFF",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Play size={14} />
+                    <span>Reanudar</span>
+                  </button>
+                )}
+
+              {(modalSync.estado === "pausado" ||
+                modalSync.estado === "error" ||
+                modalSync.estado === "completado") && (
+                <button
+                  type="button"
+                  onClick={() => setModalSync(null)}
+                  title={
+                    modalSync.estado === "completado"
+                      ? "Finalizar y volver a la agenda"
+                      : "Cerrar esta ventana (el punto guardado permanecerá arriba para reanudar luego)"
+                  }
+                  aria-label={modalSync.estado === "completado" ? "Listo" : "Cerrar"}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border:
+                      modalSync.estado === "completado"
+                        ? "1px solid #15803D"
+                        : "1px solid var(--cb-d5cfc4, #CBD5E1)",
+                    background:
+                      modalSync.estado === "completado"
+                        ? "#15803D"
+                        : "var(--cf-ffffff, #FFFFFF)",
+                    color:
+                      modalSync.estado === "completado"
+                        ? "#FFFFFF"
+                        : "var(--ct-2e2a26, #334155)",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {modalSync.estado === "completado" ? "Listo" : "Cerrar"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
