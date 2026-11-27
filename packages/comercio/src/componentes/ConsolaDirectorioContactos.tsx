@@ -181,18 +181,63 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
     }, 80);
   }, []);
 
+  const tabCacheKey = `eco_contactos_tab_${negNorm}`;
+  const tabInicializadaRef = useRef<boolean>(false);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search);
-      if (sp.get("tab") === "depurador" || sp.get("google_ok") || sp.get("google_error")) {
+      const tabParam = sp.get("tab");
+      const tieneCheckpointPendiente = Boolean(
+        window.localStorage.getItem(`eco_gcontacts_sync_job_${negNorm}`) ||
+          window.localStorage.getItem(`eco_app_dir_sync_job_${negNorm}`)
+      );
+
+      if (
+        tieneCheckpointPendiente ||
+        tabParam === "depurador" ||
+        sp.get("google_ok") ||
+        sp.get("google_error")
+      ) {
         setPestana("depurador");
+      } else if (
+        tabParam === "importar" ||
+        tabParam === "directorio" ||
+        tabParam === "lineas"
+      ) {
+        setPestana(tabParam);
+      } else {
+        const savedTab = window.localStorage.getItem(tabCacheKey);
+        if (
+          savedTab === "importar" ||
+          savedTab === "depurador" ||
+          savedTab === "directorio" ||
+          savedTab === "lineas"
+        ) {
+          setPestana(savedTab);
+        }
       }
+      tabInicializadaRef.current = true;
     }
     if (typeof navigator !== "undefined") {
       const nav = navigator as ContactPickerNavigator;
       setSoportaContactPicker(Boolean(nav.contacts && typeof nav.contacts.select === "function"));
     }
-  }, []);
+  }, [negNorm, tabCacheKey]);
+
+  useEffect(() => {
+    if (!tabInicializadaRef.current || typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(tabCacheKey, pestana);
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("tab") !== pestana) {
+        sp.set("tab", pestana);
+        window.history.replaceState({}, "", `${window.location.pathname}?${sp.toString()}`);
+      }
+    } catch {
+      // Ignorar si el navegador restringe storage/history
+    }
+  }, [pestana, tabCacheKey]);
 
   const cargarDirectorio = useCallback(async () => {
     setCargando(true);
@@ -207,7 +252,12 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
     setCrmSemilla(res.crmSemilla);
     setLineasWhatsapp(res.lineasWhatsapp);
     try {
-      window.localStorage.setItem(cacheKey, JSON.stringify(res.contactos));
+      // Limitar caché local a 400 contactos para no llenar la cuota de localStorage en móvil (reservada a checkpoints de sync)
+      if (res.contactos.length <= 400) {
+        window.localStorage.setItem(cacheKey, JSON.stringify(res.contactos));
+      } else {
+        window.localStorage.removeItem(cacheKey);
+      }
     } catch {
       // Ignorar cuota localStorage
     }

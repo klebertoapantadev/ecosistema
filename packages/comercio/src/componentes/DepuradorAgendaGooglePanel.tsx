@@ -87,6 +87,7 @@ interface CheckpointSyncGoogle {
   operaciones: OperacionEscrituraGoogleContacts[];
   siguienteIndice: number;
   actualizados: number;
+  etiquetadosCategoria?: number;
   etiquetadosDuplicados: number;
   eliminadosPapelera: number;
   errores: string[];
@@ -132,7 +133,7 @@ interface WakeLockSentinelLike {
   release: () => Promise<void>;
 }
 
-const TAMANO_LOTE_GOOGLE = 20;
+const TAMANO_LOTE_GOOGLE = 60;
 const TAMANO_LOTE_APP = 150;
 const MAX_LOGS_SYNC = 120;
 
@@ -1055,14 +1056,27 @@ export function DepuradorAgendaGooglePanel({
   const ejecutarLoopSyncGoogle = async (jobInicial: CheckpointSyncGoogle) => {
     let job: CheckpointSyncGoogle = {
       ...jobInicial,
+      etiquetadosCategoria: jobInicial.etiquetadosCategoria ?? 0,
+      operaciones: [...jobInicial.operaciones],
       errores: [...jobInicial.errores],
       logs: [...jobInicial.logs],
     };
     const total = job.operaciones.length;
     const totalLotes = Math.max(1, Math.ceil(total / TAMANO_LOTE_GOOGLE));
-    const inicioLote = Math.floor(job.siguienteIndice / TAMANO_LOTE_GOOGLE);
     const inicioSesionMs = Date.now();
     const hechosInicioSesion = job.siguienteIndice;
+
+    const compactarYGuardarCheckpoint = (cp: CheckpointSyncGoogle) => {
+      // Compactar operaciones ya completadas para mantener localStorage liviano (<100 KB en móvil)
+      const opsCompactas = cp.operaciones.map((op, idx) =>
+        idx < cp.siguienteIndice
+          ? ({ tipo: op.tipo, resourceName: op.resourceName } as OperacionEscrituraGoogleContacts)
+          : op
+      );
+      const cpCompacto: CheckpointSyncGoogle = { ...cp, operaciones: opsCompactas };
+      guardarCheckpointLocal(claveCheckpointGoogle, cpCompacto);
+      setCheckpointGoogle(cpCompacto);
+    };
 
     pausarSyncRef.current = false;
     syncEnCursoRef.current = true;
@@ -1070,16 +1084,16 @@ export function DepuradorAgendaGooglePanel({
     setMensaje(null);
 
     const wakeOk = await activarWakeLock();
+    const loteInicial = Math.min(totalLotes, Math.floor(job.siguienteIndice / TAMANO_LOTE_GOOGLE) + 1);
     job.logs = anexarLogs(job.logs, [
       crearEntradaLog(
         "info",
         job.siguienteIndice > 0
-          ? `▶ Reanudando Google Contacts desde ${job.siguienteIndice + 1}/${total} (lote ${inicioLote + 1}/${totalLotes}) sin repetir los ya aplicados…`
-          : `▶ Sincronizando ${total} operación(es) en ${totalLotes} lote(s) con ${job.correoGoogle || "Google Contacts"}…`
+          ? `▶ Reanudando Google Contacts desde ${job.siguienteIndice + 1}/${total} (lote ${loteInicial}/${totalLotes}, modo Batch rápido) sin repetir los ya aplicados…`
+          : `▶ Sincronizando ${total} operación(es) en ${totalLotes} lote(s) Batch con ${job.correoGoogle || "Google Contacts"}…`
       ),
     ]);
-    guardarCheckpointLocal(claveCheckpointGoogle, job);
-    setCheckpointGoogle(job);
+    compactarYGuardarCheckpoint(job);
 
     const actualizarModalGoogle = (
       estado: EstadoModalSync["estado"],
@@ -1087,6 +1101,29 @@ export function DepuradorAgendaGooglePanel({
       etapaActual: string,
       errorMensaje: string | null = null
     ) => {
+      const kpisLista: Array<{ label: string; valor: number; color: string }> = [
+        { label: "Actualizados", valor: job.actualizados, color: "#15803D" },
+      ];
+      if ((job.etiquetadosCategoria ?? 0) > 0) {
+        kpisLista.push({
+          label: "Solo etiqueta",
+          valor: job.etiquetadosCategoria ?? 0,
+          color: "#0F766E",
+        });
+      }
+      kpisLista.push(
+        {
+          label: job.modoDuplicados === "PAPELERA" ? "A Papelera" : "Dup. etiq.",
+          valor:
+            job.modoDuplicados === "PAPELERA"
+              ? job.eliminadosPapelera
+              : job.etiquetadosDuplicados,
+          color: "#7C3AED",
+        },
+        { label: "Pendientes", valor: Math.max(0, total - job.siguienteIndice), color: "#1D4ED8" },
+        { label: "Avisos", valor: job.errores.length, color: "#B91C1C" }
+      );
+
       setModalSync({
         abierto: true,
         modo: "google",
@@ -1100,19 +1137,7 @@ export function DepuradorAgendaGooglePanel({
         etapaActual,
         iniciadoMs: inicioSesionMs,
         hechosAlInicioSesion: hechosInicioSesion,
-        kpis: [
-          { label: "Actualizados", valor: job.actualizados, color: "#15803D" },
-          {
-            label: job.modoDuplicados === "PAPELERA" ? "A Papelera" : "Etiquetados",
-            valor:
-              job.modoDuplicados === "PAPELERA"
-                ? job.eliminadosPapelera
-                : job.etiquetadosDuplicados,
-            color: "#7C3AED",
-          },
-          { label: "Pendientes", valor: Math.max(0, total - job.siguienteIndice), color: "#1D4ED8" },
-          { label: "Avisos", valor: job.errores.length, color: "#B91C1C" },
-        ],
+        kpis: kpisLista,
         logs: job.logs,
         errorMensaje,
         wakeLockActivo: wakeOk,
@@ -1121,54 +1146,63 @@ export function DepuradorAgendaGooglePanel({
 
     actualizarModalGoogle(
       "ejecutando",
-      inicioLote + 1,
-      `Enviando lote ${inicioLote + 1} de ${totalLotes}…`
+      loteInicial,
+      `Enviando lote Batch ${loteInicial} de ${totalLotes}…`
     );
 
     try {
-      for (let i = inicioLote; i < totalLotes; i++) {
+      while (job.siguienteIndice < total) {
+        const loteActual = Math.min(
+          totalLotes,
+          Math.floor(job.siguienteIndice / TAMANO_LOTE_GOOGLE) + 1
+        );
+
         if (pausarSyncRef.current) {
           job.actualizadoEn = new Date().toISOString();
           job.logs = anexarLogs(job.logs, [
             crearEntradaLog(
               "aviso",
-              `⏸️ Pausado exactamente en ${job.siguienteIndice}/${total}. Cuando vuelvas, pulsa «Reanudar» para seguir en el lote ${i + 1}/${totalLotes}.`
+              `⏸️ Pausado exactamente en ${job.siguienteIndice}/${total}. Cuando vuelvas, pulsa «Reanudar» para seguir sin perder nada.`
             ),
           ]);
-          guardarCheckpointLocal(claveCheckpointGoogle, job);
-          setCheckpointGoogle(job);
+          compactarYGuardarCheckpoint(job);
           actualizarModalGoogle(
             "pausado",
-            i + 1,
-            `Pausado en ${job.siguienteIndice} de ${total} (lote ${i}/${totalLotes} completados).`
+            loteActual,
+            `Pausado en ${job.siguienteIndice} de ${total}.`
           );
           return;
         }
 
-        const inicioIdx = i * TAMANO_LOTE_GOOGLE;
-        const bloque = job.operaciones.slice(inicioIdx, inicioIdx + TAMANO_LOTE_GOOGLE);
-        const hechosAlTerminar = Math.min(inicioIdx + bloque.length, total);
-        setProgresoGoogle(`Google ${hechosAlTerminar}/${total} (lote ${i + 1}/${totalLotes})`);
+        const inicioIdx = job.siguienteIndice;
+        const finIdx = Math.min(inicioIdx + TAMANO_LOTE_GOOGLE, total);
+        const bloque = job.operaciones.slice(inicioIdx, finIdx);
+        const esUltimo = finIdx >= total;
+        setProgresoGoogle(`Google ${finIdx}/${total} (lote ${loteActual}/${totalLotes})`);
 
         const primerNombre = bloque[0]?.nombreLimpio || bloque[0]?.resourceName || "";
         job.logs = anexarLogs(job.logs, [
           crearEntradaLog(
             "info",
-            `Lote ${i + 1}/${totalLotes}: procesando ${bloque.length} ficha(s)${primerNombre ? ` (desde «${primerNombre}»)` : ""}…`
+            `Lote ${loteActual}/${totalLotes}: aplicando ${bloque.length} operación(es) en Batch${primerNombre ? ` (desde «${primerNombre}»)` : ""}…`
           ),
         ]);
         actualizarModalGoogle(
           pausarSyncRef.current ? "pausando" : "ejecutando",
-          i + 1,
-          `Aplicando lote ${i + 1} de ${totalLotes} (${bloque.length} cambios en paralelo)…`
+          loteActual,
+          `Aplicando lote Batch ${loteActual} de ${totalLotes} (${bloque.length} operaciones)…`
         );
 
         let resLote: {
           actualizados: number;
+          etiquetadosCategoria: number;
           etiquetadosDuplicados: number;
           eliminadosPapelera: number;
           errores: string[];
           detallesLog: string[];
+          rateLimited: boolean;
+          retryAfterSegundos: number;
+          operacionesPendientes429: OperacionEscrituraGoogleContacts[];
         } | null = null;
         let ultimoError = "";
 
@@ -1179,9 +1213,10 @@ export function DepuradorAgendaGooglePanel({
               conexionId: job.conexionId,
               mapaGrupos: job.mapaGrupos,
               operaciones: bloque,
-              esUltimoLote: i === totalLotes - 1,
+              esUltimoLote: esUltimo,
               resumenFinal: {
                 actualizados: job.actualizados,
+                etiquetadosCategoria: job.etiquetadosCategoria ?? 0,
                 etiquetadosDuplicados: job.etiquetadosDuplicados,
                 eliminadosPapelera: job.eliminadosPapelera,
               },
@@ -1189,10 +1224,14 @@ export function DepuradorAgendaGooglePanel({
             if (res.ok) {
               resLote = {
                 actualizados: res.actualizados,
+                etiquetadosCategoria: res.etiquetadosCategoria ?? 0,
                 etiquetadosDuplicados: res.etiquetadosDuplicados,
                 eliminadosPapelera: res.eliminadosPapelera,
                 errores: res.errores,
                 detallesLog: res.detallesLog ?? [],
+                rateLimited: Boolean(res.rateLimited),
+                retryAfterSegundos: res.retryAfterSegundos ?? 0,
+                operacionesPendientes429: res.operacionesPendientes429 ?? [],
               };
               break;
             }
@@ -1209,13 +1248,13 @@ export function DepuradorAgendaGooglePanel({
             job.logs = anexarLogs(job.logs, [
               crearEntradaLog(
                 "aviso",
-                `⚠️ Corte temporal en lote ${i + 1}/${totalLotes}. Reintentando en ${esperaSeg}s (${ultimoError.slice(0, 90)})…`
+                `⚠️ Corte temporal en lote ${loteActual}/${totalLotes}. Reintentando en ${esperaSeg}s (${ultimoError.slice(0, 90)})…`
               ),
             ]);
             actualizarModalGoogle(
               "ejecutando",
-              i + 1,
-              `Reintentando lote ${i + 1}/${totalLotes} automáticamente…`
+              loteActual,
+              `Reintentando lote ${loteActual}/${totalLotes} automáticamente…`
             );
             await esperarMs(esperaSeg * 1000);
           }
@@ -1226,60 +1265,103 @@ export function DepuradorAgendaGooglePanel({
           job.logs = anexarLogs(job.logs, [
             crearEntradaLog(
               "error",
-              `❌ Pausado por red/sesión en lote ${i + 1}/${totalLotes}: ${ultimoError}. Punto guardado en ${job.siguienteIndice}/${total}.`
+              `❌ Pausado por red/sesión en lote ${loteActual}/${totalLotes}: ${ultimoError}. Punto guardado en ${job.siguienteIndice}/${total}.`
             ),
           ]);
-          guardarCheckpointLocal(claveCheckpointGoogle, job);
-          setCheckpointGoogle(job);
+          compactarYGuardarCheckpoint(job);
           actualizarModalGoogle(
             "error",
-            i + 1,
-            `Se detuvo en lote ${i + 1}/${totalLotes} (${job.siguienteIndice}/${total} ya aplicados). Pulsa «Reanudar» para continuar exactamente aquí.`,
+            loteActual,
+            `Se detuvo en lote ${loteActual}/${totalLotes} (${job.siguienteIndice}/${total} ya aplicados). Pulsa «Reanudar» para continuar exactamente aquí.`,
             ultimoError
           );
           setMensaje({
             tipo: "error",
-            texto: `Google Contacts pausado en ${job.siguienteIndice}/${total} (lote ${i + 1}/${totalLotes}). Pulsa «Reanudar» arriba para continuar donde quedó.`,
+            texto: `Google Contacts pausado en ${job.siguienteIndice}/${total}. Pulsa «Reanudar» arriba para continuar donde quedó.`,
           });
           return;
         }
 
         job.actualizados += resLote.actualizados;
+        job.etiquetadosCategoria = (job.etiquetadosCategoria ?? 0) + resLote.etiquetadosCategoria;
         job.etiquetadosDuplicados += resLote.etiquetadosDuplicados;
         job.eliminadosPapelera += resLote.eliminadosPapelera;
         if (resLote.errores.length > 0) {
           job.errores = [...job.errores, ...resLote.errores].slice(-80);
         }
-        job.siguienteIndice = hechosAlTerminar;
+
+        // Manejo sin pérdida de cuota Google (HTTP 429): reencola exactamente las pendientes y hace cooldown automático
+        if (resLote.rateLimited && resLote.operacionesPendientes429.length > 0) {
+          const hechasEnBloque = Math.max(
+            0,
+            bloque.length - resLote.operacionesPendientes429.length
+          );
+          const nuevoIndice = Math.min(finIdx, inicioIdx + hechasEnBloque);
+          // Reemplazar solo la porción pendiente del bloque con las operaciones exactas que devolvió el 429
+          const opsActualizadas = [
+            ...job.operaciones.slice(0, nuevoIndice),
+            ...resLote.operacionesPendientes429,
+            ...job.operaciones.slice(finIdx),
+          ];
+          job.operaciones = opsActualizadas;
+          job.siguienteIndice = nuevoIndice;
+          job.actualizadoEn = new Date().toISOString();
+
+          const esperaSeg = Math.max(15, Math.min(65, resLote.retryAfterSegundos || 25));
+          job.logs = anexarLogs(job.logs, [
+            ...resLote.detallesLog.slice(0, 3).map((l) => crearEntradaLog("info", l)),
+            crearEntradaLog(
+              "aviso",
+              `⏳ Cuota temporal de Google (HTTP 429). Esperando ${esperaSeg}s para reintentar ${resLote.operacionesPendientes429.length} operación(es) sin perder ninguna…`
+            ),
+          ]);
+          compactarYGuardarCheckpoint(job);
+
+          for (let s = esperaSeg; s > 0; s--) {
+            if (pausarSyncRef.current) break;
+            actualizarModalGoogle(
+              "ejecutando",
+              loteActual,
+              `⏳ Cuota de Google (429): enfriando ${s}s antes de reintentar ${resLote.operacionesPendientes429.length} ficha(s)…`
+            );
+            await esperarMs(1000);
+          }
+          continue;
+        }
+
+        job.siguienteIndice = finIdx;
         job.actualizadoEn = new Date().toISOString();
 
         const entradasLote: EntradaLogSync[] = [];
-        // Agregar resumen compacto + hasta 3 detalles representativos del lote
-        const muestra = resLote.detallesLog.slice(0, 3);
-        const etiquetasLog = resLote.detallesLog.filter((l) => l.startsWith("🏷️"));
         entradasLote.push(
           crearEntradaLog(
             "ok",
-            `✓ Lote ${i + 1}/${totalLotes} (${hechosAlTerminar}/${total}): ${resLote.actualizados} act.` +
-              (resLote.etiquetadosDuplicados > 0 ? ` · ${resLote.etiquetadosDuplicados} etiq.` : "") +
-              (resLote.eliminadosPapelera > 0 ? ` · ${resLote.eliminadosPapelera} papelera` : "") +
-              (muestra.length > 0 ? ` — ${muestra.join(", ")}` : "")
+            `✓ Lote ${loteActual}/${totalLotes} (${finIdx}/${total}):` +
+              (resLote.actualizados > 0 ? ` ${resLote.actualizados} act.` : "") +
+              (resLote.etiquetadosCategoria > 0
+                ? ` · ${resLote.etiquetadosCategoria} solo-etiqueta`
+                : "") +
+              (resLote.etiquetadosDuplicados > 0
+                ? ` · ${resLote.etiquetadosDuplicados} dup. etiq.`
+                : "") +
+              (resLote.eliminadosPapelera > 0
+                ? ` · ${resLote.eliminadosPapelera} papelera`
+                : "")
           )
         );
-        for (const etq of etiquetasLog) {
-          entradasLote.push(crearEntradaLog("info", etq));
+        for (const det of resLote.detallesLog.slice(0, 4)) {
+          entradasLote.push(crearEntradaLog("info", det));
         }
         for (const errLinea of resLote.errores.slice(0, 2)) {
           entradasLote.push(crearEntradaLog("aviso", `⚠️ ${errLinea}`));
         }
 
         job.logs = anexarLogs(job.logs, entradasLote);
-        guardarCheckpointLocal(claveCheckpointGoogle, job);
-        setCheckpointGoogle({ ...job });
+        compactarYGuardarCheckpoint(job);
         actualizarModalGoogle(
           pausarSyncRef.current ? "pausando" : "ejecutando",
-          i + 1,
-          `Guardado lote ${i + 1} de ${totalLotes} (${hechosAlTerminar}/${total}).`
+          loteActual,
+          `Completado lote ${loteActual} de ${totalLotes} (${finIdx}/${total}).`
         );
       }
 
@@ -1288,6 +1370,9 @@ export function DepuradorAgendaGooglePanel({
       setCheckpointGoogle(null);
       const resumenFinalTxt =
         `Google Contacts actualizado: ${job.actualizados} fichas actualizadas` +
+        ((job.etiquetadosCategoria ?? 0) > 0
+          ? `, ${job.etiquetadosCategoria} etiquetadas por categoría`
+          : "") +
         (job.etiquetadosDuplicados > 0
           ? `, ${job.etiquetadosDuplicados} duplicados etiquetados`
           : "") +
@@ -1300,7 +1385,7 @@ export function DepuradorAgendaGooglePanel({
       job.logs = anexarLogs(job.logs, [crearEntradaLog("ok", `🎉 ${resumenFinalTxt}`)]);
       actualizarModalGoogle("completado", totalLotes, "¡Sincronización con Google Contacts completada!");
       setMensaje({
-        tipo: job.errores.length > 0 && job.actualizados === 0 ? "error" : "ok",
+        tipo: job.errores.length > 0 && job.actualizados === 0 && (job.etiquetadosCategoria ?? 0) === 0 ? "error" : "ok",
         texto: resumenFinalTxt,
       });
       await cargarEstadoGoogle();
@@ -1326,15 +1411,24 @@ export function DepuradorAgendaGooglePanel({
 
     for (const f of fichasDepuradas) {
       if (!f.seleccionado || !f.googleResourceNamePrincipal) continue;
-      const necesitaUpdate =
+      const necesitaUpdateDatos =
         f.fichasOrigen.length > 1 ||
         f.algunTelefonoCorregido ||
-        f.nombreFueLimpiado ||
-        asignarEtiquetasCategoria;
+        f.nombreFueLimpiado;
 
-      if (necesitaUpdate) {
-        if (asignarEtiquetasCategoria && f.etiquetaCategoriaGoogle) {
-          gruposNecesarios.add(f.etiquetaCategoriaGoogle);
+      const etiquetaObjetivo =
+        asignarEtiquetasCategoria && f.etiquetaCategoriaGoogle
+          ? f.etiquetaCategoriaGoogle
+          : null;
+      const yaTieneEtiqueta =
+        !etiquetaObjetivo ||
+        f.etiquetasOriginales.some(
+          (e) => e.trim().toLowerCase() === etiquetaObjetivo.trim().toLowerCase()
+        );
+
+      if (necesitaUpdateDatos) {
+        if (etiquetaObjetivo && !yaTieneEtiqueta) {
+          gruposNecesarios.add(etiquetaObjetivo);
         }
         operaciones.push({
           tipo: "ACTUALIZAR",
@@ -1349,7 +1443,16 @@ export function DepuradorAgendaGooglePanel({
           empresa: f.empresa,
           cargo: f.cargo,
           notas: f.notas,
-          etiquetaGrupo: asignarEtiquetasCategoria ? f.etiquetaCategoriaGoogle : null,
+          etiquetaGrupo: etiquetaObjetivo && !yaTieneEtiqueta ? etiquetaObjetivo : null,
+        });
+      } else if (etiquetaObjetivo && !yaTieneEtiqueta) {
+        // Solo asignar etiqueta vía members:modify (sin consumir cuota de updateContact)
+        gruposNecesarios.add(etiquetaObjetivo);
+        operaciones.push({
+          tipo: "ASIGNAR_ETIQUETA",
+          resourceName: f.googleResourceNamePrincipal,
+          nombreLimpio: f.nombreLimpio,
+          etiquetaGrupo: etiquetaObjetivo,
         });
       }
 
@@ -1372,24 +1475,30 @@ export function DepuradorAgendaGooglePanel({
     }
 
     if (operaciones.length === 0) {
-      setMensaje({ tipo: "ok", texto: "Tu agenda de Google ya está limpia; no hay cambios pendientes." });
+      setMensaje({ tipo: "ok", texto: "Tu agenda de Google ya está limpia y etiquetada; no hay cambios pendientes." });
       return;
     }
 
     const totalUpdates = operaciones.filter((o) => o.tipo === "ACTUALIZAR").length;
-    const totalDups = operaciones.filter((o) => o.tipo !== "ACTUALIZAR").length;
+    const totalSoloEtiqueta = operaciones.filter((o) => o.tipo === "ASIGNAR_ETIQUETA").length;
+    const totalDups = operaciones.filter(
+      (o) => o.tipo === "ELIMINAR_DUPLICADO" || o.tipo === "ETIQUETAR_DUPLICADO"
+    ).length;
 
     const okConfirm =
       typeof window === "undefined" ||
       window.confirm(
-        `Se aplicarán ${operaciones.length} cambio(s) directo en Google Contacts:\n` +
-          `• ${totalUpdates} fichas actualizadas (teléfonos estandarizados, nombres y etiquetas)\n` +
+        `Se aplicarán ${operaciones.length} operación(es) en modo Batch rápido sobre Google Contacts:\n` +
+          `• ${totalUpdates} fichas con datos modificados (teléfonos, nombres o fusiones)\n` +
+          (totalSoloEtiqueta > 0
+            ? `• ${totalSoloEtiqueta} fichas solo etiqueta (sin tocar nombre/teléfono)\n`
+            : "") +
           `• ${totalDups} duplicados ${
             modoDuplicadosGoogle === "PAPELERA"
               ? "movidos a la Papelera de Google (recuperables 30 días)"
               : "etiquetados como «Duplicado - Revisar» (sin borrar nada)"
           }\n\n` +
-          `Primero se descargará automáticamente un respaldo .vcf de seguridad. Si se pausa o bloqueas el celular, podrás reanudar exactamente donde quedó. ¿Continuar?`
+          `Primero se descargará automáticamente un respaldo .vcf de seguridad. Si se pausa o cambias de app, podrás reanudar exactamente donde quedó. ¿Continuar?`
       );
     if (!okConfirm) return;
 

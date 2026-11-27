@@ -246,10 +246,14 @@ export async function aplicarLoteDepuracionGoogleAction(entrada: {
   | {
       ok: true;
       actualizados: number;
+      etiquetadosCategoria: number;
       etiquetadosDuplicados: number;
       eliminadosPapelera: number;
       errores: string[];
       detallesLog: string[];
+      rateLimited: boolean;
+      retryAfterSegundos: number;
+      operacionesPendientes429: OperacionEscrituraGoogleContacts[];
     }
   | { ok: false; error: string }
 > {
@@ -267,7 +271,7 @@ export async function aplicarLoteDepuracionGoogleAction(entrada: {
       operaciones: entrada.operaciones,
     });
 
-    if (entrada.esUltimoLote) {
+    if (entrada.esUltimoLote && !resultado.rateLimited) {
       await (supabase.schema("comun_comercio") as any).rpc(
         "com_fn_omnicanal_google_contacts_registrar_sync",
         {
@@ -276,6 +280,7 @@ export async function aplicarLoteDepuracionGoogleAction(entrada: {
           p_tipo: "ESCRITURA",
           p_cantidad:
             resultado.actualizados +
+            resultado.etiquetadosCategoria +
             resultado.etiquetadosDuplicados +
             resultado.eliminadosPapelera,
           p_detalle: entrada.resumenFinal ?? {},
