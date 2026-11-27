@@ -116,7 +116,7 @@ const PROVINCIAS_ECUADOR_INICIALES: ProvinciaItem[] = [
 const inputBaseStyle: React.CSSProperties = {
   borderRadius: "10px",
   border: "1px solid var(--linea-fuerte)",
-  background: "#FFFFFF",
+  background: "var(--cf-ffffff, #FFFFFF)",
   padding: "8px 12px",
   fontSize: "0.84rem",
   fontWeight: 600,
@@ -542,7 +542,7 @@ export function MiPerfilRedAbogadoWidget({
             padding: "10px 18px",
             borderRadius: "10px",
             border: tab === "especialidades" ? "2px solid #0E6648" : "1px solid var(--linea-fuerte)",
-            background: tab === "especialidades" ? "var(--exito-diluido)" : "#ffffff",
+            background: tab === "especialidades" ? "var(--exito-diluido)" : "var(--cf-ffffff, #ffffff)",
             color: tab === "especialidades" ? "var(--exito-texto)" : "var(--texto-2)",
             fontWeight: 800,
             fontSize: "0.85rem",
@@ -563,8 +563,8 @@ export function MiPerfilRedAbogadoWidget({
             padding: "10px 18px",
             borderRadius: "10px",
             border: tab === "disponibilidad" ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
-            background: tab === "disponibilidad" ? "var(--acento-diluido)" : "#ffffff",
-            color: tab === "disponibilidad" ? "#5000BA" : "var(--texto-2)",
+            background: tab === "disponibilidad" ? "var(--acento-diluido)" : "var(--cf-ffffff, #ffffff)",
+            color: tab === "disponibilidad" ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)",
             fontWeight: 800,
             fontSize: "0.85rem",
             cursor: "pointer",
@@ -609,7 +609,7 @@ export function MiPerfilRedAbogadoWidget({
         >
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "18px",
@@ -757,7 +757,7 @@ export function MiPerfilRedAbogadoWidget({
           {/* Especialidades Legales */}
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "18px",
@@ -802,7 +802,7 @@ export function MiPerfilRedAbogadoWidget({
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#5000BA",
+                  color: "var(--ct-5000ba, #5000BA)",
                   fontWeight: 800,
                   fontSize: "0.78rem",
                   cursor: "pointer",
@@ -846,7 +846,7 @@ export function MiPerfilRedAbogadoWidget({
           {/* Zonas de Cobertura */}
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "18px",
@@ -891,7 +891,7 @@ export function MiPerfilRedAbogadoWidget({
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#0E6648",
+                  color: "var(--ct-0e6648, #0E6648)",
                   fontWeight: 800,
                   fontSize: "0.78rem",
                   cursor: "pointer",
@@ -959,7 +959,7 @@ export function MiPerfilRedAbogadoWidget({
       ) : (
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "18px",
             border: "1px solid var(--linea)",
             padding: "22px",
@@ -990,7 +990,7 @@ export function MiPerfilRedAbogadoWidget({
                   padding: "4px 10px",
                   borderRadius: "999px",
                   background: "var(--acento-diluido)",
-                  color: "#5000BA",
+                  color: "var(--ct-5000ba, #5000BA)",
                   fontSize: "0.72rem",
                   fontWeight: 800,
                   textTransform: "uppercase",
@@ -1064,7 +1064,7 @@ export function MiPerfilRedAbogadoWidget({
                 style={{
                   borderRadius: "16px",
                   border: "1px solid var(--acento-linea)",
-                  background: "#FAF8FF",
+                  background: "var(--cf-faf8ff, #FAF8FF)",
                   padding: "18px",
                   display: "flex",
                   flexDirection: "column",
@@ -1119,7 +1119,7 @@ export function MiPerfilRedAbogadoWidget({
                         gap: "5px",
                         borderRadius: "8px",
                         border: "1px solid var(--linea-fuerte)",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         padding: "6px 10px",
                         fontSize: "0.75rem",
                         fontWeight: 700,
@@ -1168,7 +1168,7 @@ export function MiPerfilRedAbogadoWidget({
                         gap: "8px",
                         borderRadius: "12px",
                         border: "1px solid var(--linea)",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         padding: "8px 12px",
                       }}
                     >
@@ -1251,7 +1251,7 @@ export function MiPerfilRedAbogadoWidget({
                       style={{
                         padding: "12px",
                         borderRadius: "10px",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         border: "1px dashed var(--linea-fuerte)",
                         fontSize: "0.8rem",
                         color: "var(--texto-suave)",
@@ -1325,7 +1325,7 @@ export function MiPerfilRedAbogadoWidget({
                         gap: "5px",
                         borderRadius: "8px",
                         border: "1px solid var(--linea-fuerte)",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         padding: "6px 10px",
                         fontSize: "0.75rem",
                         fontWeight: 700,
@@ -1374,7 +1374,7 @@ export function MiPerfilRedAbogadoWidget({
                         gap: "8px",
                         borderRadius: "12px",
                         border: "1px solid var(--linea)",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         padding: "8px 12px",
                       }}
                     >
@@ -1457,7 +1457,7 @@ export function MiPerfilRedAbogadoWidget({
                       style={{
                         padding: "12px",
                         borderRadius: "10px",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         border: "1px dashed var(--linea-fuerte)",
                         fontSize: "0.8rem",
                         color: "var(--texto-suave)",
@@ -1544,7 +1544,7 @@ export function MiPerfilRedAbogadoWidget({
                   style={{
                     borderRadius: "10px",
                     border: "1px solid var(--aviso)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "7px 12px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
@@ -1560,7 +1560,7 @@ export function MiPerfilRedAbogadoWidget({
                   style={{
                     borderRadius: "10px",
                     border: "1px solid var(--aviso)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "7px 12px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
@@ -1576,7 +1576,7 @@ export function MiPerfilRedAbogadoWidget({
                   style={{
                     borderRadius: "10px",
                     border: "1px solid var(--aviso)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "7px 12px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
@@ -1592,7 +1592,7 @@ export function MiPerfilRedAbogadoWidget({
                   style={{
                     borderRadius: "10px",
                     border: "1px solid var(--linea-fuerte)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "7px 12px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
@@ -1610,7 +1610,7 @@ export function MiPerfilRedAbogadoWidget({
               style={{
                 borderRadius: "14px",
                 border: "1px solid var(--aviso-linea)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 padding: "16px",
                 display: "flex",
                 flexDirection: "column",
@@ -1657,7 +1657,7 @@ export function MiPerfilRedAbogadoWidget({
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      color: "#5000BA",
+                      color: "var(--ct-5000ba, #5000BA)",
                       cursor: "pointer",
                     }}
                   >
@@ -1822,7 +1822,7 @@ export function MiPerfilRedAbogadoWidget({
                       gap: "10px",
                       borderRadius: "12px",
                       border: "1px solid var(--aviso-linea)",
-                      background: "#FFFFFF",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       padding: "10px 14px",
                     }}
                   >
@@ -1861,7 +1861,7 @@ export function MiPerfilRedAbogadoWidget({
                                 padding: "3px 8px",
                                 borderRadius: "999px",
                                 background: "var(--acento-diluido)",
-                                color: "#5000BA",
+                                color: "var(--ct-5000ba, #5000BA)",
                                 fontSize: "0.74rem",
                                 fontWeight: 700,
                               }}

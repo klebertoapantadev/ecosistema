@@ -1458,8 +1458,8 @@ export function ConsolaConfirmacionEntregas({
         valor: (r) => `${r.codigoOt} ${r.fechaServicio}`,
         render: (r) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.84rem", color: "#1F1C19" }}>{r.codigoOt}</strong>
-            <span style={{ fontSize: "0.73rem", color: "#847D74" }}>
+            <strong style={{ fontSize: "0.84rem", color: "var(--ct-1f1c19, #1F1C19)" }}>{r.codigoOt}</strong>
+            <span style={{ fontSize: "0.73rem", color: "var(--ct-847d74, #847D74)" }}>
               {new Date(r.fechaServicio).toLocaleString("es-EC", {
                 day: "2-digit",
                 month: "short",
@@ -1476,10 +1476,10 @@ export function ConsolaConfirmacionEntregas({
         valor: (r) => `${r.fallecidoDestinatario} ${r.descripcionServicio}`,
         render: (r) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.85rem", color: "#221E1B" }}>
+            <strong style={{ fontSize: "0.85rem", color: "var(--ct-221e1b, #221E1B)" }}>
               {r.fallecidoDestinatario}
             </strong>
-            <span style={{ fontSize: "0.74rem", color: "#847D74" }}>{r.descripcionServicio}</span>
+            <span style={{ fontSize: "0.74rem", color: "var(--ct-847d74, #847D74)" }}>{r.descripcionServicio}</span>
           </div>
         ),
       },
@@ -1495,9 +1495,9 @@ export function ConsolaConfirmacionEntregas({
                   alignSelf: "flex-start",
                   padding: "2px 8px",
                   borderRadius: "999px",
-                  background: "#F2F6F3",
-                  border: "1px solid #CEDDD3",
-                  color: "#2B4A36",
+                  background: "var(--cf-f2f6f3, #F2F6F3)",
+                  border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                  color: "var(--ct-2b4a36, #2B4A36)",
                   fontSize: "0.72rem",
                   fontWeight: 700,
                 }}
@@ -1505,11 +1505,11 @@ export function ConsolaConfirmacionEntregas({
                 🏛️ {r.salaServicio}
               </span>
             )}
-            <span style={{ fontSize: "0.81rem", color: "#1F1C19" }}>
+            <span style={{ fontSize: "0.81rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
               {r.ubicacionNombre || r.direccionGps || "Ubicación GPS registrada"}
             </span>
             {r.coordinadorNombre && (
-              <span style={{ fontSize: "0.72rem", color: "#847D74" }}>
+              <span style={{ fontSize: "0.72rem", color: "var(--ct-847d74, #847D74)" }}>
                 Coord: {r.coordinadorNombre}
               </span>
             )}
@@ -1532,13 +1532,13 @@ export function ConsolaConfirmacionEntregas({
                     height: "48px",
                     borderRadius: "8px",
                     objectFit: "cover",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   }}
                 />
               </a>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#1F1C19" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 {r.entregadorNombre}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
@@ -1547,12 +1547,12 @@ export function ConsolaConfirmacionEntregas({
                     href={`https://www.google.com/maps?q=${r.latitud},${r.longitud}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ fontSize: "0.72rem", color: "#221E1B", textDecoration: "none" }}
+                    style={{ fontSize: "0.72rem", color: "var(--ct-221e1b, #221E1B)", textDecoration: "none" }}
                   >
                     📍 Mapa GPS
                   </a>
                 ) : (
-                  <span style={{ fontSize: "0.71rem", color: "#847D74" }}>Sin GPS aún</span>
+                  <span style={{ fontSize: "0.71rem", color: "var(--ct-847d74, #847D74)" }}>Sin GPS aún</span>
                 )}
                 {r.fotoUrl && (
                   <button
@@ -1582,9 +1582,9 @@ export function ConsolaConfirmacionEntregas({
                       gap: "4px",
                       padding: "2px 7px",
                       borderRadius: "6px",
-                      border: "1px solid #CEDDD3",
-                      background: "#F2F6F3",
-                      color: "#2F4737",
+                      border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                      background: "var(--cf-f2f6f3, #F2F6F3)",
+                      color: "var(--ct-2f4737, #2F4737)",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: compartiendoWhatsapp ? "wait" : "pointer",
@@ -1614,8 +1614,8 @@ export function ConsolaConfirmacionEntregas({
                   borderRadius: "999px",
                   fontSize: "0.72rem",
                   fontWeight: 700,
-                  background: esProg ? "#FAF6EE" : esInf ? "#EFECE6" : "#F2F6F3",
-                  color: esProg ? "#745622" : esInf ? "#3A3530" : "#2B4A36",
+                  background: esProg ? "var(--cf-faf6ee, #FAF6EE)" : esInf ? "var(--cf-efece6, #EFECE6)" : "var(--cf-f2f6f3, #F2F6F3)",
+                  color: esProg ? "var(--ct-745622, #745622)" : esInf ? "var(--ct-3a3530, #3A3530)" : "var(--ct-2b4a36, #2B4A36)",
                 }}
               >
                 {esProg
@@ -1636,8 +1636,8 @@ export function ConsolaConfirmacionEntregas({
                     gap: "4px",
                     padding: "4px 8px",
                     borderRadius: "7px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.73rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1666,7 +1666,7 @@ export function ConsolaConfirmacionEntregas({
         id: "numero",
         encabezado: "N.º de Informe",
         valor: (i) => i.numeroInforme,
-        render: (i) => <strong style={{ color: "#1F1C19" }}>{i.numeroInforme}</strong>,
+        render: (i) => <strong style={{ color: "var(--ct-1f1c19, #1F1C19)" }}>{i.numeroInforme}</strong>,
       },
       {
         id: "rango",
@@ -1729,8 +1729,8 @@ export function ConsolaConfirmacionEntregas({
         style={{
           padding: "12px 16px",
           borderRadius: "14px",
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -1775,9 +1775,9 @@ export function ConsolaConfirmacionEntregas({
                   gap: "6px",
                   padding: "8px 13px",
                   borderRadius: "10px",
-                  border: activa ? "1px solid #1F1C19" : "1px solid #E6E2DA",
-                  background: activa ? "#1F1C19" : "#F8F7F4",
-                  color: activa ? "#FFFFFF" : "#57524C",
+                  border: activa ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  background: activa ? "#1F1C19" : "var(--cf-f8f7f4, #F8F7F4)",
+                  color: activa ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                   fontSize: "0.81rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -1789,8 +1789,8 @@ export function ConsolaConfirmacionEntregas({
                     padding: "1px 7px",
                     borderRadius: "999px",
                     fontSize: "0.7rem",
-                    background: activa ? "rgba(255,255,255,0.2)" : "#E6E2DA",
-                    color: activa ? "#FFFFFF" : "#57524C",
+                    background: activa ? "rgba(255,255,255,0.2)" : "var(--cf-e6e2da, #E6E2DA)",
+                    color: activa ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                   }}
                 >
                   {tab.badge}
@@ -1808,9 +1808,9 @@ export function ConsolaConfirmacionEntregas({
               gap: "6px",
               padding: "6px 11px",
               borderRadius: "999px",
-              background: enLinea ? "#F2F6F3" : "#FAF6EE",
-              border: `1px solid ${enLinea ? "#CEDDD3" : "#E5D7BC"}`,
-              color: enLinea ? "#2F4737" : "#745622",
+              background: enLinea ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-faf6ee, #FAF6EE)",
+              border: `1px solid ${enLinea ? "var(--cb-ceddd3, #CEDDD3)" : "var(--cb-e5d7bc, #E5D7BC)"}`,
+              color: enLinea ? "var(--ct-2f4737, #2F4737)" : "var(--ct-745622, #745622)",
               fontSize: "0.76rem",
               fontWeight: 700,
             }}
@@ -1858,8 +1858,8 @@ export function ConsolaConfirmacionEntregas({
                 padding: "7px 12px",
                 borderRadius: "9px",
                 border: "1px solid #2F4737",
-                background: "#F2F6F3",
-                color: "#2B4A36",
+                background: "var(--cf-f2f6f3, #F2F6F3)",
+                color: "var(--ct-2b4a36, #2B4A36)",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -1882,9 +1882,9 @@ export function ConsolaConfirmacionEntregas({
               gap: "6px",
               padding: "7px 11px",
               borderRadius: "9px",
-              border: "1px solid #D5CFC4",
-              background: "#FFFFFF",
-              color: "#1F1C19",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-1f1c19, #1F1C19)",
               fontSize: "0.79rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -1901,9 +1901,9 @@ export function ConsolaConfirmacionEntregas({
           style={{
             padding: "11px 14px",
             borderRadius: "10px",
-            background: "#FAF6EE",
-            border: "1px solid #E5D7BC",
-            color: "#745622",
+            background: "var(--cf-faf6ee, #FAF6EE)",
+            border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+            color: "var(--ct-745622, #745622)",
             fontSize: "0.81rem",
             display: "flex",
             alignItems: "center",
@@ -1924,9 +1924,9 @@ export function ConsolaConfirmacionEntregas({
           style={{
             padding: "11px 14px",
             borderRadius: "10px",
-            background: "#FAF2F2",
-            border: "1px solid #E5CACA",
-            color: "#8A2E2E",
+            background: "var(--cf-faf2f2, #FAF2F2)",
+            border: "1px solid var(--cb-e5caca, #E5CACA)",
+            color: "var(--ct-8a2e2e, #8A2E2E)",
             fontSize: "0.83rem",
           }}
         >
@@ -1939,9 +1939,9 @@ export function ConsolaConfirmacionEntregas({
           style={{
             padding: "12px 14px",
             borderRadius: "12px",
-            background: "#F2F6F3",
-            border: "1px solid #CEDDD3",
-            color: "#2B4A36",
+            background: "var(--cf-f2f6f3, #F2F6F3)",
+            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+            color: "var(--ct-2b4a36, #2B4A36)",
             fontSize: "0.84rem",
             display: "flex",
             justifyContent: "space-between",
@@ -1996,8 +1996,8 @@ export function ConsolaConfirmacionEntregas({
         <form
           onSubmit={(e) => void handleRegistrarEntregaCampo(e)}
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #E6E2DA",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "16px",
             padding: "20px",
             display: "flex",
@@ -2012,9 +2012,9 @@ export function ConsolaConfirmacionEntregas({
                   flex: "1 1 100%",
                   padding: "10px 14px",
                   borderRadius: "10px",
-                  background: "#FAF6EE",
-                  border: "1px solid #E5D7BC",
-                  color: "#745622",
+                  background: "var(--cf-faf6ee, #FAF6EE)",
+                  border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                  color: "var(--ct-745622, #745622)",
                   fontSize: "0.8rem",
                   fontWeight: 700,
                 }}
@@ -2036,18 +2036,18 @@ export function ConsolaConfirmacionEntregas({
                 borderRadius: "12px",
                 border:
                   tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO"
-                    ? "2px solid #1F1C19"
-                    : "1px solid #D5CFC4",
+                    ? "2px solid var(--cb-1f1c19, #1F1C19)"
+                    : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                 background:
-                  tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" ? "#F8F7F4" : "#FFFFFF",
+                  tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" ? "var(--cf-f8f7f4, #F8F7F4)" : "var(--cf-ffffff, #FFFFFF)",
                 textAlign: "left",
                 cursor: "pointer",
               }}
             >
-              <strong style={{ display: "block", fontSize: "0.9rem", color: "#1F1C19" }}>
+              <strong style={{ display: "block", fontSize: "0.9rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                 🕊️ Orden de Trabajo — Exequiales IESS
               </strong>
-              <span style={{ fontSize: "0.76rem", color: "#847D74" }}>
+              <span style={{ fontSize: "0.76rem", color: "var(--ct-847d74, #847D74)" }}>
                 Solo Foto GPS + Número de Sala obligatorios en entrega rápida
               </span>
             </button>
@@ -2066,16 +2066,16 @@ export function ConsolaConfirmacionEntregas({
                 border:
                   tipoOrigenCaptura === "PEDIDO_TIENDA"
                     ? "2px solid #2F4737"
-                    : "1px solid #D5CFC4",
-                background: tipoOrigenCaptura === "PEDIDO_TIENDA" ? "#F2F6F3" : "#FFFFFF",
+                    : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: tipoOrigenCaptura === "PEDIDO_TIENDA" ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-ffffff, #FFFFFF)",
                 textAlign: "left",
                 cursor: "pointer",
               }}
             >
-              <strong style={{ display: "block", fontSize: "0.9rem", color: "#2B4A36" }}>
+              <strong style={{ display: "block", fontSize: "0.9rem", color: "var(--ct-2b4a36, #2B4A36)" }}>
                 🛍️ Resto de Pedidos de la Tienda ({tablero.pedidosPendientesTienda.length})
               </strong>
-              <span style={{ fontSize: "0.76rem", color: "#2F4737" }}>
+              <span style={{ fontSize: "0.76rem", color: "var(--ct-2f4737, #2F4737)" }}>
                 Confirmar entrega fotográfica de pedidos Web / WhatsApp / Tienda
               </span>
             </button>
@@ -2088,7 +2088,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.82rem",
                   fontWeight: 800,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                 }}
               >
                 📋 Pedidos Exequiales Enviados desde Operador / Taller ({otsProgramadas.length}) — toca
@@ -2118,9 +2118,9 @@ export function ConsolaConfirmacionEntregas({
                         border: sel
                           ? "2px solid #2F4737"
                           : listo
-                            ? "1.5px solid #CEDDD3"
-                            : "1px solid #D5CFC4",
-                        background: sel ? "#F2F6F3" : "#FFFFFF",
+                            ? "1.5px solid var(--cb-ceddd3, #CEDDD3)"
+                            : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: sel ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-ffffff, #FFFFFF)",
                         textAlign: "left",
                         cursor: "pointer",
                         display: "flex",
@@ -2136,7 +2136,7 @@ export function ConsolaConfirmacionEntregas({
                           gap: "6px",
                         }}
                       >
-                        <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>
+                        <strong style={{ fontSize: "0.82rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                           {ot.codigoOt} {ot.salaServicio ? `· 🏛️ ${ot.salaServicio}` : ""}
                         </strong>
                         <span
@@ -2145,8 +2145,8 @@ export function ConsolaConfirmacionEntregas({
                             borderRadius: "999px",
                             fontSize: "0.68rem",
                             fontWeight: 800,
-                            background: listo ? "#F2F6F3" : enPrep ? "#F5EFE3" : "#F4F2EE",
-                            color: listo ? "#2F4737" : enPrep ? "#745622" : "#3A3530",
+                            background: listo ? "var(--cf-f2f6f3, #F2F6F3)" : enPrep ? "var(--cf-f5efe3, #F5EFE3)" : "var(--cf-f4f2ee, #F4F2EE)",
+                            color: listo ? "var(--ct-2f4737, #2F4737)" : enPrep ? "var(--ct-745622, #745622)" : "var(--ct-3a3530, #3A3530)",
                           }}
                         >
                           {listo
@@ -2156,10 +2156,10 @@ export function ConsolaConfirmacionEntregas({
                               : "📨 En Taller"}
                         </span>
                       </div>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#221E1B" }}>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-221e1b, #221E1B)" }}>
                         💐 {ot.descripcionServicio}
                       </span>
-                      <span style={{ fontSize: "0.73rem", color: "#57524C" }}>
+                      <span style={{ fontSize: "0.73rem", color: "var(--ct-57524c, #57524C)" }}>
                         {ot.coordinadorNombre ? `Solicita: ${ot.coordinadorNombre} · ` : ""}
                         {ot.horaSolicitada ? `⏰ ${ot.horaSolicitada} · ` : ""}
                         🕊️ {ot.fallecidoDestinatario}
@@ -2178,7 +2178,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.8rem",
                   fontWeight: 700,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   marginBottom: "6px",
                 }}
               >
@@ -2191,7 +2191,7 @@ export function ConsolaConfirmacionEntregas({
                   width: "100%",
                   padding: "10px 12px",
                   borderRadius: "10px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.86rem",
                 }}
               >
@@ -2222,9 +2222,9 @@ export function ConsolaConfirmacionEntregas({
                       gap: "5px",
                       padding: "6px 12px",
                       borderRadius: "8px",
-                      background: "#F4F2EE",
-                      border: "1px solid #DDD8CE",
-                      color: "#221E1B",
+                      background: "var(--cf-f4f2ee, #F4F2EE)",
+                      border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
+                      color: "var(--ct-221e1b, #221E1B)",
                       fontSize: "0.78rem",
                       fontWeight: 700,
                       textDecoration: "none",
@@ -2244,8 +2244,8 @@ export function ConsolaConfirmacionEntregas({
               style={{
                 padding: "12px 14px",
                 borderRadius: "12px",
-                background: enRutaActiva ? "#F2F6F3" : "#F8F7F4",
-                border: enRutaActiva ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                background: enRutaActiva ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f8f7f4, #F8F7F4)",
+                border: enRutaActiva ? "1.5px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -2257,14 +2257,14 @@ export function ConsolaConfirmacionEntregas({
                 <strong
                   style={{
                     fontSize: "0.84rem",
-                    color: enRutaActiva ? "#2B4A36" : "#1F1C19",
+                    color: enRutaActiva ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-1f1c19, #1F1C19)",
                   }}
                 >
                   {enRutaActiva
                     ? "🛵 Compartiendo ubicación en vivo con la tienda"
                     : "🛵 ¿Ya saliste a entregar este pedido?"}
                 </strong>
-                <span style={{ fontSize: "0.75rem", color: "#57524C" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--ct-57524c, #57524C)" }}>
                   {enRutaActiva
                     ? `${ultimoPulsoRutaTexto || "GPS activo"} · Se apagará solo al confirmar la entrega.`
                     : "Activa Iniciar Ruta para que Ventas y Operaciones vean tu avance en vivo."}
@@ -2308,8 +2308,8 @@ export function ConsolaConfirmacionEntregas({
               style={{
                 padding: "14px 16px",
                 borderRadius: "14px",
-                background: salaServicio ? "#F2F6F3" : "#FAF6EE",
-                border: salaServicio ? "1px solid #CEDDD3" : "1px solid #E5D7BC",
+                background: salaServicio ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-faf6ee, #FAF6EE)",
+                border: salaServicio ? "1px solid var(--cb-ceddd3, #CEDDD3)" : "1px solid var(--cb-e5d7bc, #E5D7BC)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "10px",
@@ -2328,11 +2328,11 @@ export function ConsolaConfirmacionEntregas({
                   style={{
                     fontSize: "0.84rem",
                     fontWeight: 800,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                   }}
                 >
                   Número de Sala *{" "}
-                  <span style={{ fontWeight: 500, fontSize: "0.76rem", color: "#57524C" }}>
+                  <span style={{ fontWeight: 500, fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)" }}>
                     (único dato obligatorio junto a la foto)
                   </span>
                 </label>
@@ -2341,7 +2341,7 @@ export function ConsolaConfirmacionEntregas({
                     style={{
                       fontSize: "0.76rem",
                       fontWeight: 700,
-                      color: "#2F4737",
+                      color: "var(--ct-2f4737, #2F4737)",
                     }}
                   >
                     ✓ Seleccionado: {salaServicio}
@@ -2368,9 +2368,9 @@ export function ConsolaConfirmacionEntregas({
                       style={{
                         padding: "11px 10px",
                         borderRadius: "10px",
-                        border: activa ? "2px solid #2F4737" : "1px solid #D5CFC4",
-                        background: activa ? "#2F4737" : "#FFFFFF",
-                        color: activa ? "#FFFFFF" : "#1F1C19",
+                        border: activa ? "2px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: activa ? "#2F4737" : "var(--cf-ffffff, #FFFFFF)",
+                        color: activa ? "#FFFFFF" : "var(--ct-1f1c19, #1F1C19)",
                         fontSize: "0.84rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -2392,7 +2392,7 @@ export function ConsolaConfirmacionEntregas({
                 style={{
                   fontSize: "0.8rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                 }}
               >
                 Descripción del Servicio
@@ -2419,9 +2419,9 @@ export function ConsolaConfirmacionEntregas({
                         flex: "1 1 180px",
                         padding: "10px 12px",
                         borderRadius: "10px",
-                        border: activa ? "2px solid #1F1C19" : "1px solid #D5CFC4",
-                        background: activa ? "#1F1C19" : "#FFFFFF",
-                        color: activa ? "#FFFFFF" : "#221E1B",
+                        border: activa ? "2px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: activa ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                        color: activa ? "#FFFFFF" : "var(--ct-221e1b, #221E1B)",
                         fontSize: "0.82rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -2444,9 +2444,9 @@ export function ConsolaConfirmacionEntregas({
                     width: "100%",
                     padding: "10px 12px",
                     borderRadius: "10px",
-                    border: "1px solid #847D74",
+                    border: "1px solid var(--cb-847d74, #847D74)",
                     fontSize: "0.85rem",
-                    background: "#F8F7F4",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
                   }}
                 />
               )}
@@ -2458,7 +2458,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.78rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -2473,7 +2473,7 @@ export function ConsolaConfirmacionEntregas({
                   width: "100%",
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.85rem",
                 }}
               />
@@ -2485,8 +2485,8 @@ export function ConsolaConfirmacionEntregas({
             style={{
               padding: "16px",
               borderRadius: "14px",
-              background: "#F8F7F4",
-              border: "1px solid #D5CFC4",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
               display: "flex",
               flexDirection: "column",
               gap: "12px",
@@ -2504,9 +2504,9 @@ export function ConsolaConfirmacionEntregas({
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <MapPin
                   size={18}
-                  style={{ color: latitud != null ? "#2F4737" : "#8F6A2E", flexShrink: 0 }}
+                  style={{ color: latitud != null ? "var(--ct-2f4737, #2F4737)" : "var(--ct-8f6a2e, #8F6A2E)", flexShrink: 0 }}
                 />
-                <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#221E1B" }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--ct-221e1b, #221E1B)" }}>
                   {estadoGpsTexto}
                 </span>
               </div>
@@ -2524,9 +2524,9 @@ export function ConsolaConfirmacionEntregas({
                     gap: "6px",
                     padding: "8px 13px",
                     borderRadius: "9px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#1F1C19",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     cursor: obteniendoGps ? "wait" : "pointer",
@@ -2573,9 +2573,9 @@ export function ConsolaConfirmacionEntregas({
                     gap: "6px",
                     padding: "9px 13px",
                     borderRadius: "9px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#57524C",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-57524c, #57524C)",
                     fontSize: "0.81rem",
                     fontWeight: 600,
                     cursor: procesandoFoto ? "wait" : "pointer",
@@ -2678,9 +2678,9 @@ export function ConsolaConfirmacionEntregas({
                       gap: "6px",
                       padding: "9px 14px",
                       borderRadius: "9px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.81rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2708,7 +2708,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.78rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -2729,7 +2729,7 @@ export function ConsolaConfirmacionEntregas({
                   width: "100%",
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.85rem",
                 }}
               />
@@ -2741,7 +2741,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.78rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -2756,7 +2756,7 @@ export function ConsolaConfirmacionEntregas({
                   width: "100%",
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.85rem",
                 }}
               />
@@ -2769,7 +2769,7 @@ export function ConsolaConfirmacionEntregas({
                     display: "block",
                     fontSize: "0.78rem",
                     fontWeight: 700,
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     marginBottom: "4px",
                   }}
                 >
@@ -2784,7 +2784,7 @@ export function ConsolaConfirmacionEntregas({
                     width: "100%",
                     padding: "9px 11px",
                     borderRadius: "9px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.85rem",
                   }}
                 />
@@ -2800,10 +2800,10 @@ export function ConsolaConfirmacionEntregas({
               gap: "12px",
               flexWrap: "wrap",
               paddingTop: "8px",
-              borderTop: "1px solid #F4F2EE",
+              borderTop: "1px solid var(--cb-f4f2ee, #F4F2EE)",
             }}
           >
-            <span style={{ fontSize: "0.79rem", color: "#847D74" }}>
+            <span style={{ fontSize: "0.79rem", color: "var(--ct-847d74, #847D74)" }}>
               Entregador identificado: <strong>{tablero.usuarioActualNombre}</strong>
             </span>
 
@@ -2842,8 +2842,8 @@ export function ConsolaConfirmacionEntregas({
           <form
             onSubmit={(e) => void handleProgramarOt(e)}
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "16px",
               padding: "18px",
               display: "flex",
@@ -2851,7 +2851,7 @@ export function ConsolaConfirmacionEntregas({
               gap: "12px",
             }}
           >
-            <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "#1F1C19" }}>
+            <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Programar Nueva Orden de Trabajo — Exequiales del IESS
             </h3>
             <div
@@ -2868,10 +2868,10 @@ export function ConsolaConfirmacionEntregas({
                 style={{
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.84rem",
                   fontWeight: 700,
-                  background: "#F8F7F4",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
                 }}
               >
                 {OPCIONES_SALA_EXEQUIALES.map((s) => (
@@ -2895,7 +2895,7 @@ export function ConsolaConfirmacionEntregas({
                 style={{
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.84rem",
                 }}
               >
@@ -2916,7 +2916,7 @@ export function ConsolaConfirmacionEntregas({
                   style={{
                     padding: "9px 11px",
                     borderRadius: "9px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.84rem",
                   }}
                 />
@@ -2931,7 +2931,7 @@ export function ConsolaConfirmacionEntregas({
                 style={{
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1.5px solid #4A453F",
+                  border: "1.5px solid var(--cb-4a453f, #4A453F)",
                   fontSize: "0.84rem",
                 }}
               />
@@ -2946,7 +2946,7 @@ export function ConsolaConfirmacionEntregas({
                     flex: 1,
                     padding: "9px 11px",
                     borderRadius: "9px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.84rem",
                   }}
                 />
@@ -2979,8 +2979,8 @@ export function ConsolaConfirmacionEntregas({
 
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "16px",
               padding: "18px",
             }}
@@ -3002,8 +3002,8 @@ export function ConsolaConfirmacionEntregas({
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "16px",
               padding: "20px",
               display: "flex",
@@ -3012,10 +3012,10 @@ export function ConsolaConfirmacionEntregas({
             }}
           >
             <div>
-              <h3 style={{ margin: 0, fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+              <h3 style={{ margin: 0, fontSize: "1.02rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Configuración y Numeración del Informe Quincenal (Formato Oficial Proveedores)
               </h3>
-              <p style={{ margin: "3px 0 0", fontSize: "0.81rem", color: "#847D74" }}>
+              <p style={{ margin: "3px 0 0", fontSize: "0.81rem", color: "var(--ct-847d74, #847D74)" }}>
                 Filtra las entregas por fecha inicio – fin, edita cualquier dato en pantalla antes
                 de emitir y genera el PDF oficial con fotografías y GPS.
               </p>
@@ -3040,7 +3040,7 @@ export function ConsolaConfirmacionEntregas({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.84rem",
                   }}
                 />
@@ -3057,7 +3057,7 @@ export function ConsolaConfirmacionEntregas({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.84rem",
                   }}
                 />
@@ -3074,7 +3074,7 @@ export function ConsolaConfirmacionEntregas({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.84rem",
                   }}
                 />
@@ -3092,7 +3092,7 @@ export function ConsolaConfirmacionEntregas({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.84rem",
                     fontWeight: 700,
                   }}
@@ -3103,10 +3103,10 @@ export function ConsolaConfirmacionEntregas({
             {/* Datos editables de la Sección 1 del Proveedor */}
             <details
               style={{
-                border: "1px solid #E6E2DA",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 borderRadius: "12px",
                 padding: "12px 14px",
-                background: "#F8F7F4",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
               }}
             >
               <summary
@@ -3114,7 +3114,7 @@ export function ConsolaConfirmacionEntregas({
                   cursor: "pointer",
                   fontSize: "0.84rem",
                   fontWeight: 700,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                 }}
               >
                 1. Información General del Proveedor ({datosProveedorForm.razonSocial} · RUC{" "}
@@ -3145,7 +3145,7 @@ export function ConsolaConfirmacionEntregas({
                         display: "block",
                         fontSize: "0.74rem",
                         fontWeight: 600,
-                        color: "#57524C",
+                        color: "var(--ct-57524c, #57524C)",
                         marginBottom: "3px",
                       }}
                     >
@@ -3161,9 +3161,9 @@ export function ConsolaConfirmacionEntregas({
                         width: "100%",
                         padding: "7px 9px",
                         borderRadius: "7px",
-                        border: "1px solid #D5CFC4",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                         fontSize: "0.81rem",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                       }}
                     />
                   </div>
@@ -3186,7 +3186,7 @@ export function ConsolaConfirmacionEntregas({
                 style={{
                   padding: "9px 11px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.83rem",
                 }}
               />
@@ -3198,7 +3198,7 @@ export function ConsolaConfirmacionEntregas({
                 style={{
                   padding: "9px 11px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.83rem",
                 }}
               />
@@ -3277,8 +3277,8 @@ export function ConsolaConfirmacionEntregas({
                       gap: "12px",
                       padding: "10px 14px",
                       borderRadius: "10px",
-                      border: `1px solid ${incluida ? "#D5CFC4" : "#E6E2DA"}`,
-                      background: incluida ? "#FFFFFF" : "#F8F7F4",
+                      border: `1px solid ${incluida ? "var(--cb-d5cfc4, #D5CFC4)" : "var(--cb-e6e2da, #E6E2DA)"}`,
+                      background: incluida ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-f8f7f4, #F8F7F4)",
                       opacity: incluida ? 1 : 0.6,
                       flexWrap: "wrap",
                     }}
@@ -3317,10 +3317,10 @@ export function ConsolaConfirmacionEntregas({
                         />
                       )}
                       <div>
-                        <strong style={{ fontSize: "0.86rem", color: "#1F1C19", display: "block" }}>
+                        <strong style={{ fontSize: "0.86rem", color: "var(--ct-1f1c19, #1F1C19)", display: "block" }}>
                           {item.fallecidoDestinatario}
                         </strong>
-                        <span style={{ fontSize: "0.76rem", color: "#847D74" }}>
+                        <span style={{ fontSize: "0.76rem", color: "var(--ct-847d74, #847D74)" }}>
                           {new Date(item.fechaServicio).toLocaleDateString("es-EC")} ·{" "}
                           {item.ubicacionNombre} · {item.descripcionServicio} · Entrega:{" "}
                           {item.entregadorNombre}
@@ -3339,8 +3339,8 @@ export function ConsolaConfirmacionEntregas({
                         gap: "5px",
                         padding: "6px 11px",
                         borderRadius: "8px",
-                        border: "1px solid #D5CFC4",
-                        background: "#FFFFFF",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.76rem",
                         fontWeight: 600,
                         cursor: "pointer",
@@ -3364,8 +3364,8 @@ export function ConsolaConfirmacionEntregas({
         <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "16px",
               padding: "18px",
               display: "flex",
@@ -3382,7 +3382,7 @@ export function ConsolaConfirmacionEntregas({
                 flexWrap: "wrap",
               }}
             >
-              <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "#1F1C19" }}>
+              <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Historial Permanente de Entregas Confirmadas (Exequiales y Tienda)
               </h3>
               <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -3402,9 +3402,9 @@ export function ConsolaConfirmacionEntregas({
                       style={{
                         padding: "5px 11px",
                         borderRadius: "999px",
-                        border: act ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-                        background: act ? "#1F1C19" : "#FFFFFF",
-                        color: act ? "#FFFFFF" : "#57524C",
+                        border: act ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: act ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                        color: act ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                         fontSize: "0.75rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -3436,8 +3436,8 @@ export function ConsolaConfirmacionEntregas({
 
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "16px",
               padding: "18px",
               display: "flex",
@@ -3445,7 +3445,7 @@ export function ConsolaConfirmacionEntregas({
               gap: "12px",
             }}
           >
-            <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "#1F1C19" }}>
+            <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Histórico de Informes Quincenales Emitidos ({tablero.informes.length})
             </h3>
             <DataGrid
@@ -3475,7 +3475,7 @@ export function ConsolaConfirmacionEntregas({
           <form
             onSubmit={(e) => void handleGuardarEdicionEntrega(e)}
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "22px",
               maxWidth: "560px",
@@ -3487,7 +3487,7 @@ export function ConsolaConfirmacionEntregas({
               overflowY: "auto",
             }}
           >
-            <h3 style={{ margin: 0, fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+            <h3 style={{ margin: 0, fontSize: "1.02rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Editar Registro de Servicio ({entregaEditando.codigoOt})
             </h3>
 
@@ -3497,7 +3497,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.76rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "3px",
                 }}
               >
@@ -3514,7 +3514,7 @@ export function ConsolaConfirmacionEntregas({
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.84rem",
                 }}
               >
@@ -3533,7 +3533,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.76rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -3555,11 +3555,11 @@ export function ConsolaConfirmacionEntregas({
                       border:
                         entregaEditando.descripcionServicio === op
                           ? "1px solid #2F4737"
-                          : "1px solid #D5CFC4",
+                          : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                       background:
-                        entregaEditando.descripcionServicio === op ? "#F2F6F3" : "#F8F7F4",
+                        entregaEditando.descripcionServicio === op ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f8f7f4, #F8F7F4)",
                       color:
-                        entregaEditando.descripcionServicio === op ? "#2B4A36" : "#57524C",
+                        entregaEditando.descripcionServicio === op ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-57524c, #57524C)",
                       fontSize: "0.75rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -3582,7 +3582,7 @@ export function ConsolaConfirmacionEntregas({
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.84rem",
                 }}
               />
@@ -3605,7 +3605,7 @@ export function ConsolaConfirmacionEntregas({
                     display: "block",
                     fontSize: "0.76rem",
                     fontWeight: 700,
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     marginBottom: "3px",
                   }}
                 >
@@ -3623,7 +3623,7 @@ export function ConsolaConfirmacionEntregas({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.84rem",
                   }}
                 />
@@ -3636,7 +3636,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.76rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "3px",
                 }}
               >
@@ -3656,7 +3656,7 @@ export function ConsolaConfirmacionEntregas({
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.84rem",
                 }}
               />
@@ -3666,8 +3666,8 @@ export function ConsolaConfirmacionEntregas({
               style={{
                 padding: "12px",
                 borderRadius: "10px",
-                background: "#F8F7F4",
-                border: "1px solid #E6E2DA",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "8px",
@@ -3678,7 +3678,7 @@ export function ConsolaConfirmacionEntregas({
                   display: "block",
                   fontSize: "0.76rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                 }}
               >
                 Fotografía de Confirmación (Informe / Evidencia Permanente)
@@ -3692,7 +3692,7 @@ export function ConsolaConfirmacionEntregas({
                     maxHeight: "190px",
                     objectFit: "cover",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   }}
                 />
               )}
@@ -3705,8 +3705,8 @@ export function ConsolaConfirmacionEntregas({
                   padding: "7px 12px",
                   borderRadius: "8px",
                   border: "1px solid #2F4737",
-                  background: "#F2F6F3",
-                  color: "#2B4A36",
+                  background: "var(--cf-f2f6f3, #F2F6F3)",
+                  color: "var(--ct-2b4a36, #2B4A36)",
                   fontSize: "0.78rem",
                   fontWeight: 700,
                   cursor: subiendoFotoEdicion ? "wait" : "pointer",
@@ -3746,8 +3746,8 @@ export function ConsolaConfirmacionEntregas({
                 style={{
                   padding: "9px 14px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   fontSize: "0.82rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -3802,7 +3802,7 @@ export function ConsolaConfirmacionEntregas({
             style={{
               width: "100%",
               maxWidth: "400px",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "18px",
               padding: "20px",
               display: "flex",
@@ -3819,7 +3819,7 @@ export function ConsolaConfirmacionEntregas({
                 gap: "8px",
               }}
             >
-              <strong style={{ fontSize: "1rem", color: "#1F1C19" }}>
+              <strong style={{ fontSize: "1rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                 📲 Instalar Aplicación en tu Celular
               </strong>
               <button
@@ -3829,7 +3829,7 @@ export function ConsolaConfirmacionEntregas({
                 aria-label="Cerrar"
                 style={{
                   border: "none",
-                  background: "#F4F2EE",
+                  background: "var(--cf-f4f2ee, #F4F2EE)",
                   borderRadius: "8px",
                   width: "30px",
                   height: "30px",
@@ -3846,12 +3846,12 @@ export function ConsolaConfirmacionEntregas({
             {esDispositivoIos ? (
               <div
                 style={{
-                  background: "#F8F7F4",
-                  border: "1px solid #E6E2DA",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   borderRadius: "12px",
                   padding: "13px",
                   fontSize: "0.85rem",
-                  color: "#221E1B",
+                  color: "var(--ct-221e1b, #221E1B)",
                   lineHeight: 1.5,
                   display: "flex",
                   flexDirection: "column",
@@ -3860,7 +3860,7 @@ export function ConsolaConfirmacionEntregas({
               >
                 <div>
                   <strong>1.</strong> Toca el botón{" "}
-                  <strong style={{ color: "#221E1B" }}>Compartir (↑)</strong> en la barra de Safari.
+                  <strong style={{ color: "var(--ct-221e1b, #221E1B)" }}>Compartir (↑)</strong> en la barra de Safari.
                 </div>
                 <div>
                   <strong>2.</strong> Selecciona{" "}
@@ -3871,12 +3871,12 @@ export function ConsolaConfirmacionEntregas({
             ) : (
               <div
                 style={{
-                  background: "#F8F7F4",
-                  border: "1px solid #E6E2DA",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   borderRadius: "12px",
                   padding: "13px",
                   fontSize: "0.85rem",
-                  color: "#221E1B",
+                  color: "var(--ct-221e1b, #221E1B)",
                   lineHeight: 1.5,
                   display: "flex",
                   flexDirection: "column",
@@ -3888,7 +3888,7 @@ export function ConsolaConfirmacionEntregas({
                 </div>
                 <div>
                   <strong>2.</strong> Pulsa{" "}
-                  <strong style={{ color: "#2F4737" }}>
+                  <strong style={{ color: "var(--ct-2f4737, #2F4737)" }}>
                     &ldquo;Instalar aplicación&rdquo;
                   </strong>{" "}
                   o <strong>&ldquo;Agregar a la pantalla principal&rdquo;</strong>.

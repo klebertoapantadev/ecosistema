@@ -366,3 +366,34 @@ sacar del panel, y el enlace a una subvista se puede compartir. La salida
 visible es `BotonVolverWidget` («← Volver»; en ≤640px, solo icono con
 `aria-label`), no una X: la X se lee como «descartar», y lo que se pedía era
 retroceder (TRQ-012).
+
+## 15. Tema claro, oscuro o del sistema (TRQ-040)
+
+Solo el panel (`/panel/*`); la landing y las páginas públicas siguen en claro.
+El usuario elige en el rail (debajo de su nombre) o en Mi cuenta → Apariencia;
+por defecto sigue al sistema operativo. La elección se guarda en el perfil
+(`seg_usuario.usu_preferencia_tema`, viaja entre dispositivos) y en
+`localStorage`, que el `<head>` lee antes de pintar para que no haya fogonazo.
+
+Cómo funciona: `html[data-tema]` → `color-scheme` (solo con `:has(.panel-layout)`),
+y todos los colores del panel están escritos como `light-dark(claro, oscuro)`.
+
+- **Tokens** (`--texto`, `--linea`, `--fondo-*`, `--acento*`, `--exito*`,
+  `--aviso*`, `--error*`, `--panel-*`, papel de cada perfil): versión oscura
+  elegida a mano en `globals.css`. Son la vía preferida para código nuevo.
+- **Literales en componentes** (`'#1F1C19'` en un `style`): el codemod
+  `scripts/tema-oscuro/codemod.mjs` los cambia por `var(--cf-1f1c19, #1F1C19)`
+  (`cf` fondo · `ct` texto · `cb` borde) y genera
+  `app/tema-oscuro.generado.css`. El respaldo es el literal: tinkay, fastfix y
+  margaritas no definen esas variables y se ven igual. **Tras añadir pantallas
+  con colores literales, volver a pasar el codemod** (es idempotente).
+- **Reglas de la versión oscura** (`scripts/tema-oscuro/paleta.mjs`, en OKLCH,
+  conservando el tono): fondos claros → superficies oscuras (la tarjeta, más
+  clara que el papel: la elevación se lee aclarando); pasteles → tinta oscura
+  del mismo tono; colores de marca saturados (violeta, amarillo, naranja…) se
+  quedan, y el texto que llevan encima también; texto oscuro → claro.
+- **El rail no cambia** (`.panel-nav { color-scheme: light }`): ya es oscuro.
+- **Imprimir** siempre en claro.
+- El violeta `#5000BA` no se lee como texto sobre noche: `--acento` pasa a
+  lavanda `#7866FF` en oscuro (sirve de texto y de botón con texto blanco).
+

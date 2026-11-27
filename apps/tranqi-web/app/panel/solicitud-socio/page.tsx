@@ -41,9 +41,9 @@ export default async function PaginaSolicitudSocio() {
               width: "38px",
               height: "38px",
               borderRadius: "50%",
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               border: "1.5px solid var(--linea)",
-              color: "#111111",
+              color: "var(--ct-111111, #111111)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -97,9 +97,9 @@ export default async function PaginaSolicitudSocio() {
               width: "38px",
               height: "38px",
               borderRadius: "50%",
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               border: "1.5px solid var(--panel-linea, var(--linea))",
-              color: "#111111",
+              color: "var(--ct-111111, #111111)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -117,7 +117,7 @@ export default async function PaginaSolicitudSocio() {
 
       {solicitud && (
         <div style={{ background: "var(--violeta-suave, var(--acento-diluido))", border: "1px solid var(--violeta, #5000BA)", padding: "14px 18px", borderRadius: "12px", marginBottom: "20px" }}>
-          <p style={{ margin: 0, fontWeight: 700, color: "var(--violeta, #5000BA)", fontSize: "0.88rem" }}>
+          <p style={{ margin: 0, fontWeight: 700, color: "var(--ct-5000ba, var(--violeta, #5000BA))", fontSize: "0.88rem" }}>
             ℹTienes una solicitud registrada enviada el {new Date(solicitud.ssc_enviada_en || solicitud.ssc_creado_en).toLocaleDateString("es-EC")}. Puedes modificar tus datos o adjuntar nuevos archivos a continuación y enviar una actualización.
           </p>
         </div>

@@ -304,9 +304,9 @@ export function ModalFichaClienteOmnicanal({
           width: "100%",
           maxWidth: esMovil ? "100%" : "540px",
           maxHeight: esMovil ? "92dvh" : "88vh",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: esMovil ? "18px 18px 0 0" : "16px",
-          border: "1px solid #E6E2DA",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           boxShadow: "0 24px 60px rgba(24, 24, 27, 0.24)",
           display: "flex",
           flexDirection: "column",
@@ -317,8 +317,8 @@ export function ModalFichaClienteOmnicanal({
         <div
           style={{
             padding: esMovil ? "14px 16px 12px" : "16px 20px 14px",
-            borderBottom: "1px solid #ECE8E1",
-            background: "#FAF8F5",
+            borderBottom: "1px solid var(--cb-ece8e1, #ECE8E1)",
+            background: "var(--cf-faf8f5, #FAF8F5)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -336,7 +336,7 @@ export function ModalFichaClienteOmnicanal({
                 <strong
                   style={{
                     fontSize: "0.95rem",
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
@@ -355,9 +355,9 @@ export function ModalFichaClienteOmnicanal({
                       fontWeight: 600,
                       padding: "2px 8px",
                       borderRadius: "999px",
-                      background: "#FFFFFF",
-                      border: "1px solid #E6E2DA",
-                      color: "#57524C",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                      color: "var(--ct-57524c, #57524C)",
                     }}
                   >
                     <IconoVectorCanal canal={conversacion.canal} size={12} />
@@ -365,7 +365,7 @@ export function ModalFichaClienteOmnicanal({
                   </span>
                 )}
               </div>
-              <span style={{ fontSize: "0.73rem", color: "#6E6861" }}>
+              <span style={{ fontSize: "0.73rem", color: "var(--ct-6e6861, #6E6861)" }}>
                 Registro unificado para WhatsApp, Tienda Web y redes sociales
               </span>
             </div>
@@ -380,9 +380,9 @@ export function ModalFichaClienteOmnicanal({
               width: "34px",
               height: "34px",
               borderRadius: "9px",
-              border: "1px solid #E6E2DA",
-              background: "#FFFFFF",
-              color: "#57524C",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-57524c, #57524C)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -409,9 +409,9 @@ export function ModalFichaClienteOmnicanal({
               style={{
                 padding: "9px 12px",
                 borderRadius: "9px",
-                background: "#FAF2F2",
-                border: "1px solid #E5CACA",
-                color: "#8A2E2E",
+                background: "var(--cf-faf2f2, #FAF2F2)",
+                border: "1px solid var(--cb-e5caca, #E5CACA)",
+                color: "var(--ct-8a2e2e, #8A2E2E)",
                 fontSize: "0.78rem",
                 fontWeight: 600,
               }}
@@ -425,8 +425,8 @@ export function ModalFichaClienteOmnicanal({
             style={{
               padding: "11px 13px",
               borderRadius: "12px",
-              background: "#FAF8F5",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-faf8f5, #FAF8F5)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               display: "flex",
               flexDirection: "column",
               gap: "6px",
@@ -441,7 +441,7 @@ export function ModalFichaClienteOmnicanal({
                 flexWrap: "wrap",
               }}
             >
-              <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#1F1C19" }}>
+              <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Calificación del cliente
               </span>
               {estrellas != null && (
@@ -453,7 +453,7 @@ export function ModalFichaClienteOmnicanal({
                   style={{
                     border: "none",
                     background: "transparent",
-                    color: "#847D74",
+                    color: "var(--ct-847d74, #847D74)",
                     fontSize: "0.72rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -479,9 +479,9 @@ export function ModalFichaClienteOmnicanal({
                       width: "36px",
                       height: "36px",
                       borderRadius: "9px",
-                      border: activa ? "1px solid #E8DEC6" : "1px solid #E6E2DA",
-                      background: activa ? "#FFFBEB" : "#FFFFFF",
-                      color: activa ? "#D97706" : "#C7C2BA",
+                      border: activa ? "1px solid var(--cb-e8dec6, #E8DEC6)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                      background: activa ? "var(--cf-fffbeb, #FFFBEB)" : "var(--cf-ffffff, #FFFFFF)",
+                      color: activa ? "var(--ct-d97706, #D97706)" : "#C7C2BA",
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -498,7 +498,7 @@ export function ModalFichaClienteOmnicanal({
                   marginLeft: "4px",
                   fontSize: "0.75rem",
                   fontWeight: 600,
-                  color: estrellas != null ? "#745622" : "#847D74",
+                  color: estrellas != null ? "var(--ct-745622, #745622)" : "var(--ct-847d74, #847D74)",
                 }}
               >
                 {describirCalificacionCliente(estrellas)}
@@ -514,7 +514,7 @@ export function ModalFichaClienteOmnicanal({
                 style={{
                   fontSize: "0.75rem",
                   fontWeight: 700,
-                  color: "#221E1B",
+                  color: "var(--ct-221e1b, #221E1B)",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "5px",
@@ -534,9 +534,9 @@ export function ModalFichaClienteOmnicanal({
                   minHeight: "40px",
                   padding: "8px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#1F1C19",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   fontSize: esMovil ? "16px" : "0.84rem",
                   fontWeight: 600,
                   boxSizing: "border-box",
@@ -555,7 +555,7 @@ export function ModalFichaClienteOmnicanal({
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <label
                   htmlFor="ficha-cliente-telefono"
-                  style={{ fontSize: "0.74rem", fontWeight: 700, color: "#221E1B" }}
+                  style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-221e1b, #221E1B)" }}
                 >
                   WhatsApp / Teléfono
                 </label>
@@ -572,9 +572,9 @@ export function ModalFichaClienteOmnicanal({
                       minHeight: "38px",
                       padding: "7px 10px",
                       borderRadius: "9px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: esMovil ? "16px" : "0.82rem",
                       boxSizing: "border-box",
                     }}
@@ -589,9 +589,9 @@ export function ModalFichaClienteOmnicanal({
                         width: "36px",
                         height: "38px",
                         borderRadius: "9px",
-                        border: "1px solid #E6E2DA",
-                        background: "#F8F7F4",
-                        color: copiadoCampo === "tel" ? "#15803D" : "#57524C",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                        background: "var(--cf-f8f7f4, #F8F7F4)",
+                        color: copiadoCampo === "tel" ? "var(--ct-15803d, #15803D)" : "var(--ct-57524c, #57524C)",
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -613,9 +613,9 @@ export function ModalFichaClienteOmnicanal({
                         width: "36px",
                         height: "38px",
                         borderRadius: "9px",
-                        border: "1px solid #BBF7D0",
-                        background: "#F0FDF4",
-                        color: "#15803D",
+                        border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
+                        background: "var(--cf-f0fdf4, #F0FDF4)",
+                        color: "var(--ct-15803d, #15803D)",
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -633,7 +633,7 @@ export function ModalFichaClienteOmnicanal({
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <label
                   htmlFor="ficha-cliente-correo"
-                  style={{ fontSize: "0.74rem", fontWeight: 700, color: "#221E1B" }}
+                  style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-221e1b, #221E1B)" }}
                 >
                   Correo electrónico
                 </label>
@@ -650,9 +650,9 @@ export function ModalFichaClienteOmnicanal({
                       minHeight: "38px",
                       padding: "7px 10px",
                       borderRadius: "9px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: esMovil ? "16px" : "0.82rem",
                       boxSizing: "border-box",
                     }}
@@ -667,9 +667,9 @@ export function ModalFichaClienteOmnicanal({
                         width: "36px",
                         height: "38px",
                         borderRadius: "9px",
-                        border: "1px solid #E6E2DA",
-                        background: "#F8F7F4",
-                        color: copiadoCampo === "mail" ? "#15803D" : "#57524C",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                        background: "var(--cf-f8f7f4, #F8F7F4)",
+                        color: copiadoCampo === "mail" ? "var(--ct-15803d, #15803D)" : "var(--ct-57524c, #57524C)",
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -692,7 +692,7 @@ export function ModalFichaClienteOmnicanal({
               style={{
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#221E1B",
+                color: "var(--ct-221e1b, #221E1B)",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
@@ -715,9 +715,9 @@ export function ModalFichaClienteOmnicanal({
                     style={{
                       padding: "3px 9px",
                       borderRadius: "999px",
-                      border: incluido ? "1px solid #221E1B" : "1px solid #E6E2DA",
-                      background: incluido ? "#221E1B" : "#F8F7F4",
-                      color: incluido ? "#FFFFFF" : "#57524C",
+                      border: incluido ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                      background: incluido ? "#221E1B" : "var(--cf-f8f7f4, #F8F7F4)",
+                      color: incluido ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                       fontSize: "0.7rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -739,9 +739,9 @@ export function ModalFichaClienteOmnicanal({
                 width: "100%",
                 padding: "9px 11px",
                 borderRadius: "10px",
-                border: "1px solid #D5CFC4",
-                background: "#FFFDF9",
-                color: "#1F1C19",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-fffdf9, #FFFDF9)",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 fontSize: esMovil ? "16px" : "0.82rem",
                 lineHeight: 1.45,
                 fontFamily: "inherit",
@@ -751,7 +751,7 @@ export function ModalFichaClienteOmnicanal({
             />
 
             {conversacion?.fichaCliente?.actualizadoEn && (
-              <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
+              <span style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)" }}>
                 Última edición:{" "}
                 {conversacion.fichaCliente.actualizadoPorNombre || "Equipo"} ·{" "}
                 {new Date(conversacion.fichaCliente.actualizadoEn).toLocaleString("es-EC", {
@@ -771,8 +771,8 @@ export function ModalFichaClienteOmnicanal({
               style={{
                 padding: "11px 13px",
                 borderRadius: "12px",
-                background: "#F8F7F4",
-                border: "1px solid #E6E2DA",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "8px",
@@ -787,7 +787,7 @@ export function ModalFichaClienteOmnicanal({
                   flexWrap: "wrap",
                 }}
               >
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1F1C19" }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                   Actividad y correlación entre canales ({conversacionesCliente.length})
                 </span>
                 <div style={{ display: "inline-flex", gap: "5px", flexWrap: "wrap" }}>
@@ -799,9 +799,9 @@ export function ModalFichaClienteOmnicanal({
                         fontWeight: 700,
                         padding: "2px 7px",
                         borderRadius: "6px",
-                        background: "#FFFFFF",
-                        border: "1px solid #D5CFC4",
-                        color: "#3A3530",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        color: "var(--ct-3a3530, #3A3530)",
                       }}
                     >
                       Web: {resumenPuente.refWeb}
@@ -815,9 +815,9 @@ export function ModalFichaClienteOmnicanal({
                         fontWeight: 700,
                         padding: "2px 7px",
                         borderRadius: "6px",
-                        background: "#F0FDF4",
-                        border: "1px solid #BBF7D0",
-                        color: "#15803D",
+                        background: "var(--cf-f0fdf4, #F0FDF4)",
+                        border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
+                        color: "var(--ct-15803d, #15803D)",
                       }}
                     >
                       WA: {resumenPuente.wref}
@@ -831,8 +831,8 @@ export function ModalFichaClienteOmnicanal({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "9px",
-                    background: "#FFFFFF",
-                    border: "1px solid #E6E2DA",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -840,13 +840,13 @@ export function ModalFichaClienteOmnicanal({
                   }}
                 >
                   <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: "2px" }}>
-                    <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#2F4737" }}>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--ct-2f4737, #2F4737)" }}>
                       🛍️ Último producto revisado en Tienda Web
                     </span>
                     <strong
                       style={{
                         fontSize: "0.79rem",
-                        color: "#1F1C19",
+                        color: "var(--ct-1f1c19, #1F1C19)",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -871,9 +871,9 @@ export function ModalFichaClienteOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "7px",
-                        border: "1px solid #E6E2DA",
-                        background: "#FAF8F5",
-                        color: "#221E1B",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                        background: "var(--cf-faf8f5, #FAF8F5)",
+                        color: "var(--ct-221e1b, #221E1B)",
                         fontSize: "0.7rem",
                         fontWeight: 600,
                         textDecoration: "none",
@@ -898,8 +898,8 @@ export function ModalFichaClienteOmnicanal({
                     style={{
                       padding: "7px 10px",
                       borderRadius: "9px",
-                      background: "#FFFFFF",
-                      border: esActual ? "1px solid #221E1B" : "1px solid #E6E2DA",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      border: esActual ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
@@ -909,11 +909,11 @@ export function ModalFichaClienteOmnicanal({
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                       <IconoVectorCanal canal={c.canal} size={15} />
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#1F1C19" }}>
+                        <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                           {nombreLegibleCanal(c.canal)}
                           {esActual ? " (Actual)" : ""}
                         </div>
-                        <div style={{ fontSize: "0.69rem", color: "#847D74" }}>
+                        <div style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)" }}>
                           Cliente: {c.mensajesClienteConteo} · ARIA: {c.mensajesIaConteo} · Humano:{" "}
                           {c.mensajesHumanoConteo}
                         </div>
@@ -932,9 +932,9 @@ export function ModalFichaClienteOmnicanal({
                         style={{
                           padding: "5px 9px",
                           borderRadius: "7px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FAF8F5",
-                          color: "#1F1C19",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-faf8f5, #FAF8F5)",
+                          color: "var(--ct-1f1c19, #1F1C19)",
                           fontSize: "0.72rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -961,7 +961,7 @@ export function ModalFichaClienteOmnicanal({
                 style={{
                   fontSize: "0.75rem",
                   fontWeight: 700,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "5px",
@@ -976,8 +976,8 @@ export function ModalFichaClienteOmnicanal({
                   style={{
                     padding: "7px 10px",
                     borderRadius: "9px",
-                    border: "1px solid #E6E2DA",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -985,10 +985,10 @@ export function ModalFichaClienteOmnicanal({
                   }}
                 >
                   <div>
-                    <strong style={{ fontSize: "0.77rem", color: "#1F1C19" }}>
+                    <strong style={{ fontSize: "0.77rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                       {ord.codigoOrden}
                     </strong>
-                    <span style={{ fontSize: "0.7rem", color: "#847D74", marginLeft: "6px" }}>
+                    <span style={{ fontSize: "0.7rem", color: "var(--ct-847d74, #847D74)", marginLeft: "6px" }}>
                       {ord.estado} ·{" "}
                       {new Date(ord.creadoEn).toLocaleDateString("es-EC", {
                         day: "2-digit",
@@ -996,7 +996,7 @@ export function ModalFichaClienteOmnicanal({
                       })}
                     </span>
                   </div>
-                  <strong style={{ fontSize: "0.78rem", color: "#2F4737" }}>
+                  <strong style={{ fontSize: "0.78rem", color: "var(--ct-2f4737, #2F4737)" }}>
                     ${Number(ord.total).toFixed(2)}
                   </strong>
                 </div>
@@ -1011,8 +1011,8 @@ export function ModalFichaClienteOmnicanal({
             padding: esMovil
               ? "11px 16px calc(11px + env(safe-area-inset-bottom, 0px))"
               : "12px 20px",
-            borderTop: "1px solid #ECE8E1",
-            background: "#FAF8F5",
+            borderTop: "1px solid var(--cb-ece8e1, #ECE8E1)",
+            background: "var(--cf-faf8f5, #FAF8F5)",
             display: "flex",
             justifyContent: "flex-end",
             gap: "8px",
@@ -1028,9 +1028,9 @@ export function ModalFichaClienteOmnicanal({
               minHeight: "40px",
               padding: "8px 14px",
               borderRadius: "10px",
-              border: "1px solid #D5CFC4",
-              background: "#FFFFFF",
-              color: "#57524C",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-57524c, #57524C)",
               fontSize: "0.82rem",
               fontWeight: 600,
               cursor: guardando ? "not-allowed" : "pointer",

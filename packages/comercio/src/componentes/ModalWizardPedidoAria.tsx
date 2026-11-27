@@ -115,17 +115,17 @@ export function ModalWizardPedidoAria({
     display: "block",
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "#334155",
+    color: "var(--ct-334155, #334155)",
     marginBottom: "4px",
   };
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "8px 10px",
     borderRadius: "8px",
-    border: "1px solid #CBD5E1",
+    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
     fontSize: "0.82rem",
-    background: "#FFFFFF",
-    color: "#0F172A",
+    background: "var(--cf-ffffff, #FFFFFF)",
+    color: "var(--ct-0f172a, #0F172A)",
     boxSizing: "border-box",
   };
 
@@ -148,7 +148,7 @@ export function ModalWizardPedidoAria({
           maxWidth: "660px",
           maxHeight: "92vh",
           overflowY: "auto",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
           padding: "20px",
           display: "flex",
@@ -174,10 +174,10 @@ export function ModalWizardPedidoAria({
               <Sparkles size={17} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: "1rem", color: "#0F172A" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", color: "var(--ct-0f172a, #0F172A)" }}>
                 Nuevo Pedido con ARIA
               </h3>
-              <div style={{ fontSize: "0.73rem", color: "#64748B" }}>
+              <div style={{ fontSize: "0.73rem", color: "var(--ct-64748b, #64748B)" }}>
                 Paso {paso} de 2 · {paso === 1 ? "Pega el mensaje o dictado" : "Revisa y confirma"}
               </div>
             </div>
@@ -187,7 +187,7 @@ export function ModalWizardPedidoAria({
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
-            style={{ border: "none", background: "transparent", cursor: "pointer", color: "#64748B" }}
+            style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--ct-64748b, #64748B)" }}
           >
             <X size={19} />
           </button>
@@ -198,9 +198,9 @@ export function ModalWizardPedidoAria({
             style={{
               padding: "9px 12px",
               borderRadius: "9px",
-              background: "#FEF2F2",
-              border: "1px solid #FECACA",
-              color: "#991B1B",
+              background: "var(--cf-fef2f2, #FEF2F2)",
+              border: "1px solid var(--cb-fecaca, #FECACA)",
+              color: "var(--ct-991b1b, #991B1B)",
               fontSize: "0.8rem",
             }}
           >
@@ -211,7 +211,7 @@ export function ModalWizardPedidoAria({
         {paso === 1 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-              <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
+              <span style={{ fontSize: "0.74rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>
                 Ejemplos rápidos:
               </span>
               <button
@@ -220,9 +220,9 @@ export function ModalWizardPedidoAria({
                 style={{
                   padding: "4px 9px",
                   borderRadius: "999px",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
-                  color: "#334155",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                  background: "var(--cf-f8fafc, #F8FAFC)",
+                  color: "var(--ct-334155, #334155)",
                   fontSize: "0.72rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -236,9 +236,9 @@ export function ModalWizardPedidoAria({
                 style={{
                   padding: "4px 9px",
                   borderRadius: "999px",
-                  border: "1px solid #E9D5FF",
-                  background: "#FAF5FF",
-                  color: "#6B21A8",
+                  border: "1px solid var(--cb-e9d5ff, #E9D5FF)",
+                  background: "var(--cf-faf5ff, #FAF5FF)",
+                  color: "var(--ct-6b21a8, #6B21A8)",
                   fontSize: "0.72rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -268,9 +268,9 @@ export function ModalWizardPedidoAria({
                 style={{
                   padding: "8px 14px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
-                  background: "#FFFFFF",
-                  color: "#475569",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-475569, #475569)",
                   fontSize: "0.8rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -312,9 +312,9 @@ export function ModalWizardPedidoAria({
                   style={{
                     padding: "9px 12px",
                     borderRadius: "9px",
-                    background: "#FFFBEB",
-                    border: "1px solid #FDE68A",
-                    color: "#92400E",
+                    background: "var(--cf-fffbeb, #FFFBEB)",
+                    border: "1px solid var(--cb-fde68a, #FDE68A)",
+                    color: "var(--ct-92400e, #92400E)",
                     fontSize: "0.77rem",
                     display: "flex",
                     alignItems: "flex-start",
@@ -368,7 +368,7 @@ export function ModalWizardPedidoAria({
                     onChange={(e) =>
                       setDatos((prev) => (prev ? { ...prev, estadoInicial: e.target.value } : null))
                     }
-                    style={{ ...inputStyle, fontWeight: 700, background: "#FEF3C7", color: "#92400E" }}
+                    style={{ ...inputStyle, fontWeight: 700, background: "var(--cf-fef3c7, #FEF3C7)", color: "var(--ct-92400e, #92400E)" }}
                   >
                     {estadosDisponibles.map((est) => (
                       <option key={est.valor} value={est.valor}>
@@ -626,9 +626,9 @@ export function ModalWizardPedidoAria({
                     gap: "5px",
                     padding: "8px 13px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: "#FFFFFF",
-                    color: "#334155",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-334155, #334155)",
                     fontSize: "0.8rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -645,9 +645,9 @@ export function ModalWizardPedidoAria({
                     style={{
                       padding: "8px 13px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      background: "#FFFFFF",
-                      color: "#475569",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-475569, #475569)",
                       fontSize: "0.8rem",
                       fontWeight: 600,
                       cursor: "pointer",

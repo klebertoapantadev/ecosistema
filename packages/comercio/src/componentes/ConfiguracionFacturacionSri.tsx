@@ -49,9 +49,9 @@ const ESTILO_INPUT: React.CSSProperties = {
   boxSizing: "border-box",
   padding: "10px 12px",
   borderRadius: "10px",
-  border: "1px solid #D5CFC4",
-  backgroundColor: "#FFFFFF",
-  color: "#1F1C19",
+  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+  backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+  color: "var(--ct-1f1c19, #1F1C19)",
   fontSize: "0.875rem",
   outline: "none",
 };
@@ -60,14 +60,14 @@ const ESTILO_LABEL: React.CSSProperties = {
   display: "block",
   fontSize: "0.76rem",
   fontWeight: 700,
-  color: "#57524C",
+  color: "var(--ct-57524c, #57524C)",
   marginBottom: "5px",
   letterSpacing: "0.01em",
 };
 
 const ESTILO_CARD: React.CSSProperties = {
-  backgroundColor: "#FFFFFF",
-  border: "1px solid #E6E2DA",
+  backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
   borderRadius: "16px",
   padding: "20px",
   boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
@@ -538,16 +538,16 @@ export function ConfiguracionFacturacionSri({
         display: "flex",
         flexDirection: "column",
         gap: "20px",
-        color: "#1F1C19",
+        color: "var(--ct-1f1c19, #1F1C19)",
       }}
     >
       {/* Cabecera de estado operativo */}
       <div
         style={{
           ...ESTILO_CARD,
-          background: "#FFFFFF",
-          color: "#1F1C19",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          color: "var(--ct-1f1c19, #1F1C19)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           borderLeft: "3px solid #2F4737",
           display: "flex",
           flexWrap: "wrap",
@@ -559,7 +559,7 @@ export function ConfiguracionFacturacionSri({
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", minWidth: "260px", flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
             <FileCheck2 size={18} color="#2F4737" />
-            <h2 style={{ margin: 0, fontSize: "0.96rem", fontWeight: 600, color: "#1F1C19" }}>
+            <h2 style={{ margin: 0, fontSize: "0.96rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Parámetros de Facturación Electrónica SRI
             </h2>
             <span
@@ -568,9 +568,9 @@ export function ConfiguracionFacturacionSri({
                 borderRadius: "999px",
                 fontSize: "0.69rem",
                 fontWeight: 600,
-                backgroundColor: emisor.ambiente === 2 ? "#F2F6F3" : "#FAF6EE",
-                border: emisor.ambiente === 2 ? "1px solid #CEDDD3" : "1px solid #E5D7BC",
-                color: emisor.ambiente === 2 ? "#2B4A36" : "#745622",
+                backgroundColor: emisor.ambiente === 2 ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-faf6ee, #FAF6EE)",
+                border: emisor.ambiente === 2 ? "1px solid var(--cb-ceddd3, #CEDDD3)" : "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                color: emisor.ambiente === 2 ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-745622, #745622)",
               }}
             >
               {emisor.ambiente === 2 ? "PRODUCCIÓN (CEL)" : "PRUEBAS (CELCER)"}
@@ -581,15 +581,15 @@ export function ConfiguracionFacturacionSri({
                 borderRadius: "999px",
                 fontSize: "0.69rem",
                 fontWeight: 600,
-                backgroundColor: certificadoActivo ? "#F2F6F3" : "#FAF2F2",
-                border: certificadoActivo ? "1px solid #CEDDD3" : "1px solid #E5CACA",
-                color: certificadoActivo ? "#2B4A36" : "#8A2E2E",
+                backgroundColor: certificadoActivo ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-faf2f2, #FAF2F2)",
+                border: certificadoActivo ? "1px solid var(--cb-ceddd3, #CEDDD3)" : "1px solid var(--cb-e5caca, #E5CACA)",
+                color: certificadoActivo ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-8a2e2e, #8A2E2E)",
               }}
             >
               {certificadoActivo ? "Firma .p12 Activa" : "Firma .p12 Pendiente"}
             </span>
           </div>
-          <p style={{ margin: 0, fontSize: "0.8rem", color: "#57524C", lineHeight: 1.45 }}>
+          <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.45 }}>
             Configura el RUC, razón social, régimen RIMPE/General, serie de emisión{" "}
             <strong>
               {emisor.establecimiento}-{emisor.puntoEmision}
@@ -611,9 +611,9 @@ export function ConfiguracionFacturacionSri({
               gap: "6px",
               padding: "7px 13px",
               borderRadius: "8px",
-              border: "1px solid #D5CFC4",
-              backgroundColor: "#FFFFFF",
-              color: "#221E1B",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-221e1b, #221E1B)",
               fontSize: "0.78rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -657,9 +657,9 @@ export function ConfiguracionFacturacionSri({
             gap: "10px",
             padding: "12px 16px",
             borderRadius: "12px",
-            backgroundColor: "#FAF2F2",
-            border: "1px solid #E5CACA",
-            color: "#8A2E2E",
+            backgroundColor: "var(--cf-faf2f2, #FAF2F2)",
+            border: "1px solid var(--cb-e5caca, #E5CACA)",
+            color: "var(--ct-8a2e2e, #8A2E2E)",
             fontSize: "0.85rem",
             fontWeight: 600,
           }}
@@ -678,9 +678,9 @@ export function ConfiguracionFacturacionSri({
             gap: "10px",
             padding: "12px 16px",
             borderRadius: "12px",
-            backgroundColor: "#F2F6F3",
-            border: "1px solid #CEDDD3",
-            color: "#2B4A36",
+            backgroundColor: "var(--cf-f2f6f3, #F2F6F3)",
+            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+            color: "var(--ct-2b4a36, #2B4A36)",
             fontSize: "0.85rem",
             fontWeight: 600,
           }}
@@ -701,7 +701,7 @@ export function ConfiguracionFacturacionSri({
             gap: "12px",
             marginBottom: "18px",
             paddingBottom: "12px",
-            borderBottom: "1px solid #F4F2EE",
+            borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -710,8 +710,8 @@ export function ConfiguracionFacturacionSri({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                backgroundColor: "#F4F2EE",
-                color: "#221E1B",
+                backgroundColor: "var(--cf-f4f2ee, #F4F2EE)",
+                color: "var(--ct-221e1b, #221E1B)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -723,7 +723,7 @@ export function ConfiguracionFacturacionSri({
               <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 800 }}>
                 1. Datos Tributarios del Contribuyente Emisor
               </h3>
-              <p style={{ margin: 0, fontSize: "0.77rem", color: "#847D74" }}>
+              <p style={{ margin: 0, fontSize: "0.77rem", color: "var(--ct-847d74, #847D74)" }}>
                 Información impresa en el XML versión 2.1.0 y en el RIDE PDF del cliente ({etiquetaRegimenSri(emisor.regimen)}).
               </p>
             </div>
@@ -741,9 +741,9 @@ export function ConfiguracionFacturacionSri({
               gap: "6px",
               padding: "8px 12px",
               borderRadius: "9px",
-              border: "1px solid #D5CFC4",
-              backgroundColor: "#F8F7F4",
-              color: "#57524C",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
+              color: "var(--ct-57524c, #57524C)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -936,8 +936,8 @@ export function ConfiguracionFacturacionSri({
             marginTop: "16px",
             padding: "14px",
             borderRadius: "12px",
-            backgroundColor: "#F8F7F4",
-            border: "1px solid #E6E2DA",
+            backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           }}
         >
           <label
@@ -948,7 +948,7 @@ export function ConfiguracionFacturacionSri({
               cursor: "pointer",
               fontSize: "0.82rem",
               fontWeight: 700,
-              color: "#221E1B",
+              color: "var(--ct-221e1b, #221E1B)",
             }}
           >
             <input
@@ -960,7 +960,7 @@ export function ConfiguracionFacturacionSri({
                   obligadoContabilidad: e.target.checked,
                 }))
               }
-              style={{ width: "17px", height: "17px", accentColor: "#1F1C19" }}
+              style={{ width: "17px", height: "17px", accentColor: "var(--ct-1f1c19, #1F1C19)" }}
             />
             Obligado a llevar contabilidad ({emisor.obligadoContabilidad ? "SÍ" : "NO"})
           </label>
@@ -973,7 +973,7 @@ export function ConfiguracionFacturacionSri({
               cursor: "pointer",
               fontSize: "0.82rem",
               fontWeight: 700,
-              color: "#221E1B",
+              color: "var(--ct-221e1b, #221E1B)",
             }}
           >
             <input
@@ -985,7 +985,7 @@ export function ConfiguracionFacturacionSri({
                   emisionAutomatica: e.target.checked,
                 }))
               }
-              style={{ width: "17px", height: "17px", accentColor: "#2F4737" }}
+              style={{ width: "17px", height: "17px", accentColor: "var(--ct-2f4737, #2F4737)" }}
             />
             Facturar automáticamente cobros PLUX
           </label>
@@ -998,7 +998,7 @@ export function ConfiguracionFacturacionSri({
               cursor: "pointer",
               fontSize: "0.82rem",
               fontWeight: 700,
-              color: "#221E1B",
+              color: "var(--ct-221e1b, #221E1B)",
             }}
           >
             <input
@@ -1010,7 +1010,7 @@ export function ConfiguracionFacturacionSri({
                   activo: e.target.checked,
                 }))
               }
-              style={{ width: "17px", height: "17px", accentColor: "#221E1B" }}
+              style={{ width: "17px", height: "17px", accentColor: "var(--ct-221e1b, #221E1B)" }}
             />
             Emisor electrónico habilitado
           </label>
@@ -1066,7 +1066,7 @@ export function ConfiguracionFacturacionSri({
               gap: "10px",
               marginBottom: "14px",
               paddingBottom: "12px",
-              borderBottom: "1px solid #F4F2EE",
+              borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
             }}
           >
             <div
@@ -1074,8 +1074,8 @@ export function ConfiguracionFacturacionSri({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                backgroundColor: "#F2F6F3",
-                color: "#2F4737",
+                backgroundColor: "var(--cf-f2f6f3, #F2F6F3)",
+                color: "var(--ct-2f4737, #2F4737)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1087,7 +1087,7 @@ export function ConfiguracionFacturacionSri({
               <h3 style={{ margin: 0, fontSize: "0.96rem", fontWeight: 800 }}>
                 2. Certificado de Firma Electrónica (.p12)
               </h3>
-              <p style={{ margin: 0, fontSize: "0.76rem", color: "#847D74" }}>
+              <p style={{ margin: 0, fontSize: "0.76rem", color: "var(--ct-847d74, #847D74)" }}>
                 Custodiado cifrado en Supabase Vault para firma XAdES-BES (BCE, Security Data, Uanataca).
               </p>
             </div>
@@ -1098,8 +1098,8 @@ export function ConfiguracionFacturacionSri({
               style={{
                 padding: "14px",
                 borderRadius: "12px",
-                backgroundColor: "#F2F6F3",
-                border: "1px solid #BBF7D0",
+                backgroundColor: "var(--cf-f2f6f3, #F2F6F3)",
+                border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
                 marginBottom: "16px",
                 display: "flex",
                 flexDirection: "column",
@@ -1122,7 +1122,7 @@ export function ConfiguracionFacturacionSri({
                     gap: "5px",
                     fontSize: "0.78rem",
                     fontWeight: 800,
-                    color: "#2B4A36",
+                    color: "var(--ct-2b4a36, #2B4A36)",
                   }}
                 >
                   <ShieldCheck size={16} />
@@ -1136,31 +1136,31 @@ export function ConfiguracionFacturacionSri({
                     fontWeight: 800,
                     backgroundColor:
                       diasRestantesVigencia(certificadoActivo.validoHasta) <= 30
-                        ? "#FAF6EE"
-                        : "#F2F6F3",
+                        ? "var(--cf-faf6ee, #FAF6EE)"
+                        : "var(--cf-f2f6f3, #F2F6F3)",
                     color:
                       diasRestantesVigencia(certificadoActivo.validoHasta) <= 30
-                        ? "#745622"
-                        : "#2B4A36",
+                        ? "var(--ct-745622, #745622)"
+                        : "var(--ct-2b4a36, #2B4A36)",
                   }}
                 >
                   {diasRestantesVigencia(certificadoActivo.validoHasta)} días restantes
                 </span>
               </div>
 
-              <div style={{ fontSize: "0.82rem", color: "#14532D" }}>
+              <div style={{ fontSize: "0.82rem", color: "var(--ct-14532d, #14532D)" }}>
                 <strong>Titular:</strong> {certificadoActivo.titular}
               </div>
               {certificadoActivo.identificacionCertificado && (
-                <div style={{ fontSize: "0.78rem", color: "#2B4A36" }}>
+                <div style={{ fontSize: "0.78rem", color: "var(--ct-2b4a36, #2B4A36)" }}>
                   <strong>Identificación:</strong>{" "}
                   <code>{certificadoActivo.identificacionCertificado}</code>
                 </div>
               )}
-              <div style={{ fontSize: "0.78rem", color: "#2B4A36" }}>
+              <div style={{ fontSize: "0.78rem", color: "var(--ct-2b4a36, #2B4A36)" }}>
                 <strong>Entidad Certificadora:</strong> {certificadoActivo.emisorCa}
               </div>
-              <div style={{ fontSize: "0.76rem", color: "#2F4737" }}>
+              <div style={{ fontSize: "0.76rem", color: "var(--ct-2f4737, #2F4737)" }}>
                 <strong>Vigente hasta:</strong>{" "}
                 {new Date(certificadoActivo.validoHasta).toLocaleDateString("es-EC", {
                   day: "2-digit",
@@ -1183,9 +1183,9 @@ export function ConfiguracionFacturacionSri({
                     gap: "6px",
                     padding: "6px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #DEBABA",
-                    backgroundColor: "#FFFFFF",
-                    color: "#8A2E2E",
+                    border: "1px solid var(--cb-debaba, #DEBABA)",
+                    backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-8a2e2e, #8A2E2E)",
                     fontSize: "0.76rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1201,9 +1201,9 @@ export function ConfiguracionFacturacionSri({
               style={{
                 padding: "12px 14px",
                 borderRadius: "10px",
-                backgroundColor: "#FAF6EE",
-                border: "1px solid #E5D7BC",
-                color: "#745622",
+                backgroundColor: "var(--cf-faf6ee, #FAF6EE)",
+                border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                color: "var(--ct-745622, #745622)",
                 fontSize: "0.8rem",
                 marginBottom: "16px",
               }}
@@ -1227,7 +1227,7 @@ export function ConfiguracionFacturacionSri({
                 style={{
                   ...ESTILO_INPUT,
                   padding: "8px 10px",
-                  backgroundColor: "#F8F7F4",
+                  backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
                 }}
               />
             </div>
@@ -1259,7 +1259,7 @@ export function ConfiguracionFacturacionSri({
                   alignItems: "center",
                   gap: "5px",
                   fontSize: "0.73rem",
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                 }}
               >
                 <Lock size={13} />
@@ -1302,7 +1302,7 @@ export function ConfiguracionFacturacionSri({
               gap: "10px",
               marginBottom: "14px",
               paddingBottom: "12px",
-              borderBottom: "1px solid #F4F2EE",
+              borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
             }}
           >
             <div
@@ -1310,8 +1310,8 @@ export function ConfiguracionFacturacionSri({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                backgroundColor: "#FAF6EE",
-                color: "#745622",
+                backgroundColor: "var(--cf-faf6ee, #FAF6EE)",
+                color: "var(--ct-745622, #745622)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1323,7 +1323,7 @@ export function ConfiguracionFacturacionSri({
               <h3 style={{ margin: 0, fontSize: "0.96rem", fontWeight: 800 }}>
                 3. Ambiente SRI y Secuenciales
               </h3>
-              <p style={{ margin: 0, fontSize: "0.76rem", color: "#847D74" }}>
+              <p style={{ margin: 0, fontSize: "0.76rem", color: "var(--ct-847d74, #847D74)" }}>
                 Numeración independiente por ambiente para la serie{" "}
                 <strong>
                   {emisor.establecimiento}-{emisor.puntoEmision}
@@ -1349,9 +1349,9 @@ export function ConfiguracionFacturacionSri({
                   border:
                     emisor.ambiente === 1
                       ? "2px solid #8F6A2E"
-                      : "1px solid #D5CFC4",
-                  backgroundColor: emisor.ambiente === 1 ? "#FAF6EE" : "#FFFFFF",
-                  color: emisor.ambiente === 1 ? "#745622" : "#57524C",
+                      : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  backgroundColor: emisor.ambiente === 1 ? "var(--cf-faf6ee, #FAF6EE)" : "var(--cf-ffffff, #FFFFFF)",
+                  color: emisor.ambiente === 1 ? "var(--ct-745622, #745622)" : "var(--ct-57524c, #57524C)",
                   fontWeight: 800,
                   fontSize: "0.8rem",
                   cursor: "pointer",
@@ -1375,9 +1375,9 @@ export function ConfiguracionFacturacionSri({
                   border:
                     emisor.ambiente === 2
                       ? "2px solid #2F4737"
-                      : "1px solid #D5CFC4",
-                  backgroundColor: emisor.ambiente === 2 ? "#F2F6F3" : "#FFFFFF",
-                  color: emisor.ambiente === 2 ? "#2B4A36" : "#57524C",
+                      : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  backgroundColor: emisor.ambiente === 2 ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-ffffff, #FFFFFF)",
+                  color: emisor.ambiente === 2 ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-57524c, #57524C)",
                   fontWeight: 800,
                   fontSize: "0.8rem",
                   opacity:
@@ -1398,8 +1398,8 @@ export function ConfiguracionFacturacionSri({
                   marginTop: "10px",
                   padding: "10px 12px",
                   borderRadius: "10px",
-                  backgroundColor: "#F8F7F4",
-                  border: "1px solid #E6E2DA",
+                  backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -1414,7 +1414,7 @@ export function ConfiguracionFacturacionSri({
                     gap: "6px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                   }}
                 >
                   <ShieldAlert size={15} color="#8F6A2E" />
@@ -1431,11 +1431,11 @@ export function ConfiguracionFacturacionSri({
                   style={{
                     padding: "5px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     backgroundColor: emisor.produccionHabilitada
-                      ? "#F6E9E9"
-                      : "#F2F6F3",
-                    color: emisor.produccionHabilitada ? "#8A2E2E" : "#2B4A36",
+                      ? "var(--cf-f6e9e9, #F6E9E9)"
+                      : "var(--cf-f2f6f3, #F2F6F3)",
+                    color: emisor.produccionHabilitada ? "var(--ct-8a2e2e, #8A2E2E)" : "var(--ct-2b4a36, #2B4A36)",
                     fontSize: "0.74rem",
                     fontWeight: 800,
                     cursor: "pointer",
@@ -1454,8 +1454,8 @@ export function ConfiguracionFacturacionSri({
             style={{
               padding: "12px",
               borderRadius: "12px",
-              backgroundColor: "#F8F7F4",
-              border: "1px solid #E6E2DA",
+              backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               marginBottom: "10px",
             }}
           >
@@ -1469,14 +1469,14 @@ export function ConfiguracionFacturacionSri({
                 flexWrap: "wrap",
               }}
             >
-              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1F1C19" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Facturas (Código SRI 01)
               </span>
               <span
                 style={{
                   fontSize: "0.73rem",
                   fontFamily: "monospace",
-                  color: "#2F4737",
+                  color: "var(--ct-2f4737, #2F4737)",
                   fontWeight: 700,
                 }}
               >
@@ -1522,8 +1522,8 @@ export function ConfiguracionFacturacionSri({
             style={{
               padding: "12px",
               borderRadius: "12px",
-              backgroundColor: "#F8F7F4",
-              border: "1px solid #E6E2DA",
+              backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             }}
           >
             <div
@@ -1536,14 +1536,14 @@ export function ConfiguracionFacturacionSri({
                 flexWrap: "wrap",
               }}
             >
-              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1F1C19" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Notas de Crédito (Código SRI 04)
               </span>
               <span
                 style={{
                   fontSize: "0.73rem",
                   fontFamily: "monospace",
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   fontWeight: 700,
                 }}
               >

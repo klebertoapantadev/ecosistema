@@ -171,7 +171,7 @@ export function ModalHistorialUsoPlan({
     >
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "24px",
           maxWidth: "760px",
           width: "100%",
@@ -241,8 +241,8 @@ export function ModalHistorialUsoPlan({
           {/* 1. RESUMEN DEL CONTRATO / SUSCRIPCIÓN */}
           <div
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
+              background: "var(--cf-f8fafc, #F8FAFC)",
+              border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
               borderRadius: "16px",
               padding: "18px",
               marginBottom: "24px",
@@ -252,8 +252,8 @@ export function ModalHistorialUsoPlan({
               <div>
                 <span
                   style={{
-                    background: "#DCFCE7",
-                    color: "#166534",
+                    background: "var(--cf-dcfce7, #DCFCE7)",
+                    color: "var(--ct-166534, #166534)",
                     fontSize: "0.72rem",
                     fontWeight: 800,
                     padding: "3px 10px",
@@ -266,12 +266,12 @@ export function ModalHistorialUsoPlan({
                 >
                   <CheckCircle2 size={12} /> MEMBRESÍA ACTIVA
                 </span>
-                <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
+                <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                   {cobertura?.planNombre || "Plan Amparo Familiar"}
                 </h4>
               </div>
 
-              <span style={{ fontSize: "0.82rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)" }}>
                 ID: <code style={{ fontWeight: 700 }}>{cobertura?.suscripcionId || "sub-activo"}</code>
               </span>
             </div>
@@ -282,7 +282,7 @@ export function ModalHistorialUsoPlan({
                 gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                 gap: "12px",
                 fontSize: "0.82rem",
-                color: "#475569",
+                color: "var(--ct-475569, #475569)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -317,7 +317,7 @@ export function ModalHistorialUsoPlan({
 
           {/* 2. LÍNEA DE TIEMPO / BITÁCORA DE CONSUMOS */}
           <div>
-            <h4 style={{ margin: "0 0 16px", fontSize: "1rem", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px" }}>
+            <h4 style={{ margin: "0 0 16px", fontSize: "1rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", display: "flex", alignItems: "center", gap: "8px" }}>
               <Clock size={18} color="#6366F1" /> Trazabilidad & Consumos del Periodo
             </h4>
 
@@ -326,10 +326,10 @@ export function ModalHistorialUsoPlan({
                 <div
                   key={item.id}
                   style={{
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                     borderRadius: "14px",
                     padding: "16px",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     transition: "border-color 0.15s ease",
                   }}
                 >
@@ -340,7 +340,7 @@ export function ModalHistorialUsoPlan({
                           width: "36px",
                           height: "36px",
                           borderRadius: "10px",
-                          background: "#F1F5F9",
+                          background: "var(--cf-f1f5f9, #F1F5F9)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -349,17 +349,17 @@ export function ModalHistorialUsoPlan({
                         {obtenerIconoConcepto(item.concepto)}
                       </div>
                       <div>
-                        <strong style={{ fontSize: "0.9rem", color: "#0F172A", display: "block" }}>
+                        <strong style={{ fontSize: "0.9rem", color: "var(--ct-0f172a, #0F172A)", display: "block" }}>
                           {item.titulo}
                         </strong>
-                        <span style={{ fontSize: "0.75rem", color: "#64748B" }}>{item.fecha}</span>
+                        <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)" }}>{item.fecha}</span>
                       </div>
                     </div>
 
                     <span
                       style={{
-                        background: "#EFF6FF",
-                        color: "#1E40AF",
+                        background: "var(--cf-eff6ff, #EFF6FF)",
+                        color: "var(--ct-1e40af, #1E40AF)",
                         fontSize: "0.72rem",
                         fontWeight: 700,
                         padding: "3px 8px",
@@ -370,12 +370,12 @@ export function ModalHistorialUsoPlan({
                     </span>
                   </div>
 
-                  <p style={{ margin: "0 0 8px", fontSize: "0.82rem", color: "#334155" }}>
+                  <p style={{ margin: "0 0 8px", fontSize: "0.82rem", color: "var(--ct-334155, #334155)" }}>
                     {item.descripcion}
                   </p>
 
                   {item.responsableNombre && (
-                    <div style={{ fontSize: "0.78rem", color: "#475569", marginBottom: "8px" }}>
+                    <div style={{ fontSize: "0.78rem", color: "var(--ct-475569, #475569)", marginBottom: "8px" }}>
                       Atendido por: <strong>{item.responsableNombre}</strong>
                     </div>
                   )}
@@ -384,8 +384,8 @@ export function ModalHistorialUsoPlan({
                   {item.evidenciaUrl && (
                     <div
                       style={{
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
+                        background: "var(--cf-f8fafc, #F8FAFC)",
+                        border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                         borderRadius: "8px",
                         padding: "8px 12px",
                         display: "flex",
@@ -395,7 +395,7 @@ export function ModalHistorialUsoPlan({
                         marginTop: "10px",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#334155" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--ct-334155, #334155)" }}>
                         {item.evidenciaTipo === "FOTO_POD" ? (
                           <>
                             <ImageIcon size={14} color="#EC4899" />
@@ -417,9 +417,9 @@ export function ModalHistorialUsoPlan({
                         type="button"
                         onClick={() => setEvidenciaModalUrl(item.evidenciaUrl!)}
                         style={{
-                          background: "#FFFFFF",
-                          border: "1px solid #CBD5E1",
-                          color: "#1E293B",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                          color: "var(--ct-1e293b, #1E293B)",
                           padding: "4px 10px",
                           borderRadius: "6px",
                           fontSize: "0.72rem",
@@ -444,14 +444,14 @@ export function ModalHistorialUsoPlan({
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid #E2E8F0",
+            borderTop: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            background: "#F8FAFC",
+            background: "var(--cf-f8fafc, #F8FAFC)",
           }}
         >
-          <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)" }}>
             Tus derechos se reinician automáticamente al inicio de cada ciclo de facturación.
           </span>
           <button
@@ -490,7 +490,7 @@ export function ModalHistorialUsoPlan({
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "16px",
               maxWidth: "600px",

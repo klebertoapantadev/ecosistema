@@ -124,7 +124,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
   };
 
   return (
-    <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #E4E4E4", padding: "24px", width: "100%" }}>
+    <div style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", padding: "24px", width: "100%" }}>
       {/* CABECERA HERO MOTOR DE NOTIFICACIONES */}
       <section className="tarjeta-proteccion" style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)", color: "#ffffff", marginBottom: "20px", padding: "20px", borderRadius: "14px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
@@ -154,9 +154,9 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
             marginBottom: "16px",
             fontSize: "0.88rem",
             fontWeight: 600,
-            background: toastMsg.tipo === "exito" ? "#f0fdf4" : "#fef2f2",
-            border: `1px solid ${toastMsg.tipo === "exito" ? "#bbf7d0" : "#fecaca"}`,
-            color: toastMsg.tipo === "exito" ? "#166534" : "#991b1b"
+            background: toastMsg.tipo === "exito" ? "var(--cf-f0fdf4, #f0fdf4)" : "var(--cf-fef2f2, #fef2f2)",
+            border: `1px solid ${toastMsg.tipo === "exito" ? "var(--cb-bbf7d0, #bbf7d0)" : "var(--cb-fecaca, #fecaca)"}`,
+            color: toastMsg.tipo === "exito" ? "var(--ct-166534, #166534)" : "var(--ct-991b1b, #991b1b)"
           }}
         >
           {toastMsg.texto}
@@ -169,8 +169,8 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
           {/* Columna Izquierda: Audiencia y Canales */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {/* Segmentación de Audiencia */}
-            <section className="tarjeta-seccion" style={{ padding: "16px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-              <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#1e293b", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+            <section className="tarjeta-seccion" style={{ padding: "16px", background: "var(--cf-f8fafc, #f8fafc)", borderRadius: "12px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
+              <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--ct-1e293b, #1e293b)", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Users size={18} color="#4f46e5" /> 1. Segmentación de Audiencia ({negocio})
               </h3>
 
@@ -179,9 +179,9 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                   type="button"
                   onClick={() => setTipoAudiencia("TODOS")}
                   style={{
-                    background: tipoAudiencia === "TODOS" ? "#2563eb" : "#ffffff",
-                    color: tipoAudiencia === "TODOS" ? "#ffffff" : "#475569",
-                    border: "1px solid #cbd5e1",
+                    background: tipoAudiencia === "TODOS" ? "#2563eb" : "var(--cf-ffffff, #ffffff)",
+                    color: tipoAudiencia === "TODOS" ? "#ffffff" : "var(--ct-475569, #475569)",
+                    border: "1px solid var(--cb-cbd5e1, #cbd5e1)",
                     borderRadius: "6px",
                     padding: "8px 4px",
                     fontSize: "0.76rem",
@@ -196,9 +196,9 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                   type="button"
                   onClick={() => setTipoAudiencia("POR_ROL")}
                   style={{
-                    background: tipoAudiencia === "POR_ROL" ? "#2563eb" : "#ffffff",
-                    color: tipoAudiencia === "POR_ROL" ? "#ffffff" : "#475569",
-                    border: "1px solid #cbd5e1",
+                    background: tipoAudiencia === "POR_ROL" ? "#2563eb" : "var(--cf-ffffff, #ffffff)",
+                    color: tipoAudiencia === "POR_ROL" ? "#ffffff" : "var(--ct-475569, #475569)",
+                    border: "1px solid var(--cb-cbd5e1, #cbd5e1)",
                     borderRadius: "6px",
                     padding: "8px 4px",
                     fontSize: "0.76rem",
@@ -213,9 +213,9 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                   type="button"
                   onClick={() => setTipoAudiencia("POR_USUARIOS")}
                   style={{
-                    background: tipoAudiencia === "POR_USUARIOS" ? "#2563eb" : "#ffffff",
-                    color: tipoAudiencia === "POR_USUARIOS" ? "#ffffff" : "#475569",
-                    border: "1px solid #cbd5e1",
+                    background: tipoAudiencia === "POR_USUARIOS" ? "#2563eb" : "var(--cf-ffffff, #ffffff)",
+                    color: tipoAudiencia === "POR_USUARIOS" ? "#ffffff" : "var(--ct-475569, #475569)",
+                    border: "1px solid var(--cb-cbd5e1, #cbd5e1)",
                     borderRadius: "6px",
                     padding: "8px 4px",
                     fontSize: "0.76rem",
@@ -229,13 +229,13 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
               </div>
 
               {tipoAudiencia === "POR_ROL" && (
-                <div style={{ background: "#ffffff", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 700, display: "block", marginBottom: "6px" }}>
+                <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "10px", borderRadius: "6px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748b)", fontWeight: 700, display: "block", marginBottom: "6px" }}>
                     Selecciona los Roles Destinatarios:
                   </span>
                   <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                     {["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"].map(r => (
-                      <label key={r} style={{ fontSize: "0.74rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px", cursor: "pointer", background: rolesSeleccionados.includes(r) ? "#dbeafe" : "#f1f5f9", padding: "4px 8px", borderRadius: "4px" }}>
+                      <label key={r} style={{ fontSize: "0.74rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px", cursor: "pointer", background: rolesSeleccionados.includes(r) ? "var(--cf-dbeafe, #dbeafe)" : "var(--cf-f1f5f9, #f1f5f9)", padding: "4px 8px", borderRadius: "4px" }}>
                         <input type="checkbox" checked={rolesSeleccionados.includes(r)} onChange={() => toggleRol(r)} />
                         {r}
                       </label>
@@ -251,38 +251,38 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                     value={filtroUsuarios}
                     onChange={e => setFiltroUsuarios(e.target.value)}
                     placeholder="Escribe correos o nombres separados por coma..."
-                    style={{ width: "100%", padding: "8px 10px", fontSize: "0.8rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    style={{ width: "100%", padding: "8px 10px", fontSize: "0.8rem", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)" }}
                   />
                 </div>
               )}
             </section>
 
             {/* Canales Multicanal */}
-            <section className="tarjeta-seccion" style={{ padding: "16px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-              <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#1e293b", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+            <section className="tarjeta-seccion" style={{ padding: "16px", background: "var(--cf-f8fafc, #f8fafc)", borderRadius: "12px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
+              <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--ct-1e293b, #1e293b)", margin: "0 0 12px 0", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Bell size={18} color="#2563eb" /> 2. Canales de Despacho
               </h3>
 
               <div className="rejilla-auto" style={{ "--min": "180px", "--hueco": "8px" } as React.CSSProperties}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)", cursor: "pointer" }}>
                   <input type="checkbox" checked={canales.inApp} onChange={() => toggleCanal("inApp")} />
                   <Bell size={16} color="#2563eb" />
                   <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>In-App Banner</span>
                 </label>
 
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)", cursor: "pointer" }}>
                   <input type="checkbox" checked={canales.email} onChange={() => toggleCanal("email")} />
                   <Mail size={16} color="#4f46e5" />
                   <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>Correo Email</span>
                 </label>
 
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)", cursor: "pointer" }}>
                   <input type="checkbox" checked={canales.push} onChange={() => toggleCanal("push")} />
                   <Smartphone size={16} color="#0284c7" />
                   <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>Push Notification</span>
                 </label>
 
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#ffffff", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)", cursor: "pointer" }}>
                   <input type="checkbox" checked={canales.whatsapp} onChange={() => toggleCanal("whatsapp")} />
                   <MessageSquare size={16} color="#16a34a" />
                   <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>WhatsApp</span>
@@ -293,20 +293,20 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
 
           {/* Columna Derecha: Editor WYSIWYG / Markdown */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <section className="tarjeta-seccion" style={{ padding: "16px", background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+            <section className="tarjeta-seccion" style={{ padding: "16px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "12px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                <h3 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--ct-1e293b, #1e293b)", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
                   <FileText size={18} color="#059669" /> 3. Redacción & Editor de Contenido
                 </h3>
 
                 {/* Sub-tabs del editor */}
-                <div style={{ display: "flex", background: "#f1f5f9", padding: "2px", borderRadius: "6px" }}>
+                <div style={{ display: "flex", background: "var(--cf-f1f5f9, #f1f5f9)", padding: "2px", borderRadius: "6px" }}>
                   <button
                     type="button"
                     onClick={() => setTabEditor("wysiwyg")}
                     style={{
-                      background: tabEditor === "wysiwyg" ? "#ffffff" : "transparent",
-                      color: tabEditor === "wysiwyg" ? "#059669" : "#64748b",
+                      background: tabEditor === "wysiwyg" ? "var(--cf-ffffff, #ffffff)" : "transparent",
+                      color: tabEditor === "wysiwyg" ? "var(--ct-059669, #059669)" : "var(--ct-64748b, #64748b)",
                       border: "none",
                       padding: "4px 8px",
                       fontSize: "0.72rem",
@@ -321,8 +321,8 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                     type="button"
                     onClick={() => setTabEditor("markdown")}
                     style={{
-                      background: tabEditor === "markdown" ? "#ffffff" : "transparent",
-                      color: tabEditor === "markdown" ? "#059669" : "#64748b",
+                      background: tabEditor === "markdown" ? "var(--cf-ffffff, #ffffff)" : "transparent",
+                      color: tabEditor === "markdown" ? "var(--ct-059669, #059669)" : "var(--ct-64748b, #64748b)",
                       border: "none",
                       padding: "4px 8px",
                       fontSize: "0.72rem",
@@ -337,8 +337,8 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                     type="button"
                     onClick={() => setTabEditor("preview")}
                     style={{
-                      background: tabEditor === "preview" ? "#ffffff" : "transparent",
-                      color: tabEditor === "preview" ? "#059669" : "#64748b",
+                      background: tabEditor === "preview" ? "var(--cf-ffffff, #ffffff)" : "transparent",
+                      color: tabEditor === "preview" ? "var(--ct-059669, #059669)" : "var(--ct-64748b, #64748b)",
                       border: "none",
                       padding: "4px 8px",
                       fontSize: "0.72rem",
@@ -354,7 +354,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
 
               {/* Asunto */}
               <div style={{ marginBottom: "12px" }}>
-                <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-475569, #475569)", display: "block", marginBottom: "4px" }}>
                   Asunto de la Notificación *
                 </label>
                 <input
@@ -362,30 +362,30 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                   value={asunto}
                   onChange={e => setAsunto(e.target.value)}
                   placeholder="Escribe el asunto o título de la notificación..."
-                  style={{ width: "100%", padding: "8px 12px", fontSize: "0.88rem", fontWeight: 700, borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  style={{ width: "100%", padding: "8px 12px", fontSize: "0.88rem", fontWeight: 700, borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)" }}
                   required
                 />
               </div>
 
               {/* Barra de Formato Rápido */}
               {tabEditor !== "preview" && (
-                <div style={{ display: "flex", gap: "4px", background: "#f8fafc", padding: "4px", borderRadius: "6px", marginBottom: "8px", border: "1px solid #e2e8f0" }}>
-                  <button type="button" onClick={() => aplicarFormato("strong", "**")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Negrita">
+                <div style={{ display: "flex", gap: "4px", background: "var(--cf-f8fafc, #f8fafc)", padding: "4px", borderRadius: "6px", marginBottom: "8px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
+                  <button type="button" onClick={() => aplicarFormato("strong", "**")} style={{ padding: "4px 8px", border: "none", background: "var(--cf-ffffff, #ffffff)", borderRadius: "4px", cursor: "pointer" }} title="Negrita">
                     <Bold size={14} />
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("em", "*")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Cursiva">
+                  <button type="button" onClick={() => aplicarFormato("em", "*")} style={{ padding: "4px 8px", border: "none", background: "var(--cf-ffffff, #ffffff)", borderRadius: "4px", cursor: "pointer" }} title="Cursiva">
                     <Italic size={14} />
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("u", "_")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Subrayado">
+                  <button type="button" onClick={() => aplicarFormato("u", "_")} style={{ padding: "4px 8px", border: "none", background: "var(--cf-ffffff, #ffffff)", borderRadius: "4px", cursor: "pointer" }} title="Subrayado">
                     <Underline size={14} />
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("li", "- ")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Lista">
+                  <button type="button" onClick={() => aplicarFormato("li", "- ")} style={{ padding: "4px 8px", border: "none", background: "var(--cf-ffffff, #ffffff)", borderRadius: "4px", cursor: "pointer" }} title="Lista">
                     <List size={14} />
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("a", "[Enlace](url)")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Enlace">
+                  <button type="button" onClick={() => aplicarFormato("a", "[Enlace](url)")} style={{ padding: "4px 8px", border: "none", background: "var(--cf-ffffff, #ffffff)", borderRadius: "4px", cursor: "pointer" }} title="Enlace">
                     <LinkIcon size={14} />
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("code", "`")} style={{ padding: "4px 8px", border: "none", background: "#ffffff", borderRadius: "4px", cursor: "pointer" }} title="Código">
+                  <button type="button" onClick={() => aplicarFormato("code", "`")} style={{ padding: "4px 8px", border: "none", background: "var(--cf-ffffff, #ffffff)", borderRadius: "4px", cursor: "pointer" }} title="Código">
                     <Code size={14} />
                   </button>
                 </div>
@@ -397,7 +397,7 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                   value={contenidoHTML}
                   onChange={e => setContenidoHTML(e.target.value)}
                   rows={8}
-                  style={{ width: "100%", padding: "10px", fontFamily: "monospace", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  style={{ width: "100%", padding: "10px", fontFamily: "monospace", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)" }}
                 />
               )}
 
@@ -406,18 +406,18 @@ export function EmisionNotificacionesWidget({ negocio }: Props) {
                   value={contenidoMarkdown}
                   onChange={e => setContenidoMarkdown(e.target.value)}
                   rows={8}
-                  style={{ width: "100%", padding: "10px", fontFamily: "monospace", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                  style={{ width: "100%", padding: "10px", fontFamily: "monospace", fontSize: "0.82rem", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)" }}
                 />
               )}
 
               {tabEditor === "preview" && (
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "14px", background: "#f8fafc", minHeight: "160px", fontSize: "0.88rem", lineHeight: 1.6 }}>
-                  <h4 style={{ margin: "0 0 8px 0", color: "#1e293b" }}>{asunto || "Sin Asunto"}</h4>
+                <div style={{ border: "1px solid var(--cb-e2e8f0, #e2e8f0)", borderRadius: "6px", padding: "14px", background: "var(--cf-f8fafc, #f8fafc)", minHeight: "160px", fontSize: "0.88rem", lineHeight: 1.6 }}>
+                  <h4 style={{ margin: "0 0 8px 0", color: "var(--ct-1e293b, #1e293b)" }}>{asunto || "Sin Asunto"}</h4>
                   <div dangerouslySetInnerHTML={{ __html: contenidoHTML }} />
                 </div>
               )}
 
-              <div style={{ marginTop: "12px", fontSize: "0.75rem", color: "#64748b" }}>
+              <div style={{ marginTop: "12px", fontSize: "0.75rem", color: "var(--ct-64748b, #64748b)" }}>
                 Variables interpolables disponibles: <code>{"{{nombre_usuario}}"}</code>, <code>{"{{correo}}"}</code>, <code>{"{{negocio}}"}</code>, <code>{"{{fecha}}"}</code>.
               </div>
             </section>

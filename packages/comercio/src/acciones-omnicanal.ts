@@ -5315,7 +5315,7 @@ export async function guardarLineaWhatsappOmnicanalAction(entrada: {
       p_ia_clientes_activa: Boolean(entrada.iaClientesActiva),
       p_politica_personales: entrada.politicaPersonales,
       p_visibilidad_clientes: entrada.visibilidadClientes,
-      p_color_badge: entrada.colorBadge || "#16A34A",
+      p_color_badge: entrada.colorBadge || "var(--ct-16a34a, #16A34A)",
       p_agente_ia_id: entrada.agenteIaId?.trim() || null,
       p_ycloud_api_key: entrada.ycloudApiKey?.trim() || null,
       p_ycloud_webhook_secret: entrada.ycloudWebhookSecret?.trim() || null,

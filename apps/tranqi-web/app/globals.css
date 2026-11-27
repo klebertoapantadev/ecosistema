@@ -42,11 +42,11 @@ p { line-height: 1.55; }
   transition: background 0.15s, color 0.15s;
 }
 .btn-amarillo { background: var(--amarillo); color: var(--negro); }
-.btn-amarillo:hover { background: var(--menta); }
+.btn-amarillo:hover { background: var(--cf-b1fbe3, var(--menta)); }
 .btn-negro { background: var(--negro); color: var(--blanco); }
 .btn-negro:hover { background: var(--violeta); }
-.btn-blanco-borde { background: transparent; color: var(--blanco); box-shadow: inset 0 0 0 2px var(--blanco); }
-.btn-blanco-borde:hover { background: var(--blanco); color: var(--violeta); }
+.btn-blanco-borde { background: transparent; color: var(--blanco); box-shadow: inset 0 0 0 2px var(--cb-ffffff, var(--blanco)); }
+.btn-blanco-borde:hover { background: var(--cf-ffffff, var(--blanco)); color: var(--ct-5000ba, var(--violeta)); }
 
 /* Las secciones de la landing viven en modulos/landing/componentes/landing.css
    (TRQ-024), todas bajo `.landing`. */
@@ -66,7 +66,7 @@ p { line-height: 1.55; }
   width: 56px; height: 56px; cursor: pointer; position: relative;
   background: var(--lavanda);
   border-radius: 47% 53% 50% 50% / 55% 55% 45% 45%;
-  box-shadow: 0 0 0 3px var(--blanco), 0 4px 14px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 0 0 3px var(--cb-ffffff, var(--blanco)), 0 4px 14px rgba(0, 0, 0, 0.22);
   transition: scale 0.18s;
 }
 .avatar:hover { scale: 1.07; }
@@ -85,15 +85,15 @@ p { line-height: 1.55; }
 .globo {
   position: absolute; right: 0; bottom: 70px;
   width: max-content; max-width: min(300px, calc(100vw - 60px));
-  background: var(--blanco); color: var(--negro);
-  border: 1.5px solid var(--negro); border-radius: 14px;
+  background: var(--cf-ffffff, var(--blanco)); color: var(--ct-111111, var(--negro));
+  border: 1.5px solid var(--cb-111111, var(--negro)); border-radius: 14px;
   padding: 11px 14px; font-size: 0.88rem; line-height: 1.45; font-weight: 500;
   opacity: 0; scale: 0.92; transform-origin: 85% 100%;
   pointer-events: none; cursor: pointer;
   transition: opacity 0.3s, scale 0.3s;
 }
 .globo.show { opacity: 1; scale: 1; pointer-events: auto; }
-.globo .pista { display: block; margin-top: 6px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; color: var(--violeta); }
+.globo .pista { display: block; margin-top: 6px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; color: var(--ct-5000ba, var(--violeta)); }
 .typing { display: inline-flex; gap: 4px; align-items: center; height: 0.9em; }
 .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--lavanda); animation: tp 1.1s infinite; }
 .typing i:nth-child(2) { animation-delay: 0.18s; }
@@ -109,21 +109,21 @@ p { line-height: 1.55; }
 #chat {
   position: fixed; right: 24px; bottom: 24px; z-index: 95;
   width: min(350px, calc(100vw - 48px)); height: min(440px, calc(100svh - 48px));
-  background: var(--blanco); border: 1.5px solid var(--negro); border-radius: 18px;
+  background: var(--cf-ffffff, var(--blanco)); border: 1.5px solid var(--cb-111111, var(--negro)); border-radius: 18px;
   display: none; flex-direction: column; overflow: hidden;
 }
 #chat.open { display: flex; }
 .chat-head { background: var(--violeta); color: var(--blanco); padding: 13px 16px; display: flex; align-items: center; gap: 11px; }
 .chat-head .mini { width: 30px; height: 30px; background: var(--lavanda); border-radius: 47% 53% 50% 50% / 55% 55% 45% 45%; position: relative; flex: none; }
-.chat-head .mini::before { content: ""; position: absolute; left: 9px; top: 9px; width: 4px; height: 8px; background: var(--negro); border-radius: 3px; box-shadow: 8px 0 0 var(--negro); }
+.chat-head .mini::before { content: ""; position: absolute; left: 9px; top: 9px; width: 4px; height: 8px; background: var(--negro); border-radius: 3px; box-shadow: 8px 0 0 var(--cb-111111, var(--negro)); }
 .chat-head b { font-size: 0.98rem; }
 .chat-head small { display: block; font-size: 0.7rem; opacity: 0.8; font-weight: 400; }
 .chat-head .x { margin-left: auto; cursor: pointer; background: none; border: none; color: var(--blanco); font-size: 1.35rem; line-height: 1; }
-.chat-log { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 9px; background: #F6F4FB; }
+.chat-log { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 9px; background: var(--cf-f6f4fb, #F6F4FB); }
 .msg { max-width: 86%; padding: 9px 13px; border-radius: 13px; font-size: 0.9rem; line-height: 1.5; }
-.msg.bot { background: var(--blanco); border: 1px solid #DDD6F3; border-bottom-left-radius: 4px; align-self: flex-start; }
+.msg.bot { background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--cb-ddd6f3, #DDD6F3); border-bottom-left-radius: 4px; align-self: flex-start; }
 .msg.user { background: var(--violeta); color: var(--blanco); border-bottom-right-radius: 4px; align-self: flex-end; }
-.chat-in { display: flex; border-top: 1.5px solid var(--negro); background: var(--blanco); }
+.chat-in { display: flex; border-top: 1.5px solid var(--cb-111111, var(--negro)); background: var(--cf-ffffff, var(--blanco)); }
 .chat-in input { flex: 1; border: none; outline: none; padding: 13px 15px; font-family: inherit; font-size: 0.92rem; }
 .chat-in button { border: none; background: var(--amarillo); font-weight: 800; font-family: inherit; padding: 0 20px; cursor: pointer; }
 .chat-in button:disabled { opacity: 0.5; cursor: wait; }
@@ -136,8 +136,8 @@ p { line-height: 1.55; }
 /* ═══════════ Autenticación (registro / ingreso) ═══════════ */
 .pagina-auth {
   min-height: 100vh;
-  background: var(--blanco);
-  color: var(--negro);
+  background: var(--cf-ffffff, var(--blanco));
+  color: var(--ct-111111, var(--negro));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -146,14 +146,14 @@ p { line-height: 1.55; }
   padding: 40px 20px;
   text-align: center;
 }
-.logo-auth { font-size: 1.6rem; font-weight: 800; color: var(--violeta); text-decoration: none; }
+.logo-auth { font-size: 1.6rem; font-weight: 800; color: var(--ct-5000ba, var(--violeta)); text-decoration: none; }
 .pagina-auth h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; margin: 0; }
 
 /* Selector de pestañas Ingresar / Registrarme */
 .tabs-auth-switch {
   display: flex;
   width: min(380px, 100%);
-  background: #f4f3f8;
+  background: var(--cf-f4f3f8, #f4f3f8);
   padding: 4px;
   border-radius: 999px;
   gap: 4px;
@@ -169,7 +169,7 @@ p { line-height: 1.55; }
   text-decoration: none;
   font-weight: 700;
   font-size: 0.92rem;
-  color: #555566;
+  color: var(--ct-555566, #555566);
   text-align: center;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
@@ -198,8 +198,8 @@ p { line-height: 1.55; }
   min-height: 100vh;
   max-width: 720px;
   margin: 0 auto;
-  background: var(--blanco);
-  color: var(--negro);
+  background: var(--cf-ffffff, var(--blanco));
+  color: var(--ct-111111, var(--negro));
   padding: 40px 20px 80px;
   display: flex;
   flex-direction: column;
@@ -208,10 +208,10 @@ p { line-height: 1.55; }
 .pagina-legal h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; margin-top: 8px; }
 .pagina-legal .seccion-legal { display: flex; flex-direction: column; gap: 8px; }
 .pagina-legal h2 { font-size: 1.15rem; font-weight: 800; }
-.pagina-legal p, .pagina-legal li { line-height: 1.6; color: rgba(17,17,17,0.85); }
+.pagina-legal p, .pagina-legal li { line-height: 1.6; color: var(--ct-111111-a850, rgba(17,17,17,0.85)); }
 .pagina-legal ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
-.pagina-legal a { color: var(--violeta); font-weight: 700; }
-.fecha-legal { font-size: 0.85rem; color: rgba(17,17,17,0.55); }
+.pagina-legal a { color: var(--ct-5000ba, var(--violeta)); font-weight: 700; }
+.fecha-legal { font-size: 0.85rem; color: var(--ct-111111-a550, rgba(17,17,17,0.55)); }
 .aviso-borrador {
   background: var(--amarillo); color: var(--negro); font-weight: 700; font-size: 0.85rem;
   padding: 10px 14px; border-radius: 12px;
@@ -224,17 +224,17 @@ p { line-height: 1.55; }
   gap: 16px;
 }
 .btn-google {
-  padding: 13px 20px; border-radius: 8px; border: 1.5px solid var(--negro);
-  background: var(--blanco); font-weight: 700; cursor: pointer;
+  padding: 13px 20px; border-radius: 8px; border: 1.5px solid var(--cb-111111, var(--negro));
+  background: var(--cf-ffffff, var(--blanco)); font-weight: 700; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 10px;
 }
-.btn-google:hover { background: var(--menta); }
+.btn-google:hover { background: var(--cf-b1fbe3, var(--menta)); }
 .btn-google:disabled { opacity: 0.5; cursor: wait; }
 .logo-google { width: 20px; height: 20px; flex: none; }
-.separador { font-size: 0.82rem; color: rgba(17,17,17,0.5); }
+.separador { font-size: 0.82rem; color: var(--ct-111111-a500, rgba(17,17,17,0.5)); }
 
-.aviso-terminos { font-size: 0.78rem; color: rgba(17,17,17,0.55); text-align: center; margin-top: -6px; }
-.aviso-terminos a { color: var(--violeta); font-weight: 700; }
+.aviso-terminos { font-size: 0.78rem; color: var(--ct-111111-a550, rgba(17,17,17,0.55)); text-align: center; margin-top: -6px; }
+.aviso-terminos a { color: var(--ct-5000ba, var(--violeta)); font-weight: 700; }
 
 .form-auth { display: flex; flex-direction: column; gap: 10px; text-align: left; }
 .form-auth input {
@@ -243,18 +243,18 @@ p { line-height: 1.55; }
 }
 .form-auth input:focus { outline: none; border-color: var(--violeta); box-shadow: 0 0 0 3px rgba(80,0,186,0.13); }
 
-.error-auth { color: #B00020; font-size: 0.85rem; text-align: left; }
-.mensaje-ok { color: var(--esmeralda); font-size: 0.85rem; }
+.error-auth { color: var(--ct-b00020, #B00020); font-size: 0.85rem; text-align: left; }
+.mensaje-ok { color: var(--ct-0e6648, var(--esmeralda)); font-size: 0.85rem; }
 
 .enlace-auth { font-size: 0.9rem; }
-.enlace-auth a { color: var(--violeta); font-weight: 700; }
+.enlace-auth a { color: var(--ct-5000ba, var(--violeta)); font-weight: 700; }
 
 /* ═══════════ Bolsa de empleo (/vacantes, TRQ-012) ═══════════
    Página pública: arriba el registro expresivo de la landing (violeta pleno,
    píldoras), abajo el sobrio de las pantallas de trabajo (papel, tarjetas
    blancas con línea de 1 px). Antes llevaba la paleta oscura de GitHub en 55
    estilos inline y `font-family: sans-serif`, que tapaba la fuente de marca. */
-.vacantes { min-height: 100vh; background: var(--papel-cliente); color: var(--negro); }
+.vacantes { min-height: 100vh; background: var(--papel-cliente); color: var(--ct-111111, var(--negro)); }
 
 .vacantes-nav {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px;
@@ -285,14 +285,14 @@ p { line-height: 1.55; }
   background: transparent; color: var(--blanco); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
-.vacantes-filtros button:hover { box-shadow: inset 0 0 0 1.5px var(--blanco); }
-.vacantes-filtros button[aria-pressed="true"] { background: var(--blanco); color: var(--violeta); box-shadow: none; }
+.vacantes-filtros button:hover { box-shadow: inset 0 0 0 1.5px var(--cb-ffffff, var(--blanco)); }
+.vacantes-filtros button[aria-pressed="true"] { background: var(--cf-ffffff, var(--blanco)); color: var(--ct-5000ba, var(--violeta)); box-shadow: none; }
 
 .vacantes-lista { max-width: 1120px; margin: 0 auto; padding: 40px clamp(20px, 4vw, 48px) 72px; }
 .vacantes-lista .rejilla-auto { --min: 420px; --hueco: 24px; }
 .vacante {
   display: flex; flex-direction: column; gap: 14px;
-  background: var(--blanco); border: 1px solid rgba(17, 17, 17, 0.1); border-radius: 16px; padding: 24px;
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--cb-111111-a100, rgba(17, 17, 17, 0.1)); border-radius: 16px; padding: 24px;
 }
 .vacante-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .vacante-cabecera h2 { font-size: 1.3rem; margin-top: 10px; }
@@ -303,14 +303,14 @@ p { line-height: 1.55; }
 }
 .vacante-area { color: var(--violeta); background: rgba(80, 0, 186, 0.08); }
 .vacante-contrato { flex: none; color: rgba(17, 17, 17, 0.7); background: rgba(17, 17, 17, 0.06); }
-.vacante-desc { font-size: 0.95rem; color: rgba(17, 17, 17, 0.75); }
+.vacante-desc { font-size: 0.95rem; color: var(--ct-111111-a750, rgba(17, 17, 17, 0.75)); }
 .vacante-requisitos b { display: block; font-size: 0.85rem; font-weight: 800; margin-bottom: 6px; }
-.vacante-requisitos ul { padding-left: 18px; font-size: 0.9rem; line-height: 1.55; color: rgba(17, 17, 17, 0.75); }
+.vacante-requisitos ul { padding-left: 18px; font-size: 0.9rem; line-height: 1.55; color: var(--ct-111111-a750, rgba(17, 17, 17, 0.75)); }
 .vacante-pie {
-  margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(17, 17, 17, 0.1);
+  margin-top: auto; padding-top: 16px; border-top: 1px solid var(--cb-111111-a100, rgba(17, 17, 17, 0.1));
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
 }
-.vacante-pie span { font-size: 0.85rem; color: rgba(17, 17, 17, 0.65); }
+.vacante-pie span { font-size: 0.85rem; color: var(--ct-111111-a650, rgba(17, 17, 17, 0.65)); }
 
 .vacantes-accion {
   font: inherit; font-size: 0.92rem; font-weight: 700; cursor: pointer;
@@ -318,7 +318,7 @@ p { line-height: 1.55; }
 }
 .vacantes-accion.es-principal { background: var(--violeta); color: var(--blanco); }
 .vacantes-accion.es-principal:hover { background: var(--violeta-oscuro); }
-.vacantes-accion.es-discreta { background: transparent; color: var(--negro); box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.2); }
+.vacantes-accion.es-discreta { background: transparent; color: var(--ct-111111, var(--negro)); box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.2); }
 .vacantes-accion.es-discreta:hover { background: rgba(17, 17, 17, 0.05); }
 .vacantes-accion:disabled { opacity: 0.6; cursor: default; }
 
@@ -328,37 +328,37 @@ p { line-height: 1.55; }
 }
 .vacantes-modal {
   width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto;
-  background: var(--blanco); border-radius: 16px; padding: 28px;
+  background: var(--cf-ffffff, var(--blanco)); border-radius: 16px; padding: 28px;
 }
 .vacantes-modal-cabecera {
   display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-  padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid rgba(17, 17, 17, 0.1);
+  padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--cb-111111-a100, rgba(17, 17, 17, 0.1));
 }
 .vacantes-modal-cabecera h3 { font-size: 1.2rem; font-weight: 800; }
-.vacantes-modal-cabecera p { font-size: 0.85rem; font-weight: 600; color: var(--violeta); margin-top: 2px; }
+.vacantes-modal-cabecera p { font-size: 0.85rem; font-weight: 600; color: var(--ct-5000ba, var(--violeta)); margin-top: 2px; }
 .vacantes-cerrar {
   flex: none; width: 36px; height: 36px; border: none; border-radius: 8px; cursor: pointer;
-  background: none; color: rgba(17, 17, 17, 0.55); font-size: 1.5rem; line-height: 1;
+  background: none; color: var(--ct-111111-a550, rgba(17, 17, 17, 0.55)); font-size: 1.5rem; line-height: 1;
 }
 .vacantes-cerrar:hover { background: rgba(17, 17, 17, 0.06); color: var(--negro); }
 /* error con los tonos de "urgente" (§6); éxito con la menta, que no es fondo
    de texto pequeño y por eso lleva encima la tinta honda (§8) */
 .vacantes-aviso { padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; margin-bottom: 16px; }
-.vacantes-aviso.es-error { background: #FFE9DE; color: #C33F00; }
-.vacantes-aviso.es-exito { background: rgba(177, 251, 227, 0.55); color: var(--menta-honda); }
+.vacantes-aviso.es-error { background: var(--cf-ffe9de, #FFE9DE); color: var(--ct-c33f00, #C33F00); }
+.vacantes-aviso.es-exito { background: var(--cf-b1fbe3-a550, rgba(177, 251, 227, 0.55)); color: var(--ct-056b57, var(--menta-honda)); }
 .vacantes-form { display: flex; flex-direction: column; gap: 14px; }
 .vacantes-form .rejilla-auto { --min: 200px; --hueco: 12px; }
 .vacantes-campo label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px; }
-.vacantes-campo label small { font-size: 0.78rem; font-weight: 700; color: var(--violeta); margin-left: 8px; }
+.vacantes-campo label small { font-size: 0.78rem; font-weight: 700; color: var(--ct-5000ba, var(--violeta)); margin-left: 8px; }
 .vacantes-campo input {
-  width: 100%; font: inherit; font-size: 0.92rem; color: var(--negro); background: var(--blanco);
-  border: 1px solid rgba(17, 17, 17, 0.18); border-radius: 8px; padding: 9px 12px;
+  width: 100%; font: inherit; font-size: 0.92rem; color: var(--ct-111111, var(--negro)); background: var(--cf-ffffff, var(--blanco));
+  border: 1px solid var(--cb-111111-a180, rgba(17, 17, 17, 0.18)); border-radius: 8px; padding: 9px 12px;
 }
-.vacantes-campo input[type="file"] { padding: 7px 10px; font-size: 0.85rem; color: rgba(17, 17, 17, 0.7); }
+.vacantes-campo input[type="file"] { padding: 7px 10px; font-size: 0.85rem; color: var(--ct-111111-a700, rgba(17, 17, 17, 0.7)); }
 .vacantes-campo input:focus-visible { outline: 2px solid var(--violeta); outline-offset: 1px; }
 .vacantes-consentimiento { display: flex; gap: 10px; align-items: flex-start; margin-top: 6px; }
 .vacantes-consentimiento input { margin-top: 3px; accent-color: var(--violeta); }
-.vacantes-consentimiento label { font-size: 0.82rem; line-height: 1.45; color: rgba(17, 17, 17, 0.7); }
+.vacantes-consentimiento label { font-size: 0.82rem; line-height: 1.45; color: var(--ct-111111-a700, rgba(17, 17, 17, 0.7)); }
 .vacantes-botones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
 /* ═══════════ Panel administrativo ═══════════
@@ -368,13 +368,67 @@ p { line-height: 1.55; }
    panel administrativo es negro con acento violeta; las pantallas de cliente
    y abogado usan su propio par (§4 del sistema visual).                    */
 
+/* ── Tema oscuro (TRQ-040) ───────────────────────────────────────────
+   Solo el panel: la landing y las páginas públicas siguen en claro. El
+   <head> pone data-tema (claro | oscuro | sistema) desde la preferencia del
+   usuario; aquí se traduce a color-scheme, y TODOS los colores del panel
+   están escritos como light-dark(claro, oscuro): los tokens de arriba a
+   mano, y los literales de los componentes vía tema-oscuro.generado.css
+   (scripts/tema-oscuro/codemod.mjs). Sin JS no hay data-tema y se sigue
+   al sistema. :has() porque el panel es un layout anidado y no puede poner
+   atributos en <html>; así los modales en portal (hijos de <body>) también
+   heredan el esquema. Imprimir siempre en claro: el papel es blanco. */
+html:has(.panel-layout)[data-tema="oscuro"] { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+  html:has(.panel-layout):not([data-tema="claro"]) { color-scheme: dark; }
+}
+@media print {
+  html { color-scheme: light !important; }
+}
+/* El rail es oscuro en los dos temas (§4 del sistema visual): se fija en
+   claro para que cualquier light-dark() de dentro resuelva al valor de
+   siempre y no se "oscurezca" dos veces. */
+.panel-nav { color-scheme: light; }
+/* Lo mismo para las superficies de color pleno del contenido (§3: una por
+   pantalla): la tarjeta de planes con foto y la tarjeta de protección
+   violeta. Por dentro llevan pastillas blancas y texto pensado para ese
+   fondo, que no debe pasar a noche. .tarjeta-admin es solo un título. */
+.ini-carrusel, .tarjeta-proteccion:not(.tarjeta-admin) { color-scheme: light; }
+
+/* Selector de tema: en el rail (sobre su superficie oscura) y en Mi cuenta. */
+.selector-tema { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; width: fit-content; }
+.selector-tema button {
+  display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; cursor: pointer;
+  border-radius: 999px; padding: 5px 7px; font: inherit; font-size: 0.8rem; font-weight: 600; color: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.selector-tema svg { width: 15px; height: 15px; flex: none; }
+.selector-tema button:focus-visible { outline: 2px solid var(--rail-acento, var(--acento)); outline-offset: 2px; }
+.selector-tema-rail { margin-top: 8px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.66); }
+.selector-tema-rail button:hover { color: #FFFFFF; }
+.selector-tema-rail button[aria-checked="true"] { background: rgba(255,255,255,0.16); color: var(--rail-acento); }
+.selector-tema-cuenta { background: var(--fondo-hundido); border: 1px solid var(--linea); color: var(--texto-suave); }
+.selector-tema-cuenta button { padding: 8px 16px; }
+.selector-tema-cuenta button:hover { color: var(--texto); }
+.fila-apariencia {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px;
+  padding: 14px 18px; margin-bottom: 18px; border: 1px solid var(--linea); border-radius: 14px;
+  background: light-dark(var(--cf-ffffff, #FFFFFF), #191919);
+}
+.fila-apariencia > div:first-child { display: grid; gap: 2px; }
+.fila-apariencia b { font-size: 0.95rem; color: var(--texto); }
+.fila-apariencia span { font-size: 0.82rem; color: var(--texto-suave); }
+.selector-tema-cuenta button[aria-checked="true"] {
+  background: light-dark(var(--cf-ffffff, #FFFFFF), #2A2A30); color: var(--texto); box-shadow: 0 1px 3px rgba(0,0,0,0.14);
+}
+
 /* neutros del panel: grises puros, sin tinte de marca — el color solo
    aparece donde significa algo */
 :root {
-  --panel-papel: #F6F6F5;
-  --panel-linea: #E4E4E4;
-  --panel-linea-suave: #F1F1F1;
-  --panel-gris: #737373;
+  --panel-papel: light-dark(#F6F6F5, #111112);
+  --panel-linea: light-dark(#E4E4E4, #2C2C2F);
+  --panel-linea-suave: light-dark(#F1F1F1, #222225);
+  --panel-gris: light-dark(#737373, #A1A1A6);
   --panel-negro-alto: #1E1E1E;
   /* Un paso MÁS HONDO que el papel, para la columna del asistente. El registro
      de mensajes usaba --panel-papel, es decir el mismo fondo exacto que la
@@ -382,7 +436,7 @@ p { line-height: 1.55; }
      como una sola superficie. Es neutro a propósito -- §3 del sistema visual
      solo admite UNA superficie de color pleno por pantalla, y esa ya es la
      tarjeta de protección. La diferencia la hace el tono, no la marca. */
-  --panel-hondo: #EBEBE9;
+  --panel-hondo: light-dark(#EBEBE9, #0C0C0D);
 
   /* Curvas del movimiento (TRQ-010). Una sola familia para todo el panel: si
      cada componente elige la suya, la interfaz se mueve como si la hubieran
@@ -419,7 +473,7 @@ p { line-height: 1.55; }
   --esmeralda-tinta: #083D2C;
   /* papel con tinte de marca de la maqueta de cliente; el del panel
      administrativo sigue siendo gris puro */
-  --papel-cliente: #F7F6FA;
+  --papel-cliente: light-dark(#F7F6FA, #121016);
   /* verde honda: la menta no es fondo de texto pequeño (§8), así que cuando
      hace de fondo necesita esta tinta encima */
   --menta-honda: #056B57;
@@ -431,16 +485,16 @@ p { line-height: 1.55; }
    estado positivo y naranja solo para lo urgente (datos que faltan, pago
    rechazado). Maqueta aprobada: TRANQUI/demo/checkout.html. */
 :root {
-  --ckt-acento: var(--violeta);
+  --ckt-acento: light-dark(var(--violeta), #7866FF);
   --ckt-acento-hondo: var(--violeta-oscuro);
   --ckt-acento-claro: var(--lavanda);
-  --ckt-acento-tenue: #F3EEFF;
+  --ckt-acento-tenue: light-dark(#F3EEFF, #241B38);
   --ckt-resumen: var(--violeta-tinta);
   --ckt-positivo: var(--menta);
   --ckt-positivo-hondo: var(--menta-honda);
-  --ckt-positivo-tenue: #EFFFF9;
+  --ckt-positivo-tenue: light-dark(#EFFFF9, #10241E);
   --ckt-alerta: var(--naranja);
-  --ckt-alerta-tenue: #FFF1EA;
+  --ckt-alerta-tenue: light-dark(#FFF1EA, #2A1A12);
   --ckt-chip: var(--amarillo);
   --ckt-confeti-1: var(--violeta);
   --ckt-confeti-2: var(--lavanda);
@@ -477,33 +531,33 @@ p { line-height: 1.55; }
   --rail-superficie: var(--esmeralda-tinta, #083D2C);
   --rail-alta: var(--esmeralda, #0E6648);
   --rail-acento: var(--lima, #D8FFB3);
-  --panel-papel: #F0FDF4;
+  --panel-papel: light-dark(#F0FDF4, #0D1411);
 }
 .panel-layout.perfil-admin,
 .panel-layout.perfil-administrador {
   --rail-superficie: var(--negro, #111111);
   --rail-alta: #1F1F2E;
   --rail-acento: var(--lavanda, #7866FF);
-  --panel-papel: #F8FAFC;
+  --panel-papel: light-dark(#F8FAFC, #111214);
 }
 .panel-layout.perfil-operador,
 .panel-layout.perfil-auxiliar {
   --rail-superficie: #0F172A;
   --rail-alta: #1E293B;
   --rail-acento: #38BDF8;
-  --panel-papel: #F0F9FF;
+  --panel-papel: light-dark(#F0F9FF, #0E1317);
 }
 .panel-layout.perfil-tecnico {
   --rail-superficie: #3B1A04;
   --rail-alta: #542606;
   --rail-acento: #FBBF24;
-  --panel-papel: #FFFBEB;
+  --panel-papel: light-dark(#FFFBEB, #15130D);
 }
 .panel-layout.perfil-superadmin {
   --rail-superficie: #18002E;
   --rail-alta: #2E0054;
   --rail-acento: #F43F5E;
-  --panel-papel: #FAF5FF;
+  --panel-papel: light-dark(#FAF5FF, #130F17);
 }
 .panel-layout.perfil-admin .cinta-rail,
 .panel-layout.perfil-administrador .cinta-rail { opacity: 0.14; }
@@ -529,7 +583,7 @@ p { line-height: 1.55; }
   scroll-snap-align: none; scroll-snap-stop: normal;
 }
 
-.panel-layout { display: flex; min-height: 100vh; background: var(--panel-papel); color: var(--negro); }
+.panel-layout { display: flex; min-height: 100vh; background: var(--panel-papel); color: var(--ct-111111, var(--negro)); }
 .panel-nav {
   /* 236px es el ancho de las maquetas. position+overflow son para la cinta: el
      SVG se posiciona contra el rail, y si el rail quedara static el trazo
@@ -592,13 +646,13 @@ p { line-height: 1.55; }
   margin-left: auto; flex: none;
   font-size: 0.55rem; font-weight: 800;
   letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
-  color: rgba(255,255,255,0.42); border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.42); border: 1px solid var(--cb-ffffff-a180, rgba(255,255,255,0.18));
   padding: 1px 5px; border-radius: 999px;
 }
 
 .panel-usuario {
   font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px;
-  border-bottom: 1px solid rgba(255,255,255,0.14); padding-bottom: 14px; margin-bottom: 2px;
+  border-bottom: 1px solid var(--cb-ffffff-a140, rgba(255,255,255,0.14)); padding-bottom: 14px; margin-bottom: 2px;
 }
 .nombre-usuario-activo {
   font-weight: 700; color: #FFFFFF; font-size: 0.86rem; line-height: 1.25; word-break: break-word;
@@ -614,7 +668,7 @@ p { line-height: 1.55; }
 .etiqueta-superadmin:hover { opacity: 0.9; transform: translateY(-1px); }
 .etiqueta-rol-activo {
   display: inline-block; background: rgba(255,255,255,0.16); color: #FFFFFF;
-  border: 1px solid rgba(255,255,255,0.22);
+  border: 1px solid var(--cb-ffffff-a220, rgba(255,255,255,0.22));
   font-weight: 700; font-size: 0.68rem; padding: 2px 8px; border-radius: 999px; width: fit-content;
   text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px;
 }
@@ -707,16 +761,16 @@ p { line-height: 1.55; }
    "Tenue" = la acción del perfil diluida sobre blanco, para fondos de icono
    y de selección; nunca un color nuevo. */
 .panel-layout {
-  --panel-tenue: color-mix(in srgb, var(--panel-accion) 9%, var(--blanco));
+  --panel-tenue: color-mix(in srgb, var(--panel-accion) 9%, light-dark(#FFFFFF, #191919));
   --panel-foco: color-mix(in srgb, var(--panel-accion) 24%, transparent);
-  --naranja-tenue: #FFF0E7;
-  --naranja-texto: #B23D00;
+  --naranja-tenue: light-dark(#FFF0E7, #2A1A12);
+  --naranja-texto: light-dark(#B23D00, #FF9A66);
 }
 .lector-oculto {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
-.btn-neutro { background: var(--blanco); border: 1px solid var(--panel-linea); color: var(--negro); }
+.btn-neutro { background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea); color: var(--ct-111111, var(--negro)); }
 .btn-neutro:hover { border-color: var(--panel-gris); }
 .btn-pequeno { padding: 7px 12px; font-size: 0.813rem; display: inline-flex; align-items: center; gap: 7px; }
 .btn-agendar { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
@@ -735,7 +789,7 @@ p { line-height: 1.55; }
   padding: 4px 10px; border-radius: 999px;
 }
 .estado-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.estado-pill.es-ok { background: var(--menta); color: var(--menta-honda); }
+.estado-pill.es-ok { background: var(--cf-b1fbe3, var(--menta)); color: var(--menta-honda); }
 .estado-pill.es-accion { background: var(--panel-tenue); color: var(--panel-accion); }
 .estado-pill.es-neutro { background: var(--panel-linea-suave); color: var(--panel-gris); }
 .estado-pill.es-urgente { background: var(--naranja-tenue); color: var(--naranja-texto); }
@@ -750,7 +804,7 @@ p { line-height: 1.55; }
 @container (max-width: 640px) { .cifras-inicio { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .cifra-tarjeta {
   display: flex; flex-direction: column; gap: 10px; min-height: 148px; padding: 15px;
-  background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea); border-radius: 16px;
   color: inherit; text-decoration: none; transition: border-color 0.2s, transform 0.3s var(--curva-rail);
 }
 a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-2px); }
@@ -777,15 +831,15 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .etapas-caso::after { width: calc(75% * var(--avance, 0)); background: var(--panel-accion); animation: etapas-avanza 1.1s var(--curva-rail) 0.3s both; }
 @keyframes etapas-avanza { from { width: 0; } }
 .etapas-caso li { position: relative; z-index: 1; display: grid; justify-items: center; gap: 7px; text-align: center; font-size: 0.719rem; font-weight: 600; color: var(--panel-gris); }
-.etapa-punto { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--blanco); border: 2px solid var(--panel-linea); color: transparent; }
+.etapa-punto { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--cf-ffffff, var(--blanco)); border: 2px solid var(--panel-linea); color: transparent; }
 .etapas-caso li.es-hecha .etapa-punto { background: var(--panel-accion); border-color: var(--panel-accion); color: var(--blanco); }
-.etapas-caso li.es-actual { color: var(--negro); font-weight: 800; }
+.etapas-caso li.es-actual { color: var(--ct-111111, var(--negro)); font-weight: 800; }
 .etapas-caso li.es-actual .etapa-punto { border-color: var(--panel-accion); transform: scale(1.1); animation: etapa-pulso 2s ease-in-out infinite; }
 .etapas-caso li.es-actual .etapa-punto svg { display: none; }
 .etapas-caso li.es-actual .etapa-punto::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--panel-accion); }
 @keyframes etapa-pulso { 50% { box-shadow: 0 0 0 6px var(--panel-foco); } }
 .caso-siguiente { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; background: var(--panel-tenue); color: var(--panel-accion); }
-.caso-siguiente div { display: grid; line-height: 1.35; color: var(--negro); }
+.caso-siguiente div { display: grid; line-height: 1.35; color: var(--ct-111111, var(--negro)); }
 .caso-siguiente b { font-size: 0.875rem; }
 .caso-siguiente small { font-size: 0.781rem; color: var(--panel-gris); }
 .pestanas-caso { position: relative; display: flex; gap: 2px; padding: 0 12px; border-top: 1px solid var(--panel-linea-suave); border-bottom: 1px solid var(--panel-linea); overflow-x: auto; scrollbar-width: none; }
@@ -793,7 +847,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   display: flex; align-items: center; gap: 6px; padding: 12px 10px; white-space: nowrap;
   background: transparent; border: 0; font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--panel-gris); cursor: pointer;
 }
-.pestanas-caso [role="tab"]:hover, .pestanas-caso [role="tab"][aria-selected="true"] { color: var(--negro); }
+.pestanas-caso [role="tab"]:hover, .pestanas-caso [role="tab"][aria-selected="true"] { color: var(--ct-111111, var(--negro)); }
 .pestanas-caso [role="tab"]:focus-visible { outline: 2px solid var(--panel-accion); outline-offset: -2px; }
 .pestana-cuenta { font-size: 0.656rem; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: var(--panel-tenue); color: var(--panel-accion); }
 .pestanas-linea { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; border-radius: 2px 2px 0 0; background: var(--panel-accion); transition: transform 0.4s var(--curva-rail), width 0.4s var(--curva-rail); }
@@ -878,7 +932,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   border-radius: 14px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .ini-pulgar {
-  position: absolute; top: 4px; bottom: 4px; left: 4px; width: 0; border-radius: 10px; background: var(--blanco);
+  position: absolute; top: 4px; bottom: 4px; left: 4px; width: 0; border-radius: 10px; background: var(--cf-ffffff, var(--blanco));
   box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.4); transition: transform 0.45s var(--curva-entrada), width 0.45s var(--curva-entrada);
 }
 .ini-modalidades button {
@@ -888,7 +942,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .ini-modalidades button[aria-pressed="true"] { color: rgb(var(--tono)); }
 .ini-beneficios { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 9px 20px; }
 .ini-beneficios li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.875rem; color: rgba(255, 255, 255, 0.92); animation: ini-entrar 0.45s var(--curva-entrada) both; animation-delay: calc(var(--k, 0) * 70ms); }
-.ini-ok { flex: none; width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; background: var(--menta); color: var(--menta-honda); display: grid; place-items: center; }
+.ini-ok { flex: none; width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; background: var(--cf-b1fbe3, var(--menta)); color: var(--menta-honda); display: grid; place-items: center; }
 
 .ini-cierre { margin-top: auto; padding-top: 16px; display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; }
 .ini-precio { display: flex; align-items: baseline; gap: 4px; }
@@ -899,7 +953,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .ini-precio-nota { margin: 4px 0 0; font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); }
 .ini-btn-contratar {
   position: relative; overflow: hidden; height: 52px; padding: 0 26px; border: 0; border-radius: 12px; cursor: pointer;
-  background: var(--blanco); color: var(--violeta); font: inherit; font-size: 0.938rem; font-weight: 700;
+  background: var(--cf-ffffff, var(--blanco)); color: var(--ct-5000ba, var(--violeta)); font: inherit; font-size: 0.938rem; font-weight: 700;
   box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.6); transition: transform 0.2s var(--curva-entrada);
 }
 .ini-btn-contratar:hover { transform: translateY(-1px); }
@@ -913,11 +967,11 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 
 .ini-chip-rec {
   position: absolute; top: 18px; right: 18px; z-index: 3; padding: 5px 10px; border-radius: 999px;
-  background: var(--menta); color: var(--menta-honda); font-size: 0.688rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--cf-b1fbe3, var(--menta)); color: var(--menta-honda); font-size: 0.688rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
 }
 .ini-poliza {
   position: absolute; right: 22px; bottom: 76px; z-index: 3; width: 230px; padding: 12px 14px; border-radius: 14px;
-  background: rgba(30, 0, 70, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  background: rgba(30, 0, 70, 0.5); border: 1px solid var(--cb-ffffff-a200, rgba(255, 255, 255, 0.2)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   display: flex; align-items: center; justify-content: space-between; gap: 10px; animation: ini-flotar 5s ease-in-out infinite;
 }
 @keyframes ini-flotar { 50% { transform: translateY(-5px); } }
@@ -926,7 +980,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .ini-miembros { display: flex; }
 .ini-miembros span {
   width: 30px; height: 30px; margin-left: -8px; border-radius: 50%; display: grid; place-items: center;
-  color: var(--violeta-tinta); background: var(--menta); border: 2.5px solid #3A1466;
+  color: var(--violeta-tinta); background: var(--cf-b1fbe3, var(--menta)); border: 2.5px solid #3A1466;
   animation: ini-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(var(--k, 0) * 90ms);
 }
 .ini-miembros span:first-child { margin-left: 0; }
@@ -943,23 +997,23 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   background: rgba(255, 255, 255, 0.28); transition: width 0.45s var(--curva-entrada);
 }
 .ini-indicadores button[aria-selected="true"] { width: 64px; }
-.ini-relleno { position: absolute; inset: 0; width: 0; border-radius: inherit; background: var(--menta); }
+.ini-relleno { position: absolute; inset: 0; width: 0; border-radius: inherit; background: var(--cf-b1fbe3, var(--menta)); }
 .ini-indicadores button[aria-selected="true"] .ini-relleno { animation: ini-llenar var(--dur, 7s) linear forwards; }
-.ini-indicadores button.es-visto .ini-relleno { width: 100%; background: rgba(255, 255, 255, 0.7); }
+.ini-indicadores button.es-visto .ini-relleno { width: 100%; background: var(--cf-ffffff-a700, rgba(255, 255, 255, 0.7)); }
 .ini-carrusel.es-pausado .ini-relleno { animation-play-state: paused; }
 @keyframes ini-llenar { to { width: 100%; } }
 .ini-contador { font-size: 0.75rem; font-weight: 700; color: rgba(255, 255, 255, 0.7); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ini-flechas { margin-left: auto; display: flex; gap: 8px; }
 .ini-flechas button {
   width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.28); color: var(--blanco); background: rgba(30, 0, 70, 0.35);
+  border: 1px solid var(--cb-ffffff-a280, rgba(255, 255, 255, 0.28)); color: var(--blanco); background: rgba(30, 0, 70, 0.35);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   transition: background 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .ini-flechas button:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.08); }
 
 /* Trámites y servicios: tarjetas con foto */
-.ini-catalogo { padding: 20px 22px 22px; border-radius: 18px; background: var(--blanco); border: 1px solid var(--panel-linea); }
+.ini-catalogo { padding: 20px 22px 22px; border-radius: 18px; background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea); }
 .ini-catalogo > header { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
 .ini-catalogo h2 { margin: 0; font-size: 1.125rem; font-weight: 800; }
 .ini-catalogo header p { margin: 2px 0 0; font-size: 0.813rem; color: var(--panel-gris); }
@@ -969,22 +1023,22 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   position: relative; z-index: 1; padding: 7px 13px; border: 0; border-radius: 9px; background: none; cursor: pointer;
   font: inherit; font-size: 0.813rem; font-weight: 700; color: var(--panel-gris); white-space: nowrap; transition: color 0.2s;
 }
-.ini-filtros button[aria-pressed="true"] { color: var(--violeta); }
+.ini-filtros button[aria-pressed="true"] { color: var(--ct-5000ba, var(--violeta)); }
 .ini-tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 16px; }
 .ini-producto {
-  display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; background: var(--blanco); border: 1px solid var(--panel-linea);
+  display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
   transition: transform 0.35s var(--curva-entrada), box-shadow 0.35s var(--curva-entrada), border-color 0.25s;
   animation: ini-entrar 0.5s var(--curva-entrada) both; animation-delay: calc(0.1s + var(--n, 0) * 60ms);
 }
-.ini-producto:hover { transform: translateY(-4px); box-shadow: 0 22px 40px -24px rgba(30, 0, 70, 0.45); border-color: #D9CFF5; }
-.ini-imagen { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #EDE7FA; }
+.ini-producto:hover { transform: translateY(-4px); box-shadow: 0 22px 40px -24px rgba(30, 0, 70, 0.45); border-color: var(--cb-d9cff5, #D9CFF5); }
+.ini-imagen { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--cf-ede7fa, #EDE7FA); }
 .ini-imagen img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--curva-entrada); }
 .ini-producto:hover .ini-imagen img { transform: scale(1.06); }
 .ini-imagen::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(20, 16, 25, 0.45)); }
-.ini-sin-foto { position: absolute; inset: 0; display: grid; place-items: center; color: var(--violeta); background: linear-gradient(135deg, #F3EEFF, #E4DBFA); }
+.ini-sin-foto { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ct-5000ba, var(--violeta)); background: linear-gradient(135deg, var(--cf-f3eeff, #F3EEFF), var(--cf-e4dbfa, #E4DBFA)); }
 .ini-tipo {
   position: absolute; top: 10px; left: 10px; z-index: 1; padding: 4px 8px; border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92); color: var(--violeta); font-size: 0.625rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--cf-ffffff-a920, rgba(255, 255, 255, 0.92)); color: var(--ct-5000ba, var(--violeta)); font-size: 0.625rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
 }
 .ini-precio-foto {
   position: absolute; left: 12px; bottom: 10px; z-index: 1; color: var(--blanco); font-size: 1.188rem; font-weight: 800;
@@ -997,8 +1051,8 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .ini-meta { display: flex; gap: 6px; align-items: center; margin-top: 2px; font-size: 0.75rem; color: var(--panel-gris); }
 .ini-pie { margin-top: auto; padding-top: 10px; }
 .ini-btn-linea {
-  width: 100%; height: 40px; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--panel-linea); background: var(--blanco);
-  color: var(--violeta); font: inherit; font-size: 0.813rem; font-weight: 700; transition: border-color 0.2s, background 0.2s, color 0.2s;
+  width: 100%; height: 40px; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--panel-linea); background: var(--cf-ffffff, var(--blanco));
+  color: var(--ct-5000ba, var(--violeta)); font: inherit; font-size: 0.813rem; font-weight: 700; transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
 .ini-producto:hover .ini-btn-linea { border-color: var(--violeta); }
 .ini-btn-linea:hover { background: var(--violeta); color: var(--blanco); }
@@ -1007,10 +1061,10 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .ini-opciones { display: grid; gap: 8px; }
 .ini-opcion {
   display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; cursor: pointer;
-  border: 1.5px solid var(--panel-linea); background: var(--blanco); font: inherit; font-size: 0.875rem; text-align: left; transition: border-color 0.2s, background 0.2s;
+  border: 1.5px solid var(--panel-linea); background: var(--cf-ffffff, var(--blanco)); font: inherit; font-size: 0.875rem; text-align: left; transition: border-color 0.2s, background 0.2s;
 }
-.ini-opcion:hover { border-color: var(--violeta); background: #FBFAFE; }
-.ini-opcion b { color: var(--violeta); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ini-opcion:hover { border-color: var(--violeta); background: var(--cf-fbfafe, #FBFAFE); }
+.ini-opcion b { color: var(--ct-5000ba, var(--violeta)); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ini-nota-iva { margin: 0; font-size: 0.75rem; color: var(--panel-gris); }
 
 /* En una columna estrecha: la foto arriba y el degradado sube desde abajo. */
@@ -1038,20 +1092,20 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 /* Aviso legal discreto: sustituye a la banda de campañas informativas. */
 .aviso-legal {
   display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 10px 10px 10px 16px; border-radius: 12px;
-  background: var(--blanco); border: 1px solid var(--panel-linea); border-left: 4px solid var(--lavanda);
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea); border-left: 4px solid var(--lavanda);
   font-size: 0.875rem; color: var(--panel-gris); animation: ini-bajar 0.5s var(--curva-entrada) both;
 }
 @keyframes ini-bajar { from { opacity: 0; transform: translateY(-8px); } }
 .aviso-legal-etiqueta {
-  flex: none; padding: 3px 9px; border-radius: 999px; background: #F3EEFF; color: var(--violeta);
+  flex: none; padding: 3px 9px; border-radius: 999px; background: var(--cf-f3eeff, #F3EEFF); color: var(--ct-5000ba, var(--violeta));
   font-size: 0.688rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
 }
 .aviso-legal-texto { flex: 1; min-width: 0; margin: 0; animation: ini-entrar 0.4s var(--curva-entrada) both; }
-.aviso-legal-texto b { color: var(--negro); }
-.aviso-legal-enlace { flex: none; font-weight: 700; color: var(--violeta); text-decoration: none; white-space: nowrap; }
+.aviso-legal-texto b { color: var(--ct-111111, var(--negro)); }
+.aviso-legal-enlace { flex: none; font-weight: 700; color: var(--ct-5000ba, var(--violeta)); text-decoration: none; white-space: nowrap; }
 .aviso-legal-enlace:hover { text-decoration: underline; }
 .aviso-legal-boton { flex: none; width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: var(--panel-gris); display: grid; place-items: center; cursor: pointer; }
-.aviso-legal-boton:hover { background: var(--panel-linea-suave); color: var(--negro); }
+.aviso-legal-boton:hover { background: var(--panel-linea-suave); color: var(--ct-111111, var(--negro)); }
 @media (max-width: 760px) {
   .aviso-legal { flex-wrap: wrap; }
   .aviso-legal-texto { order: 3; flex-basis: 100%; }
@@ -1067,14 +1121,14 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 /* 7A · confirmación de compra (<dialog> nativo) */
 .dialogo-compra {
   margin: auto; padding: 0; border: 0; border-radius: 20px; width: min(440px, calc(100% - 32px));
-  background: var(--blanco); color: var(--negro); box-shadow: 0 40px 90px -30px rgba(20,16,25,0.55);
+  background: var(--cf-ffffff, var(--blanco)); color: var(--ct-111111, var(--negro)); box-shadow: 0 40px 90px -30px rgba(20,16,25,0.55);
 }
 .dialogo-compra::backdrop { background: rgba(20, 16, 25, 0.45); backdrop-filter: blur(3px); }
 .dialogo-compra[open] { animation: dialogo-entra 0.4s var(--curva-rail); }
 @keyframes dialogo-entra { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
 .dialogo-compra-cuerpo { position: relative; display: grid; gap: 16px; padding: 26px 24px 22px; }
 .dialogo-cerrar { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--panel-gris); cursor: pointer; }
-.dialogo-cerrar:hover { background: var(--panel-linea-suave); color: var(--negro); }
+.dialogo-cerrar:hover { background: var(--panel-linea-suave); color: var(--ct-111111, var(--negro)); }
 .dialogo-icono { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; background: var(--panel-tenue); color: var(--panel-accion); }
 .dialogo-compra h2 { font-size: 1.25rem; font-weight: 800; }
 .dialogo-sub { margin-top: -10px; font-size: 0.906rem; color: var(--panel-gris); }
@@ -1083,10 +1137,10 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .desglose-compra dt { color: var(--panel-gris); }
 .desglose-compra dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
 .desglose-compra .es-total { margin-top: 2px; padding-top: 8px; border-top: 1px dashed var(--panel-linea); }
-.desglose-compra .es-total dt { color: var(--negro); font-weight: 700; }
+.desglose-compra .es-total dt { color: var(--ct-111111, var(--negro)); font-weight: 700; }
 .desglose-compra .es-total dd { font-size: 1.125rem; font-weight: 800; }
 .forma-pago { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid var(--panel-accion); border-radius: 12px; background: var(--panel-tenue); color: var(--panel-accion); }
-.forma-pago div { display: grid; line-height: 1.35; color: var(--negro); }
+.forma-pago div { display: grid; line-height: 1.35; color: var(--ct-111111, var(--negro)); }
 .forma-pago b { font-size: 0.875rem; }
 .forma-pago small { font-size: 0.75rem; color: var(--panel-gris); }
 .dialogo-acciones { display: flex; gap: 10px; }
@@ -1123,7 +1177,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .carpeta-fondo::before { content: ""; position: absolute; bottom: calc(100% - 1px); left: 0; width: 48px; height: 12px; border-radius: 8px 8px 0 0; background: inherit; }
 .carpeta-papel {
   position: absolute; left: 15%; bottom: 10%; width: 70%; height: 72%; display: grid; place-items: center;
-  border-radius: 8px; background: var(--blanco); color: var(--panel-accion); box-shadow: 0 2px 8px rgba(20,16,25,0.18);
+  border-radius: 8px; background: var(--cf-ffffff, var(--blanco)); color: var(--panel-accion); box-shadow: 0 2px 8px rgba(20,16,25,0.18);
   translate: var(--papel-x) var(--papel-y); transition: transform 0.5s var(--curva-rail), translate 0.2s ease-out;
 }
 .carpeta-frente { position: absolute; bottom: 0; width: 50%; height: 84%; background: var(--panel-accion); transform-origin: bottom; transition: transform 0.5s var(--curva-rail); }
@@ -1148,15 +1202,15 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 @keyframes aviso-sale { to { opacity: 0; transform: translateX(-24px); } }
 .aviso-panel-icono { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--rail-acento); color: var(--rail-superficie); }
 .aviso-panel.es-info .aviso-panel-icono { background: rgba(255,255,255,0.14); color: var(--blanco); }
-.aviso-panel.es-urgente { background: var(--blanco); color: var(--negro); border: 1px solid var(--panel-linea); border-left: 4px solid var(--naranja); }
-.aviso-panel.es-urgente .aviso-panel-icono { background: var(--naranja-tenue); color: var(--naranja); }
+.aviso-panel.es-urgente { background: var(--cf-ffffff, var(--blanco)); color: var(--ct-111111, var(--negro)); border: 1px solid var(--panel-linea); border-left: 4px solid var(--naranja); }
+.aviso-panel.es-urgente .aviso-panel-icono { background: var(--naranja-tenue); color: var(--ct-fe5800, var(--naranja)); }
 .aviso-panel-texto { flex: 1; min-width: 0; }
 .aviso-panel-texto b { display: block; font-size: 0.875rem; }
 .aviso-panel-texto p { margin-top: 1px; font-size: 0.813rem; opacity: 0.8; }
 .aviso-panel-cerrar { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: inherit; opacity: 0.6; cursor: pointer; }
 .aviso-panel-cerrar:hover { opacity: 1; background: rgba(127,127,127,0.15); }
 .aviso-panel-tiempo { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--rail-acento); transform-origin: left; animation: aviso-tiempo 5s linear forwards; }
-.aviso-panel.es-info .aviso-panel-tiempo { background: rgba(255,255,255,0.5); }
+.aviso-panel.es-info .aviso-panel-tiempo { background: var(--cf-ffffff-a500, rgba(255,255,255,0.5)); }
 /* Pausa también con el foco: quien llega por teclado al botón de cerrar
    está leyendo el aviso, no debe desaparecer mientras tanto. */
 .aviso-panel:hover .aviso-panel-tiempo,
@@ -1170,7 +1224,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   display: flex; align-items: center; gap: 9px; padding: 3px 8px 3px 3px; border: 1px solid transparent; border-radius: 999px;
   background: transparent; font: inherit; color: inherit; cursor: pointer; text-align: left; transition: background 0.2s, border-color 0.2s;
 }
-.menu-cuenta-boton:hover, .menu-cuenta-boton[aria-expanded="true"] { background: var(--blanco); border-color: var(--panel-linea); }
+.menu-cuenta-boton:hover, .menu-cuenta-boton[aria-expanded="true"] { background: var(--cf-ffffff, var(--blanco)); border-color: var(--panel-linea); }
 .menu-cuenta-foto { width: 34px; height: 34px; flex: none; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: var(--panel-accion); color: var(--blanco); font-size: 0.813rem; font-weight: 700; }
 .menu-cuenta-foto img { width: 100%; height: 100%; object-fit: cover; }
 .menu-cuenta-txt { display: grid; line-height: 1.25; }
@@ -1180,7 +1234,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .menu-cuenta-boton[aria-expanded="true"] .menu-cuenta-flecha { transform: rotate(180deg); }
 .menu-cuenta-lista {
   position: absolute; z-index: 1060; right: 0; top: calc(100% + 8px); width: 260px; padding: 6px;
-  background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 14px;
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea); border-radius: 14px;
   box-shadow: 0 24px 48px -20px rgba(20,16,25,0.35), 0 2px 6px rgba(20,16,25,0.05);
   transform-origin: top right; opacity: 0; visibility: hidden; transform: scale(0.96) translateY(-4px);
   transition: opacity 0.18s, transform 0.25s var(--curva-rail), visibility 0s linear 0.25s;
@@ -1193,7 +1247,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .menu-cuenta-etiqueta { display: block; padding: 6px 10px 2px; font-size: 0.625rem; font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; color: var(--panel-gris); }
 .menu-cuenta-item {
   width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 0; border-radius: 8px;
-  background: transparent; font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--negro); text-align: left; text-decoration: none; cursor: pointer;
+  background: transparent; font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--ct-111111, var(--negro)); text-align: left; text-decoration: none; cursor: pointer;
 }
 .menu-cuenta-item svg { flex: none; color: var(--panel-gris); }
 .menu-cuenta-item:hover, .menu-cuenta-item:focus { outline: none; background: var(--panel-tenue); color: var(--panel-accion); }
@@ -1222,7 +1276,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .paso-agenda.es-hecho button, .paso-agenda.es-actual button { background: var(--panel-accion); color: var(--blanco); }
 .paso-agenda.es-actual button { box-shadow: 0 0 0 4px var(--panel-foco); }
 .paso-agenda-nombre { font-size: 0.75rem; font-weight: 600; color: var(--panel-gris); }
-.paso-agenda.es-actual .paso-agenda-nombre { color: var(--negro); font-weight: 800; }
+.paso-agenda.es-actual .paso-agenda-nombre { color: var(--ct-111111, var(--negro)); font-weight: 800; }
 .paso-agenda-cuerpo { display: grid; gap: 14px; }
 .paso-agenda-cuerpo h2 { font-size: 1.125rem; font-weight: 800; }
 .paso-agenda-cuerpo h2:focus { outline: none; }
@@ -1237,19 +1291,19 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .opcion-tarjeta input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .opcion-tarjeta-cuerpo {
   position: relative; display: grid; gap: 2px; height: 100%; padding: 13px 38px 13px 14px;
-  border: 1.5px solid var(--panel-linea); border-radius: 12px; background: var(--blanco); transition: border-color 0.2s, background 0.2s;
+  border: 1.5px solid var(--panel-linea); border-radius: 12px; background: var(--cf-ffffff, var(--blanco)); transition: border-color 0.2s, background 0.2s;
 }
 .opcion-tarjeta-cuerpo svg { color: var(--panel-gris); margin-bottom: 4px; }
 .opcion-tarjeta-cuerpo b { font-size: 0.875rem; }
 .opcion-tarjeta-cuerpo small { font-size: 0.75rem; color: var(--panel-gris); }
 .opcion-tarjeta-cuerpo::after {
   content: ""; position: absolute; top: 12px; right: 12px; width: 16px; height: 16px; border-radius: 50%;
-  border: 1.5px solid var(--panel-gris); background: var(--blanco); transition: border-color 0.2s, box-shadow 0.2s;
+  border: 1.5px solid var(--panel-gris); background: var(--cf-ffffff, var(--blanco)); transition: border-color 0.2s, box-shadow 0.2s;
 }
 .opcion-tarjeta:hover .opcion-tarjeta-cuerpo { border-color: var(--panel-gris); }
 .opcion-tarjeta input:checked + .opcion-tarjeta-cuerpo { border-color: var(--panel-accion); background: var(--panel-tenue); }
 .opcion-tarjeta input:checked + .opcion-tarjeta-cuerpo svg { color: var(--panel-accion); }
-.opcion-tarjeta input:checked + .opcion-tarjeta-cuerpo::after { border-color: var(--panel-accion); box-shadow: inset 0 0 0 3.5px var(--blanco), inset 0 0 0 8px var(--panel-accion); }
+.opcion-tarjeta input:checked + .opcion-tarjeta-cuerpo::after { border-color: var(--panel-accion); box-shadow: inset 0 0 0 3.5px var(--cb-ffffff, var(--blanco)), inset 0 0 0 8px var(--panel-accion); }
 .opcion-tarjeta input:focus-visible + .opcion-tarjeta-cuerpo { outline: 2px solid var(--panel-accion); outline-offset: 2px; }
 .resumen-agenda { margin: 12px 0 0; border: 1px solid var(--panel-linea-suave); border-radius: 12px; overflow: hidden; }
 .resumen-agenda div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; font-size: 0.875rem; }
@@ -1322,11 +1376,11 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   display: inline-flex; align-items: center; gap: 6px; flex: none;
   font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer;
   padding: 8px 14px 8px 10px; border-radius: 8px;
-  background: var(--blanco); color: var(--negro);
+  background: var(--cf-ffffff, var(--blanco)); color: var(--ct-111111, var(--negro));
   border: 1px solid var(--panel-linea, #E4E4E4);
   transition: background 0.15s, border-color 0.15s;
 }
-.boton-volver-widget:hover { background: var(--panel-linea-suave, #FAFAF9); border-color: var(--negro); }
+.boton-volver-widget:hover { background: var(--panel-linea-suave, #FAFAF9); border-color: var(--cb-111111, var(--negro)); }
 
 /* Fila de acciones: en fila mientras quepan, apiladas cuando no. El apilado
    real va en el bloque @media del final del archivo (§10 del sistema visual). */
@@ -1349,13 +1403,13 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
    duplicar la regla (§4, regla 2 del sistema visual). */
 .accion-menor.es-principal { background: var(--panel-accion, var(--violeta)); color: var(--blanco); }
 .accion-menor.es-discreta {
-  background: var(--blanco); color: var(--negro); border-color: var(--panel-linea);
+  background: var(--cf-ffffff, var(--blanco)); color: var(--ct-111111, var(--negro)); border-color: var(--panel-linea);
 }
 .accion-menor.es-discreta:hover { background: var(--panel-linea-suave); }
 /* Destructiva: texto, no relleno. Un botón rojo pleno junto a uno de acción
    convierte la fila en un semáforo y ninguna de las dos gana (§3, regla 1). */
-.accion-menor.es-peligro { background: transparent; color: #B00020; }
-.accion-menor.es-peligro:hover { background: #FEF2F2; }
+.accion-menor.es-peligro { background: transparent; color: var(--ct-b00020, #B00020); }
+.accion-menor.es-peligro:hover { background: var(--cf-fef2f2, #FEF2F2); }
 
 /* Texto que se esconde cuando no cabe, dejando solo el icono del botón. El
    `title` del botón sigue diciendo qué hace. */
@@ -1368,7 +1422,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 
 /* tarjeta: el contenedor por defecto del panel */
 .tarjeta-panel {
-  background: var(--blanco); border: 1px solid var(--panel-linea);
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
   border-radius: 16px; padding: 20px; max-width: 640px;
 }
 
@@ -1415,7 +1469,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 }
 .btn-mini:hover { background: #33007A; }
 .btn-mini:disabled { opacity: 0.5; cursor: wait; }
-.mensaje-fila { font-size: 0.78rem; color: var(--esmeralda); margin-left: 6px; }
+.mensaje-fila { font-size: 0.78rem; color: var(--ct-0e6648, var(--esmeralda)); margin-left: 6px; }
 
 /* Envoltura con scroll horizontal -- una tabla con varias columnas no cabe
    en un telefono, mismo problema que resuelve .tabla-envoltura en las
@@ -1423,7 +1477,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
    se desplaza. */
 .tabla-panel-envoltura { overflow-x: auto; border-radius: 16px; border: 1px solid var(--panel-linea); }
 .tabla-panel {
-  width: 100%; min-width: 480px; border-collapse: collapse; background: var(--blanco);
+  width: 100%; min-width: 480px; border-collapse: collapse; background: var(--cf-ffffff, var(--blanco));
 }
 .tabla-panel-envoltura .tabla-panel { border: none; border-radius: 0; }
 .tabla-panel th, .tabla-panel td {
@@ -1432,13 +1486,13 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 }
 .tabla-panel tr:last-child td { border-bottom: 0; }
 .tabla-panel th {
-  background: #FAFAF9; font-weight: 800; font-size: 0.7rem;
+  background: var(--cf-fafaf9, #FAFAF9); font-weight: 800; font-size: 0.7rem;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--panel-gris);
   border-bottom: 1px solid var(--panel-linea);
 }
 .tabla-panel td { font-variant-numeric: tabular-nums; }
 .tabla-panel tbody tr { transition: background 0.1s; }
-.tabla-panel tbody tr:hover { background: #FAFAF9; }
+.tabla-panel tbody tr:hover { background: var(--cf-fafaf9, #FAFAF9); }
 .tabla-panel select { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--panel-linea); font-family: inherit; }
 
 /* Estado vacío: reemplaza el <p> suelto ("todavía no hay...") en listas
@@ -1446,7 +1500,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
    resto del panel (sin ilustración, sin color de marca fuera de lugar). */
 .estado-vacio {
   display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
-  padding: 28px 20px; background: var(--blanco); border: 1px dashed var(--panel-linea);
+  padding: 28px 20px; background: var(--cf-ffffff, var(--blanco)); border: 1px dashed var(--panel-linea);
   border-radius: 16px; color: var(--panel-gris); max-width: 480px;
 }
 .estado-vacio svg { width: 22px; height: 22px; color: var(--panel-gris); }
@@ -1477,7 +1531,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   width: 16px; height: 16px; color: var(--panel-gris);
 }
 .buscador-cliente input {
-  width: 100%; background: var(--blanco); border: 1px solid var(--panel-linea);
+  width: 100%; background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
   border-radius: 8px; padding: 9px 12px 9px 36px; font-size: 0.875rem;
   font-family: inherit; outline: none;
 }
@@ -1503,7 +1557,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   letter-spacing: -0.02em; line-height: 1.2;
 }
 /* "Estás tranqi" es la línea de marca del saludo (§ maqueta .saludo h1 i) */
-.inicio-cliente h1 i { font-style: normal; color: var(--violeta); }
+.inicio-cliente h1 i { font-style: normal; color: var(--ct-5000ba, var(--violeta)); }
 
 .tarjeta-proteccion {
   background: var(--violeta); color: var(--blanco);
@@ -1537,7 +1591,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   display: inline-flex; align-items: center; gap: 7px;
   font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em;
   padding: 6px 12px; border-radius: 999px; text-transform: uppercase;
-  background: var(--menta); color: var(--menta-honda); white-space: nowrap;
+  background: var(--cf-b1fbe3, var(--menta)); color: var(--menta-honda); white-space: nowrap;
 }
 .pildora-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 /* "sin activar" no es un estado positivo: la menta se reserva a lo que va
@@ -1546,7 +1600,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 
 /* ── Tarjeta de sección: cabecera + cuerpo ───────────────────────── */
 .tarjeta-seccion {
-  background: var(--blanco); border: 1px solid var(--panel-linea);
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
   border-radius: 16px; overflow: hidden;
 }
 .tarjeta-seccion > header {
@@ -1562,7 +1616,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .vacio-seccion {
   padding: 30px 20px; display: grid; gap: 5px; justify-items: center; text-align: center;
 }
-.vacio-seccion b { font-size: 0.938rem; font-weight: 600; color: var(--negro); }
+.vacio-seccion b { font-size: 0.938rem; font-weight: 600; color: var(--ct-111111, var(--negro)); }
 .vacio-seccion span { font-size: 0.844rem; color: var(--panel-gris); max-width: 36ch; line-height: 1.45; }
 
 /* ── Rejilla del inicio de cliente ───────────────────────────────────
@@ -1587,7 +1641,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   gap: 14px;
 }
 .tarjeta-acceso {
-  background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea); border-radius: 16px;
   padding: 18px; display: flex; flex-direction: column; gap: 4px;
   transition: border-color 0.15s, transform 0.15s;
   /* casi todas son <Link>: lo de anular subrayado y color venía repetido inline
@@ -1601,14 +1655,14 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .tarjeta-acceso:hover { border-color: var(--violeta); transform: translateY(-2px); }
 .tarjeta-acceso-icono {
   width: 34px; height: 34px; padding: 7px; box-sizing: border-box; margin-bottom: 8px;
-  border-radius: 9px; background: var(--panel-linea-suave); color: var(--violeta);
+  border-radius: 9px; background: var(--panel-linea-suave); color: var(--ct-5000ba, var(--violeta));
   transition: background 0.15s, color 0.15s;
 }
 /* menta con tinta honda encima, no esmeralda: la esmeralda es la identidad del
    lado abogado (§2) y en una tarjeta de cliente contradice la regla 2 -- el
    acento tiene que decirte en qué perfil estás. Además la menta no es fondo de
    texto oscuro pequeño (§8), y --menta-honda es su par legible. */
-.tarjeta-acceso:hover .tarjeta-acceso-icono { background: var(--menta); color: var(--menta-honda); }
+.tarjeta-acceso:hover .tarjeta-acceso-icono { background: var(--cf-b1fbe3, var(--menta)); color: var(--menta-honda); }
 .tarjeta-acceso strong { font-size: 0.95rem; line-height: 1.25; }
 .tarjeta-acceso p { font-size: 0.8rem; color: var(--panel-gris); line-height: 1.4; margin: 4px 0 0; }
 
@@ -1625,9 +1679,9 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 /* Peligro: la tinta la lleva el título, no el icono ni el borde. Una tarjeta
    entera en rojo entre cinco neutras grita antes de que la leas. */
-.tarjeta-acceso.es-peligro strong { color: #B00020; }
+.tarjeta-acceso.es-peligro strong { color: var(--ct-b00020, #B00020); }
 .tarjeta-acceso.es-peligro:hover { border-color: #B00020; }
-.tarjeta-acceso.es-peligro:hover .tarjeta-acceso-icono { background: #FEF2F2; color: #B00020; }
+.tarjeta-acceso.es-peligro:hover .tarjeta-acceso-icono { background: var(--cf-fef2f2, #FEF2F2); color: var(--ct-b00020, #B00020); }
 
 .tarjeta-acceso-cabeza { min-width: 0; margin-top: 6px; display: grid; gap: 4px; }
 .fila-chips { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
@@ -1647,7 +1701,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   align-self: flex-end; margin-top: auto; padding-top: 10px;
   color: var(--panel-gris); transition: color 0.15s, transform 0.15s;
 }
-.tarjeta-acceso:hover .flecha-acceso { color: var(--violeta); transform: translateX(2px); }
+.tarjeta-acceso:hover .flecha-acceso { color: var(--ct-5000ba, var(--violeta)); transform: translateX(2px); }
 .chip-proximamente {
   align-self: flex-start; margin-top: 8px;
   font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
@@ -1662,7 +1716,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
    La menta no es fondo de texto oscuro pequeño (§8), así que el título lleva
    --menta-honda y el cuerpo una tinta aún más honda. */
 .bloque-ayuda {
-  background: var(--menta); border: 1px solid #9AF0D4; border-radius: 16px;
+  background: var(--cf-b1fbe3, var(--menta)); border: 1px solid var(--cb-9af0d4, #9AF0D4); border-radius: 16px;
   padding: 20px; display: grid; gap: 12px;
 }
 .bloque-ayuda-cabeza { display: flex; align-items: center; gap: 11px; }
@@ -1670,15 +1724,15 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .bloque-ayuda-ojitos {
   width: 38px; height: 38px; flex: none; background: var(--lavanda);
   border-radius: 47% 53% 50% 50% / 55% 55% 45% 45%;
-  position: relative; box-shadow: 0 0 0 2px var(--blanco);
+  position: relative; box-shadow: 0 0 0 2px var(--cb-ffffff, var(--blanco));
 }
 .bloque-ayuda-ojitos::before {
   content: ""; position: absolute; left: 12px; top: 13px;
   width: 5px; height: 10px; background: var(--negro); border-radius: 3px;
-  box-shadow: 9px 0 0 var(--negro);
+  box-shadow: 9px 0 0 var(--cb-111111, var(--negro));
 }
-.bloque-ayuda strong { font-size: 0.938rem; font-weight: 700; color: var(--menta-honda); }
-.bloque-ayuda p { font-size: 0.875rem; color: #05594A; line-height: 1.45; }
+.bloque-ayuda strong { font-size: 0.938rem; font-weight: 700; color: var(--ct-056b57, var(--menta-honda)); }
+.bloque-ayuda p { font-size: 0.875rem; color: var(--ct-05594a, #05594A); line-height: 1.45; }
 .bloque-ayuda .chip-proximamente {
   background: rgba(5,107,87,0.12); color: var(--menta-honda); margin-top: 0;
 }
@@ -1690,7 +1744,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   font-size: 0.75rem; color: var(--panel-gris);
 }
 .pie-panel a { color: var(--panel-gris); text-decoration: none; }
-.pie-panel a:hover { color: var(--violeta); text-decoration: underline; }
+.pie-panel a:hover { color: var(--ct-5000ba, var(--violeta)); text-decoration: underline; }
 
 /* ═══════════ Socios (TRQ-001: solicitud de registro de socio abogado) ═══════════ */
 .form-solicitud-socio { max-width: 640px; }
@@ -1712,13 +1766,13 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .tarjeta-estado-solicitud {
   display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
-  padding: 14px 18px; background: var(--blanco); border-radius: 12px; border: 1px solid var(--panel-linea);
+  padding: 14px 18px; background: var(--cf-ffffff, var(--blanco)); border-radius: 12px; border: 1px solid var(--panel-linea);
 }
 .chip-estado-solicitud {
   font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
   padding: 4px 10px; border-radius: 999px; width: fit-content;
 }
-.chip-enviada, .chip-en_revision { background: #FEF3C7; color: #92400E; }
+.chip-enviada, .chip-en_revision { background: var(--cf-fef3c7, #FEF3C7); color: var(--ct-92400e, #92400E); }
 .chip-aceptada { background: rgba(14,102,72,0.12); color: var(--esmeralda); }
 .chip-rechazada { background: rgba(176,0,32,0.08); color: var(--peligro, #B00020); }
 
@@ -1737,7 +1791,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .form-solicitud-socio input[type="file"] {
   padding: 9px 10px; border-radius: 8px; border: 1.5px solid var(--panel-linea);
-  font-family: inherit; font-size: 0.85rem; background: var(--blanco);
+  font-family: inherit; font-size: 0.85rem; background: var(--cf-ffffff, var(--blanco));
 }
 
 .subir-documento-revision { max-width: 420px; margin-top: 16px; gap: 10px; }
@@ -1754,7 +1808,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
    fino que usan las maquetas de referencia. */
 .linea-verificacion { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .icono-verificado, .icono-no-verificado { width: 17px; height: 17px; flex: none; }
-.icono-verificado { color: var(--esmeralda); }
+.icono-verificado { color: var(--ct-0e6648, var(--esmeralda)); }
 .icono-no-verificado { color: var(--panel-gris); }
 .icono-enlace-externo { display: inline; width: 13px; height: 13px; vertical-align: -1px; margin-left: 1px; }
 
@@ -1787,11 +1841,11 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 .datagrid-chip-agrupado button { background: none; border: none; color: inherit; cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 2px; }
 .datagrid-envoltura { overflow-x: auto; border-radius: 16px; border: 1px solid var(--panel-linea); }
-.datagrid-tabla { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--blanco); }
+.datagrid-tabla { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--cf-ffffff, var(--blanco)); }
 .datagrid-tabla td { padding: 13px 16px; font-size: 0.88rem; border-bottom: 1px solid var(--panel-linea-suave); font-variant-numeric: tabular-nums; }
-.datagrid-tabla tbody tr:hover { background: #FAFAF9; }
+.datagrid-tabla tbody tr:hover { background: var(--cf-fafaf9, #FAFAF9); }
 .datagrid-th {
-  background: #FAFAF9; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--cf-fafaf9, #FAFAF9); font-weight: 800; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--panel-gris); border-bottom: 1px solid var(--panel-linea); padding: 0; white-space: nowrap;
 }
 .datagrid-th-arrastrar {
@@ -1813,7 +1867,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .datagrid-th-agrupar-activa { opacity: 1; background: rgba(80,0,186,0.08); color: var(--violeta); border-color: rgba(80,0,186,0.2); }
 .datagrid-th-expandir, .datagrid-td-expandir { width: 32px; }
 .datagrid-boton-expandir, .datagrid-toggle-grupo { background: none; border: none; cursor: pointer; color: var(--panel-gris); font: inherit; }
-.datagrid-toggle-grupo { font-weight: 700; color: var(--negro); padding: 10px 16px; }
+.datagrid-toggle-grupo { font-weight: 700; color: var(--ct-111111, var(--negro)); padding: 10px 16px; }
 .datagrid-fila-grupo { background: var(--panel-linea-suave); }
 .datagrid-fila-detalle td { padding: 4px 16px 16px 44px; border-top: 1px solid var(--panel-linea-suave); }
 .id-registro {
@@ -1825,7 +1879,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   padding: 4px 10px; border-radius: 999px; width: fit-content;
 }
 .chip-operacion-INSERT { background: rgba(14,102,72,0.12); color: var(--esmeralda); }
-.chip-operacion-UPDATE { background: #FEF3C7; color: #92400E; }
+.chip-operacion-UPDATE { background: var(--cf-fef3c7, #FEF3C7); color: var(--ct-92400e, #92400E); }
 .chip-operacion-DELETE { background: rgba(176,0,32,0.08); color: var(--peligro, #B00020); }
 .diferencias-auditoria {
   margin: 0; padding: 4px 16px 16px 34px; display: flex; flex-direction: column; gap: 8px;
@@ -1843,20 +1897,20 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 .tarjeta-mfa {
   display: flex; flex-direction: column; gap: 14px; align-items: center;
-  background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px; padding: 28px;
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea); border-radius: 16px; padding: 28px;
 }
 .tarjeta-mfa input {
   padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--panel-linea);
   font-family: inherit; font-size: 1.4rem; letter-spacing: 0.3em; text-align: center; width: 160px;
 }
-.qr-mfa { width: 180px; height: 180px; border: 1px solid var(--panel-linea); border-radius: 12px; padding: 8px; background: var(--blanco); }
+.qr-mfa { width: 180px; height: 180px; border: 1px solid var(--panel-linea); border-radius: 12px; padding: 8px; background: var(--cf-ffffff, var(--blanco)); }
 
 /* ═══════════ Bienvenida (post-registro, PLT-001 regla 2) ═══════════ */
 /* Fondo menta: es el mismo color que usa la seccion "hola" de la landing --
    se reutiliza el significado de marca que ya existe, no uno nuevo. */
 .pagina-bienvenida {
   min-height: 100vh;
-  background: var(--menta);
+  background: var(--cf-b1fbe3, var(--menta));
   color: var(--negro);
   display: flex;
   align-items: center;
@@ -1873,7 +1927,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .campo-telefono input { flex: 1; min-width: 0; }
 .campo-check { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; font-weight: 500; cursor: pointer; }
 .campo-check input { width: 18px; height: 18px; }
-.campo-check a { color: var(--violeta); font-weight: 700; }
+.campo-check a { color: var(--ct-5000ba, var(--violeta)); font-weight: 700; }
 
 .nombre-usuario-activo { display: block; font-weight: 700; }
 .correo-usuario-activo { display: block; font-size: 0.75rem; opacity: 0.7; }
@@ -1883,11 +1937,11 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   margin-top: 40px; padding: 20px; border: 1.5px solid #B00020; border-radius: 12px;
   max-width: 480px; display: flex; flex-direction: column; gap: 10px; background: rgba(176,0,32,0.04);
 }
-.zona-peligro h2 { font-size: 1.05rem; font-weight: 800; color: #B00020; }
+.zona-peligro h2 { font-size: 1.05rem; font-weight: 800; color: var(--ct-b00020, #B00020); }
 .zona-peligro p { font-size: 0.85rem; line-height: 1.5; }
 .btn-peligro {
   align-self: flex-start; padding: 10px 18px; border-radius: 8px; border: 1.5px solid #B00020;
-  background: var(--blanco); color: #B00020; font-weight: 700; cursor: pointer;
+  background: var(--cf-ffffff, var(--blanco)); color: var(--ct-b00020, #B00020); font-weight: 700; cursor: pointer;
 }
 .btn-peligro:hover { background: #B00020; color: var(--blanco); }
 .btn-peligro:disabled { opacity: 0.5; cursor: wait; }
@@ -1896,9 +1950,9 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .historial-accesos { margin-top: 32px; max-width: 480px; }
 .historial-accesos h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 10px; }
 .historial-accesos ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.historial-accesos li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 12px; background: var(--blanco); border-radius: 8px; border: 1px solid rgba(17,17,17,0.1); }
+.historial-accesos li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 12px; background: var(--cf-ffffff, var(--blanco)); border-radius: 8px; border: 1px solid var(--cb-111111-a100, rgba(17,17,17,0.1)); }
 .historial-negocio { opacity: 0.6; }
-.historial-fecha { color: rgba(17,17,17,0.55); }
+.historial-fecha { color: var(--ct-111111-a550, rgba(17,17,17,0.55)); }
 
 /* ── PLT-004: la barra del asistente ─────────────────────────────────
    Tercera columna del panel, a la derecha del contenido. Es una COLUMNA y no
@@ -1915,8 +1969,8 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
    a `--panel-accion` y `--asistente-accion` queda como alias para no tocar las
    reglas del asistente que ya lo usaban. */
 .panel-layout { --panel-accion: var(--lavanda); --asistente-accion: var(--panel-accion); }
-.panel-layout.perfil-cliente { --panel-accion: var(--violeta); }
-.panel-layout.perfil-abogado { --panel-accion: var(--esmeralda); }
+.panel-layout.perfil-cliente { --panel-accion: light-dark(var(--violeta), #7866FF); }
+.panel-layout.perfil-abogado { --panel-accion: light-dark(var(--esmeralda), #23926E); }
 
 .asistente {
   width: 360px; flex: none;
@@ -1989,7 +2043,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   font-size: 0.86rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .asistente-msg.de-asistente {
-  background: var(--blanco); border: 1px solid var(--panel-linea);
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
   align-self: flex-start; border-bottom-left-radius: 5px;
 }
 .asistente-msg.de-usuario {
@@ -2020,11 +2074,11 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .asistente-redactor {
   display: flex; gap: 8px; padding: 12px 14px;
-  border-top: 1px solid var(--panel-linea); background: var(--blanco);
+  border-top: 1px solid var(--panel-linea); background: var(--cf-ffffff, var(--blanco));
 }
 .asistente-redactor input {
   flex: 1; min-width: 0; padding: 9px 12px; font: inherit; font-size: 0.86rem;
-  border: 1px solid var(--panel-linea); border-radius: 10px; background: var(--blanco);
+  border: 1px solid var(--panel-linea); border-radius: 10px; background: var(--cf-ffffff, var(--blanco));
 }
 .asistente-redactor input:focus-visible {
   outline: 2px solid var(--asistente-accion); outline-offset: 1px; border-color: transparent;
@@ -2179,17 +2233,17 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 /* Un fallo de ARIA se ve como aviso, no como lista vacía: "no hay agentes" y
    "no pude preguntar" son cosas distintas y confundirlas hace perder tiempo. */
 .agentes-aviso {
-  background: #FFF4EE; border: 1px solid var(--naranja); color: #7A2B00;
+  background: var(--cf-fff4ee, #FFF4EE); border: 1px solid var(--naranja); color: var(--ct-7a2b00, #7A2B00);
   border-radius: 12px; padding: 10px 14px; font-size: 0.85rem; max-width: 62ch;
 }
 
 .lista-agentes, .lista-mcp { list-style: none; display: grid; gap: 10px; max-width: 720px; }
 .tarjeta-agente {
   display: flex; flex-direction: column; gap: 3px;
-  background: var(--blanco); border: 1px solid var(--panel-linea);
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
   border-radius: 14px; padding: 14px 16px; text-decoration: none; color: inherit;
 }
-.tarjeta-agente:hover { border-color: var(--negro); }
+.tarjeta-agente:hover { border-color: var(--cb-111111, var(--negro)); }
 .agente-nombre { font-weight: 800; display: flex; align-items: center; gap: 8px; }
 .agente-descripcion { font-size: 0.85rem; color: var(--panel-gris); }
 .agente-meta { font-size: 0.76rem; color: var(--panel-gris); font-variant-numeric: tabular-nums; }
@@ -2198,7 +2252,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   font-size: 0.66rem; font-weight: 700; padding: 2px 7px; border-radius: 999px;
 }
 .lista-mcp li {
-  background: var(--blanco); border: 1px solid var(--panel-linea);
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
   border-radius: 14px; padding: 12px 16px; display: flex; flex-direction: column; gap: 2px;
 }
 
@@ -2211,7 +2265,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .miga-agentes { font-size: 0.82rem; margin-bottom: 10px; }
 .miga-agentes a { color: var(--panel-gris); text-decoration: none; }
-.miga-agentes a:hover { color: var(--negro); }
+.miga-agentes a:hover { color: var(--ct-111111, var(--negro)); }
 
 .editor-agente { display: grid; gap: 20px; max-width: 720px; }
 .bloque-editor { display: grid; gap: 16px; max-width: none; border: 1px solid var(--panel-linea); }
@@ -2223,7 +2277,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .campo-editor > small { color: var(--panel-gris); font-size: 0.78rem; }
 .campo-editor input, .campo-editor textarea {
   font: inherit; font-size: 0.85rem; padding: 9px 11px;
-  border: 1px solid var(--panel-linea); border-radius: 10px; background: var(--blanco);
+  border: 1px solid var(--panel-linea); border-radius: 10px; background: var(--cf-ffffff, var(--blanco));
   width: 100%;
 }
 /* El prompt es prosa larga: monoespaciada para que los saltos de línea y la
@@ -2241,8 +2295,8 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .campo-interruptor small { color: var(--panel-gris); }
 
 .acciones-editor { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.editor-ok { color: var(--menta-honda); font-size: 0.83rem; font-weight: 600; }
-.editor-error { color: #A32100; font-size: 0.83rem; font-weight: 600; }
+.editor-ok { color: var(--ct-056b57, var(--menta-honda)); font-size: 0.83rem; font-weight: 600; }
+.editor-error { color: var(--ct-a32100, #A32100); font-size: 0.83rem; font-weight: 600; }
 
 /* ≤1080px: la columna lateral del inicio de cliente deja de caber al lado.
    Mismo quiebre que la maqueta (maqueta-cliente.html). Va ANTES del bloque de
@@ -2365,7 +2419,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  background: var(--blanco, #ffffff);
+  background: var(--cf-ffffff, var(--blanco, #ffffff));
   padding: 12px 16px;
   border-radius: 16px;
   border: 1px solid var(--panel-linea, #E4E4E4);
@@ -2397,7 +2451,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   padding: 8px 14px;
   border-radius: 10px;
   border: 1px solid var(--panel-linea, #E4E4E4);
-  background: #ffffff;
+  background: var(--cf-ffffff, #ffffff);
   color: var(--panel-gris, #737373);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease,
@@ -2405,7 +2459,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 .btn-rol:hover {
   background: var(--panel-linea-suave, #FAFAF9);
-  color: var(--negro, #111111);
+  color: var(--ct-111111, var(--negro, #111111));
   border-color: var(--violeta, #5000BA);
 }
 .btn-rol.activo {
@@ -2479,7 +2533,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
 }
 .tarjeta-widget-admin {
-  background: var(--blanco); border: 1px solid var(--panel-linea); border-radius: 16px;
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea); border-radius: 16px;
   padding: 20px; display: flex; flex-direction: column; gap: 8px;
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   position: relative; overflow: hidden;
@@ -2489,10 +2543,10 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .tarjeta-widget-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .tarjeta-widget-icono {
   width: 36px; height: 36px; padding: 8px; border-radius: 10px;
-  background: var(--panel-linea-suave); color: var(--violeta);
+  background: var(--panel-linea-suave); color: var(--ct-5000ba, var(--violeta));
 }
 .tarjeta-widget-admin.destacado .tarjeta-widget-icono { background: rgba(14, 102, 72, 0.1); color: var(--esmeralda); }
-.tarjeta-widget-admin strong { font-size: 1rem; font-weight: 700; color: var(--negro); }
+.tarjeta-widget-admin strong { font-size: 1rem; font-weight: 700; color: var(--ct-111111, var(--negro)); }
 .tarjeta-widget-admin p { font-size: 0.835rem; color: var(--panel-gris); line-height: 1.45; }
 
 .chip-registrado {
@@ -2623,9 +2677,9 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: background 0.15s, color 0.15s;
 }
-.pestana-notif:hover { color: var(--negro); }
+.pestana-notif:hover { color: var(--ct-111111, var(--negro)); }
 .pestana-notif.es-activa {
-  background: var(--blanco); color: var(--negro); font-weight: 800;
+  background: var(--cf-ffffff, var(--blanco)); color: var(--ct-111111, var(--negro)); font-weight: 800;
   box-shadow: 0 1px 2px rgba(17,17,17,0.10);
 }
 
@@ -2647,14 +2701,14 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   padding: 22px 16px; border: 1px dashed var(--panel-linea); border-radius: 12px;
   color: var(--panel-gris); font-size: 0.84rem;
 }
-.vacio-notif svg { color: var(--esmeralda); }
+.vacio-notif svg { color: var(--ct-0e6648, var(--esmeralda)); }
 
 /* La notificacion. Blanca como cualquier tarjeta del panel: lo pendiente lo
    marca el punto naranja del titulo, no el envase entero. El naranja esta
    reservado a lo que exige accion (§3, regla 3) y esto lo es. */
 .notif {
   padding: 12px 14px; border-radius: 12px;
-  background: var(--blanco); border: 1px solid var(--panel-linea);
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
 }
 .notif-cabeza { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .notif-titulo { font-size: 0.86rem; font-weight: 700; line-height: 1.3; }
@@ -2665,7 +2719,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 .notif-hora { font-size: 0.7rem; color: var(--panel-gris); white-space: nowrap; flex: none; }
 .notif-cuerpo { font-size: 0.82rem; color: var(--panel-gris); margin-top: 6px; line-height: 1.5; }
-.notif-cuerpo a { color: var(--violeta); }
+.notif-cuerpo a { color: var(--ct-5000ba, var(--violeta)); }
 /* TRQ-027: NotificacionesPanel reduce cada cuerpo a líneas de texto y un enlace. */
 .notif-cuerpo p { margin: 0 0 2px; overflow-wrap: anywhere; }
 .notif-cuerpo .notif-enlace { margin-top: 6px; }
@@ -2680,7 +2734,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   position: absolute; bottom: 100%; left: 0; margin-bottom: 6px; z-index: 100;
   min-width: 176px; padding: 6px;
   display: flex; flex-direction: column; gap: 2px;
-  background: var(--blanco); border: 1px solid var(--panel-linea);
+  background: var(--cf-ffffff, var(--blanco)); border: 1px solid var(--panel-linea);
   border-radius: 10px; box-shadow: 0 10px 24px rgba(17,17,17,0.14);
 }
 .menu-posponer-titulo {
@@ -2689,12 +2743,12 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 .opcion-posponer {
   text-align: left; padding: 7px 8px; border: 0; border-radius: 6px;
-  background: none; color: var(--negro); font: inherit; font-size: 0.78rem;
+  background: none; color: var(--ct-111111, var(--negro)); font: inherit; font-size: 0.78rem;
   font-weight: 600; cursor: pointer; width: 100%;
   transition: background 0.12s;
 }
 .opcion-posponer:hover { background: var(--panel-linea-suave); }
-.opcion-posponer.es-enlace { color: var(--violeta); font-weight: 700; }
+.opcion-posponer.es-enlace { color: var(--ct-5000ba, var(--violeta)); font-weight: 700; }
 .menu-posponer-pie { border-top: 1px solid var(--panel-linea-suave); margin-top: 4px; padding-top: 4px; }
 .posponer-personalizado { display: flex; align-items: center; gap: 6px; padding: 4px; }
 .posponer-personalizado input {
@@ -2714,7 +2768,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .marca-leida {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 0.7rem; font-weight: 700; color: var(--esmeralda);
+  font-size: 0.7rem; font-weight: 700; color: var(--ct-0e6648, var(--esmeralda));
 }
 .marca-eliminada {
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
@@ -2811,7 +2865,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .fila-metadato {
   display: grid; grid-template-columns: 1fr 1.2fr 34px;
   gap: 8px; align-items: center;
-  background: var(--blanco); padding: 6px 8px;
+  background: var(--cf-ffffff, var(--blanco)); padding: 6px 8px;
   border-radius: 8px; border: 1px solid var(--panel-linea);
 }
 /* ═══════════════════════════════════════════════════════════════════
@@ -2884,10 +2938,10 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .agenda-editor input,
 .agenda-editor select {
   padding: 0.6rem 0.7rem;
-  border: 1px solid #d9d4e6;
+  border: 1px solid var(--cb-d9d4e6, #d9d4e6);
   border-radius: 10px;
   font: inherit;
-  background: #fff;
+  background: var(--cf-ffffff, #fff);
 }
 
 .agenda-modalidad {
@@ -2906,12 +2960,12 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   font-size: 0.92rem;
 }
 .agenda-cobertura-ok {
-  background: var(--menta, #b1fbe3);
-  color: #05402f;
+  background: var(--cf-b1fbe3, var(--menta, #b1fbe3));
+  color: var(--ct-05402f, #05402f);
 }
 .agenda-cobertura-pago {
-  background: #f5f3ff;
-  color: #3d2a63;
+  background: var(--cf-f5f3ff, #f5f3ff);
+  color: var(--ct-3d2a63, #3d2a63);
 }
 
 .agenda-lista-huecos {
@@ -2925,9 +2979,9 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .agenda-hueco {
   padding: 0.55rem 0.85rem;
-  border: 1px solid #d9d4e6;
+  border: 1px solid var(--cb-d9d4e6, #d9d4e6);
   border-radius: 999px;
-  background: #fff;
+  background: var(--cf-ffffff, #fff);
   cursor: pointer;
   font: inherit;
   text-transform: capitalize;
@@ -2943,9 +2997,9 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .agenda-confirmar {
   padding: 1rem;
-  border: 1px solid #d9d4e6;
+  border: 1px solid var(--cb-d9d4e6, #d9d4e6);
   border-radius: 12px;
-  background: #fbfaff;
+  background: var(--cf-fbfaff, #fbfaff);
 }
 .agenda-confirmar p {
   margin-top: 0;
@@ -2953,14 +3007,14 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .agenda-nota {
   font-size: 0.9rem;
-  color: #6b6580;
+  color: var(--ct-6b6580, #6b6580);
   margin: 0.25rem 0;
 }
 
 .agenda-aviso {
   padding: 0.7rem 0.9rem;
   border-left: 3px solid var(--naranja, #fe5800);
-  background: #fff6f1;
+  background: var(--cf-fff6f1, #fff6f1);
   border-radius: 0 10px 10px 0;
   font-size: 0.93rem;
 }
@@ -2975,9 +3029,9 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .agenda-cita {
   padding: 0.9rem 1rem;
-  border: 1px solid #e6e2ef;
+  border: 1px solid var(--cb-e6e2ef, #e6e2ef);
   border-radius: 12px;
-  background: #fff;
+  background: var(--cf-ffffff, #fff);
 }
 .agenda-cita-urgente {
   border-color: var(--naranja, #fe5800);
@@ -2994,7 +3048,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .agenda-cita-meta {
   font-size: 0.9rem;
-  color: #6b6580;
+  color: var(--ct-6b6580, #6b6580);
   margin: 0.35rem 0;
 }
 .agenda-cita-motivo {
@@ -3039,7 +3093,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 .agenda-resumen {
   padding: 0.75rem 0.9rem;
-  background: #f5f3ff;
+  background: var(--cf-f5f3ff, #f5f3ff);
   border-radius: 10px;
   font-size: 0.93rem;
 }
@@ -3081,22 +3135,22 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   white-space: nowrap;
 }
 .aria-nivel-verde {
-  background: var(--menta, #b1fbe3);
-  color: #05402f;
+  background: var(--cf-b1fbe3, var(--menta, #b1fbe3));
+  color: var(--ct-05402f, #05402f);
 }
 .aria-nivel-ambar {
-  background: #fff4d6;
-  color: #7a5200;
+  background: var(--cf-fff4d6, #fff4d6);
+  color: var(--ct-7a5200, #7a5200);
 }
 .aria-nivel-rojo {
-  background: #ffe3d6;
-  color: #8a2c00;
+  background: var(--cf-ffe3d6, #ffe3d6);
+  color: var(--ct-8a2c00, #8a2c00);
 }
 
 .aria-identidad-base {
   margin: 0;
   font-size: 0.88rem;
-  color: #4b4560;
+  color: var(--ct-4b4560, #4b4560);
 }
 
 .aria-documentos {
@@ -3112,9 +3166,9 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.7rem;
-  border: 1px solid #e6e2ef;
+  border: 1px solid var(--cb-e6e2ef, #e6e2ef);
   border-radius: 10px;
-  background: #fff;
+  background: var(--cf-ffffff, #fff);
   font-size: 0.88rem;
   flex-wrap: wrap;
 }
@@ -3127,19 +3181,19 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   font-weight: 700;
 }
 .aria-documento-titular {
-  color: #6b6580;
+  color: var(--ct-6b6580, #6b6580);
 }
 .aria-documento-score {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
-  color: #6b6580;
+  color: var(--ct-6b6580, #6b6580);
 }
 
 .aria-observaciones {
   margin: 0;
   padding-left: 1.1rem;
   font-size: 0.87rem;
-  color: #8a2c00;
+  color: var(--ct-8a2c00, #8a2c00);
   display: grid;
   gap: 0.25rem;
 }
@@ -3147,7 +3201,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .aria-nota {
   margin: 0;
   font-size: 0.83rem;
-  color: #6b6580;
+  color: var(--ct-6b6580, #6b6580);
 }
 
 .aria-acciones {
@@ -3176,7 +3230,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 
 .billetera-aria-brillo {
-  background: linear-gradient(135deg, rgba(80, 0, 186, 0.06) 0%, rgba(177, 251, 227, 0.14) 50%, rgba(80, 0, 186, 0.06) 100%) !important;
+  background: linear-gradient(135deg, rgba(80, 0, 186, 0.06) 0%, var(--cf-b1fbe3-a140, rgba(177, 251, 227, 0.14)) 50%, rgba(80, 0, 186, 0.06) 100%) !important;
   background-size: 200% 200% !important;
   animation: billeteraAriaBrillo 4s ease infinite;
 }
@@ -3229,10 +3283,10 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 }
 
 .billetera-aria-esqueleto {
-  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 37%, #F3F4F6 63%) !important;
+  background: linear-gradient(90deg, var(--cf-f3f4f6, #F3F4F6) 25%, var(--cf-e5e7eb, #E5E7EB) 37%, var(--cf-f3f4f6, #F3F4F6) 63%) !important;
   background-size: 200% 100% !important;
   animation: billeteraAriaEsqueleto 1.5s ease-in-out infinite;
-  color: #9CA3AF !important;
+  color: var(--ct-9ca3af, #9CA3AF) !important;
   cursor: wait !important;
 }
 
@@ -3259,7 +3313,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
     animation: none !important;
   }
   .billetera-aria-esqueleto {
-    background: #F3F4F6 !important;
+    background: var(--cf-f3f4f6, #F3F4F6) !important;
   }
   .billetera-aria-escaneo {
     top: 50% !important;
@@ -3279,41 +3333,41 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
    color-mix sobre --acento en :root se quedaría violeta para el abogado.
    Error y urgencia comparten el naranja hondo de §6: el sistema no tiene rojo. */
 :root {
-  --texto: #111111;
-  --texto-2: #3F3F46;
-  --texto-suave: #6B6B76;
-  --texto-tenue: #9D9DA6;
-  --linea-fuerte: #D4D4D8;
-  --linea: #E7E7EA;
-  --fondo-suave: #F8F8FA;
-  --fondo-hundido: #F1F1F4;
+  --texto: light-dark(#111111, #ECECEF);
+  --texto-2: light-dark(#3F3F46, #C9C9D0);
+  --texto-suave: light-dark(#6B6B76, #9D9DA8);
+  --texto-tenue: light-dark(#9D9DA6, #6E6E78);
+  --linea-fuerte: light-dark(#D4D4D8, #3A3A40);
+  --linea: light-dark(#E7E7EA, #2A2A2F);
+  --fondo-suave: light-dark(#F8F8FA, #1F1F23);
+  --fondo-hundido: light-dark(#F1F1F4, #141416);
 
-  --acento: var(--violeta);
-  --acento-hondo: #3A0088;
-  --acento-diluido: #F3EEFB;
-  --acento-linea: #D9C8F2;
+  --acento: light-dark(var(--violeta), #7866FF);
+  --acento-hondo: light-dark(#3A0088, #9A8CFF);
+  --acento-diluido: light-dark(#F3EEFB, #221B33);
+  --acento-linea: light-dark(#D9C8F2, #3D3260);
 
-  --exito: var(--esmeralda);
-  --exito-texto: #0A4A35;
-  --exito-diluido: #EAF7F2;
-  --exito-linea: #B7E3D6;
+  --exito: light-dark(var(--esmeralda), #1F9A70);
+  --exito-texto: light-dark(#0A4A35, #7FD6B5);
+  --exito-diluido: light-dark(#EAF7F2, #10251E);
+  --exito-linea: light-dark(#B7E3D6, #1F4A3C);
 
-  --aviso: #A77B00;
-  --aviso-texto: #6B5000;
-  --aviso-diluido: #FFF8D9;
-  --aviso-linea: #F0DE8C;
+  --aviso: light-dark(#A77B00, #C9971A);
+  --aviso-texto: light-dark(#6B5000, #F2CF6B);
+  --aviso-diluido: light-dark(#FFF8D9, #2A2410);
+  --aviso-linea: light-dark(#F0DE8C, #4A3F16);
 
-  --error: #C33F00;
-  --error-texto: #9A3200;
-  --error-diluido: #FFE9DE;
-  --error-linea: #FFC7AD;
+  --error: light-dark(#C33F00, #FF7A3D);
+  --error-texto: light-dark(#9A3200, #FFA27A);
+  --error-diluido: light-dark(#FFE9DE, #2E1A12);
+  --error-linea: light-dark(#FFC7AD, #5A2C18);
 }
 .panel-layout.perfil-abogado,
 .panel-layout.perfil-socio {
-  --acento: var(--esmeralda);
-  --acento-hondo: #0A4A35;
-  --acento-diluido: #EAF7F2;
-  --acento-linea: #B7E3D6;
+  --acento: light-dark(var(--esmeralda), #23926E);
+  --acento-hondo: light-dark(#0A4A35, #7FD6B5);
+  --acento-diluido: light-dark(#EAF7F2, #10251E);
+  --acento-linea: light-dark(#B7E3D6, #1F4A3C);
 }
 
 /* ── TRQ-016 · Cabecera de las pantallas de gestión ─────────────────────────
@@ -3341,7 +3395,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   position: fixed; z-index: 990; left: 50%; bottom: 74px; transform: translateX(-50%);
   width: max-content; max-width: calc(100vw - 24px);
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 10px 10px 16px;
-  background: var(--blanco); color: var(--negro); border: 1px solid var(--panel-linea); border-radius: 14px;
+  background: var(--cf-ffffff, var(--blanco)); color: var(--ct-111111, var(--negro)); border: 1px solid var(--panel-linea); border-radius: 14px;
   box-shadow: 0 16px 34px -18px rgba(20, 16, 25, 0.45);
 }
 .barra-app-texto { display: grid; gap: 1px; }
@@ -3353,7 +3407,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
 }
 .barra-app-principal { background: var(--violeta); color: var(--blanco); border: 0; }
-.barra-app-secundaria { background: transparent; color: var(--negro); border: 1px solid var(--panel-linea); }
+.barra-app-secundaria { background: transparent; color: var(--ct-111111, var(--negro)); border: 1px solid var(--panel-linea); }
 .barra-app-secundaria:disabled { opacity: 0.6; cursor: wait; }
 .barra-app-cerrar { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--panel-gris); cursor: pointer; }
 .barra-app-cerrar:hover { background: rgba(127, 127, 127, 0.12); color: var(--negro); }

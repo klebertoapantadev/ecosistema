@@ -171,8 +171,8 @@ function CeldaPerfilesInteractiva({
                 gap: "4px",
                 padding: "3px 8px",
                 borderRadius: "6px",
-                background: tiene ? "#F3E8FF" : "#F8FAFC",
-                border: tiene ? "1px solid #D8B4FE" : "1px solid #E2E8F0",
+                background: tiene ? "var(--cf-f3e8ff, #F3E8FF)" : "var(--cf-f8fafc, #F8FAFC)",
+                border: tiene ? "1px solid var(--cb-d8b4fe, #D8B4FE)" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
                 fontSize: "0.76rem",
                 cursor: fueraDeAlcance || (esBase && tiene) || esAbogado || ocupado !== null ? "default" : "pointer",
                 opacity: fueraDeAlcance ? 0.55 : estaCargandoEste ? 0.7 : 1,
@@ -196,15 +196,15 @@ function CeldaPerfilesInteractiva({
                 disabled={!puedeAsignarRoles || ocupado !== null || fueraDeAlcance || (esBase && tiene) || esAbogado}
                 onChange={(e) => alternar(p.clave, e.target.checked)}
               />
-              <span style={{ fontWeight: tiene ? 700 : 500, color: tiene ? "#5000BA" : "#475569" }}>
+              <span style={{ fontWeight: tiene ? 700 : 500, color: tiene ? "var(--ct-5000ba, #5000BA)" : "var(--ct-475569, #475569)" }}>
                 {p.nombre}
               </span>
-              <span className="perfil-nivel" style={{ fontSize: "0.68rem", color: "#94A3B8" }}>{p.nivel}</span>
+              <span className="perfil-nivel" style={{ fontSize: "0.68rem", color: "var(--ct-94a3b8, #94A3B8)" }}>{p.nivel}</span>
             </label>
           );
         })}
       </div>
-      {mensaje && <p className="error-auth mensaje-fila" style={{ color: "#DC2626", fontSize: "0.75rem", margin: "4px 0 0 0" }}>{mensaje}</p>}
+      {mensaje && <p className="error-auth mensaje-fila" style={{ color: "var(--ct-dc2626, #DC2626)", fontSize: "0.75rem", margin: "4px 0 0 0" }}>{mensaje}</p>}
     </div>
   );
 }
@@ -227,7 +227,7 @@ function CeldaAccionUsuario({ usuario, puedeEliminar = false }: { usuario: Usuar
   });
 
   if (!puedeEliminar) {
-    return <span style={{ fontSize: "0.74rem", color: "#94A3B8", fontWeight: 600 }}>Solo Lectura</span>;
+    return <span style={{ fontSize: "0.74rem", color: "var(--ct-94a3b8, #94A3B8)", fontWeight: 600 }}>Solo Lectura</span>;
   }
 
   async function handleEliminar() {
@@ -266,7 +266,7 @@ function CeldaAccionUsuario({ usuario, puedeEliminar = false }: { usuario: Usuar
   }
 
   if (usuario.usu_correo === "familiammtg@gmail.com" || usuario.perfiles?.includes("SUPERADMIN") || usuario.nivelMaximo >= 100) {
-    return <span style={{ fontSize: "0.72rem", color: "#9CA3AF", fontWeight: 700 }}>Protegido</span>;
+    return <span style={{ fontSize: "0.72rem", color: "var(--ct-9ca3af, #9CA3AF)", fontWeight: 700 }}>Protegido</span>;
   }
 
   return (
@@ -279,9 +279,9 @@ function CeldaAccionUsuario({ usuario, puedeEliminar = false }: { usuario: Usuar
         title={`Eliminar usuario ${usuario.usu_correo}`}
         aria-label={`Eliminar usuario ${usuario.usu_correo}`}
         style={{
-          background: "#FEF2F2",
-          border: "1px solid #FCA5A5",
-          color: "#DC2626",
+          background: "var(--cf-fef2f2, #FEF2F2)",
+          border: "1px solid var(--cb-fca5a5, #FCA5A5)",
+          color: "var(--ct-dc2626, #DC2626)",
           borderRadius: "8px",
           padding: "6px 10px",
           fontSize: "0.75rem",
@@ -482,9 +482,9 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
       ordenable: true,
       render: (u) => (
         <span style={{
-          background: u.mem_estado === "ACTIVO" ? "#ECFDF5" : "#FEF3C7",
-          color: u.mem_estado === "ACTIVO" ? "#047857" : "#B45309",
-          border: `1px solid ${u.mem_estado === "ACTIVO" ? "#A7F3D0" : "#FDE68A"}`,
+          background: u.mem_estado === "ACTIVO" ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-fef3c7, #FEF3C7)",
+          color: u.mem_estado === "ACTIVO" ? "var(--ct-047857, #047857)" : "var(--ct-b45309, #B45309)",
+          border: `1px solid ${u.mem_estado === "ACTIVO" ? "var(--cb-a7f3d0, #A7F3D0)" : "var(--cb-fde68a, #FDE68A)"}`,
           borderRadius: "999px",
           padding: "2px 10px",
           fontSize: "0.75rem",
@@ -527,18 +527,18 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
   const perfilObjConsulta = MATRIZ_PERFILES_CONSULTA.find((p) => p.clave === perfilSeleccionado) || MATRIZ_PERFILES_CONSULTA[1]!;
 
   return (
-    <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #E4E4E4", padding: "24px", width: "100%" }}>
+    <div style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", padding: "24px", width: "100%" }}>
       {/* CABECERA WIDGET UNIFICADO GESTIÓN DE USUARIOS */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", borderBottom: "1px solid #F3F4F6", paddingBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", borderBottom: "1px solid var(--cb-f3f4f6, #F3F4F6)", paddingBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "var(--violeta-suave, #F3E8FF)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "var(--cf-f3e8ff, var(--violeta-suave, #F3E8FF))", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Users size={24} color="var(--violeta, #5000BA)" />
           </div>
           <div>
-            <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#111111" }}>
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, #111111)" }}>
               Gestión de Usuarios, Membresías & Asignación de Roles
             </h2>
-            <p style={{ fontSize: "0.84rem", color: "#666666", margin: "2px 0 0 0" }}>
+            <p style={{ fontSize: "0.84rem", color: "var(--ct-666666, #666666)", margin: "2px 0 0 0" }}>
               Directorio unificado de miembros, asignación/revocación de perfiles en tiempo real y eliminación.
             </p>
           </div>
@@ -551,9 +551,9 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             onClick={handleCompartirConsulta}
             className="btn-responsive-accion"
             style={{
-              background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
-              border: copiadoConsulta ? "1px solid #10B981" : "1px solid #CBD5E1",
-              color: copiadoConsulta ? "#047857" : "#334155",
+              background: copiadoConsulta ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-f8fafc, #F8FAFC)",
+              border: copiadoConsulta ? "1px solid #10B981" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+              color: copiadoConsulta ? "var(--ct-047857, #047857)" : "var(--ct-334155, #334155)",
               padding: "7px 14px",
               borderRadius: "20px",
               fontSize: "0.78rem",
@@ -576,9 +576,9 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             onClick={() => cargarDirectorio(filtroTexto)}
             className="btn-responsive-accion"
             style={{
-              background: "#F1F5F9",
-              border: "1px solid #CBD5E1",
-              color: "#334155",
+              background: "var(--cf-f1f5f9, #F1F5F9)",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+              color: "var(--ct-334155, #334155)",
               padding: "7px 14px",
               borderRadius: "20px",
               fontSize: "0.78rem",
@@ -602,11 +602,11 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             style={{
               fontSize: "0.78rem",
               fontWeight: 800,
-              color: "#DC2626",
-              background: "#FEF2F2",
+              color: "var(--ct-dc2626, #DC2626)",
+              background: "var(--cf-fef2f2, #FEF2F2)",
               padding: "7px 14px",
               borderRadius: "20px",
-              border: "1px solid #FCA5A5",
+              border: "1px solid var(--cb-fca5a5, #FCA5A5)",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
@@ -623,7 +623,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
       </div>
 
       {/* PESTAÑAS DE NAVEGACIÓN */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "1px solid #E4E4E4" }}>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
         <button
           type="button"
           onClick={() => setTabActiva("usuarios")}
@@ -633,7 +633,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             borderBottom: tabActiva === "usuarios" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
             background: "transparent",
             fontWeight: tabActiva === "usuarios" ? 800 : 600,
-            color: tabActiva === "usuarios" ? "var(--violeta, #5000BA)" : "#666",
+            color: tabActiva === "usuarios" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--ct-666666, #666)",
             cursor: "pointer",
             fontSize: "0.88rem",
             display: "flex",
@@ -653,7 +653,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
             borderBottom: tabActiva === "matriz" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
             background: "transparent",
             fontWeight: tabActiva === "matriz" ? 800 : 600,
-            color: tabActiva === "matriz" ? "var(--violeta, #5000BA)" : "#666",
+            color: tabActiva === "matriz" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--ct-666666, #666)",
             cursor: "pointer",
             fontSize: "0.88rem",
             display: "flex",
@@ -669,7 +669,7 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
       {tabActiva === "usuarios" && (
         <div>
           {cargando ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#666" }}>
+            <div style={{ padding: "40px", textAlign: "center", color: "var(--ct-666666, #666)" }}>
               Cargando directorio de usuarios y perfiles...
             </div>
           ) : (
@@ -686,11 +686,11 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
       {/* TAB 2: MATRIZ DE PERFILES & PERMISOS */}
       {tabActiva === "matriz" && (
         <div>
-          <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
-            <h3 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 8px 0", color: "var(--violeta, #5000BA)" }}>
+          <div style={{ background: "var(--cf-f9fafb, #F9FAFB)", border: "1px solid var(--cb-e5e7eb, #E5E7EB)", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
+            <h3 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 8px 0", color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
               Matriz de Jerarquía de Permisos & Gobernanza BDD (1–100)
             </h3>
-            <p style={{ fontSize: "0.82rem", color: "#4B5563", margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: "0.82rem", color: "var(--ct-4b5563, #4B5563)", margin: 0, lineHeight: 1.5 }}>
               Selecciona un perfil para consultar sus capacidades operativas, techo de nivel jerárquico y widgets accesibles en cada panel del ecosistema.
             </p>
           </div>
@@ -705,9 +705,9 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
                 style={{
                   padding: "8px 16px",
                   borderRadius: "20px",
-                  border: perfilSeleccionado === p.clave ? "1.5px solid var(--violeta, #5000BA)" : "1px solid #E4E4E4",
-                  background: perfilSeleccionado === p.clave ? "var(--violeta-suave, #F3E8FF)" : "#ffffff",
-                  color: perfilSeleccionado === p.clave ? "var(--violeta, #5000BA)" : "#374151",
+                  border: perfilSeleccionado === p.clave ? "1.5px solid var(--violeta, #5000BA)" : "1px solid var(--cb-e4e4e4, #E4E4E4)",
+                  background: perfilSeleccionado === p.clave ? "var(--cf-f3e8ff, var(--violeta-suave, #F3E8FF))" : "var(--cf-ffffff, #ffffff)",
+                  color: perfilSeleccionado === p.clave ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--ct-374151, #374151)",
                   fontWeight: 800,
                   fontSize: "0.82rem",
                   cursor: "pointer",
@@ -719,20 +719,20 @@ export function ConsultaUsuariosPerfilesWidget({ negocio = "TRANQ" }: Props) {
           </div>
 
           {/* Detalle del Perfil Seleccionado */}
-          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "12px", padding: "20px" }}>
-            <h4 style={{ margin: "0 0 8px 0", color: "#111", fontSize: "1.05rem" }}>
-              {perfilObjConsulta.nombre} — <span style={{ color: "var(--violeta, #5000BA)" }}>Nivel Jerárquico {perfilObjConsulta.nivel}</span>
+          <div style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", borderRadius: "12px", padding: "20px" }}>
+            <h4 style={{ margin: "0 0 8px 0", color: "var(--ct-111111, #111)", fontSize: "1.05rem" }}>
+              {perfilObjConsulta.nombre} — <span style={{ color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>Nivel Jerárquico {perfilObjConsulta.nivel}</span>
             </h4>
-            <p style={{ fontSize: "0.85rem", color: "#4B5563", margin: "0 0 16px 0" }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--ct-4b5563, #4B5563)", margin: "0 0 16px 0" }}>
               {perfilObjConsulta.descripcion}
             </p>
 
-            <h5 style={{ fontSize: "0.85rem", fontWeight: 800, margin: "16px 0 8px 0", color: "#111" }}>
+            <h5 style={{ fontSize: "0.85rem", fontWeight: 800, margin: "16px 0 8px 0", color: "var(--ct-111111, #111)" }}>
               Paneles Accesibles:
             </h5>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
               {perfilObjConsulta.paneles.map((pan) => (
-                <span key={pan} style={{ background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#3730A3", padding: "4px 12px", borderRadius: "12px", fontWeight: 700, fontSize: "0.78rem" }}>
+                <span key={pan} style={{ background: "var(--cf-eef2ff, #EEF2FF)", border: "1px solid var(--cb-c7d2fe, #C7D2FE)", color: "var(--ct-3730a3, #3730A3)", padding: "4px 12px", borderRadius: "12px", fontWeight: 700, fontSize: "0.78rem" }}>
                   {pan}
                 </span>
               ))}

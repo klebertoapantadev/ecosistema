@@ -896,7 +896,7 @@ export function ConsolaEnvioPedidosTaller({
               style={{ width: "16px", height: "16px", cursor: "pointer" }}
             />
           ) : (
-            <span style={{ color: "#2F4737", fontWeight: 800 }}>✓</span>
+            <span style={{ color: "var(--ct-2f4737, #2F4737)", fontWeight: 800 }}>✓</span>
           ),
       },
       {
@@ -916,13 +916,13 @@ export function ConsolaEnvioPedidosTaller({
                   borderRadius: "999px",
                   fontSize: "0.73rem",
                   fontWeight: 800,
-                  background: esHoy ? "#F2F6F3" : esManana ? "#EFECE6" : "#F4F2EE",
-                  color: esHoy ? "#2F4737" : esManana ? "#221E1B" : "#57524C",
+                  background: esHoy ? "var(--cf-f2f6f3, #F2F6F3)" : esManana ? "var(--cf-efece6, #EFECE6)" : "var(--cf-f4f2ee, #F4F2EE)",
+                  color: esHoy ? "var(--ct-2f4737, #2F4737)" : esManana ? "var(--ct-221e1b, #221E1B)" : "var(--ct-57524c, #57524C)",
                 }}
               >
                 📅 {infoFecha.etiquetaPrincipal}
               </span>
-              <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
+              <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                 ⏰{" "}
                 {formatearHorarioEntregaOrden({
                   franjaHoraria: o.franjaHoraria,
@@ -944,7 +944,7 @@ export function ConsolaEnvioPedidosTaller({
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxWidth: "335px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.83rem", color: "#1F1C19" }}>{o.codigo}</strong>
+                <strong style={{ fontSize: "0.83rem", color: "var(--ct-1f1c19, #1F1C19)" }}>{o.codigo}</strong>
                 <InsigniaClasificacionPedido
                   clasificacion={clasif}
                   opaco={confirmada}
@@ -952,7 +952,7 @@ export function ConsolaEnvioPedidosTaller({
                   sufijoTexto={clasif === "EXEQUIALES" && o.salaServicio ? o.salaServicio : null}
                 />
               </div>
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#221E1B" }}>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-221e1b, #221E1B)" }}>
                 {o.productoResumen}
               </span>
             </div>
@@ -968,22 +968,22 @@ export function ConsolaEnvioPedidosTaller({
           const esExeq = resolverClasif(o) === "EXEQUIALES";
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "2px", maxWidth: "260px" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1F1C19" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 {esExeq
                   ? `Solicita: ${o.clienteSolicita}`
                   : o.destinatarioFallecido || o.clienteSolicita}
               </span>
               {esExeq ? (
                 <>
-                  <span style={{ fontSize: "0.74rem", color: "#3A3530", fontWeight: 700 }}>
+                  <span style={{ fontSize: "0.74rem", color: "var(--ct-3a3530, #3A3530)", fontWeight: 700 }}>
                     Fallecido: {o.destinatarioFallecido || "Pendiente registrar"}
                   </span>
-                  <span style={{ fontSize: "0.72rem", color: "#57524C" }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--ct-57524c, #57524C)" }}>
                     Sala: {o.salaServicio || "Por confirmar"}
                   </span>
                 </>
               ) : (
-                <span style={{ fontSize: "0.73rem", color: "#847D74" }}>
+                <span style={{ fontSize: "0.73rem", color: "var(--ct-847d74, #847D74)" }}>
                   {o.retiroEnLocal ? "Retiro en Tienda" : o.ubicacionEntrega || "Sin dirección"}
                 </span>
               )}
@@ -997,7 +997,7 @@ export function ConsolaEnvioPedidosTaller({
         valor: (o) => `${o.estadoPago || ""} ${o.estadoTaller} ${o.repartidorNombre || ""}`,
         render: (o) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#57524C" }}>
+            <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
               Pago: {o.estadoPago || "APROBADA"}
               {o.totalUsd ? ` ($${o.totalUsd.toFixed(2)})` : ""}
             </span>
@@ -1010,20 +1010,20 @@ export function ConsolaEnvioPedidosTaller({
                 fontWeight: 700,
                 background:
                   o.estadoTaller === "PENDIENTE_ENVIO"
-                    ? "#FAF6EE"
+                    ? "var(--cf-faf6ee, #FAF6EE)"
                     : o.estadoTaller === "LISTO_ENTREGA"
-                      ? "#F2F6F3"
+                      ? "var(--cf-f2f6f3, #F2F6F3)"
                       : o.estadoTaller === "EN_PREPARACION"
-                        ? "#F5EFE3"
-                        : "#EFECE6",
+                        ? "var(--cf-f5efe3, #F5EFE3)"
+                        : "var(--cf-efece6, #EFECE6)",
                 color:
                   o.estadoTaller === "PENDIENTE_ENVIO"
-                    ? "#745622"
+                    ? "var(--ct-745622, #745622)"
                     : o.estadoTaller === "LISTO_ENTREGA"
-                      ? "#2F4737"
+                      ? "var(--ct-2f4737, #2F4737)"
                       : o.estadoTaller === "EN_PREPARACION"
-                        ? "#745622"
-                        : "#3A3530",
+                        ? "var(--ct-745622, #745622)"
+                        : "var(--ct-3a3530, #3A3530)",
               }}
             >
               {o.estadoTaller === "PENDIENTE_ENVIO"
@@ -1043,16 +1043,16 @@ export function ConsolaEnvioPedidosTaller({
                   marginTop: "2px",
                   padding: "4px 7px",
                   borderRadius: "7px",
-                  background: "#FAF2F2",
-                  border: "1px solid #E5CACA",
-                  color: "#8A2E2E",
+                  background: "var(--cf-faf2f2, #FAF2F2)",
+                  border: "1px solid var(--cb-e5caca, #E5CACA)",
+                  color: "var(--ct-8a2e2e, #8A2E2E)",
                   fontSize: "0.7rem",
                 }}
               >
                 <div>
                   <strong>🗑️ Eliminado por:</strong> {o.eliminadoPorNombre || "Staff"}
                 </div>
-                <div style={{ color: "#8A2E2E" }}>
+                <div style={{ color: "var(--ct-8a2e2e, #8A2E2E)" }}>
                   {new Date(o.eliminadoEn).toLocaleString("es-EC")}
                 </div>
                 {o.eliminadoMotivo ? (
@@ -1071,11 +1071,11 @@ export function ConsolaEnvioPedidosTaller({
                   style={{
                     padding: "4px 7px",
                     borderRadius: "7px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.72rem",
                     fontWeight: 600,
-                    background: o.repartidorId ? "#F2F6F3" : "#FFFFFF",
-                    color: "#1F1C19",
+                    background: o.repartidorId ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     maxWidth: "185px",
                   }}
                 >
@@ -1138,8 +1138,8 @@ export function ConsolaEnvioPedidosTaller({
                     padding: "6px 10px",
                     borderRadius: "8px",
                     border: "1px solid #2F4737",
-                    background: "#F2F6F3",
-                    color: "#2B4A36",
+                    background: "var(--cf-f2f6f3, #F2F6F3)",
+                    color: "var(--ct-2b4a36, #2B4A36)",
                     fontSize: "0.74rem",
                     fontWeight: 700,
                     cursor: proc ? "wait" : "pointer",
@@ -1221,11 +1221,11 @@ export function ConsolaEnvioPedidosTaller({
                     border:
                       (o.tarjetaMetadata?.impresiones || 0) > 0
                         ? "1px solid #8F6A2E"
-                        : "1px solid #221E1B",
+                        : "1px solid var(--cb-221e1b, #221E1B)",
                     background:
-                      (o.tarjetaMetadata?.impresiones || 0) > 0 ? "#FAF6EE" : "#F4F2EE",
+                      (o.tarjetaMetadata?.impresiones || 0) > 0 ? "var(--cf-faf6ee, #FAF6EE)" : "var(--cf-f4f2ee, #F4F2EE)",
                     color:
-                      (o.tarjetaMetadata?.impresiones || 0) > 0 ? "#745622" : "#3A3530",
+                      (o.tarjetaMetadata?.impresiones || 0) > 0 ? "var(--ct-745622, #745622)" : "var(--ct-3a3530, #3A3530)",
                     fontSize: "0.74rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1251,9 +1251,9 @@ export function ConsolaEnvioPedidosTaller({
                   gap: "4px",
                   padding: "6px 9px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#57524C",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-57524c, #57524C)",
                   fontSize: "0.74rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -1282,9 +1282,9 @@ export function ConsolaEnvioPedidosTaller({
                     gap: "4px",
                     padding: "6px 9px",
                     borderRadius: "8px",
-                    border: "1px solid #E5CACA",
-                    background: "#FAF2F2",
-                    color: "#8A2E2E",
+                    border: "1px solid var(--cb-e5caca, #E5CACA)",
+                    background: "var(--cf-faf2f2, #FAF2F2)",
+                    color: "var(--ct-8a2e2e, #8A2E2E)",
                     fontSize: "0.74rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1319,7 +1319,7 @@ export function ConsolaEnvioPedidosTaller({
     display: "block",
     fontSize: "0.78rem",
     fontWeight: 700,
-    color: "#57524C",
+    color: "var(--ct-57524c, #57524C)",
     marginBottom: "4px",
   };
 
@@ -1327,9 +1327,9 @@ export function ConsolaEnvioPedidosTaller({
     width: "100%",
     padding: "9px 11px",
     borderRadius: "9px",
-    border: "1px solid #D5CFC4",
+    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
     fontSize: "0.85rem",
-    background: "#FFFFFF",
+    background: "var(--cf-ffffff, #FFFFFF)",
   };
 
   return (
@@ -1345,8 +1345,8 @@ export function ConsolaEnvioPedidosTaller({
       {/* Barra Principal de Navegación Operativa */}
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           borderRadius: "14px",
           padding: "12px 16px",
           display: "flex",
@@ -1368,9 +1368,9 @@ export function ConsolaEnvioPedidosTaller({
               gap: "6px",
               padding: "8px 13px",
               borderRadius: "10px",
-              border: "1px solid #D9C49B",
-              background: "#FAF5EB",
-              color: "#6E5222",
+              border: "1px solid var(--cb-d9c49b, #D9C49B)",
+              background: "var(--cf-faf5eb, #FAF5EB)",
+              color: "var(--ct-6e5222, #6E5222)",
               fontSize: "0.81rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -1424,9 +1424,9 @@ export function ConsolaEnvioPedidosTaller({
                   gap: "6px",
                   padding: "8px 13px",
                   borderRadius: "10px",
-                  border: activa ? "1px solid #1F1C19" : "1px solid #E6E2DA",
-                  background: activa ? "#1F1C19" : "#F8F7F4",
-                  color: activa ? "#FFFFFF" : "#57524C",
+                  border: activa ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  background: activa ? "#1F1C19" : "var(--cf-f8f7f4, #F8F7F4)",
+                  color: activa ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                   fontSize: "0.81rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -1440,8 +1440,8 @@ export function ConsolaEnvioPedidosTaller({
                       padding: "1px 7px",
                       borderRadius: "999px",
                       fontSize: "0.7rem",
-                      background: activa ? "rgba(255,255,255,0.22)" : "#E6E2DA",
-                      color: activa ? "#FFFFFF" : "#57524C",
+                      background: activa ? "rgba(255,255,255,0.22)" : "var(--cf-e6e2da, #E6E2DA)",
+                      color: activa ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                     }}
                   >
                     {tab.badge}
@@ -1458,9 +1458,9 @@ export function ConsolaEnvioPedidosTaller({
           style={{
             padding: "11px 14px",
             borderRadius: "10px",
-            background: "#FAF2F2",
-            border: "1px solid #E5CACA",
-            color: "#8A2E2E",
+            background: "var(--cf-faf2f2, #FAF2F2)",
+            border: "1px solid var(--cb-e5caca, #E5CACA)",
+            color: "var(--ct-8a2e2e, #8A2E2E)",
             fontSize: "0.83rem",
           }}
         >
@@ -1473,9 +1473,9 @@ export function ConsolaEnvioPedidosTaller({
           style={{
             padding: "11px 14px",
             borderRadius: "10px",
-            background: "#F2F6F3",
-            border: "1px solid #CEDDD3",
-            color: "#2B4A36",
+            background: "var(--cf-f2f6f3, #F2F6F3)",
+            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+            color: "var(--ct-2b4a36, #2B4A36)",
             fontSize: "0.83rem",
             display: "flex",
             alignItems: "center",
@@ -1511,8 +1511,8 @@ export function ConsolaEnvioPedidosTaller({
 
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "16px",
               padding: "16px",
               display: "flex",
@@ -1573,9 +1573,9 @@ export function ConsolaEnvioPedidosTaller({
                       padding: "6px 11px",
                       borderRadius: "999px",
                       border:
-                        filtroBandeja === f.id ? "1px solid #2F4737" : "1px solid #D5CFC4",
-                      background: filtroBandeja === f.id ? "#F2F6F3" : "#FFFFFF",
-                      color: filtroBandeja === f.id ? "#2B4A36" : "#57524C",
+                        filtroBandeja === f.id ? "1px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: filtroBandeja === f.id ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-ffffff, #FFFFFF)",
+                      color: filtroBandeja === f.id ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-57524c, #57524C)",
                       fontSize: "0.76rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1656,9 +1656,9 @@ export function ConsolaEnvioPedidosTaller({
                 <div
                   style={{
                     padding: "12px",
-                    background: "#F8F7F4",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
                     borderRadius: "10px",
-                    border: "1px solid #E6E2DA",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     display: "grid",
                     gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
                     gap: "12px",
@@ -1675,7 +1675,7 @@ export function ConsolaEnvioPedidosTaller({
                       ))}
                     </ul>
                     {resolverClasif(o) !== "EXEQUIALES" && o.dedicatoria && (
-                      <div style={{ marginTop: "6px", color: "#745622" }}>
+                      <div style={{ marginTop: "6px", color: "var(--ct-745622, #745622)" }}>
                         💌 <strong>Dedicatoria:</strong> {o.dedicatoria}
                       </div>
                     )}
@@ -1752,9 +1752,9 @@ export function ConsolaEnvioPedidosTaller({
                             gap: "5px",
                             padding: "5px 10px",
                             borderRadius: "7px",
-                            border: "1px solid #CEDDD3",
-                            background: "#F2F6F3",
-                            color: "#2B4A36",
+                            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                            background: "var(--cf-f2f6f3, #F2F6F3)",
+                            color: "var(--ct-2b4a36, #2B4A36)",
                             fontSize: "0.74rem",
                             fontWeight: 700,
                             cursor: "pointer",
@@ -1780,8 +1780,8 @@ export function ConsolaEnvioPedidosTaller({
         <form
           onSubmit={(e) => void handleGuardarLlamadaExequiales(e)}
           style={{
-            background: "#FFFFFF",
-            border: "2px solid #DDD8CE",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "2px solid var(--cb-ddd8ce, #DDD8CE)",
             borderRadius: "16px",
             padding: "20px",
             display: "flex",
@@ -1795,8 +1795,8 @@ export function ConsolaEnvioPedidosTaller({
                 width: "40px",
                 height: "40px",
                 borderRadius: "10px",
-                background: "#F8F7F4",
-                color: "#3A3530",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                color: "var(--ct-3a3530, #3A3530)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1805,12 +1805,12 @@ export function ConsolaEnvioPedidosTaller({
               <PhoneCall size={20} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1F1C19" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Exequiales → Envío Directo a Taller
               </h3>
               <span
                 className="ocultar-en-movil eco-ocultar-subtitulo-movil"
-                style={{ fontSize: "0.78rem", color: "#847D74" }}
+                style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)" }}
               >
                 Notifica en vivo al Taller y deja precargada la orden para Confirmación de Entregas.
               </span>
@@ -1840,9 +1840,9 @@ export function ConsolaEnvioPedidosTaller({
                       flex: "1 1 190px",
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      border: activo ? "2px solid #3A3530" : "1px solid #D5CFC4",
-                      background: activo ? "#3A3530" : "#FFFFFF",
-                      color: activo ? "#FFFFFF" : "#221E1B",
+                      border: activo ? "2px solid var(--cb-3a3530, #3A3530)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: activo ? "#3A3530" : "var(--cf-ffffff, #FFFFFF)",
+                      color: activo ? "#FFFFFF" : "var(--ct-221e1b, #221E1B)",
                       fontSize: "0.83rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1882,9 +1882,9 @@ export function ConsolaEnvioPedidosTaller({
                   style={{
                     padding: "4px 10px",
                     borderRadius: "999px",
-                    border: "1px solid #D5CFC4",
-                    background: exeqFechaEntrega === hoyYmd ? "#1F1C19" : "#F8F7F4",
-                    color: exeqFechaEntrega === hoyYmd ? "#FFFFFF" : "#57524C",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: exeqFechaEntrega === hoyYmd ? "#1F1C19" : "var(--cf-f8f7f4, #F8F7F4)",
+                    color: exeqFechaEntrega === hoyYmd ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                     fontSize: "0.74rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1898,11 +1898,11 @@ export function ConsolaEnvioPedidosTaller({
                   style={{
                     padding: "4px 10px",
                     borderRadius: "999px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     background:
-                      exeqFechaEntrega === sumarDiasYmd(hoyYmd, 1) ? "#1F1C19" : "#F8F7F4",
+                      exeqFechaEntrega === sumarDiasYmd(hoyYmd, 1) ? "#1F1C19" : "var(--cf-f8f7f4, #F8F7F4)",
                     color:
-                      exeqFechaEntrega === sumarDiasYmd(hoyYmd, 1) ? "#FFFFFF" : "#57524C",
+                      exeqFechaEntrega === sumarDiasYmd(hoyYmd, 1) ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                     fontSize: "0.74rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1940,7 +1940,7 @@ export function ConsolaEnvioPedidosTaller({
                   required
                   value={exeqHora}
                   onChange={(e) => setExeqHora(e.target.value)}
-                  style={{ ...inputStyle, marginTop: "6px", border: "1.5px solid #3A3530", fontWeight: 700 }}
+                  style={{ ...inputStyle, marginTop: "6px", border: "1.5px solid var(--cb-3a3530, #3A3530)", fontWeight: 700 }}
                 />
               )}
             </div>
@@ -1960,9 +1960,9 @@ export function ConsolaEnvioPedidosTaller({
                     style={{
                       padding: "7px 14px",
                       borderRadius: "999px",
-                      border: activo ? "2px solid #2F4737" : "1px solid #D5CFC4",
-                      background: activo ? "#F2F6F3" : "#FFFFFF",
-                      color: activo ? "#2B4A36" : "#57524C",
+                      border: activo ? "2px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: activo ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-ffffff, #FFFFFF)",
+                      color: activo ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-57524c, #57524C)",
                       fontSize: "0.82rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2003,9 +2003,9 @@ export function ConsolaEnvioPedidosTaller({
                     style={{
                       padding: "10px",
                       borderRadius: "10px",
-                      border: activa ? "2px solid #2F4737" : "1px solid #D5CFC4",
-                      background: activa ? "#2F4737" : "#FFFFFF",
-                      color: activa ? "#FFFFFF" : "#1F1C19",
+                      border: activa ? "2px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: activa ? "#2F4737" : "var(--cf-ffffff, #FFFFFF)",
+                      color: activa ? "#FFFFFF" : "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.82rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2027,7 +2027,7 @@ export function ConsolaEnvioPedidosTaller({
             }}
           >
             <div>
-              <label style={{ ...labelStyle, color: "#3A3530" }}>
+              <label style={{ ...labelStyle, color: "var(--ct-3a3530, #3A3530)" }}>
                 Persona Fallecida (Destinatario) *
               </label>
               <input
@@ -2036,7 +2036,7 @@ export function ConsolaEnvioPedidosTaller({
                 value={exeqFallecido}
                 onChange={(e) => setExeqFallecido(e.target.value)}
                 placeholder="Nombre completo de la persona fallecida (requerido)"
-                style={{ ...inputStyle, border: "1.5px solid #4A453F" }}
+                style={{ ...inputStyle, border: "1.5px solid var(--cb-4a453f, #4A453F)" }}
               />
             </div>
 
@@ -2085,8 +2085,8 @@ export function ConsolaEnvioPedidosTaller({
       {pestana === "cargar_manual" && (
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #E6E2DA",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "16px",
             padding: "20px",
             display: "flex",
@@ -2095,12 +2095,12 @@ export function ConsolaEnvioPedidosTaller({
           }}
         >
           <div>
-            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1F1C19" }}>
+            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Pedido Manual (WhatsApp / Teléfono / Tienda)
             </h3>
             <span
               className="ocultar-en-movil eco-ocultar-subtitulo-movil"
-              style={{ fontSize: "0.79rem", color: "#847D74" }}
+              style={{ fontSize: "0.79rem", color: "var(--ct-847d74, #847D74)" }}
             >
               Programa la fecha real de entrega (hoy, mañana o cualquier día futuro) y elige si
               dejarlo pendiente de validación o enviarlo de una vez al Taller.
@@ -2158,11 +2158,11 @@ export function ConsolaEnvioPedidosTaller({
               style={{
                 padding: "12px 14px",
                 borderRadius: "10px",
-                background: "#F4F2EE",
-                border: "1px solid #DDD8CE",
+                background: "var(--cf-f4f2ee, #F4F2EE)",
+                border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
               }}
             >
-              <label style={{ ...labelStyle, color: "#3A3530" }}>Sala Exequiales</label>
+              <label style={{ ...labelStyle, color: "var(--ct-3a3530, #3A3530)" }}>Sala Exequiales</label>
               <SelectConBuscador
                 value={manSalaServicio}
                 onChange={(e) => setManSalaServicio(e.target.value)}
@@ -2183,15 +2183,15 @@ export function ConsolaEnvioPedidosTaller({
             style={{
               padding: "14px",
               borderRadius: "12px",
-              background: "#F2F6F3",
-              border: "1px solid #CEDDD3",
+              background: "var(--cf-f2f6f3, #F2F6F3)",
+              border: "1px solid var(--cb-ceddd3, #CEDDD3)",
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
               gap: "14px",
             }}
           >
             <div>
-              <label style={{ ...labelStyle, color: "#2B4A36" }}>
+              <label style={{ ...labelStyle, color: "var(--ct-2b4a36, #2B4A36)" }}>
                 📅 Fecha de Entrega * (Dato principal)
               </label>
               <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
@@ -2208,8 +2208,8 @@ export function ConsolaEnvioPedidosTaller({
                       padding: "5px 11px",
                       borderRadius: "999px",
                       border: "1px solid #2F4737",
-                      background: manFechaEntrega === b.ymd ? "#2F4737" : "#FFFFFF",
-                      color: manFechaEntrega === b.ymd ? "#FFFFFF" : "#2B4A36",
+                      background: manFechaEntrega === b.ymd ? "#2F4737" : "var(--cf-ffffff, #FFFFFF)",
+                      color: manFechaEntrega === b.ymd ? "#FFFFFF" : "var(--ct-2b4a36, #2B4A36)",
                       fontSize: "0.75rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2228,7 +2228,7 @@ export function ConsolaEnvioPedidosTaller({
             </div>
 
             <div>
-              <label style={{ ...labelStyle, color: "#2B4A36" }}>
+              <label style={{ ...labelStyle, color: "var(--ct-2b4a36, #2B4A36)" }}>
                 ⏳ Hora de Entrega * (Rango u Hora exacta)
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -2241,10 +2241,10 @@ export function ConsolaEnvioPedidosTaller({
                       borderRadius: "9px",
                       border:
                         manModoHorario === "LO_ANTES_POSIBLE"
-                          ? "2px solid #3A3530"
-                          : "1px solid #D5CFC4",
-                      background: manModoHorario === "LO_ANTES_POSIBLE" ? "#3A3530" : "#FFFFFF",
-                      color: manModoHorario === "LO_ANTES_POSIBLE" ? "#FFFFFF" : "#221E1B",
+                          ? "2px solid var(--cb-3a3530, #3A3530)"
+                          : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: manModoHorario === "LO_ANTES_POSIBLE" ? "#3A3530" : "var(--cf-ffffff, #FFFFFF)",
+                      color: manModoHorario === "LO_ANTES_POSIBLE" ? "#FFFFFF" : "var(--ct-221e1b, #221E1B)",
                       fontSize: "0.82rem",
                       fontWeight: 700,
                       textAlign: "left",
@@ -2264,9 +2264,9 @@ export function ConsolaEnvioPedidosTaller({
                       style={{
                         padding: "8px 12px",
                         borderRadius: "9px",
-                        border: activo ? "2px solid #1F1C19" : "1px solid #D5CFC4",
-                        background: activo ? "#1F1C19" : "#FFFFFF",
-                        color: activo ? "#FFFFFF" : "#221E1B",
+                        border: activo ? "2px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: activo ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                        color: activo ? "#FFFFFF" : "var(--ct-221e1b, #221E1B)",
                         fontSize: "0.82rem",
                         fontWeight: 700,
                         textAlign: "left",
@@ -2286,9 +2286,9 @@ export function ConsolaEnvioPedidosTaller({
                     border:
                       manModoHorario === "HORA_EXACTA"
                         ? "2px solid #2F4737"
-                        : "1px solid #D5CFC4",
-                    background: manModoHorario === "HORA_EXACTA" ? "#2F4737" : "#FFFFFF",
-                    color: manModoHorario === "HORA_EXACTA" ? "#FFFFFF" : "#221E1B",
+                        : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: manModoHorario === "HORA_EXACTA" ? "#2F4737" : "var(--cf-ffffff, #FFFFFF)",
+                    color: manModoHorario === "HORA_EXACTA" ? "#FFFFFF" : "var(--ct-221e1b, #221E1B)",
                     fontSize: "0.82rem",
                     fontWeight: 700,
                     textAlign: "left",
@@ -2315,8 +2315,8 @@ export function ConsolaEnvioPedidosTaller({
             style={{
               padding: "14px",
               borderRadius: "12px",
-              background: "#F8F7F4",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               display: "flex",
               flexDirection: "column",
               gap: "10px",
@@ -2406,8 +2406,8 @@ export function ConsolaEnvioPedidosTaller({
                       alignItems: "center",
                       padding: "7px 10px",
                       borderRadius: "8px",
-                      background: "#FFFFFF",
-                      border: "1px solid #D5CFC4",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                       fontSize: "0.82rem",
                     }}
                   >
@@ -2424,7 +2424,7 @@ export function ConsolaEnvioPedidosTaller({
                       style={{
                         border: "none",
                         background: "transparent",
-                        color: "#8A2E2E",
+                        color: "var(--ct-8a2e2e, #8A2E2E)",
                         cursor: "pointer",
                       }}
                     >
@@ -2588,7 +2588,7 @@ export function ConsolaEnvioPedidosTaller({
                       gap: "6px",
                       fontSize: "0.75rem",
                       marginTop: "6px",
-                      color: "#57524C",
+                      color: "var(--ct-57524c, #57524C)",
                       cursor: "pointer",
                     }}
                   >
@@ -2640,11 +2640,11 @@ export function ConsolaEnvioPedidosTaller({
                         gap: "4px",
                         padding: "3px 8px",
                         borderRadius: "999px",
-                        border: yaEsta ? `1.5px solid #1F1C19` : `1px solid ${c.bordeHex}`,
-                        background: yaEsta ? "#F4F2EE" : "#FFFFFF",
+                        border: yaEsta ? `1.5px solid var(--cb-1f1c19, #1F1C19)` : `1px solid ${c.bordeHex}`,
+                        background: yaEsta ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.72rem",
                         fontWeight: yaEsta ? 700 : 500,
-                        color: "#221E1B",
+                        color: "var(--ct-221e1b, #221E1B)",
                         cursor: "pointer",
                       }}
                     >
@@ -2654,7 +2654,7 @@ export function ConsolaEnvioPedidosTaller({
                           height: "8px",
                           borderRadius: "50%",
                           background: c.hex,
-                          border: "1px solid #847D74",
+                          border: "1px solid var(--cb-847d74, #847D74)",
                           display: "inline-block",
                         }}
                       />
@@ -2695,7 +2695,7 @@ export function ConsolaEnvioPedidosTaller({
               gap: "10px",
               flexWrap: "wrap",
               paddingTop: "8px",
-              borderTop: "1px solid #F4F2EE",
+              borderTop: "1px solid var(--cb-f4f2ee, #F4F2EE)",
             }}
           >
             <button
@@ -2710,9 +2710,9 @@ export function ConsolaEnvioPedidosTaller({
                 gap: "6px",
                 padding: "10px 16px",
                 borderRadius: "10px",
-                border: "1px solid #1F1C19",
-                background: "#FFFFFF",
-                color: "#1F1C19",
+                border: "1px solid var(--cb-1f1c19, #1F1C19)",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 fontSize: "0.84rem",
                 fontWeight: 700,
                 cursor: guardandoManual ? "wait" : "pointer",
@@ -2790,7 +2790,7 @@ export function ConsolaEnvioPedidosTaller({
             onClick={(ev) => ev.stopPropagation()}
             onSubmit={(e) => void handleGuardarEdicionModal(e)}
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "20px",
               maxWidth: "520px",
@@ -2803,7 +2803,7 @@ export function ConsolaEnvioPedidosTaller({
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <strong style={{ fontSize: "0.98rem", color: "#1F1C19" }}>
+              <strong style={{ fontSize: "0.98rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Editar Pedido ({ordenEditando.codigo})
               </strong>
               <button
@@ -2813,7 +2813,7 @@ export function ConsolaEnvioPedidosTaller({
                 aria-label="Cerrar"
                 style={{
                   border: "none",
-                  background: "#F4F2EE",
+                  background: "var(--cf-f4f2ee, #F4F2EE)",
                   borderRadius: "8px",
                   width: "30px",
                   height: "30px",
@@ -2827,13 +2827,13 @@ export function ConsolaEnvioPedidosTaller({
             {errorModalOrden && (
               <div
                 style={{
-                  background: "#FAF2F2",
-                  border: "1px solid #E5CACA",
+                  background: "var(--cf-faf2f2, #FAF2F2)",
+                  border: "1px solid var(--cb-e5caca, #E5CACA)",
                   borderRadius: "8px",
                   padding: "8px 11px",
                   fontSize: "0.78rem",
                   fontWeight: 600,
-                  color: "#8A2E2E",
+                  color: "var(--ct-8a2e2e, #8A2E2E)",
                 }}
               >
                 {errorModalOrden}
@@ -2894,7 +2894,7 @@ export function ConsolaEnvioPedidosTaller({
 
               {resolverClasif(ordenEditando) === "EXEQUIALES" ? (
                 <div>
-                  <label style={{ ...labelStyle, color: "#3A3530" }}>Sala Exequiales</label>
+                  <label style={{ ...labelStyle, color: "var(--ct-3a3530, #3A3530)" }}>Sala Exequiales</label>
                   <SelectConBuscador
                     value={ordenEditando.salaServicio ?? ""}
                     onChange={(e) =>
@@ -2961,7 +2961,7 @@ export function ConsolaEnvioPedidosTaller({
                 </div>
                 {editModoHorario === "HORA_EXACTA" && (
                   <div>
-                    <label style={{ ...labelStyle, color: "#2F4737" }}>Hora Exacta *</label>
+                    <label style={{ ...labelStyle, color: "var(--ct-2f4737, #2F4737)" }}>Hora Exacta *</label>
                     <input
                       type="time"
                       required
@@ -2975,7 +2975,7 @@ export function ConsolaEnvioPedidosTaller({
             ) : (
               editModoHorario === "HORA_EXACTA" && (
                 <div>
-                  <label style={{ ...labelStyle, color: "#2F4737" }}>
+                  <label style={{ ...labelStyle, color: "var(--ct-2f4737, #2F4737)" }}>
                     Indicar Hora Exacta de Entrega *
                   </label>
                   <input
@@ -3093,7 +3093,7 @@ export function ConsolaEnvioPedidosTaller({
                     <label style={{ ...labelStyle, marginBottom: 0 }}>
                       Dirección de Entrega
                     </label>
-                    <label style={{ fontSize: "0.74rem", color: "#57524C", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                    <label style={{ fontSize: "0.74rem", color: "var(--ct-57524c, #57524C)", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
                       <input
                         type="checkbox"
                         checked={Boolean(ordenEditando.retiroEnLocal)}
@@ -3137,7 +3137,7 @@ export function ConsolaEnvioPedidosTaller({
                       style={{
                         border: "none",
                         background: "transparent",
-                        color: "#221E1B",
+                        color: "var(--ct-221e1b, #221E1B)",
                         fontSize: "0.73rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -3214,8 +3214,8 @@ export function ConsolaEnvioPedidosTaller({
                 style={{
                   padding: "8px 14px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   fontSize: "0.82rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -3282,7 +3282,7 @@ export function ConsolaEnvioPedidosTaller({
             style={{
               width: "100%",
               maxWidth: "460px",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "20px",
               display: "flex",
@@ -3292,7 +3292,7 @@ export function ConsolaEnvioPedidosTaller({
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1rem", color: "#8A2E2E" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", color: "var(--ct-8a2e2e, #8A2E2E)" }}>
                 {ordenAEliminar.eliminadoEn
                   ? `Eliminar definitivamente ${ordenAEliminar.codigo}`
                   : `Eliminar pedido ${ordenAEliminar.codigo}`}
@@ -3305,7 +3305,7 @@ export function ConsolaEnvioPedidosTaller({
                   border: "none",
                   background: "transparent",
                   cursor: "pointer",
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                 }}
               >
                 <X size={18} />
@@ -3316,26 +3316,26 @@ export function ConsolaEnvioPedidosTaller({
               style={{
                 padding: "10px 12px",
                 borderRadius: "9px",
-                background: "#F8F7F4",
-                border: "1px solid #E6E2DA",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 fontSize: "0.82rem",
-                color: "#57524C",
+                color: "var(--ct-57524c, #57524C)",
               }}
             >
               <strong>{ordenAEliminar.productoResumen}</strong>
-              <div style={{ fontSize: "0.75rem", color: "#847D74", marginTop: "3px" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--ct-847d74, #847D74)", marginTop: "3px" }}>
                 Solicita: {ordenAEliminar.clienteSolicita} · Entrega: {ordenAEliminar.fechaEntrega}
               </div>
             </div>
 
             {ordenAEliminar.eliminadoEn ? (
-              <p style={{ margin: 0, fontSize: "0.82rem", color: "#8A2E2E", lineHeight: 1.45 }}>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--ct-8a2e2e, #8A2E2E)", lineHeight: 1.45 }}>
                 Esta acción eliminará el registro de forma <strong>permanente e irreversible</strong>{" "}
                 de la base de datos (taller, proforma y evidencia asociada).
               </p>
             ) : (
               <>
-                <p style={{ margin: 0, fontSize: "0.81rem", color: "#57524C", lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: "0.81rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.45 }}>
                   {esAdminEstricto
                     ? "Como Administrador puedes enviarlo a Papelera (borrado lógico reversible) o eliminarlo definitivamente."
                     : "El pedido dejará de mostrarse en las bandejas operativas y quedará archivado en la Papelera (solo visible para el Administrador)."}
@@ -3361,9 +3361,9 @@ export function ConsolaEnvioPedidosTaller({
                 style={{
                   padding: "8px 13px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#57524C",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-57524c, #57524C)",
                   fontSize: "0.8rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -3383,9 +3383,9 @@ export function ConsolaEnvioPedidosTaller({
                     gap: "5px",
                     padding: "8px 14px",
                     borderRadius: "8px",
-                    border: "1px solid #DEBABA",
-                    background: esAdminEstricto ? "#FAF2F2" : "#8A2E2E",
-                    color: esAdminEstricto ? "#8A2E2E" : "#FFFFFF",
+                    border: "1px solid var(--cb-debaba, #DEBABA)",
+                    background: esAdminEstricto ? "var(--cf-faf2f2, #FAF2F2)" : "#8A2E2E",
+                    color: esAdminEstricto ? "var(--ct-8a2e2e, #8A2E2E)" : "#FFFFFF",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     cursor: procesandoEliminacion ? "wait" : "pointer",

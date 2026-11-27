@@ -146,8 +146,8 @@ export function FormularioInvitacionEquipo({
   return (
     <section
       style={{
-        background: "#FFFFFF",
-        border: "1px solid #E5DFD5",
+        background: "var(--cf-ffffff, #FFFFFF)",
+        border: "1px solid var(--cb-e5dfd5, #E5DFD5)",
         borderRadius: 16,
         padding: "clamp(14px, 3.5vw, 24px)",
         marginBottom: 24,
@@ -170,8 +170,8 @@ export function FormularioInvitacionEquipo({
               width: 38,
               height: 38,
               borderRadius: 10,
-              background: "#F5F2EB",
-              color: "#2D3D30",
+              background: "var(--cf-f5f2eb, #F5F2EB)",
+              color: "var(--ct-2d3d30, #2D3D30)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -185,12 +185,12 @@ export function FormularioInvitacionEquipo({
                 margin: 0,
                 fontSize: "0.9rem",
                 fontWeight: 700,
-                color: "#1C261F",
+                color: "var(--ct-1c261f, #1C261F)",
               }}
             >
               Invitar Miembro del Equipo por Correo
             </h2>
-            <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#6B746C" }}>
+            <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--ct-6b746c, #6B746C)" }}>
               Envía una invitación definiendo su rol exacto (Ventas, Taller, Delivery Interno, Delivery Subcontratado, Operador o Administrador).
             </p>
           </div>
@@ -212,7 +212,7 @@ export function FormularioInvitacionEquipo({
               display: "block",
               fontSize: "0.75rem",
               fontWeight: 700,
-              color: "#4A544C",
+              color: "var(--ct-4a544c, #4A544C)",
               marginBottom: 6,
               textTransform: "uppercase",
               letterSpacing: "0.04em",
@@ -230,10 +230,10 @@ export function FormularioInvitacionEquipo({
               width: "100%",
               padding: "10px 12px",
               borderRadius: 10,
-              border: "1px solid #D6CFC2",
+              border: "1px solid var(--cb-d6cfc2, #D6CFC2)",
               fontSize: "0.88rem",
-              color: "#1C261F",
-              background: "#FDFBF7",
+              color: "var(--ct-1c261f, #1C261F)",
+              background: "var(--cf-fdfbf7, #FDFBF7)",
               boxSizing: "border-box",
             }}
           />
@@ -245,7 +245,7 @@ export function FormularioInvitacionEquipo({
               display: "block",
               fontSize: "0.75rem",
               fontWeight: 700,
-              color: "#4A544C",
+              color: "var(--ct-4a544c, #4A544C)",
               marginBottom: 6,
               textTransform: "uppercase",
               letterSpacing: "0.04em",
@@ -262,10 +262,10 @@ export function FormularioInvitacionEquipo({
               width: "100%",
               padding: "10px 12px",
               borderRadius: 10,
-              border: "1px solid #D6CFC2",
+              border: "1px solid var(--cb-d6cfc2, #D6CFC2)",
               fontSize: "0.88rem",
-              color: "#1C261F",
-              background: "#FDFBF7",
+              color: "var(--ct-1c261f, #1C261F)",
+              background: "var(--cf-fdfbf7, #FDFBF7)",
               boxSizing: "border-box",
             }}
           />
@@ -277,7 +277,7 @@ export function FormularioInvitacionEquipo({
               display: "block",
               fontSize: "0.75rem",
               fontWeight: 700,
-              color: "#4A544C",
+              color: "var(--ct-4a544c, #4A544C)",
               marginBottom: 6,
               textTransform: "uppercase",
               letterSpacing: "0.04em",
@@ -292,11 +292,11 @@ export function FormularioInvitacionEquipo({
               width: "100%",
               padding: "10px 12px",
               borderRadius: 10,
-              border: "1px solid #D6CFC2",
+              border: "1px solid var(--cb-d6cfc2, #D6CFC2)",
               fontSize: "0.88rem",
               fontWeight: 600,
-              color: "#1C261F",
-              background: "#FDFBF7",
+              color: "var(--ct-1c261f, #1C261F)",
+              background: "var(--cf-fdfbf7, #FDFBF7)",
               boxSizing: "border-box",
             }}
           >
@@ -342,16 +342,16 @@ export function FormularioInvitacionEquipo({
           marginTop: 12,
           padding: "10px 14px",
           borderRadius: 10,
-          background: "#F5F2EB",
-          border: "1px solid #E5DFD5",
+          background: "var(--cf-f5f2eb, #F5F2EB)",
+          border: "1px solid var(--cb-e5dfd5, #E5DFD5)",
           display: "flex",
           alignItems: "center",
           gap: 8,
           fontSize: "0.8rem",
-          color: "#2D3D30",
+          color: "var(--ct-2d3d30, #2D3D30)",
         }}
       >
-        <ShieldCheck size={16} style={{ flexShrink: 0, color: "#C27D5F" }} />
+        <ShieldCheck size={16} style={{ flexShrink: 0, color: "var(--ct-c27d5f, #C27D5F)" }} />
         <span>
           <strong>Permisos de {rolSeleccionadoInfo.etiqueta}:</strong> {rolSeleccionadoInfo.resumen}
         </span>
@@ -363,9 +363,9 @@ export function FormularioInvitacionEquipo({
             marginTop: 12,
             padding: "10px 14px",
             borderRadius: 10,
-            background: "#F2F6F3",
-            border: "1px solid #CEDDD3",
-            color: "#2B4A36",
+            background: "var(--cf-f2f6f3, #F2F6F3)",
+            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+            color: "var(--ct-2b4a36, #2B4A36)",
             fontSize: "0.83rem",
             fontWeight: 600,
           }}
@@ -380,9 +380,9 @@ export function FormularioInvitacionEquipo({
             marginTop: 12,
             padding: "10px 14px",
             borderRadius: 10,
-            background: "#FAF2F2",
-            border: "1px solid #E5CACA",
-            color: "#8A2E2E",
+            background: "var(--cf-faf2f2, #FAF2F2)",
+            border: "1px solid var(--cb-e5caca, #E5CACA)",
+            color: "var(--ct-8a2e2e, #8A2E2E)",
             fontSize: "0.83rem",
             fontWeight: 600,
           }}
@@ -399,7 +399,7 @@ export function FormularioInvitacionEquipo({
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.06em",
-              color: "#6B746C",
+              color: "var(--ct-6b746c, #6B746C)",
               marginBottom: 10,
             }}
           >
@@ -420,12 +420,12 @@ export function FormularioInvitacionEquipo({
                     gap: 10,
                     padding: "10px 14px",
                     borderRadius: 10,
-                    border: "1px solid #E5DFD5",
-                    background: "#FDFBF7",
+                    border: "1px solid var(--cb-e5dfd5, #E5DFD5)",
+                    background: "var(--cf-fdfbf7, #FDFBF7)",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <span style={{ fontWeight: 700, fontSize: "0.86rem", color: "#1C261F" }}>
+                    <span style={{ fontWeight: 700, fontSize: "0.86rem", color: "var(--ct-1c261f, #1C261F)" }}>
                       {inv.nombre ? `${inv.nombre} (${inv.correo})` : inv.correo}
                     </span>
                     <span
@@ -447,7 +447,7 @@ export function FormularioInvitacionEquipo({
                         gap: 4,
                         fontSize: "0.74rem",
                         fontWeight: 600,
-                        color: inv.estado === "ACEPTADA" ? "#2F4737" : "#745622",
+                        color: inv.estado === "ACEPTADA" ? "var(--ct-2f4737, #2F4737)" : "var(--ct-745622, #745622)",
                       }}
                     >
                       {inv.estado === "ACEPTADA" ? (
@@ -474,9 +474,9 @@ export function FormularioInvitacionEquipo({
                       gap: 5,
                       padding: "5px 10px",
                       borderRadius: 8,
-                      border: "1px solid #E5CACA",
-                      background: "#FAF2F2",
-                      color: "#8A2E2E",
+                      border: "1px solid var(--cb-e5caca, #E5CACA)",
+                      background: "var(--cf-faf2f2, #FAF2F2)",
+                      color: "var(--ct-8a2e2e, #8A2E2E)",
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",

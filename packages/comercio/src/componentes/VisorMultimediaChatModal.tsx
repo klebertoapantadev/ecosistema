@@ -198,7 +198,7 @@ export function ModalVisorImagenChat({
           padding: "10px 14px",
           borderRadius: "12px",
           background: "rgba(15, 23, 42, 0.78)",
-          border: "1px solid rgba(255, 255, 255, 0.14)",
+          border: "1px solid var(--cb-ffffff-a140, rgba(255, 255, 255, 0.14))",
           color: "#FFFFFF",
         }}
       >
@@ -243,7 +243,7 @@ export function ModalVisorImagenChat({
               gap: "6px",
               padding: "7px 12px",
               borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.22)",
+              border: "1px solid var(--cb-ffffff-a220, rgba(255,255,255,0.22))",
               background: "rgba(255,255,255,0.1)",
               color: "#FFFFFF",
               fontSize: "0.78rem",
@@ -344,7 +344,7 @@ export function ModalVisorImagenChat({
               width: "34px",
               height: "34px",
               borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.22)",
+              border: "1px solid var(--cb-ffffff-a220, rgba(255,255,255,0.22))",
               background: "rgba(255,255,255,0.12)",
               color: "#FFFFFF",
               cursor: "pointer",
@@ -383,7 +383,7 @@ export function ModalVisorImagenChat({
             transition: "transform 0.18s ease",
             borderRadius: "12px",
             boxShadow: "0 20px 50px rgba(0, 0, 0, 0.55)",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             cursor: zoomActivo ? "zoom-out" : "zoom-in",
             objectFit: "contain",
           }}
@@ -621,9 +621,9 @@ export function ModalReenviarMensajeChat({
           maxWidth: "520px",
           maxHeight: "90vh",
           overflowY: "auto",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
           boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)",
           padding: "18px",
           display: "flex",
@@ -633,8 +633,8 @@ export function ModalReenviarMensajeChat({
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Forward size={18} style={{ color: "#0F172A" }} />
-            <strong style={{ fontSize: "0.96rem", color: "#0F172A" }}>
+            <Forward size={18} style={{ color: "var(--ct-0f172a, #0F172A)" }} />
+            <strong style={{ fontSize: "0.96rem", color: "var(--ct-0f172a, #0F172A)" }}>
               Reenviar {datos.imagenUrl ? "Fotografía" : "Mensaje"}
             </strong>
           </div>
@@ -645,7 +645,7 @@ export function ModalReenviarMensajeChat({
             aria-label="Cerrar"
             style={{
               border: "none",
-              background: "#F1F5F9",
+              background: "var(--cf-f1f5f9, #F1F5F9)",
               borderRadius: "8px",
               width: "30px",
               height: "30px",
@@ -665,10 +665,10 @@ export function ModalReenviarMensajeChat({
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gap: "8px",
-            background: "#F8FAFC",
+            background: "var(--cf-f8fafc, #F8FAFC)",
             padding: "4px",
             borderRadius: "10px",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
           }}
         >
           <button
@@ -728,8 +728,8 @@ export function ModalReenviarMensajeChat({
             alignItems: "center",
             padding: "10px",
             borderRadius: "10px",
-            background: "#F8FAFC",
-            border: "1px solid #E2E8F0",
+            background: "var(--cf-f8fafc, #F8FAFC)",
+            border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
           }}
         >
           {datos.imagenUrl && (
@@ -741,14 +741,14 @@ export function ModalReenviarMensajeChat({
                 height: "64px",
                 objectFit: "cover",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                 flexShrink: 0,
               }}
             />
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: "3px", minWidth: 0 }}>
             {datos.contextoCliente?.clienteNombre && (
-              <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#475569" }}>
+              <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "var(--ct-475569, #475569)" }}>
                 Origen: {datos.contextoCliente.clienteNombre}
                 {datos.contextoCliente.clienteTelefono
                   ? ` (${datos.contextoCliente.clienteTelefono})`
@@ -758,7 +758,7 @@ export function ModalReenviarMensajeChat({
             <span
               style={{
                 fontSize: "0.8rem",
-                color: "#0F172A",
+                color: "var(--ct-0f172a, #0F172A)",
                 display: "-webkit-box",
                 WebkitLineClamp: 3,
                 WebkitBoxOrient: "vertical",
@@ -777,7 +777,7 @@ export function ModalReenviarMensajeChat({
           {destino === "equipo" ? (
             <>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#475569" }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-475569, #475569)" }}>
                   Mencionar rápido para que respondan (clic para insertar):
                 </span>
                 <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
@@ -803,9 +803,9 @@ export function ModalReenviarMensajeChat({
                         gap: "3px",
                         padding: "3px 9px",
                         borderRadius: "999px",
-                        border: "1px solid #DDD6FE",
-                        background: "#F5F3FF",
-                        color: "#5B21B6",
+                        border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                        background: "var(--cf-f5f3ff, #F5F3FF)",
+                        color: "var(--ct-5b21b6, #5B21B6)",
                         fontSize: "0.73rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -827,7 +827,7 @@ export function ModalReenviarMensajeChat({
                   width: "100%",
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontSize: "0.83rem",
                   fontFamily: "inherit",
                   resize: "vertical",
@@ -838,7 +838,7 @@ export function ModalReenviarMensajeChat({
             <>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <label
-                  style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155" }}
+                  style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-334155, #334155)" }}
                 >
                   Enviar directo a un chat de WhatsApp activo en Tinkay:
                 </label>
@@ -850,7 +850,7 @@ export function ModalReenviarMensajeChat({
                       left: "10px",
                       top: "50%",
                       transform: "translateY(-50%)",
-                      color: "#94A3B8",
+                      color: "var(--ct-94a3b8, #94A3B8)",
                     }}
                   />
                   <input
@@ -862,7 +862,7 @@ export function ModalReenviarMensajeChat({
                       width: "100%",
                       padding: "7px 10px 7px 30px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.8rem",
                     }}
                   />
@@ -872,18 +872,18 @@ export function ModalReenviarMensajeChat({
                   style={{
                     maxHeight: "145px",
                     overflowY: "auto",
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                     borderRadius: "9px",
                     display: "flex",
                     flexDirection: "column",
                   }}
                 >
                   {cargandoMeta ? (
-                    <div style={{ padding: "12px", fontSize: "0.78rem", color: "#64748B" }}>
+                    <div style={{ padding: "12px", fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                       Cargando chats de WhatsApp…
                     </div>
                   ) : chatsFiltrados.length === 0 ? (
-                    <div style={{ padding: "12px", fontSize: "0.78rem", color: "#64748B" }}>
+                    <div style={{ padding: "12px", fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                       No hay conversaciones abiertas con ese filtro. También puedes usar el botón{" "}
                       <strong>WhatsApp Externo</strong> abajo.
                     </div>
@@ -901,9 +901,9 @@ export function ModalReenviarMensajeChat({
                             alignItems: "center",
                             padding: "8px 11px",
                             border: "none",
-                            borderBottom: "1px solid #F1F5F9",
-                            background: sel ? "#ECFDF5" : "#FFFFFF",
-                            color: "#0F172A",
+                            borderBottom: "1px solid var(--cb-f1f5f9, #F1F5F9)",
+                            background: sel ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-ffffff, #FFFFFF)",
+                            color: "var(--ct-0f172a, #0F172A)",
                             fontSize: "0.8rem",
                             fontWeight: sel ? 700 : 500,
                             cursor: "pointer",
@@ -913,12 +913,12 @@ export function ModalReenviarMensajeChat({
                           <span>
                             📱 {ch.nombre}{" "}
                             {ch.telefono ? (
-                              <span style={{ color: "#64748B", fontSize: "0.74rem" }}>
+                              <span style={{ color: "var(--ct-64748b, #64748B)", fontSize: "0.74rem" }}>
                                 ({ch.telefono})
                               </span>
                             ) : null}
                           </span>
-                          {sel && <Check size={15} style={{ color: "#15803D" }} />}
+                          {sel && <Check size={15} style={{ color: "var(--ct-15803d, #15803D)" }} />}
                         </button>
                       );
                     })
@@ -935,7 +935,7 @@ export function ModalReenviarMensajeChat({
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontSize: "0.82rem",
                   fontFamily: "inherit",
                 }}
@@ -948,9 +948,9 @@ export function ModalReenviarMensajeChat({
               style={{
                 padding: "8px 10px",
                 borderRadius: "8px",
-                background: "#FEF2F2",
-                border: "1px solid #FECACA",
-                color: "#991B1B",
+                background: "var(--cf-fef2f2, #FEF2F2)",
+                border: "1px solid var(--cb-fecaca, #FECACA)",
+                color: "var(--ct-991b1b, #991B1B)",
                 fontSize: "0.78rem",
               }}
             >
@@ -985,8 +985,8 @@ export function ModalReenviarMensajeChat({
                   padding: "8px 12px",
                   borderRadius: "9px",
                   border: "1px solid #86EFAC",
-                  background: "#F0FDF4",
-                  color: "#15803D",
+                  background: "var(--cf-f0fdf4, #F0FDF4)",
+                  color: "var(--ct-15803d, #15803D)",
                   fontSize: "0.78rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -1008,9 +1008,9 @@ export function ModalReenviarMensajeChat({
                 style={{
                   padding: "8px 13px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
-                  background: "#FFFFFF",
-                  color: "#334155",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-334155, #334155)",
                   fontSize: "0.8rem",
                   fontWeight: 600,
                   cursor: "pointer",

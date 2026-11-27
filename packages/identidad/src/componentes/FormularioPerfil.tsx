@@ -201,8 +201,8 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
             width: "84px",
             height: "84px",
             borderRadius: "50%",
-            background: "var(--violeta-suave, #F3E8FF)",
-            border: "2px solid var(--blanco, #ffffff)",
+            background: "var(--cf-f3e8ff, var(--violeta-suave, #F3E8FF))",
+            border: "2px solid var(--cb-ffffff, var(--blanco, #ffffff))",
             boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
             display: "flex",
             alignItems: "center",
@@ -219,7 +219,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           ) : (
-            <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+            <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
               {iniciales}
             </span>
           )}
@@ -227,7 +227,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
 
         {/* Acciones de Carga de Foto */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--negro, #111111)" }}>
+          <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))" }}>
             Foto de Perfil
           </div>
           <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)" }}>
@@ -250,9 +250,9 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
               title={fotoUrl ? "Cambiar Foto de perfil" : "Cargar Foto de perfil"}
               aria-label={fotoUrl ? "Cambiar Foto" : "Cargar Foto"}
               style={{
-                background: "var(--blanco, #ffffff)",
+                background: "var(--cf-ffffff, var(--blanco, #ffffff))",
                 border: "1px solid var(--panel-linea, #E4E4E4)",
-                color: "var(--negro, #111111)",
+                color: "var(--ct-111111, var(--negro, #111111))",
                 gap: "6px",
                 display: "inline-flex",
                 alignItems: "center",
@@ -338,7 +338,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
               top: "50%",
               transform: "translateY(-50%)",
               fontSize: "0.78rem",
-              color: "var(--esmeralda, #05876e)",
+              color: "var(--ct-05876e, var(--esmeralda, #05876e))",
               fontWeight: 700,
               display: "flex",
               alignItems: "center",
@@ -354,7 +354,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
 
       {/* Correos Adicionales de Notificación */}
       <div>
-        <label style={{ display: "block", marginBottom: "6px", fontSize: "0.82rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
+        <label style={{ display: "block", marginBottom: "6px", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-111111, var(--negro, #111111))" }}>
           Correos Adicionales para Notificaciones
         </label>
         <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
@@ -381,8 +381,8 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
             title="Agregar correo adicional"
             aria-label="Agregar correo adicional"
             style={{
-              background: "var(--violeta-suave, #F3E8FF)",
-              color: "var(--violeta, #5000BA)",
+              background: "var(--cf-f3e8ff, var(--violeta-suave, #F3E8FF))",
+              color: "var(--ct-5000ba, var(--violeta, #5000BA))",
               border: "1px solid var(--panel-linea, #E4E4E4)",
               fontWeight: 700,
               gap: "4px",
@@ -413,7 +413,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
                   borderRadius: "999px",
                   fontSize: "0.8rem",
                   fontWeight: 600,
-                  color: "var(--negro, #111111)",
+                  color: "var(--ct-111111, var(--negro, #111111))",
                 }}
               >
                 <Mail size={13} color="var(--violeta, #5000BA)" />
@@ -441,7 +441,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
 
       {/* Teléfono WhatsApp con Selector de País (100% Responsive en Móviles) */}
       <div>
-        <label style={{ display: "block", marginBottom: "6px", fontSize: "0.82rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
+        <label style={{ display: "block", marginBottom: "6px", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-111111, var(--negro, #111111))" }}>
           Número de Celular / WhatsApp (Opcional)
         </label>
         <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
@@ -457,8 +457,8 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
                 padding: "0 22px 0 10px",
                 borderRadius: "8px",
                 border: "1px solid var(--panel-linea, #E4E4E4)",
-                background: "var(--blanco, #ffffff)",
-                color: "var(--negro, #111111)",
+                background: "var(--cf-ffffff, var(--blanco, #ffffff))",
+                color: "var(--ct-111111, var(--negro, #111111))",
                 fontSize: "0.88rem",
                 fontWeight: 700,
                 fontFamily: "inherit",
@@ -474,7 +474,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
               }}
             >
               {PAISES_WHATSAPP.map((p) => (
-                <option key={p.codigo} value={p.codigo} style={{ padding: "8px", color: "#111111" }}>
+                <option key={p.codigo} value={p.codigo} style={{ padding: "8px", color: "var(--ct-111111, #111111)" }}>
                   {p.iso} {p.codigo} — {p.nombre}
                 </option>
               ))}
@@ -507,8 +507,8 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
               padding: "0 14px",
               borderRadius: "8px",
               border: "1px solid var(--panel-linea, #E4E4E4)",
-              background: "var(--blanco, #ffffff)",
-              color: "var(--negro, #111111)",
+              background: "var(--cf-ffffff, var(--blanco, #ffffff))",
+              color: "var(--ct-111111, var(--negro, #111111))",
               fontSize: "0.88rem",
               fontFamily: "inherit",
               boxSizing: "border-box",
@@ -540,7 +540,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: "var(--violeta, #5000BA)",
+              color: "var(--ct-5000ba, var(--violeta, #5000BA))",
               fontSize: "0.8rem",
               fontWeight: 700,
               textDecoration: "underline",

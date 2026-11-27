@@ -701,8 +701,8 @@ export function EditorTarjetaPublicoCliente({
         style={{
           minHeight: "100vh",
           width: "100%",
-          backgroundColor: "#F6F4F0",
-          color: "#1F1C19",
+          backgroundColor: "var(--cf-f6f4f0, #F6F4F0)",
+          color: "var(--ct-1f1c19, #1F1C19)",
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           display: "flex",
           flexDirection: "column",
@@ -731,7 +731,7 @@ export function EditorTarjetaPublicoCliente({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1F1C19" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Pedido {datosIniciales.codigo}
               </span>
               <span
@@ -740,14 +740,14 @@ export function EditorTarjetaPublicoCliente({
                   fontWeight: 600,
                   padding: "3px 9px",
                   borderRadius: "999px",
-                  backgroundColor: "#EAE5DC",
-                  color: "#57524C",
+                  backgroundColor: "var(--cf-eae5dc, #EAE5DC)",
+                  color: "var(--ct-57524c, #57524C)",
                 }}
               >
                 Tarjeta impresa
               </span>
             </div>
-            <span style={{ fontSize: "0.74rem", color: "#78716C" }}>{nombreMarca}</span>
+            <span style={{ fontSize: "0.74rem", color: "var(--ct-78716c, #78716C)" }}>{nombreMarca}</span>
           </div>
 
           {exitoMsg && (
@@ -759,9 +759,9 @@ export function EditorTarjetaPublicoCliente({
                 gap: "8px",
                 padding: "10px 14px",
                 borderRadius: "12px",
-                backgroundColor: "#EEF4F0",
-                border: "1px solid #C8D5CB",
-                color: "#2F4737",
+                backgroundColor: "var(--cf-eef4f0, #EEF4F0)",
+                border: "1px solid var(--cb-c8d5cb, #C8D5CB)",
+                color: "var(--ct-2f4737, #2F4737)",
                 fontSize: "0.82rem",
                 fontWeight: 600,
               }}
@@ -774,9 +774,9 @@ export function EditorTarjetaPublicoCliente({
           {/* Tarjeta interior tal como se imprimirá */}
           <div
             style={{
-              backgroundColor: "#FFFFFF",
+              backgroundColor: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "18px",
-              border: "1px solid #E6E2DA",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               boxShadow: "0 12px 32px rgba(31, 28, 25, 0.05)",
               padding: "20px 18px",
               display: "flex",
@@ -791,13 +791,13 @@ export function EditorTarjetaPublicoCliente({
                   margin: 0,
                   fontSize: "1.22rem",
                   fontWeight: 700,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   letterSpacing: "-0.015em",
                 }}
               >
                 Interior de tu tarjeta impresa
               </h1>
-              <p style={{ margin: "4px 0 0 0", fontSize: "0.82rem", color: "#57524C" }}>
+              <p style={{ margin: "4px 0 0 0", fontSize: "0.82rem", color: "var(--ct-57524c, #57524C)" }}>
                 En la tarjeta física imprimimos únicamente la parte interior del díptico.
               </p>
             </div>
@@ -821,9 +821,9 @@ export function EditorTarjetaPublicoCliente({
                 style={{
                   padding: "11px 16px",
                   borderRadius: "12px",
-                  backgroundColor: "#FEF3C7",
-                  border: "1px solid #FDE68A",
-                  color: "#92400E",
+                  backgroundColor: "var(--cf-fef3c7, #FEF3C7)",
+                  border: "1px solid var(--cb-fde68a, #FDE68A)",
+                  color: "var(--ct-92400e, #92400E)",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
@@ -895,9 +895,9 @@ export function EditorTarjetaPublicoCliente({
                       gap: "7px",
                       padding: "12px 16px",
                       borderRadius: "12px",
-                      border: "1px solid #CFC8BC",
-                      backgroundColor: "#FAF8F5",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                      backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.86rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -918,9 +918,9 @@ export function EditorTarjetaPublicoCliente({
                     width: "100%",
                     padding: "13px 15px",
                     borderRadius: "12px",
-                    border: "1px solid #C8D5CB",
-                    backgroundColor: "#EEF4F0",
-                    color: "#2F4737",
+                    border: "1px solid var(--cb-c8d5cb, #C8D5CB)",
+                    backgroundColor: "var(--cf-eef4f0, #EEF4F0)",
+                    color: "var(--ct-2f4737, #2F4737)",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
@@ -946,10 +946,10 @@ export function EditorTarjetaPublicoCliente({
                       <Music size={16} />
                     </div>
                     <div>
-                      <strong style={{ display: "block", fontSize: "0.86rem", color: "#1F1C19" }}>
+                      <strong style={{ display: "block", fontSize: "0.86rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                         Incluir tarjeta digital con audio
                       </strong>
-                      <span style={{ fontSize: "0.75rem", color: "#57524C" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--ct-57524c, #57524C)" }}>
                         Agrega portada animada 3D, canción de fondo, letra y código QR
                       </span>
                     </div>
@@ -1019,7 +1019,7 @@ export function EditorTarjetaPublicoCliente({
                   borderRadius: "999px",
                   backgroundColor: "rgba(255, 255, 255, 0.06)",
                   color: "rgba(228, 228, 231, 0.7)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  border: "1px solid var(--cb-ffffff-a120, rgba(255, 255, 255, 0.12))",
                 }}
               >
                 Condolencias
@@ -1056,7 +1056,7 @@ export function EditorTarjetaPublicoCliente({
                 padding: "5px 11px",
                 borderRadius: "999px",
                 backgroundColor: "rgba(255, 255, 255, 0.08)",
-                border: "1px solid rgba(255, 255, 255, 0.14)",
+                border: "1px solid var(--cb-ffffff-a140, rgba(255, 255, 255, 0.14))",
                 color: "rgba(245, 239, 230, 0.88)",
                 fontSize: "0.73rem",
                 fontWeight: 600,
@@ -1112,8 +1112,8 @@ export function EditorTarjetaPublicoCliente({
                     style={{
                       padding: "11px 16px",
                       borderRadius: "12px",
-                      backgroundColor: "rgba(254, 243, 199, 0.12)",
-                      border: "1px solid rgba(253, 230, 138, 0.32)",
+                      backgroundColor: "var(--cf-fef3c7-a120, rgba(254, 243, 199, 0.12))",
+                      border: "1px solid var(--cb-fde68a-a320, rgba(253, 230, 138, 0.32))",
                       color: "#FDE68A",
                       display: "flex",
                       alignItems: "center",
@@ -1161,10 +1161,10 @@ export function EditorTarjetaPublicoCliente({
                         padding: "12px 26px",
                         borderRadius: "999px",
                         border: esCondolencias
-                          ? "1px solid rgba(228, 228, 231, 0.25)"
-                          : "1px solid rgba(245, 239, 230, 0.25)",
-                        backgroundColor: esCondolencias ? "#F4F3EF" : "#F5EFE6",
-                        color: "#1F1C19",
+                          ? "1px solid var(--cb-e4e4e7-a250, rgba(228, 228, 231, 0.25))"
+                          : "1px solid var(--cb-f5efe6-a250, rgba(245, 239, 230, 0.25))",
+                        backgroundColor: esCondolencias ? "var(--cf-f4f3ef, #F4F3EF)" : "var(--cf-f5efe6, #F5EFE6)",
+                        color: "var(--ct-1f1c19, #1F1C19)",
                         fontSize: "0.9rem",
                         fontWeight: 700,
                         letterSpacing: "0.01em",
@@ -1229,8 +1229,8 @@ export function EditorTarjetaPublicoCliente({
         style={{
           minHeight: "100vh",
           width: "100%",
-          backgroundColor: "#F4F3EF",
-          color: "#27272A",
+          backgroundColor: "var(--cf-f4f3ef, #F4F3EF)",
+          color: "var(--ct-27272a, #27272A)",
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           display: "flex",
           flexDirection: "column",
@@ -1269,9 +1269,9 @@ export function EditorTarjetaPublicoCliente({
                 gap: "6px",
                 padding: "7px 13px",
                 borderRadius: "999px",
-                border: "1px solid #D4D4D8",
-                backgroundColor: "#FFFFFF",
-                color: "#27272A",
+                border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-27272a, #27272A)",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -1286,10 +1286,10 @@ export function EditorTarjetaPublicoCliente({
                 style={{
                   fontSize: "0.72rem",
                   fontWeight: 600,
-                  color: "#52525B",
+                  color: "var(--ct-52525b, #52525B)",
                   padding: "3px 10px",
                   borderRadius: "999px",
-                  backgroundColor: "#E4E4E7",
+                  backgroundColor: "var(--cf-e4e4e7, #E4E4E7)",
                 }}
               >
                 Condolencias · {datosIniciales.codigo}
@@ -1317,9 +1317,9 @@ export function EditorTarjetaPublicoCliente({
           {/* Tarjeta única para editar exclusivamente el mensaje */}
           <div
             style={{
-              backgroundColor: "#FFFFFF",
+              backgroundColor: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
-              border: "1px solid #E4E4E7",
+              border: "1px solid var(--cb-e4e4e7, #E4E4E7)",
               boxShadow: "0 10px 28px rgba(24, 24, 27, 0.04)",
               padding: "22px 20px",
               display: "flex",
@@ -1334,7 +1334,7 @@ export function EditorTarjetaPublicoCliente({
                   margin: 0,
                   fontSize: "1.22rem",
                   fontWeight: 600,
-                  color: "#18181B",
+                  color: "var(--ct-18181b, #18181B)",
                   letterSpacing: "-0.01em",
                 }}
               >
@@ -1344,7 +1344,7 @@ export function EditorTarjetaPublicoCliente({
                 style={{
                   margin: "5px 0 0 0",
                   fontSize: "0.84rem",
-                  color: "#52525B",
+                  color: "var(--ct-52525b, #52525B)",
                   lineHeight: 1.5,
                 }}
               >
@@ -1363,11 +1363,11 @@ export function EditorTarjetaPublicoCliente({
               >
                 <label
                   htmlFor="eco-campo-mensaje-condolencias"
-                  style={{ fontSize: "0.8rem", fontWeight: 600, color: "#27272A" }}
+                  style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--ct-27272a, #27272A)" }}
                 >
                   Mensaje
                 </label>
-                <span style={{ fontSize: "0.74rem", color: "#71717A" }}>
+                <span style={{ fontSize: "0.74rem", color: "var(--ct-71717a, #71717A)" }}>
                   {mensaje.length} caracteres
                 </span>
               </div>
@@ -1384,9 +1384,9 @@ export function EditorTarjetaPublicoCliente({
                   width: "100%",
                   padding: "13px 14px",
                   borderRadius: "10px",
-                  border: "1px solid #D4D4D8",
-                  backgroundColor: "#FAFAFA",
-                  color: "#18181B",
+                  border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                  backgroundColor: "var(--cf-fafafa, #FAFAFA)",
+                  color: "var(--ct-18181b, #18181B)",
                   fontSize: "16px",
                   lineHeight: 1.55,
                   boxSizing: "border-box",
@@ -1396,7 +1396,7 @@ export function EditorTarjetaPublicoCliente({
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#52525B" }}>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--ct-52525b, #52525B)" }}>
                 Frases sobrias sugeridas:
               </span>
               {FRASES_CONDOLENCIAS.map((frase, i) => (
@@ -1412,9 +1412,9 @@ export function EditorTarjetaPublicoCliente({
                     textAlign: "left",
                     padding: "9px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #E4E4E7",
-                    backgroundColor: "#F9F9F8",
-                    color: "#3F3F46",
+                    border: "1px solid var(--cb-e4e4e7, #E4E4E7)",
+                    backgroundColor: "var(--cf-f9f9f8, #F9F9F8)",
+                    color: "var(--ct-3f3f46, #3F3F46)",
                     fontSize: "0.8rem",
                     lineHeight: 1.45,
                     cursor: "pointer",
@@ -1431,9 +1431,9 @@ export function EditorTarjetaPublicoCliente({
                 style={{
                   padding: "10px 13px",
                   borderRadius: "8px",
-                  backgroundColor: "#FEF2F2",
-                  border: "1px solid #FECACA",
-                  color: "#991B1B",
+                  backgroundColor: "var(--cf-fef2f2, #FEF2F2)",
+                  border: "1px solid var(--cb-fecaca, #FECACA)",
+                  color: "var(--ct-991b1b, #991B1B)",
                   fontSize: "0.8rem",
                   fontWeight: 600,
                 }}
@@ -1449,7 +1449,7 @@ export function EditorTarjetaPublicoCliente({
                 justifyContent: "space-between",
                 gap: "10px",
                 paddingTop: "10px",
-                borderTop: "1px solid #ECECE9",
+                borderTop: "1px solid var(--cb-ecece9, #ECECE9)",
                 flexWrap: "wrap",
               }}
             >
@@ -1461,9 +1461,9 @@ export function EditorTarjetaPublicoCliente({
                 style={{
                   padding: "11px 16px",
                   borderRadius: "9px",
-                  border: "1px solid #D4D4D8",
-                  backgroundColor: "#FFFFFF",
-                  color: "#27272A",
+                  border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                  backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-27272a, #27272A)",
                   fontSize: "0.84rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -1498,7 +1498,7 @@ export function EditorTarjetaPublicoCliente({
             </div>
           </div>
 
-          <div style={{ textAlign: "center", fontSize: "0.72rem", color: "#71717A" }}>
+          <div style={{ textAlign: "center", fontSize: "0.72rem", color: "var(--ct-71717a, #71717A)" }}>
             {nombreMarca}
           </div>
         </div>
@@ -1516,8 +1516,8 @@ export function EditorTarjetaPublicoCliente({
       style={{
         minHeight: "100vh",
         width: "100%",
-        backgroundColor: "#F6F4F0",
-        color: "#1F1C19",
+        backgroundColor: "var(--cf-f6f4f0, #F6F4F0)",
+        color: "var(--ct-1f1c19, #1F1C19)",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         display: "flex",
         flexDirection: "column",
@@ -1567,9 +1567,9 @@ export function EditorTarjetaPublicoCliente({
               gap: "6px",
               padding: "7px 13px",
               borderRadius: "999px",
-              border: "1px solid #DDD7CD",
-              backgroundColor: "#FFFFFF",
-              color: "#1F1C19",
+              border: "1px solid var(--cb-ddd7cd, #DDD7CD)",
+              backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-1f1c19, #1F1C19)",
               fontSize: "0.8rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -1584,7 +1584,7 @@ export function EditorTarjetaPublicoCliente({
               style={{
                 fontSize: "0.76rem",
                 fontWeight: 600,
-                color: "#57524C",
+                color: "var(--ct-57524c, #57524C)",
               }}
             >
               Paso {pasoIdx + 1} de {pasos.length}
@@ -1593,10 +1593,10 @@ export function EditorTarjetaPublicoCliente({
               style={{
                 fontSize: "0.72rem",
                 fontWeight: 600,
-                color: "#57524C",
+                color: "var(--ct-57524c, #57524C)",
                 padding: "3px 9px",
                 borderRadius: "999px",
-                backgroundColor: "#EAE5DC",
+                backgroundColor: "var(--cf-eae5dc, #EAE5DC)",
               }}
             >
               {datosIniciales.codigo}
@@ -1610,7 +1610,7 @@ export function EditorTarjetaPublicoCliente({
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gap: "8px",
-            backgroundColor: "#EAE5DC",
+            backgroundColor: "var(--cf-eae5dc, #EAE5DC)",
             padding: "4px",
             borderRadius: "12px",
           }}
@@ -1624,8 +1624,8 @@ export function EditorTarjetaPublicoCliente({
               padding: "8px 10px",
               borderRadius: "9px",
               border: "none",
-              backgroundColor: !modoDigitalAvanzado ? "#FFFFFF" : "transparent",
-              color: !modoDigitalAvanzado ? "#1F1C19" : "#57524C",
+              backgroundColor: !modoDigitalAvanzado ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+              color: !modoDigitalAvanzado ? "var(--ct-1f1c19, #1F1C19)" : "var(--ct-57524c, #57524C)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -1667,7 +1667,7 @@ export function EditorTarjetaPublicoCliente({
             width: "100%",
             height: "4px",
             borderRadius: "999px",
-            backgroundColor: "#E5E0D6",
+            backgroundColor: "var(--cf-e5e0d6, #E5E0D6)",
             overflow: "hidden",
           }}
         >
@@ -1719,16 +1719,16 @@ export function EditorTarjetaPublicoCliente({
                   padding: "7px 12px",
                   borderRadius: "999px",
                   border: activo
-                    ? "1px solid #221E1B"
+                    ? "1px solid var(--cb-221e1b, #221E1B)"
                     : completado
-                      ? "1px solid #C8D5CB"
-                      : "1px solid #E2DDD4",
+                      ? "1px solid var(--cb-c8d5cb, #C8D5CB)"
+                      : "1px solid var(--cb-e2ddd4, #E2DDD4)",
                   backgroundColor: activo
                     ? "#221E1B"
                     : completado
-                      ? "#EEF4F0"
-                      : "#FFFFFF",
-                  color: activo ? "#FFFFFF" : completado ? "#2F4737" : "#57524C",
+                      ? "var(--cf-eef4f0, #EEF4F0)"
+                      : "var(--cf-ffffff, #FFFFFF)",
+                  color: activo ? "#FFFFFF" : completado ? "var(--ct-2f4737, #2F4737)" : "var(--ct-57524c, #57524C)",
                   fontSize: "0.76rem",
                   fontWeight: activo ? 700 : 600,
                   cursor: "pointer",
@@ -1751,9 +1751,9 @@ export function EditorTarjetaPublicoCliente({
         {/* Tarjeta del paso activo */}
         <div
           style={{
-            backgroundColor: "#FFFFFF",
+            backgroundColor: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "18px",
-            border: "1px solid #E6E2DA",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             boxShadow: "0 12px 32px rgba(31, 28, 25, 0.05)",
             padding: "24px 22px",
             display: "flex",
@@ -1773,7 +1773,7 @@ export function EditorTarjetaPublicoCliente({
                     margin: 0,
                     fontSize: "1.35rem",
                     fontWeight: 700,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     letterSpacing: "-0.015em",
                   }}
                 >
@@ -1781,7 +1781,7 @@ export function EditorTarjetaPublicoCliente({
                     ? "¿En memoria de quién es esta tarjeta?"
                     : "¿Para quién es esta tarjeta?"}
                 </h1>
-                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
+                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                   {esCondolencias
                     ? "Escribe el nombre de la persona o familia destinataria."
                     : "Este nombre aparecerá en la portada de tu tarjeta antes de abrirla."}
@@ -1795,7 +1795,7 @@ export function EditorTarjetaPublicoCliente({
                     display: "block",
                     fontSize: "0.8rem",
                     fontWeight: 600,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     marginBottom: "6px",
                   }}
                 >
@@ -1814,9 +1814,9 @@ export function EditorTarjetaPublicoCliente({
                     width: "100%",
                     padding: "12px 14px",
                     borderRadius: "12px",
-                    border: "1px solid #CFC8BC",
-                    backgroundColor: "#FDFCFB",
-                    color: "#1F1C19",
+                    border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                    backgroundColor: "var(--cf-fdfcfb, #FDFCFB)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     fontSize: "16px",
                     boxSizing: "border-box",
                   }}
@@ -1840,8 +1840,8 @@ export function EditorTarjetaPublicoCliente({
                       maxWidth: "280px",
                       aspectRatio: "113 / 84",
                       borderRadius: "10px",
-                      backgroundColor: "#DFD9CE",
-                      border: "1px solid #C8C0B2",
+                      backgroundColor: "var(--cf-dfd9ce, #DFD9CE)",
+                      border: "1px solid var(--cb-c8c0b2, #C8C0B2)",
                       boxShadow: "0 10px 24px rgba(31, 28, 25, 0.1)",
                       display: "flex",
                       flexDirection: "column",
@@ -1883,7 +1883,7 @@ export function EditorTarjetaPublicoCliente({
                           fontFamily: "'Playfair Display', Georgia, serif",
                           fontSize: "1.45rem",
                           fontWeight: 700,
-                          color: "#292524",
+                          color: "var(--ct-292524, #292524)",
                         }}
                       >
                         Margaritas
@@ -1895,16 +1895,16 @@ export function EditorTarjetaPublicoCliente({
                         fontFamily: "'Playfair Display', Georgia, serif",
                         fontSize: "0.9rem",
                         fontStyle: "italic",
-                        color: "#44403C",
+                        color: "var(--ct-44403c, #44403C)",
                       }}
                     >
                       Para:{" "}
-                      <strong style={{ fontStyle: "normal", color: "#1C1917" }}>
+                      <strong style={{ fontStyle: "normal", color: "var(--ct-1c1917, #1C1917)" }}>
                         {para.trim() || "Tu destinatario"}
                       </strong>
                     </div>
                   </div>
-                  <span style={{ fontSize: "0.74rem", color: "#78716C" }}>
+                  <span style={{ fontSize: "0.74rem", color: "var(--ct-78716c, #78716C)" }}>
                     Vista previa de la portada
                   </span>
                 </div>
@@ -1923,13 +1923,13 @@ export function EditorTarjetaPublicoCliente({
                     margin: 0,
                     fontSize: "1.35rem",
                     fontWeight: 700,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     letterSpacing: "-0.015em",
                   }}
                 >
                   Escribe tu mensaje
                 </h1>
-                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
+                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                   Dedica unas palabras sinceras. En el siguiente paso podrás elegir tipografía, fotos y ubicación.
                 </p>
               </div>
@@ -1945,11 +1945,11 @@ export function EditorTarjetaPublicoCliente({
                 >
                   <label
                     htmlFor="eco-campo-mensaje"
-                    style={{ fontSize: "0.8rem", fontWeight: 600, color: "#1F1C19" }}
+                    style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}
                   >
                     Texto de la tarjeta
                   </label>
-                  <span style={{ fontSize: "0.74rem", color: "#78716C" }}>
+                  <span style={{ fontSize: "0.74rem", color: "var(--ct-78716c, #78716C)" }}>
                     {mensaje.length} caracteres
                   </span>
                 </div>
@@ -1976,9 +1976,9 @@ export function EditorTarjetaPublicoCliente({
                     width: "100%",
                     padding: "13px 14px",
                     borderRadius: "12px",
-                    border: "1px solid #CFC8BC",
-                    backgroundColor: "#FDFCFB",
-                    color: "#1F1C19",
+                    border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                    backgroundColor: "var(--cf-fdfcfb, #FDFCFB)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     fontSize: "16px",
                     lineHeight: 1.55,
                     boxSizing: "border-box",
@@ -2003,9 +2003,9 @@ export function EditorTarjetaPublicoCliente({
                     gap: "7px",
                     padding: "9px 14px",
                     borderRadius: "10px",
-                    border: panelIaAbierto ? "1px solid #2F4737" : "1px solid #C8D5CB",
-                    backgroundColor: panelIaAbierto ? "#2F4737" : "#EEF4F0",
-                    color: panelIaAbierto ? "#FFFFFF" : "#2F4737",
+                    border: panelIaAbierto ? "1px solid #2F4737" : "1px solid var(--cb-c8d5cb, #C8D5CB)",
+                    backgroundColor: panelIaAbierto ? "#2F4737" : "var(--cf-eef4f0, #EEF4F0)",
+                    color: panelIaAbierto ? "#FFFFFF" : "var(--ct-2f4737, #2F4737)",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -2028,9 +2028,9 @@ export function EditorTarjetaPublicoCliente({
                       gap: "7px",
                       padding: "9px 14px",
                       borderRadius: "10px",
-                      border: "1px solid #D5CFC4",
-                      backgroundColor: "#FAF8F5",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.8rem",
                       fontWeight: 600,
                       cursor: corrigiendoIa ? "wait" : "pointer",
@@ -2048,20 +2048,20 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "16px",
                     borderRadius: "14px",
-                    backgroundColor: "#FAF8F5",
-                    border: "1px solid #DFD9CE",
+                    backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
+                    border: "1px solid var(--cb-dfd9ce, #DFD9CE)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "12px",
                   }}
                 >
                   <div>
-                    <strong style={{ display: "block", fontSize: "0.84rem", color: "#1F1C19" }}>
+                    <strong style={{ display: "block", fontSize: "0.84rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                       {mensaje.trim()
                         ? "Mejoraremos tu mensaje actual en 2 opciones"
                         : "¿Para qué ocasión necesitas el mensaje?"}
                     </strong>
-                    <span style={{ fontSize: "0.75rem", color: "#57524C" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--ct-57524c, #57524C)" }}>
                       {mensaje.trim()
                         ? "Puedes elegir también la ocasión o un detalle extra para afinar el tono."
                         : "Selecciona la ocasión y crearemos 2 propuestas listas para tu tarjeta."}
@@ -2079,9 +2079,9 @@ export function EditorTarjetaPublicoCliente({
                           style={{
                             padding: "6px 11px",
                             borderRadius: "999px",
-                            border: seleccionada ? "1px solid #2F4737" : "1px solid #D5CFC4",
-                            backgroundColor: seleccionada ? "#2F4737" : "#FFFFFF",
-                            color: seleccionada ? "#FFFFFF" : "#3F3A34",
+                            border: seleccionada ? "1px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            backgroundColor: seleccionada ? "#2F4737" : "var(--cf-ffffff, #FFFFFF)",
+                            color: seleccionada ? "#FFFFFF" : "var(--ct-3f3a34, #3F3A34)",
                             fontSize: "0.75rem",
                             fontWeight: 600,
                             cursor: "pointer",
@@ -2102,9 +2102,9 @@ export function EditorTarjetaPublicoCliente({
                       width: "100%",
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      border: "1px solid #CFC8BC",
-                      backgroundColor: "#FFFFFF",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                      backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "16px",
                       boxSizing: "border-box",
                     }}
@@ -2138,7 +2138,7 @@ export function EditorTarjetaPublicoCliente({
 
                   {opcionesIa.length > 0 && (
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "2px" }}>
-                      <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "#57524C" }}>
+                      <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                         Elige la opción que más te guste:
                       </span>
                       {opcionesIa.map((op, idx) => {
@@ -2157,9 +2157,9 @@ export function EditorTarjetaPublicoCliente({
                               textAlign: "left",
                               padding: "12px 14px",
                               borderRadius: "12px",
-                              border: activa ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                              backgroundColor: activa ? "#EEF4F0" : "#FFFFFF",
-                              color: "#1F1C19",
+                              border: activa ? "2px solid #2F4737" : "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                              backgroundColor: activa ? "var(--cf-eef4f0, #EEF4F0)" : "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-1f1c19, #1F1C19)",
                               cursor: "pointer",
                               display: "flex",
                               flexDirection: "column",
@@ -2174,7 +2174,7 @@ export function EditorTarjetaPublicoCliente({
                                 gap: "8px",
                               }}
                             >
-                              <strong style={{ fontSize: "0.78rem", color: "#2F4737" }}>
+                              <strong style={{ fontSize: "0.78rem", color: "var(--ct-2f4737, #2F4737)" }}>
                                 Opción {idx + 1} · {op.titulo}
                               </strong>
                               {activa && <Check size={15} color="#2F4737" />}
@@ -2183,7 +2183,7 @@ export function EditorTarjetaPublicoCliente({
                               style={{
                                 fontSize: "0.83rem",
                                 lineHeight: 1.5,
-                                color: "#292524",
+                                color: "var(--ct-292524, #292524)",
                                 whiteSpace: "pre-wrap",
                               }}
                             >
@@ -2200,7 +2200,7 @@ export function EditorTarjetaPublicoCliente({
               {/* Emojis sugeridos contextualmente según el mensaje u ocasión */}
               {(mensaje.trim().length > 0 || emojisIa.length > 0) && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#57524C" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                     Emojis sugeridos para tu mensaje (toca para agregar):
                   </span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
@@ -2215,8 +2215,8 @@ export function EditorTarjetaPublicoCliente({
                         style={{
                           padding: "6px 11px",
                           borderRadius: "999px",
-                          border: "1px solid #E2DDD4",
-                          backgroundColor: "#FAF8F5",
+                          border: "1px solid var(--cb-e2ddd4, #E2DDD4)",
+                          backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
                           fontSize: "1rem",
                           lineHeight: 1,
                           cursor: "pointer",
@@ -2242,13 +2242,13 @@ export function EditorTarjetaPublicoCliente({
                     margin: 0,
                     fontSize: "1.35rem",
                     fontWeight: 700,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     letterSpacing: "-0.015em",
                   }}
                 >
                   ¿Deseas firmar tu tarjeta?
                 </h1>
-                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
+                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                   Elige si quieres que aparezca tu firma al pie del mensaje o mantener el detalle anónimo.
                 </p>
               </div>
@@ -2267,9 +2267,9 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "14px 16px",
                     borderRadius: "12px",
-                    border: incluirFirma ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: incluirFirma ? "#EEF4F0" : "#FFFFFF",
-                    color: "#1F1C19",
+                    border: incluirFirma ? "2px solid #2F4737" : "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                    backgroundColor: incluirFirma ? "var(--cf-eef4f0, #EEF4F0)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     textAlign: "left",
                     cursor: "pointer",
                     display: "flex",
@@ -2281,7 +2281,7 @@ export function EditorTarjetaPublicoCliente({
                     <strong style={{ fontSize: "0.88rem" }}>Sí, incluir firma</strong>
                     {incluirFirma && <Check size={16} color="#2F4737" />}
                   </div>
-                  <span style={{ fontSize: "0.76rem", color: "#57524C" }}>
+                  <span style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)" }}>
                     Se muestra al final del mensaje dentro de la tarjeta.
                   </span>
                 </button>
@@ -2293,9 +2293,9 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "14px 16px",
                     borderRadius: "12px",
-                    border: !incluirFirma ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: !incluirFirma ? "#EEF4F0" : "#FFFFFF",
-                    color: "#1F1C19",
+                    border: !incluirFirma ? "2px solid #2F4737" : "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                    backgroundColor: !incluirFirma ? "var(--cf-eef4f0, #EEF4F0)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     textAlign: "left",
                     cursor: "pointer",
                     display: "flex",
@@ -2307,7 +2307,7 @@ export function EditorTarjetaPublicoCliente({
                     <strong style={{ fontSize: "0.88rem" }}>Sin firma</strong>
                     {!incluirFirma && <Check size={16} color="#2F4737" />}
                   </div>
-                  <span style={{ fontSize: "0.76rem", color: "#57524C" }}>
+                  <span style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)" }}>
                     Ideal para sorpresas anónimas o mensajes sin remitente.
                   </span>
                 </button>
@@ -2321,7 +2321,7 @@ export function EditorTarjetaPublicoCliente({
                       display: "block",
                       fontSize: "0.8rem",
                       fontWeight: 600,
-                      color: "#1F1C19",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       marginBottom: "6px",
                     }}
                   >
@@ -2340,9 +2340,9 @@ export function EditorTarjetaPublicoCliente({
                       width: "100%",
                       padding: "12px 14px",
                       borderRadius: "12px",
-                      border: "1px solid #CFC8BC",
-                      backgroundColor: "#FDFCFB",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                      backgroundColor: "var(--cf-fdfcfb, #FDFCFB)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "16px",
                       boxSizing: "border-box",
                     }}
@@ -2355,8 +2355,8 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "14px 16px",
                     borderRadius: "12px",
-                    backgroundColor: "#FAF8F5",
-                    border: "1px solid #E6E2DA",
+                    backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "8px",
@@ -2364,7 +2364,7 @@ export function EditorTarjetaPublicoCliente({
                 >
                   <label
                     htmlFor="eco-campo-remitente-portada"
-                    style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1F1C19" }}
+                    style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}
                   >
                     Remitente en portada digital (opcional)
                   </label>
@@ -2384,14 +2384,14 @@ export function EditorTarjetaPublicoCliente({
                       width: "100%",
                       padding: "11px 13px",
                       borderRadius: "10px",
-                      border: "1px solid #CFC8BC",
-                      backgroundColor: "#FFFFFF",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                      backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "16px",
                       boxSizing: "border-box",
                     }}
                   />
-                  <span style={{ fontSize: "0.75rem", color: "#57524C", lineHeight: 1.45 }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.45 }}>
                     Se muestra en la portada antes de abrir la tarjeta digital (por ejemplo: “De: El amor de tu vida”), mientras tu firma aparece al abrirla.
                   </span>
                 </div>
@@ -2410,13 +2410,13 @@ export function EditorTarjetaPublicoCliente({
                     margin: 0,
                     fontSize: "1.35rem",
                     fontWeight: 700,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     letterSpacing: "-0.015em",
                   }}
                 >
                   Diseña tu tarjeta
                 </h1>
-                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
+                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                   Agrega hasta 3 imágenes, ajusta tamaño, rotación o transparencia, elige la tipografía y arrastra cada elemento a tu gusto.
                 </p>
               </div>
@@ -2459,13 +2459,13 @@ export function EditorTarjetaPublicoCliente({
                     margin: 0,
                     fontSize: "1.35rem",
                     fontWeight: 700,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     letterSpacing: "-0.015em",
                   }}
                 >
                   ¿Deseas incluir una canción?
                 </h1>
-                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
+                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                   Al abrir tu tarjeta digital, la melodía comenzará a sonar suavemente al 15% de volumen.
                 </p>
               </div>
@@ -2484,9 +2484,9 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "14px 16px",
                     borderRadius: "12px",
-                    border: incluirAudio ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: incluirAudio ? "#EEF4F0" : "#FFFFFF",
-                    color: "#1F1C19",
+                    border: incluirAudio ? "2px solid #2F4737" : "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                    backgroundColor: incluirAudio ? "var(--cf-eef4f0, #EEF4F0)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     textAlign: "left",
                     cursor: "pointer",
                     display: "flex",
@@ -2501,7 +2501,7 @@ export function EditorTarjetaPublicoCliente({
                     </span>
                     {incluirAudio && <Check size={16} color="#2F4737" />}
                   </div>
-                  <span style={{ fontSize: "0.76rem", color: "#57524C" }}>
+                  <span style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)" }}>
                     Pega un enlace de YouTube o sube tu archivo MP3.
                   </span>
                 </button>
@@ -2513,9 +2513,9 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "14px 16px",
                     borderRadius: "12px",
-                    border: !incluirAudio ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: !incluirAudio ? "#EEF4F0" : "#FFFFFF",
-                    color: "#1F1C19",
+                    border: !incluirAudio ? "2px solid #2F4737" : "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                    backgroundColor: !incluirAudio ? "var(--cf-eef4f0, #EEF4F0)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     textAlign: "left",
                     cursor: "pointer",
                     display: "flex",
@@ -2530,7 +2530,7 @@ export function EditorTarjetaPublicoCliente({
                     </span>
                     {!incluirAudio && <Check size={16} color="#2F4737" />}
                   </div>
-                  <span style={{ fontSize: "0.76rem", color: "#57524C" }}>
+                  <span style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)" }}>
                     Solo mensaje y diseño, sin música de fondo.
                   </span>
                 </button>
@@ -2545,7 +2545,7 @@ export function EditorTarjetaPublicoCliente({
                       display: "block",
                       fontSize: "0.8rem",
                       fontWeight: 600,
-                      color: "#1F1C19",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       marginBottom: "6px",
                     }}
                   >
@@ -2564,9 +2564,9 @@ export function EditorTarjetaPublicoCliente({
                       width: "100%",
                       padding: "12px 14px",
                       borderRadius: "12px",
-                      border: "1px solid #CFC8BC",
-                      backgroundColor: "#FDFCFB",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                      backgroundColor: "var(--cf-fdfcfb, #FDFCFB)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "16px",
                       boxSizing: "border-box",
                     }}
@@ -2586,9 +2586,9 @@ export function EditorTarjetaPublicoCliente({
                       gap: "7px",
                       padding: "10px 16px",
                       borderRadius: "10px",
-                      border: "1px solid #CFC8BC",
-                      backgroundColor: "#FAF8F5",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                      backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.82rem",
                       fontWeight: 600,
                       cursor: subiendoMp3 ? "wait" : "pointer",
@@ -2623,9 +2623,9 @@ export function EditorTarjetaPublicoCliente({
                         gap: "6px",
                         padding: "10px 14px",
                         borderRadius: "10px",
-                        border: "1px solid #FECACA",
-                        backgroundColor: "#FEF2F2",
-                        color: "#991B1B",
+                        border: "1px solid var(--cb-fecaca, #FECACA)",
+                        backgroundColor: "var(--cf-fef2f2, #FEF2F2)",
+                        color: "var(--ct-991b1b, #991B1B)",
                         fontSize: "0.8rem",
                         fontWeight: 600,
                         cursor: "pointer",
@@ -2636,7 +2636,7 @@ export function EditorTarjetaPublicoCliente({
                     </button>
                   )}
 
-                  <span style={{ fontSize: "0.75rem", color: "#78716C" }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--ct-78716c, #78716C)" }}>
                     Máximo 15 MB (MP3, M4A, WAV u OGG)
                   </span>
                 </div>
@@ -2648,7 +2648,7 @@ export function EditorTarjetaPublicoCliente({
                       display: "block",
                       fontSize: "0.8rem",
                       fontWeight: 600,
-                      color: "#1F1C19",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       marginBottom: "6px",
                     }}
                   >
@@ -2667,9 +2667,9 @@ export function EditorTarjetaPublicoCliente({
                       width: "100%",
                       padding: "12px 14px",
                       borderRadius: "12px",
-                      border: "1px solid #CFC8BC",
-                      backgroundColor: "#FDFCFB",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                      backgroundColor: "var(--cf-fdfcfb, #FDFCFB)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "16px",
                       boxSizing: "border-box",
                     }}
@@ -2684,9 +2684,9 @@ export function EditorTarjetaPublicoCliente({
                       gap: "7px",
                       padding: "9px 12px",
                       borderRadius: "10px",
-                      backgroundColor: "#EEF4F0",
-                      border: "1px solid #C8D5CB",
-                      color: "#2F4737",
+                      backgroundColor: "var(--cf-eef4f0, #EEF4F0)",
+                      border: "1px solid var(--cb-c8d5cb, #C8D5CB)",
+                      color: "var(--ct-2f4737, #2F4737)",
                       fontSize: "0.8rem",
                       fontWeight: 600,
                     }}
@@ -2711,13 +2711,13 @@ export function EditorTarjetaPublicoCliente({
                     margin: 0,
                     fontSize: "1.35rem",
                     fontWeight: 700,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     letterSpacing: "-0.015em",
                   }}
                 >
                   Letra sincronizada (opcional)
                 </h1>
-                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
+                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                   Los versos aparecerán con elegancia debajo de tu tarjeta mientras suena la canción.
                 </p>
               </div>
@@ -2727,15 +2727,15 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "16px",
                     borderRadius: "12px",
-                    backgroundColor: "#FAF8F5",
-                    border: "1px solid #E6E2DA",
+                    backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "10px",
                     alignItems: "flex-start",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#57524C", fontSize: "0.84rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--ct-57524c, #57524C)", fontSize: "0.84rem" }}>
                     <Info size={16} />
                     <span>Aún no has agregado una canción. La letra solo se muestra cuando hay audio activo.</span>
                   </div>
@@ -2753,9 +2753,9 @@ export function EditorTarjetaPublicoCliente({
                       gap: "6px",
                       padding: "8px 14px",
                       borderRadius: "999px",
-                      border: "1px solid #CFC8BC",
-                      backgroundColor: "#FFFFFF",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                      backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.8rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -2808,9 +2808,9 @@ export function EditorTarjetaPublicoCliente({
                           gap: "6px",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          border: "1px solid #E2DDD4",
-                          backgroundColor: "#FFFFFF",
-                          color: "#57524C",
+                          border: "1px solid var(--cb-e2ddd4, #E2DDD4)",
+                          backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-57524c, #57524C)",
                           fontSize: "0.8rem",
                           fontWeight: 600,
                           cursor: "pointer",
@@ -2822,7 +2822,7 @@ export function EditorTarjetaPublicoCliente({
                     )}
 
                     {lyrics.length > 0 && (
-                      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#2F4737" }}>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-2f4737, #2F4737)" }}>
                         {lyrics.length} líneas listas
                       </span>
                     )}
@@ -2835,7 +2835,7 @@ export function EditorTarjetaPublicoCliente({
                         display: "block",
                         fontSize: "0.8rem",
                         fontWeight: 600,
-                        color: "#1F1C19",
+                        color: "var(--ct-1f1c19, #1F1C19)",
                         marginBottom: "6px",
                       }}
                     >
@@ -2851,9 +2851,9 @@ export function EditorTarjetaPublicoCliente({
                         width: "100%",
                         padding: "12px 14px",
                         borderRadius: "12px",
-                        border: "1px solid #CFC8BC",
-                        backgroundColor: "#FDFCFB",
-                        color: "#1F1C19",
+                        border: "1px solid var(--cb-cfc8bc, #CFC8BC)",
+                        backgroundColor: "var(--cf-fdfcfb, #FDFCFB)",
+                        color: "var(--ct-1f1c19, #1F1C19)",
                         fontSize: "15px",
                         lineHeight: 1.6,
                         boxSizing: "border-box",
@@ -2877,13 +2877,13 @@ export function EditorTarjetaPublicoCliente({
                     margin: 0,
                     fontSize: "1.35rem",
                     fontWeight: 700,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     letterSpacing: "-0.015em",
                   }}
                 >
                   Así recibirá tu tarjeta
                 </h1>
-                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
+                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                   {esCondolencias
                     ? "Revisa cada detalle de tu tarjeta de condolencias antes de guardarla para taller."
                     : "Toca la portada para abrir el díptico y probar tu diseño, música y letra tal como la verá quien la reciba."}
@@ -2923,13 +2923,13 @@ export function EditorTarjetaPublicoCliente({
                     margin: 0,
                     fontSize: "1.35rem",
                     fontWeight: 700,
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     letterSpacing: "-0.015em",
                   }}
                 >
                   ¿Cómo imprimimos tu tarjeta física?
                 </h1>
-                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
+                <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                   Elige cómo deseas entregar tu tarjeta junto al arreglo floral.
                 </p>
               </div>
@@ -2949,9 +2949,9 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "16px 14px",
                     borderRadius: "14px",
-                    border: modoImpresion === "SOLO_MENSAJE" ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: modoImpresion === "SOLO_MENSAJE" ? "#EEF4F0" : "#FFFFFF",
-                    color: "#1F1C19",
+                    border: modoImpresion === "SOLO_MENSAJE" ? "2px solid #2F4737" : "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                    backgroundColor: modoImpresion === "SOLO_MENSAJE" ? "var(--cf-eef4f0, #EEF4F0)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     textAlign: "left",
                     cursor: "pointer",
                     display: "flex",
@@ -2965,8 +2965,8 @@ export function EditorTarjetaPublicoCliente({
                         width: "34px",
                         height: "34px",
                         borderRadius: "10px",
-                        backgroundColor: modoImpresion === "SOLO_MENSAJE" ? "#2F4737" : "#F3EFE8",
-                        color: modoImpresion === "SOLO_MENSAJE" ? "#FFFFFF" : "#57524C",
+                        backgroundColor: modoImpresion === "SOLO_MENSAJE" ? "#2F4737" : "var(--cf-f3efe8, #F3EFE8)",
+                        color: modoImpresion === "SOLO_MENSAJE" ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -2980,7 +2980,7 @@ export function EditorTarjetaPublicoCliente({
                     <strong style={{ display: "block", fontSize: "0.9rem", marginBottom: "4px" }}>
                       Solo mensaje impreso
                     </strong>
-                    <span style={{ fontSize: "0.76rem", color: "#57524C", lineHeight: 1.45, display: "block" }}>
+                    <span style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.45, display: "block" }}>
                       Imprimimos tu dedicatoria, firma y diseño en la cartulina física (sin código QR).
                     </span>
                   </div>
@@ -2994,9 +2994,9 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "16px 14px",
                     borderRadius: "14px",
-                    border: modoImpresion === "SOLO_QR" ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: modoImpresion === "SOLO_QR" ? "#EEF4F0" : "#FFFFFF",
-                    color: "#1F1C19",
+                    border: modoImpresion === "SOLO_QR" ? "2px solid #2F4737" : "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                    backgroundColor: modoImpresion === "SOLO_QR" ? "var(--cf-eef4f0, #EEF4F0)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     textAlign: "left",
                     cursor: "pointer",
                     display: "flex",
@@ -3010,8 +3010,8 @@ export function EditorTarjetaPublicoCliente({
                         width: "34px",
                         height: "34px",
                         borderRadius: "10px",
-                        backgroundColor: modoImpresion === "SOLO_QR" ? "#2F4737" : "#F3EFE8",
-                        color: modoImpresion === "SOLO_QR" ? "#FFFFFF" : "#57524C",
+                        backgroundColor: modoImpresion === "SOLO_QR" ? "#2F4737" : "var(--cf-f3efe8, #F3EFE8)",
+                        color: modoImpresion === "SOLO_QR" ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -3025,7 +3025,7 @@ export function EditorTarjetaPublicoCliente({
                     <strong style={{ display: "block", fontSize: "0.9rem", marginBottom: "4px" }}>
                       Solo QR (Digital)
                     </strong>
-                    <span style={{ fontSize: "0.76rem", color: "#57524C", lineHeight: 1.45, display: "block" }}>
+                    <span style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.45, display: "block" }}>
                       Cartulina discreta solo con QR. Al escanearlo se abre el díptico digital con tus fotos y música.
                     </span>
                   </div>
@@ -3039,9 +3039,9 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "16px 14px",
                     borderRadius: "14px",
-                    border: modoImpresion === "MENSAJE_Y_QR" ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: modoImpresion === "MENSAJE_Y_QR" ? "#EEF4F0" : "#FFFFFF",
-                    color: "#1F1C19",
+                    border: modoImpresion === "MENSAJE_Y_QR" ? "2px solid #2F4737" : "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                    backgroundColor: modoImpresion === "MENSAJE_Y_QR" ? "var(--cf-eef4f0, #EEF4F0)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     textAlign: "left",
                     cursor: "pointer",
                     display: "flex",
@@ -3055,8 +3055,8 @@ export function EditorTarjetaPublicoCliente({
                         width: "34px",
                         height: "34px",
                         borderRadius: "10px",
-                        backgroundColor: modoImpresion === "MENSAJE_Y_QR" ? "#2F4737" : "#F3EFE8",
-                        color: modoImpresion === "MENSAJE_Y_QR" ? "#FFFFFF" : "#57524C",
+                        backgroundColor: modoImpresion === "MENSAJE_Y_QR" ? "#2F4737" : "var(--cf-f3efe8, #F3EFE8)",
+                        color: modoImpresion === "MENSAJE_Y_QR" ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -3070,7 +3070,7 @@ export function EditorTarjetaPublicoCliente({
                     <strong style={{ display: "block", fontSize: "0.9rem", marginBottom: "4px" }}>
                       Mensaje + QR digital
                     </strong>
-                    <span style={{ fontSize: "0.76rem", color: "#57524C", lineHeight: 1.45, display: "block" }}>
+                    <span style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.45, display: "block" }}>
                       Imprimimos tu mensaje en la cartulina e incluimos un QR discreto para abrir la tarjeta digital.
                     </span>
                   </div>
@@ -3083,9 +3083,9 @@ export function EditorTarjetaPublicoCliente({
                   style={{
                     padding: "11px 14px",
                     borderRadius: "10px",
-                    backgroundColor: "#FAF8F5",
-                    border: "1px solid #E2DDD4",
-                    color: "#57524C",
+                    backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
+                    border: "1px solid var(--cb-e2ddd4, #E2DDD4)",
+                    color: "var(--ct-57524c, #57524C)",
                     fontSize: "0.78rem",
                     lineHeight: 1.45,
                     display: "flex",
@@ -3093,7 +3093,7 @@ export function EditorTarjetaPublicoCliente({
                     gap: "8px",
                   }}
                 >
-                  <Info size={15} style={{ flexShrink: 0, marginTop: "2px", color: "#2F4737" }} />
+                  <Info size={15} style={{ flexShrink: 0, marginTop: "2px", color: "var(--ct-2f4737, #2F4737)" }} />
                   <span>
                     Agregaste una canción a tu tarjeta. Si eliges <strong>Mensaje + QR digital</strong> o <strong>Solo QR</strong>, quien la reciba podrá escanear la cartulina y escucharla.
                   </span>
@@ -3108,8 +3108,8 @@ export function EditorTarjetaPublicoCliente({
                   gap: "8px",
                   padding: "14px",
                   borderRadius: "14px",
-                  backgroundColor: "#FAF8F5",
-                  border: "1px solid #E6E2DA",
+                  backgroundColor: "var(--cf-faf8f5, #FAF8F5)",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 }}
               >
                 <div
@@ -3121,15 +3121,15 @@ export function EditorTarjetaPublicoCliente({
                     flexWrap: "wrap",
                   }}
                 >
-                  <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>
+                  <strong style={{ fontSize: "0.82rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                     Así se imprimirá el interior de tu tarjeta
                   </strong>
                   <span
                     style={{
                       fontSize: "0.7rem",
                       fontWeight: 700,
-                      color: "#2F4737",
-                      backgroundColor: "#EEF4F0",
+                      color: "var(--ct-2f4737, #2F4737)",
+                      backgroundColor: "var(--cf-eef4f0, #EEF4F0)",
                       padding: "3px 9px",
                       borderRadius: "999px",
                     }}
@@ -3165,9 +3165,9 @@ export function EditorTarjetaPublicoCliente({
               style={{
                 padding: "10px 13px",
                 borderRadius: "10px",
-                backgroundColor: "#FEF2F2",
-                border: "1px solid #FECACA",
-                color: "#991B1B",
+                backgroundColor: "var(--cf-fef2f2, #FEF2F2)",
+                border: "1px solid var(--cb-fecaca, #FECACA)",
+                color: "var(--ct-991b1b, #991B1B)",
                 fontSize: "0.8rem",
                 fontWeight: 600,
               }}
@@ -3182,9 +3182,9 @@ export function EditorTarjetaPublicoCliente({
               style={{
                 padding: "10px 13px",
                 borderRadius: "10px",
-                backgroundColor: "#EEF4F0",
-                border: "1px solid #C8D5CB",
-                color: "#2F4737",
+                backgroundColor: "var(--cf-eef4f0, #EEF4F0)",
+                border: "1px solid var(--cb-c8d5cb, #C8D5CB)",
+                color: "var(--ct-2f4737, #2F4737)",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 display: "flex",
@@ -3205,7 +3205,7 @@ export function EditorTarjetaPublicoCliente({
               justifyContent: "space-between",
               gap: "10px",
               paddingTop: "12px",
-              borderTop: "1px solid #EFECE6",
+              borderTop: "1px solid var(--cb-efece6, #EFECE6)",
               flexWrap: "wrap",
             }}
           >
@@ -3220,9 +3220,9 @@ export function EditorTarjetaPublicoCliente({
                 gap: "6px",
                 padding: "11px 16px",
                 borderRadius: "10px",
-                border: "1px solid #DDD7CD",
-                backgroundColor: "#FFFFFF",
-                color: "#1F1C19",
+                border: "1px solid var(--cb-ddd7cd, #DDD7CD)",
+                backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 fontSize: "0.84rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -3244,7 +3244,7 @@ export function EditorTarjetaPublicoCliente({
                     borderRadius: "10px",
                     border: "none",
                     backgroundColor: "transparent",
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     fontSize: "0.84rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -3307,7 +3307,7 @@ export function EditorTarjetaPublicoCliente({
           </div>
         </div>
 
-        <div style={{ textAlign: "center", fontSize: "0.73rem", color: "#78716C" }}>
+        <div style={{ textAlign: "center", fontSize: "0.73rem", color: "var(--ct-78716c, #78716C)" }}>
           {nombreMarca} · Puedes editar tu tarjeta hasta que ingrese a impresión en taller
         </div>
       </div>

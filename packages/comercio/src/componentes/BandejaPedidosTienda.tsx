@@ -865,15 +865,15 @@ export function BandejaPedidosTienda({
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxWidth: "300px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                <strong style={{ color: "#1F1C19", fontSize: "0.84rem" }}>{p.codigoOrden}</strong>
-                <span style={{ fontSize: "0.7rem", color: "#847D74" }}>
+                <strong style={{ color: "var(--ct-1f1c19, #1F1C19)", fontSize: "0.84rem" }}>{p.codigoOrden}</strong>
+                <span style={{ fontSize: "0.7rem", color: "var(--ct-847d74, #847D74)" }}>
                   {new Date(p.creadoEn).toLocaleString("es-EC", {
                     dateStyle: "short",
                     timeStyle: "short",
                   })}
                 </span>
               </div>
-              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#221E1B" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ct-221e1b, #221E1B)" }}>
                 {resumenProd}
               </span>
             </div>
@@ -911,8 +911,8 @@ export function BandejaPedidosTienda({
                   padding: "3px 7px",
                   borderRadius: "6px",
                   border: `1px solid ${def.bordeHex}`,
-                  background: "#FFFFFF",
-                  color: "#57524C",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-57524c, #57524C)",
                   fontSize: "0.7rem",
                   fontWeight: 600,
                   maxWidth: "145px",
@@ -943,15 +943,15 @@ export function BandejaPedidosTienda({
           const fallecido = p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre;
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "2px", maxWidth: "260px" }}>
-              <strong style={{ fontSize: "0.81rem", color: "#1F1C19" }}>
+              <strong style={{ fontSize: "0.81rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                 {esExeq ? `Solicita: ${p.compradorNombre}` : p.compradorNombre}
               </strong>
               {esExeq ? (
                 <>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#3A3530" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-3a3530, #3A3530)" }}>
                     Fallecido: {fallecido || "Pendiente registrar"}
                   </span>
-                  <span style={{ fontSize: "0.72rem", color: "#57524C", fontWeight: 600 }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--ct-57524c, #57524C)", fontWeight: 600 }}>
                     Sala: {sala || "Por confirmar"}
                   </span>
                 </>
@@ -959,12 +959,12 @@ export function BandejaPedidosTienda({
                 <>
                   {p.logistica.destinatarioNombre &&
                     p.logistica.destinatarioNombre !== p.compradorNombre && (
-                      <span style={{ fontSize: "0.74rem", color: "#57524C", fontWeight: 600 }}>
+                      <span style={{ fontSize: "0.74rem", color: "var(--ct-57524c, #57524C)", fontWeight: 600 }}>
                         {esCondol ? "Destinatario / Difunto" : "Recibe"}:{" "}
                         {p.logistica.destinatarioNombre}
                       </span>
                     )}
-                  <span style={{ fontSize: "0.72rem", color: "#847D74" }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--ct-847d74, #847D74)" }}>
                     {p.compradorTelefono || p.compradorCorreo || "—"}
                   </span>
                 </>
@@ -1002,7 +1002,7 @@ export function BandejaPedidosTienda({
                   gap: "4px",
                   fontSize: "0.77rem",
                   fontWeight: 700,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                 }}
               >
                 <Clock size={12} color="#2F4737" />
@@ -1012,7 +1012,7 @@ export function BandejaPedidosTienda({
                 </span>
               </span>
 
-              <span style={{ fontSize: "0.74rem", color: "#57524C", lineHeight: 1.35 }}>
+              <span style={{ fontSize: "0.74rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.35 }}>
                 {esExeq
                   ? sala
                     ? `Sala Exequiales: ${sala}`
@@ -1035,9 +1035,9 @@ export function BandejaPedidosTienda({
                       gap: "5px",
                       padding: "3px 8px",
                       borderRadius: "6px",
-                      border: "1px solid #CEDDD3",
-                      background: "#F2F6F3",
-                      color: "#2B4A36",
+                      border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                      background: "var(--cf-f2f6f3, #F2F6F3)",
+                      color: "var(--ct-2b4a36, #2B4A36)",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1052,9 +1052,9 @@ export function BandejaPedidosTienda({
                       style={{
                         padding: "2px 6px",
                         borderRadius: "6px",
-                        background: "#F4F2EE",
-                        border: "1px solid #DDD8CE",
-                        color: "#3A3530",
+                        background: "var(--cf-f4f2ee, #F4F2EE)",
+                        border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
+                        color: "var(--ct-3a3530, #3A3530)",
                         fontSize: "0.67rem",
                         fontWeight: 700,
                       }}
@@ -1076,16 +1076,16 @@ export function BandejaPedidosTienda({
           const esConvenio = p.metodoPago.toLowerCase().includes("convenio");
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <strong style={{ fontSize: "0.85rem", color: "#1F1C19" }}>
+              <strong style={{ fontSize: "0.85rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                 {esConvenio && p.total === 0 ? "Convenio IESS" : `$${p.total.toFixed(2)}`}
               </strong>
               {typeof p.montoAbonadoUsd === "number" && p.montoAbonadoUsd > 0 && (
-                <span style={{ fontSize: "0.7rem", color: "#221E1B", fontWeight: 700 }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--ct-221e1b, #221E1B)", fontWeight: 700 }}>
                   Abono: ${p.montoAbonadoUsd.toFixed(2)} · Saldo: $
                   {Math.max(0, p.saldoPendienteUsd ?? p.total - p.montoAbonadoUsd).toFixed(2)}
                 </span>
               )}
-              <span style={{ fontSize: "0.69rem", color: "#847D74", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)", textTransform: "uppercase" }}>
                 {p.metodoPago}
               </span>
               <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
@@ -1094,9 +1094,9 @@ export function BandejaPedidosTienda({
                     style={{
                       fontSize: "0.66rem",
                       fontWeight: 700,
-                      color: "#2B4A36",
-                      background: "#F2F6F3",
-                      border: "1px solid #CEDDD3",
+                      color: "var(--ct-2b4a36, #2B4A36)",
+                      background: "var(--cf-f2f6f3, #F2F6F3)",
+                      border: "1px solid var(--cb-ceddd3, #CEDDD3)",
                       borderRadius: "6px",
                       padding: "1px 6px",
                     }}
@@ -1110,9 +1110,9 @@ export function BandejaPedidosTienda({
                     style={{
                       fontSize: "0.66rem",
                       fontWeight: 700,
-                      color: "#1E40AF",
-                      background: "#EFF6FF",
-                      border: "1px solid #BFDBFE",
+                      color: "var(--ct-1e40af, #1E40AF)",
+                      background: "var(--cf-eff6ff, #EFF6FF)",
+                      border: "1px solid var(--cb-bfdbfe, #BFDBFE)",
                       borderRadius: "6px",
                       padding: "1px 6px",
                     }}
@@ -1138,9 +1138,9 @@ export function BandejaPedidosTienda({
                   style={{
                     padding: "4px 8px",
                     borderRadius: "7px",
-                    background: "#FAF2F2",
-                    border: "1px solid #E5CACA",
-                    color: "#8A2E2E",
+                    background: "var(--cf-faf2f2, #FAF2F2)",
+                    border: "1px solid var(--cb-e5caca, #E5CACA)",
+                    color: "var(--ct-8a2e2e, #8A2E2E)",
                     fontSize: "0.7rem",
                   }}
                 >
@@ -1166,8 +1166,8 @@ export function BandejaPedidosTienda({
                       padding: "4px 8px",
                       borderRadius: "6px",
                       border: "1px solid #2F4737",
-                      background: "#F2F6F3",
-                      color: "#2B4A36",
+                      background: "var(--cf-f2f6f3, #F2F6F3)",
+                      color: "var(--ct-2b4a36, #2B4A36)",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1221,7 +1221,7 @@ export function BandejaPedidosTienda({
                 style={{
                   padding: "4px 8px",
                   borderRadius: "999px",
-                  border: "1px solid rgba(0,0,0,0.08)",
+                  border: "1px solid var(--cb-000000-a080, rgba(0,0,0,0.08))",
                   background: est.colorFondo,
                   color: est.colorTexto,
                   fontSize: "0.74rem",
@@ -1248,9 +1248,9 @@ export function BandejaPedidosTienda({
                     gap: "4px",
                     padding: "4px 8px",
                     borderRadius: "6px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#57524C",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-57524c, #57524C)",
                     fontSize: "0.7rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1281,11 +1281,11 @@ export function BandejaPedidosTienda({
                           ? "1px solid #8F6A2E"
                           : editadaCliente
                             ? "1.5px solid #8F6A2E"
-                            : "1px solid #221E1B",
+                            : "1px solid var(--cb-221e1b, #221E1B)",
                       background:
-                        impresiones > 0 ? "#FAF6EE" : editadaCliente ? "#FAF6EE" : "#F4F2EE",
+                        impresiones > 0 ? "var(--cf-faf6ee, #FAF6EE)" : editadaCliente ? "var(--cf-faf6ee, #FAF6EE)" : "var(--cf-f4f2ee, #F4F2EE)",
                       color:
-                        impresiones > 0 ? "#745622" : editadaCliente ? "#745622" : "#3A3530",
+                        impresiones > 0 ? "var(--ct-745622, #745622)" : editadaCliente ? "var(--ct-745622, #745622)" : "var(--ct-3a3530, #3A3530)",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1321,9 +1321,9 @@ export function BandejaPedidosTienda({
                       gap: "4px",
                       padding: "4px 8px",
                       borderRadius: "6px",
-                      border: "1px solid #E5CACA",
-                      background: "#FAF2F2",
-                      color: "#8A2E2E",
+                      border: "1px solid var(--cb-e5caca, #E5CACA)",
+                      background: "var(--cf-faf2f2, #FAF2F2)",
+                      color: "var(--ct-8a2e2e, #8A2E2E)",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1367,8 +1367,8 @@ export function BandejaPedidosTienda({
     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       <style>{`
         .eco-pedidos-barra-unica {
-          background: #FFFFFF;
-          border: 1px solid #E6E2DA;
+          background: var(--cf-ffffff, #FFFFFF);
+          border: 1px solid var(--cb-e6e2da, #E6E2DA);
           border-radius: 12px;
           padding: 8px 12px;
           display: flex;
@@ -1389,8 +1389,8 @@ export function BandejaPedidosTienda({
           top: calc(100% + 8px);
           right: 0;
           width: min(440px, calc(100vw - 24px));
-          background: #FFFFFF;
-          border: 1px solid #D5CFC4;
+          background: var(--cf-ffffff, #FFFFFF);
+          border: 1px solid var(--cb-d5cfc4, #D5CFC4);
           border-radius: 14px;
           box-shadow: 0 20px 44px rgba(24, 21, 18, 0.16);
           padding: 14px;
@@ -1460,7 +1460,7 @@ export function BandejaPedidosTienda({
                 left: "10px",
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "#847D74",
+                color: "var(--ct-847d74, #847D74)",
                 pointerEvents: "none",
               }}
             />
@@ -1474,10 +1474,10 @@ export function BandejaPedidosTienda({
                 width: "100%",
                 padding: "7px 10px 7px 30px",
                 borderRadius: "9px",
-                border: "1px solid #D5CFC4",
-                background: "#F8F7F4",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
                 fontSize: "0.82rem",
-                color: "#1F1C19",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 boxSizing: "border-box",
               }}
             />
@@ -1500,9 +1500,9 @@ export function BandejaPedidosTienda({
               gap: "5px",
               padding: "5px 10px",
               borderRadius: "999px",
-              border: "1px solid #E6E2DA",
-              background: "#F8F7F4",
-              color: "#57524C",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              color: "var(--ct-57524c, #57524C)",
               fontSize: "0.74rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -1514,7 +1514,7 @@ export function BandejaPedidosTienda({
             {filtroClasificacion !== "TODOS" && (
               <>
                 <span style={{ color: "#C5BEB4" }}>·</span>
-                <span style={{ color: "#1F1C19" }}>{etiquetaClasificacionActiva}</span>
+                <span style={{ color: "var(--ct-1f1c19, #1F1C19)" }}>{etiquetaClasificacionActiva}</span>
               </>
             )}
             <span
@@ -1523,8 +1523,8 @@ export function BandejaPedidosTienda({
                 height: "16px",
                 padding: "0 5px",
                 borderRadius: "999px",
-                background: "#E6E2DA",
-                color: "#1F1C19",
+                background: "var(--cf-e6e2da, #E6E2DA)",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 fontSize: "0.68rem",
                 fontWeight: 800,
                 display: "inline-flex",
@@ -1548,9 +1548,9 @@ export function BandejaPedidosTienda({
                 gap: "4px",
                 padding: "5px 9px",
                 borderRadius: "999px",
-                border: "1px solid #E5CACA",
-                background: "#FAF2F2",
-                color: "#8A2E2E",
+                border: "1px solid var(--cb-e5caca, #E5CACA)",
+                background: "var(--cf-faf2f2, #FAF2F2)",
+                color: "var(--ct-8a2e2e, #8A2E2E)",
                 fontSize: "0.72rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -1607,9 +1607,9 @@ export function BandejaPedidosTienda({
                 padding: "7px 12px",
                 minHeight: "34px",
                 borderRadius: "9px",
-                border: "1px solid #D5CFC4",
-                background: "#FAF8F5",
-                color: "#1F1C19",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-faf8f5, #FAF8F5)",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -1638,9 +1638,9 @@ export function BandejaPedidosTienda({
               padding: "7px 12px",
               minHeight: "34px",
               borderRadius: "9px",
-              border: opcionesAbiertas ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-              background: opcionesAbiertas ? "#1F1C19" : "#FFFFFF",
-              color: opcionesAbiertas ? "#FFFFFF" : "#1F1C19",
+              border: opcionesAbiertas ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: opcionesAbiertas ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+              color: opcionesAbiertas ? "#FFFFFF" : "var(--ct-1f1c19, #1F1C19)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -1692,12 +1692,12 @@ export function BandejaPedidosTienda({
                   alignItems: "center",
                   justifyContent: "space-between",
                   paddingBottom: "8px",
-                  borderBottom: "1px solid #E6E2DA",
+                  borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 }}
               >
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
                   <SlidersHorizontal size={15} color="#2F4737" />
-                  <strong style={{ fontSize: "0.9rem", color: "#1F1C19" }}>Opciones</strong>
+                  <strong style={{ fontSize: "0.9rem", color: "var(--ct-1f1c19, #1F1C19)" }}>Opciones</strong>
                 </div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
                   {(cantidadFiltrosNoDefecto > 0 || busquedaKanban.trim() !== "") && (
@@ -1709,7 +1709,7 @@ export function BandejaPedidosTienda({
                       style={{
                         border: "none",
                         background: "transparent",
-                        color: "#2F4737",
+                        color: "var(--ct-2f4737, #2F4737)",
                         fontSize: "0.74rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -1732,9 +1732,9 @@ export function BandejaPedidosTienda({
                       width: "30px",
                       height: "30px",
                       borderRadius: "8px",
-                      border: "1px solid #E6E2DA",
-                      background: "#F8F7F4",
-                      color: "#57524C",
+                      border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                      background: "var(--cf-f8f7f4, #F8F7F4)",
+                      color: "var(--ct-57524c, #57524C)",
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1756,7 +1756,7 @@ export function BandejaPedidosTienda({
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.04em",
-                      color: "#847D74",
+                      color: "var(--ct-847d74, #847D74)",
                       marginBottom: "6px",
                     }}
                   >
@@ -1785,9 +1785,9 @@ export function BandejaPedidosTienda({
                             gap: "5px",
                             padding: "6px 11px",
                             borderRadius: "999px",
-                            border: activo ? "1px solid #1F1C19" : "1px solid #E6E2DA",
-                            background: activo ? "#1F1C19" : "#F8F7F4",
-                            color: activo ? "#FFFFFF" : "#57524C",
+                            border: activo ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                            background: activo ? "#1F1C19" : "var(--cf-f8f7f4, #F8F7F4)",
+                            color: activo ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                             fontSize: "0.75rem",
                             fontWeight: 700,
                             cursor: "pointer",
@@ -1800,8 +1800,8 @@ export function BandejaPedidosTienda({
                               height: "17px",
                               padding: "0 5px",
                               borderRadius: "999px",
-                              background: activo ? "rgba(255,255,255,0.2)" : "#E6E2DA",
-                              color: activo ? "#FFFFFF" : "#57524C",
+                              background: activo ? "rgba(255,255,255,0.2)" : "var(--cf-e6e2da, #E6E2DA)",
+                              color: activo ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                               fontSize: "0.68rem",
                               fontWeight: 800,
                               display: "inline-flex",
@@ -1825,7 +1825,7 @@ export function BandejaPedidosTienda({
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.04em",
-                      color: "#847D74",
+                      color: "var(--ct-847d74, #847D74)",
                       marginBottom: "6px",
                     }}
                   >
@@ -1842,7 +1842,7 @@ export function BandejaPedidosTienda({
               </div>
 
               {/* 2. VISUALIZACIÓN (Kanban por defecto / Tabla) */}
-              <div style={{ paddingTop: "10px", borderTop: "1px dashed #E6E2DA" }}>
+              <div style={{ paddingTop: "10px", borderTop: "1px dashed var(--cb-e6e2da, #E6E2DA)" }}>
                 <span
                   style={{
                     display: "block",
@@ -1850,7 +1850,7 @@ export function BandejaPedidosTienda({
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.04em",
-                    color: "#847D74",
+                    color: "var(--ct-847d74, #847D74)",
                     marginBottom: "6px",
                   }}
                 >
@@ -1864,8 +1864,8 @@ export function BandejaPedidosTienda({
                     gridTemplateColumns: "1fr 1fr",
                     padding: "3px",
                     borderRadius: "10px",
-                    background: "#F4F2EE",
-                    border: "1px solid #E6E2DA",
+                    background: "var(--cf-f4f2ee, #F4F2EE)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     gap: "4px",
                   }}
                 >
@@ -1924,7 +1924,7 @@ export function BandejaPedidosTienda({
               <div
                 style={{
                   paddingTop: "10px",
-                  borderTop: "1px dashed #E6E2DA",
+                  borderTop: "1px dashed var(--cb-e6e2da, #E6E2DA)",
                   display: "flex",
                   flexWrap: "wrap",
                   gap: "8px",
@@ -1944,9 +1944,9 @@ export function BandejaPedidosTienda({
                     gap: "6px",
                     padding: "8px 12px",
                     borderRadius: "9px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#1F1C19",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     fontSize: "0.77rem",
                     fontWeight: 700,
                     cursor: cargando ? "wait" : "pointer",
@@ -1973,9 +1973,9 @@ export function BandejaPedidosTienda({
                       gap: "6px",
                       padding: "8px 12px",
                       borderRadius: "9px",
-                      border: "1px solid #D5CFC4",
-                      background: "#F8F7F4",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-f8f7f4, #F8F7F4)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.77rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2000,9 +2000,9 @@ export function BandejaPedidosTienda({
                       gap: "6px",
                       padding: "8px 12px",
                       borderRadius: "9px",
-                      border: verPapelera ? "1px solid #8A2E2E" : "1px solid #E5CACA",
-                      background: verPapelera ? "#8A2E2E" : "#FAF2F2",
-                      color: verPapelera ? "#FFFFFF" : "#8A2E2E",
+                      border: verPapelera ? "1px solid #8A2E2E" : "1px solid var(--cb-e5caca, #E5CACA)",
+                      background: verPapelera ? "#8A2E2E" : "var(--cf-faf2f2, #FAF2F2)",
+                      color: verPapelera ? "#FFFFFF" : "var(--ct-8a2e2e, #8A2E2E)",
                       fontSize: "0.77rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2044,12 +2044,12 @@ export function BandejaPedidosTienda({
       {errorMsg && (
         <div
           style={{
-            background: "#FAF2F2",
-            border: "1px solid #E5CACA",
+            background: "var(--cf-faf2f2, #FAF2F2)",
+            border: "1px solid var(--cb-e5caca, #E5CACA)",
             borderRadius: "10px",
             padding: "10px 14px",
             fontSize: "0.82rem",
-            color: "#8A2E2E",
+            color: "var(--ct-8a2e2e, #8A2E2E)",
           }}
         >
           {errorMsg}
@@ -2066,9 +2066,9 @@ export function BandejaPedidosTienda({
             gap: "10px",
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#F4F2EE",
-            border: "1px solid #DDD8CE",
-            color: "#3A3530",
+            background: "var(--cf-f4f2ee, #F4F2EE)",
+            border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
+            color: "var(--ct-3a3530, #3A3530)",
             fontSize: "0.82rem",
           }}
         >
@@ -2096,9 +2096,9 @@ export function BandejaPedidosTienda({
             style={{
               padding: "5px 11px",
               borderRadius: "8px",
-              border: "1px solid #DDD8CE",
-              background: "#FFFFFF",
-              color: "#221E1B",
+              border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-221e1b, #221E1B)",
               fontSize: "0.75rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -2111,8 +2111,8 @@ export function BandejaPedidosTienda({
 
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           borderRadius: "12px",
           padding: "clamp(10px, 2.5vw, 16px)",
           minWidth: 0,
@@ -2129,7 +2129,7 @@ export function BandejaPedidosTienda({
                 gap: "10px",
               }}
             >
-              <span style={{ fontSize: "0.74rem", color: "#847D74", fontWeight: 600 }}>
+              <span style={{ fontSize: "0.74rem", color: "var(--ct-847d74, #847D74)", fontWeight: 600 }}>
                 {columnasKanbanDisponibles.length}{" "}
                 {columnasKanbanDisponibles.length === 1 ? "estado activo" : "estados activos"} ·{" "}
                 {!verPapelera
@@ -2143,11 +2143,11 @@ export function BandejaPedidosTienda({
                 style={{
                   padding: "32px 16px",
                   textAlign: "center",
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                   fontSize: "0.85rem",
-                  background: "#F8F7F4",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
                   borderRadius: "10px",
-                  border: "1px dashed #D5CFC4",
+                  border: "1px dashed var(--cb-d5cfc4, #D5CFC4)",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -2166,7 +2166,7 @@ export function BandejaPedidosTienda({
                       style={{
                         padding: "6px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #221E1B",
+                        border: "1px solid var(--cb-221e1b, #221E1B)",
                         background: "#221E1B",
                         color: "#FFFFFF",
                         fontSize: "0.76rem",
@@ -2183,9 +2183,9 @@ export function BandejaPedidosTienda({
                     style={{
                       padding: "6px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.76rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2239,8 +2239,8 @@ export function BandejaPedidosTienda({
                         flex: "1 0 295px",
                         minWidth: "295px",
                         maxWidth: "360px",
-                        background: esDropHover ? "#F4F2EE" : "#F8F7F4",
-                        border: esDropHover ? "2px dashed #4A453F" : "1px solid #E6E2DA",
+                        background: esDropHover ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-f8f7f4, #F8F7F4)",
+                        border: esDropHover ? "2px dashed var(--cb-4a453f, #4A453F)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
                         borderRadius: "12px",
                         padding: "10px",
                         display: "flex",
@@ -2277,7 +2277,7 @@ export function BandejaPedidosTienda({
                           style={{
                             padding: "1px 8px",
                             borderRadius: "999px",
-                            background: "rgba(255,255,255,0.75)",
+                            background: "var(--cf-ffffff-a750, rgba(255,255,255,0.75))",
                             color: col.colorTexto,
                             fontSize: "0.72rem",
                             fontWeight: 800,
@@ -2317,11 +2317,11 @@ export function BandejaPedidosTienda({
                                 setEstadoHoverKanban(null);
                               }}
                               style={{
-                                background: "#FFFFFF",
+                                background: "var(--cf-ffffff, #FFFFFF)",
                                 border:
                                   arrastrandoPedidoId === p.id
-                                    ? "1.5px solid #4A453F"
-                                    : "1px solid #E6E2DA",
+                                    ? "1.5px solid var(--cb-4a453f, #4A453F)"
+                                    : "1px solid var(--cb-e6e2da, #E6E2DA)",
                                 borderRadius: "10px",
                                 padding: "11px",
                                 display: "flex",
@@ -2340,7 +2340,7 @@ export function BandejaPedidosTienda({
                                   flexWrap: "wrap",
                                 }}
                               >
-                                <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>
+                                <strong style={{ fontSize: "0.82rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                                   {p.codigoOrden}
                                 </strong>
                                 <InsigniaClasificacionPedido
@@ -2350,17 +2350,17 @@ export function BandejaPedidosTienda({
                                 />
                               </div>
 
-                              <div style={{ fontSize: "0.78rem", color: "#221E1B", fontWeight: 600 }}>
+                              <div style={{ fontSize: "0.78rem", color: "var(--ct-221e1b, #221E1B)", fontWeight: 600 }}>
                                 {p.items.map((it) => `${it.cantidad}× ${it.descripcion}`).join(" + ") ||
                                   "Arreglo floral"}
                               </div>
 
-                              <div style={{ fontSize: "0.74rem", color: "#57524C", lineHeight: 1.35 }}>
+                              <div style={{ fontSize: "0.74rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.35 }}>
                                 <div>
                                   <strong>Solicita:</strong> {solicita}
                                 </div>
                                 {esExeq && fallecido ? (
-                                  <div style={{ color: "#3A3530" }}>
+                                  <div style={{ color: "var(--ct-3a3530, #3A3530)" }}>
                                     <strong>Fallecido:</strong> {fallecido}
                                   </div>
                                 ) : fallecido && fallecido !== solicita ? (
@@ -2369,11 +2369,11 @@ export function BandejaPedidosTienda({
                                   </div>
                                 ) : null}
                                 {sala ? (
-                                  <div style={{ color: "#3A3530", fontWeight: 600 }}>
+                                  <div style={{ color: "var(--ct-3a3530, #3A3530)", fontWeight: 600 }}>
                                     Sala: {sala}
                                   </div>
                                 ) : p.logistica.direccion ? (
-                                  <div style={{ color: "#847D74" }}>
+                                  <div style={{ color: "var(--ct-847d74, #847D74)" }}>
                                     📍 {p.logistica.direccion}
                                   </div>
                                 ) : null}
@@ -2386,8 +2386,8 @@ export function BandejaPedidosTienda({
                                   alignItems: "center",
                                   gap: "6px",
                                   fontSize: "0.72rem",
-                                  color: "#2F4737",
-                                  background: "#F2F6F3",
+                                  color: "var(--ct-2f4737, #2F4737)",
+                                  background: "var(--cf-f2f6f3, #F2F6F3)",
                                   padding: "4px 7px",
                                   borderRadius: "6px",
                                 }}
@@ -2395,7 +2395,7 @@ export function BandejaPedidosTienda({
                                 <span style={{ fontWeight: 700 }}>
                                   🕒 {p.logistica.fechaEntrega || "Hoy"} · {horaMostrar}
                                 </span>
-                                <strong style={{ color: "#1F1C19" }}>
+                                <strong style={{ color: "var(--ct-1f1c19, #1F1C19)" }}>
                                   {esExeq ? "IESS" : `$${p.total.toFixed(2)}`}
                                 </strong>
                               </div>
@@ -2405,9 +2405,9 @@ export function BandejaPedidosTienda({
                                   style={{
                                     padding: "5px 7px",
                                     borderRadius: "6px",
-                                    background: "#FAF2F2",
-                                    border: "1px solid #E5CACA",
-                                    color: "#8A2E2E",
+                                    background: "var(--cf-faf2f2, #FAF2F2)",
+                                    border: "1px solid var(--cb-e5caca, #E5CACA)",
+                                    color: "var(--ct-8a2e2e, #8A2E2E)",
                                     fontSize: "0.7rem",
                                   }}
                                 >
@@ -2431,7 +2431,7 @@ export function BandejaPedidosTienda({
                                     width: "100%",
                                     padding: "5px 8px",
                                     borderRadius: "7px",
-                                    border: "1px solid #D5CFC4",
+                                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                     background: col.colorFondo,
                                     color: col.colorTexto,
                                     fontSize: "0.72rem",
@@ -2461,8 +2461,8 @@ export function BandejaPedidosTienda({
                                         padding: "4px 8px",
                                         borderRadius: "6px",
                                         border: "1px solid #2F4737",
-                                        background: "#F2F6F3",
-                                        color: "#2B4A36",
+                                        background: "var(--cf-f2f6f3, #F2F6F3)",
+                                        color: "var(--ct-2b4a36, #2B4A36)",
                                         fontSize: "0.7rem",
                                         fontWeight: 700,
                                         cursor: "pointer",
@@ -2507,9 +2507,9 @@ export function BandejaPedidosTienda({
                                           gap: "4px",
                                           padding: "3px 7px",
                                           borderRadius: "6px",
-                                          border: "1px solid #E7E5E4",
-                                          background: "#FAF8F5",
-                                          color: "#57534E",
+                                          border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
+                                          background: "var(--cf-faf8f5, #FAF8F5)",
+                                          color: "var(--ct-57534e, #57534E)",
                                           fontSize: "0.68rem",
                                           fontWeight: 600,
                                         }}
@@ -2530,9 +2530,9 @@ export function BandejaPedidosTienda({
                                           gap: "4px",
                                           padding: "4px 8px",
                                           borderRadius: "6px",
-                                          border: "1px solid #CEDDD3",
-                                          background: "#F2F6F3",
-                                          color: "#2B4A36",
+                                          border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                                          background: "var(--cf-f2f6f3, #F2F6F3)",
+                                          color: "var(--ct-2b4a36, #2B4A36)",
                                           fontSize: "0.7rem",
                                           fontWeight: 700,
                                           textDecoration: "none",
@@ -2551,9 +2551,9 @@ export function BandejaPedidosTienda({
                                           gap: "4px",
                                           padding: "4px 8px",
                                           borderRadius: "6px",
-                                          border: "1px solid #BFDBFE",
-                                          background: "#EFF6FF",
-                                          color: "#1E40AF",
+                                          border: "1px solid var(--cb-bfdbfe, #BFDBFE)",
+                                          background: "var(--cf-eff6ff, #EFF6FF)",
+                                          color: "var(--ct-1e40af, #1E40AF)",
                                           fontSize: "0.7rem",
                                           fontWeight: 700,
                                         }}
@@ -2572,9 +2572,9 @@ export function BandejaPedidosTienda({
                                           gap: "4px",
                                           padding: "4px 8px",
                                           borderRadius: "6px",
-                                          border: "1px solid #CEDDD3",
-                                          background: "#F2F6F3",
-                                          color: "#2B4A36",
+                                          border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                                          background: "var(--cf-f2f6f3, #F2F6F3)",
+                                          color: "var(--ct-2b4a36, #2B4A36)",
                                           fontSize: "0.7rem",
                                           fontWeight: 700,
                                           cursor: "pointer",
@@ -2594,9 +2594,9 @@ export function BandejaPedidosTienda({
                                         gap: "4px",
                                         padding: "4px 8px",
                                         borderRadius: "6px",
-                                        border: "1px solid #D5CFC4",
-                                        background: "#FFFFFF",
-                                        color: "#57524C",
+                                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                        background: "var(--cf-ffffff, #FFFFFF)",
+                                        color: "var(--ct-57524c, #57524C)",
                                         fontSize: "0.7rem",
                                         fontWeight: 700,
                                         cursor: "pointer",
@@ -2619,9 +2619,9 @@ export function BandejaPedidosTienda({
                                           border:
                                             impresiones > 0
                                               ? "1px solid #8F6A2E"
-                                              : "1px solid #221E1B",
-                                          background: impresiones > 0 ? "#FAF6EE" : "#F4F2EE",
-                                          color: impresiones > 0 ? "#745622" : "#3A3530",
+                                              : "1px solid var(--cb-221e1b, #221E1B)",
+                                          background: impresiones > 0 ? "var(--cf-faf6ee, #FAF6EE)" : "var(--cf-f4f2ee, #F4F2EE)",
+                                          color: impresiones > 0 ? "var(--ct-745622, #745622)" : "var(--ct-3a3530, #3A3530)",
                                           fontSize: "0.7rem",
                                           fontWeight: 700,
                                           cursor: "pointer",
@@ -2645,9 +2645,9 @@ export function BandejaPedidosTienda({
                                           gap: "4px",
                                           padding: "4px 8px",
                                           borderRadius: "6px",
-                                          border: "1px solid #E5CACA",
-                                          background: "#FAF2F2",
-                                          color: "#8A2E2E",
+                                          border: "1px solid var(--cb-e5caca, #E5CACA)",
+                                          background: "var(--cf-faf2f2, #FAF2F2)",
+                                          color: "var(--ct-8a2e2e, #8A2E2E)",
                                           fontSize: "0.7rem",
                                           fontWeight: 700,
                                           cursor: "pointer",
@@ -2689,16 +2689,16 @@ export function BandejaPedidosTienda({
                   gridTemplateColumns: "repeat(auto-fit, minmax(min(255px, 100%), 1fr))",
                   gap: "14px",
                   padding: "12px",
-                  background: "#F8F7F4",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
                   borderRadius: "10px",
-                  border: "1px solid #E6E2DA",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 }}
               >
                 {/* 1. Auditoría Interna de Logística, Sala y Dirección */}
                 <div
                   style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #D5CFC4",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     borderRadius: "9px",
                     padding: "12px",
                     display: "flex",
@@ -2715,7 +2715,7 @@ export function BandejaPedidosTienda({
                       flexWrap: "wrap",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#1F1C19" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--ct-1f1c19, #1F1C19)" }}>
                       <Truck size={15} color="#2F4737" />
                       <strong style={{ fontSize: "0.82rem" }}>
                         {esExeq ? "Detalle Permanente Exequiales" : "Detalle Logístico y Entrega"}
@@ -2733,9 +2733,9 @@ export function BandejaPedidosTienda({
                           gap: "4px",
                           padding: "4px 9px",
                           borderRadius: "6px",
-                          border: "1px solid #221E1B",
-                          background: "#F4F2EE",
-                          color: "#3A3530",
+                          border: "1px solid var(--cb-221e1b, #221E1B)",
+                          background: "var(--cf-f4f2ee, #F4F2EE)",
+                          color: "var(--ct-3a3530, #3A3530)",
                           fontSize: "0.72rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -2748,7 +2748,7 @@ export function BandejaPedidosTienda({
                     </div>
                   </div>
 
-                  <div style={{ fontSize: "0.78rem", color: "#57524C", lineHeight: 1.48 }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.48 }}>
                     {esExeq ? (
                       <>
                         <div>
@@ -2791,7 +2791,7 @@ export function BandejaPedidosTienda({
                     )}
 
                     {!esExeq && p.logistica.detalleDireccionGeo && (
-                      <div style={{ fontSize: "0.74rem", color: "#2F4737" }}>
+                      <div style={{ fontSize: "0.74rem", color: "var(--ct-2f4737, #2F4737)" }}>
                         <strong>Mapa (Calle / Sector / Parroquia):</strong>{" "}
                         {[
                           p.logistica.detalleDireccionGeo.callePrincipal,
@@ -2823,9 +2823,9 @@ export function BandejaPedidosTienda({
                           marginTop: "6px",
                           padding: "8px 10px",
                           borderRadius: "8px",
-                          background: "#EFF6FF",
-                          border: "1px solid #BFDBFE",
-                          color: "#1E3A8A",
+                          background: "var(--cf-eff6ff, #EFF6FF)",
+                          border: "1px solid var(--cb-bfdbfe, #BFDBFE)",
+                          color: "var(--ct-1e3a8a, #1E3A8A)",
                           fontSize: "0.75rem",
                           display: "flex",
                           flexDirection: "column",
@@ -2858,12 +2858,12 @@ export function BandejaPedidosTienda({
                           )}
                           {typeof p.logistica.lat === "number" &&
                             typeof p.logistica.lng === "number" && (
-                              <span style={{ fontWeight: 500, color: "#1E40AF" }}>
+                              <span style={{ fontWeight: 500, color: "var(--ct-1e40af, #1E40AF)" }}>
                                 GPS: {p.logistica.lat.toFixed(5)}, {p.logistica.lng.toFixed(5)}
                               </span>
                             )}
                         </div>
-                        <div style={{ fontSize: "0.73rem", color: "#1E40AF" }}>
+                        <div style={{ fontSize: "0.73rem", color: "var(--ct-1e40af, #1E40AF)" }}>
                           <strong>Detalle de ruta:</strong> {p.logistica.formulaCalculoInterno}
                         </div>
                       </div>
@@ -2874,9 +2874,9 @@ export function BandejaPedidosTienda({
                           marginTop: "6px",
                           padding: "7px 9px",
                           borderRadius: "7px",
-                          background: "#F4F2EE",
-                          border: "1px solid #DDD8CE",
-                          color: "#3A3530",
+                          background: "var(--cf-f4f2ee, #F4F2EE)",
+                          border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
+                          color: "var(--ct-3a3530, #3A3530)",
                           fontSize: "0.75rem",
                         }}
                       >
@@ -2917,8 +2917,8 @@ export function BandejaPedidosTienda({
                 {/* 2. Ítems, Producto y Dedicatorias */}
                 <div
                   style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E6E2DA",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     borderRadius: "9px",
                     padding: "12px",
                     display: "flex",
@@ -2926,7 +2926,7 @@ export function BandejaPedidosTienda({
                     gap: "8px",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#1F1C19" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--ct-1f1c19, #1F1C19)" }}>
                     <PackageCheck size={15} color="#221E1B" />
                     <strong style={{ fontSize: "0.82rem" }}>
                       {esExeq
@@ -2942,10 +2942,10 @@ export function BandejaPedidosTienda({
                       <div
                         key={`${p.id}-it-${idx}`}
                         style={{
-                          borderTop: idx === 0 ? "none" : "1px solid #F4F2EE",
+                          borderTop: idx === 0 ? "none" : "1px solid var(--cb-f4f2ee, #F4F2EE)",
                           paddingTop: idx === 0 ? 0 : "6px",
                           fontSize: "0.78rem",
-                          color: "#221E1B",
+                          color: "var(--ct-221e1b, #221E1B)",
                           display: "flex",
                           gap: "10px",
                           alignItems: "flex-start",
@@ -2973,8 +2973,8 @@ export function BandejaPedidosTienda({
                                 borderRadius: "8px",
                                 border: it.personalizacionFloral?.mismosColoresFoto
                                   ? "2px solid #2F4737"
-                                  : "1px solid #D5CFC4",
-                                background: "#FFFFFF",
+                                  : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                background: "var(--cf-ffffff, #FFFFFF)",
                                 display: "block",
                               }}
                             />
@@ -2993,14 +2993,14 @@ export function BandejaPedidosTienda({
                                 marginTop: "3px",
                                 fontSize: "0.73rem",
                                 color: it.personalizacionFloral.mismosColoresFoto
-                                  ? "#166534"
-                                  : "#831843",
+                                  ? "var(--ct-166534, #166534)"
+                                  : "var(--ct-831843, #831843)",
                                 background: it.personalizacionFloral.mismosColoresFoto
-                                  ? "#F0FDF4"
-                                  : "#FDF2F8",
+                                  ? "var(--cf-f0fdf4, #F0FDF4)"
+                                  : "var(--cf-fdf2f8, #FDF2F8)",
                                 border: it.personalizacionFloral.mismosColoresFoto
-                                  ? "1px solid #BBF7D0"
-                                  : "1px solid #FBCFE8",
+                                  ? "1px solid var(--cb-bbf7d0, #BBF7D0)"
+                                  : "1px solid var(--cb-fbcfe8, #FBCFE8)",
                                 borderRadius: "6px",
                                 padding: "5px 8px",
                               }}
@@ -3017,9 +3017,9 @@ export function BandejaPedidosTienda({
                                     marginTop: "4px",
                                     padding: "3px 6px",
                                     borderRadius: "5px",
-                                    background: "#ECFDF5",
+                                    background: "var(--cf-ecfdf5, #ECFDF5)",
                                     border: "1px solid #6EE7B7",
-                                    color: "#065F46",
+                                    color: "var(--ct-065f46, #065F46)",
                                     fontWeight: 700,
                                     fontSize: "0.7rem",
                                   }}
@@ -3035,9 +3035,9 @@ export function BandejaPedidosTienda({
                                     marginTop: "4px",
                                     padding: "3px 6px",
                                     borderRadius: "5px",
-                                    background: "#FFFBEB",
+                                    background: "var(--cf-fffbeb, #FFFBEB)",
                                     border: "1px solid #F59E0B",
-                                    color: "#92400E",
+                                    color: "var(--ct-92400e, #92400E)",
                                     fontWeight: 700,
                                     fontSize: "0.7rem",
                                   }}
@@ -3053,9 +3053,9 @@ export function BandejaPedidosTienda({
                               style={{
                                 marginTop: "3px",
                                 fontSize: "0.73rem",
-                                color: "#57524C",
-                                background: "#FAF6EE",
-                                border: "1px solid #E5D7BC",
+                                color: "var(--ct-57524c, #57524C)",
+                                background: "var(--cf-faf6ee, #FAF6EE)",
+                                border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
                                 borderRadius: "6px",
                                 padding: "5px 8px",
                               }}
@@ -3096,8 +3096,8 @@ export function BandejaPedidosTienda({
                         style={{
                           padding: "10px 11px",
                           borderRadius: "8px",
-                          background: "#FAF6EE",
-                          border: "1px solid #E5D7BC",
+                          background: "var(--cf-faf6ee, #FAF6EE)",
+                          border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
                           display: "flex",
                           flexDirection: "column",
                           gap: "7px",
@@ -3112,7 +3112,7 @@ export function BandejaPedidosTienda({
                             flexWrap: "wrap",
                           }}
                         >
-                          <strong style={{ fontSize: "0.77rem", color: "#745622" }}>
+                          <strong style={{ fontSize: "0.77rem", color: "var(--ct-745622, #745622)" }}>
                             {esCondolTarj
                               ? "🕊️ Condolencias (16,8 × 11,3 cm Horizontal)"
                               : "💌 Dedicatoria (11,3 × 16,8 cm Vertical)"}
@@ -3135,8 +3135,8 @@ export function BandejaPedidosTienda({
                               style={{
                                 padding: "1px 6px",
                                 borderRadius: "999px",
-                                background: editCli ? "#F2F6F3" : editStaff ? "#EFECE6" : "#FAF6EE",
-                                color: editCli ? "#2B4A36" : editStaff ? "#3A3530" : "#745622",
+                                background: editCli ? "var(--cf-f2f6f3, #F2F6F3)" : editStaff ? "var(--cf-efece6, #EFECE6)" : "var(--cf-faf6ee, #FAF6EE)",
+                                color: editCli ? "var(--ct-2b4a36, #2B4A36)" : editStaff ? "var(--ct-3a3530, #3A3530)" : "var(--ct-745622, #745622)",
                                 fontWeight: 700,
                               }}
                             >
@@ -3151,8 +3151,8 @@ export function BandejaPedidosTienda({
                                 style={{
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  background: "#EFECE6",
-                                  color: "#3A3530",
+                                  background: "var(--cf-efece6, #EFECE6)",
+                                  color: "var(--ct-3a3530, #3A3530)",
                                   fontWeight: 700,
                                 }}
                               >
@@ -3164,8 +3164,8 @@ export function BandejaPedidosTienda({
                                 style={{
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  background: "#E5D7BC",
-                                  color: "#745622",
+                                  background: "var(--cf-e5d7bc, #E5D7BC)",
+                                  color: "var(--ct-745622, #745622)",
                                   fontWeight: 700,
                                 }}
                               >
@@ -3177,8 +3177,8 @@ export function BandejaPedidosTienda({
                                 style={{
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  background: "#F4F2EE",
-                                  color: "#3A3530",
+                                  background: "var(--cf-f4f2ee, #F4F2EE)",
+                                  color: "var(--ct-3a3530, #3A3530)",
                                   fontWeight: 700,
                                   display: "inline-flex",
                                   alignItems: "center",
@@ -3191,18 +3191,18 @@ export function BandejaPedidosTienda({
                           </div>
                         </div>
 
-                        <div style={{ fontSize: "0.75rem", color: "#57524C" }}>
+                        <div style={{ fontSize: "0.75rem", color: "var(--ct-57524c, #57524C)" }}>
                           {msgTarj ? (
                             <>
                               &ldquo;{msgTarj}&rdquo;
                               {!esCondolTarj && p.tarjeta?.musicaTitulo ? (
-                                <span style={{ display: "block", fontSize: "0.7rem", color: "#3A3530", marginTop: "2px" }}>
+                                <span style={{ display: "block", fontSize: "0.7rem", color: "var(--ct-3a3530, #3A3530)", marginTop: "2px" }}>
                                   🎵 {p.tarjeta.musicaTitulo}
                                 </span>
                               ) : null}
                             </>
                           ) : (
-                            <span style={{ fontStyle: "italic", color: "#847D74" }}>
+                            <span style={{ fontStyle: "italic", color: "var(--ct-847d74, #847D74)" }}>
                               Sin mensaje escrito aún. Puedes editarla aquí o enviar el enlace de edición al cliente.
                             </span>
                           )}
@@ -3245,9 +3245,9 @@ export function BandejaPedidosTienda({
                                 gap: "4px",
                                 padding: "5px 9px",
                                 borderRadius: "6px",
-                                border: "1px solid #CEDDD3",
-                                background: "#F2F6F3",
-                                color: "#2F4737",
+                                border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                                background: "var(--cf-f2f6f3, #F2F6F3)",
+                                color: "var(--ct-2f4737, #2F4737)",
                                 textDecoration: "none",
                                 fontSize: "0.73rem",
                                 fontWeight: 700,
@@ -3271,9 +3271,9 @@ export function BandejaPedidosTienda({
                                 gap: "4px",
                                 padding: "5px 9px",
                                 borderRadius: "6px",
-                                border: "1px solid #D5CFC4",
-                                background: "#FFFFFF",
-                                color: "#1F1C19",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                color: "var(--ct-1f1c19, #1F1C19)",
                                 textDecoration: "none",
                                 fontSize: "0.73rem",
                                 fontWeight: 700,
@@ -3292,9 +3292,9 @@ export function BandejaPedidosTienda({
                     style={{
                       marginTop: "auto",
                       paddingTop: "8px",
-                      borderTop: "1px solid #E6E2DA",
+                      borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
                       fontSize: "0.75rem",
-                      color: "#57524C",
+                      color: "var(--ct-57524c, #57524C)",
                       display: "flex",
                       flexDirection: "column",
                       gap: "8px",
@@ -3305,9 +3305,9 @@ export function BandejaPedidosTienda({
                         style={{
                           padding: "8px 10px",
                           borderRadius: "7px",
-                          background: "#F8F4F2",
-                          border: "1px solid #E5D8D3",
-                          color: "#6E3B42",
+                          background: "var(--cf-f8f4f2, #F8F4F2)",
+                          border: "1px solid var(--cb-e5d8d3, #E5D8D3)",
+                          color: "var(--ct-6e3b42, #6E3B42)",
                         }}
                       >
                         <strong>Evento:</strong> {p.evento.tipoEvento || "Evento"} · Fecha:{" "}
@@ -3343,9 +3343,9 @@ export function BandejaPedidosTienda({
                           gap: "6px",
                           flexWrap: "wrap",
                           fontSize: "0.75rem",
-                          color: "#44403C",
-                          background: "#FAF8F5",
-                          border: "1px solid #E7E5E4",
+                          color: "var(--ct-44403c, #44403C)",
+                          background: "var(--cf-faf8f5, #FAF8F5)",
+                          border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
                           borderRadius: "8px",
                           padding: "5px 9px",
                         }}
@@ -3366,8 +3366,8 @@ export function BandejaPedidosTienda({
                       style={{
                         padding: "10px 12px",
                         borderRadius: "10px",
-                        background: "#F8FAF8",
-                        border: "1px solid #DCE7DF",
+                        background: "var(--cf-f8faf8, #F8FAF8)",
+                        border: "1px solid var(--cb-dce7df, #DCE7DF)",
                         display: "flex",
                         flexDirection: "column",
                         gap: "8px",
@@ -3382,7 +3382,7 @@ export function BandejaPedidosTienda({
                           flexWrap: "wrap",
                         }}
                       >
-                        <strong style={{ fontSize: "0.76rem", color: "#1F352C" }}>
+                        <strong style={{ fontSize: "0.76rem", color: "var(--ct-1f352c, #1F352C)" }}>
                           Evidencias del Pedido
                         </strong>
                         <label
@@ -3394,8 +3394,8 @@ export function BandejaPedidosTienda({
                             padding: "4px 9px",
                             borderRadius: "7px",
                             border: "1px solid #2F4737",
-                            background: "#FFFFFF",
-                            color: "#2F4737",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            color: "var(--ct-2f4737, #2F4737)",
                             fontSize: "0.71rem",
                             fontWeight: 700,
                             cursor: subiendoEvidenciaPedidoId === p.id ? "wait" : "pointer",
@@ -3433,9 +3433,9 @@ export function BandejaPedidosTienda({
                           style={{
                             padding: "8px 10px",
                             borderRadius: "8px",
-                            background: "#F2F6F3",
-                            border: "1px solid #CEDDD3",
-                            color: "#2B4A36",
+                            background: "var(--cf-f2f6f3, #F2F6F3)",
+                            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                            color: "var(--ct-2b4a36, #2B4A36)",
                             display: "flex",
                             flexDirection: "column",
                             gap: "6px",
@@ -3490,8 +3490,8 @@ export function BandejaPedidosTienda({
                                 maxHeight: "150px",
                                 objectFit: "contain",
                                 borderRadius: "6px",
-                                border: "1px solid #CEDDD3",
-                                background: "#FFFFFF",
+                                border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                                background: "var(--cf-ffffff, #FFFFFF)",
                               }}
                             />
                           )}
@@ -3504,9 +3504,9 @@ export function BandejaPedidosTienda({
                           style={{
                             padding: "8px 10px",
                             borderRadius: "8px",
-                            background: "#EFF6FF",
-                            border: "1px solid #BFDBFE",
-                            color: "#1E3A8A",
+                            background: "var(--cf-eff6ff, #EFF6FF)",
+                            border: "1px solid var(--cb-bfdbfe, #BFDBFE)",
+                            color: "var(--ct-1e3a8a, #1E3A8A)",
                             display: "flex",
                             flexDirection: "column",
                             gap: "4px",
@@ -3530,7 +3530,7 @@ export function BandejaPedidosTienda({
                             )}
                           </div>
                           {p.respuestaPlux.identificador && (
-                            <div style={{ fontSize: "0.7rem", color: "#3B82F6" }}>
+                            <div style={{ fontSize: "0.7rem", color: "var(--ct-3b82f6, #3B82F6)" }}>
                               ID Transacción: <code>{p.respuestaPlux.identificador}</code>
                               {p.respuestaPlux.confirmadoEn
                                 ? ` · ${new Date(p.respuestaPlux.confirmadoEn).toLocaleString("es-EC")}`
@@ -3547,14 +3547,14 @@ export function BandejaPedidosTienda({
                                   margin: "4px 0 0",
                                   padding: "6px 8px",
                                   borderRadius: "6px",
-                                  background: "#FFFFFF",
-                                  border: "1px solid #DBEAFE",
+                                  background: "var(--cf-ffffff, #FFFFFF)",
+                                  border: "1px solid var(--cb-dbeafe, #DBEAFE)",
                                   fontSize: "0.67rem",
                                   maxHeight: "150px",
                                   overflow: "auto",
                                   whiteSpace: "pre-wrap",
                                   wordBreak: "break-word",
-                                  color: "#1E293B",
+                                  color: "var(--ct-1e293b, #1E293B)",
                                 }}
                               >
                                 {JSON.stringify(p.respuestaPlux.respuestaRaw, null, 2)}
@@ -3570,9 +3570,9 @@ export function BandejaPedidosTienda({
                           style={{
                             padding: "8px 10px",
                             borderRadius: "8px",
-                            background: "#ECFDF5",
-                            border: "1px solid #A7F3D0",
-                            color: "#065F46",
+                            background: "var(--cf-ecfdf5, #ECFDF5)",
+                            border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
+                            color: "var(--ct-065f46, #065F46)",
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
@@ -3617,7 +3617,7 @@ export function BandejaPedidosTienda({
                         !p.respuestaPlux &&
                         !p.evidenciaEntrega?.confirmada &&
                         !p.evidenciaEntrega?.fotoUrl && (
-                          <span style={{ fontSize: "0.73rem", color: "#64748B" }}>
+                          <span style={{ fontSize: "0.73rem", color: "var(--ct-64748b, #64748B)" }}>
                             Aún sin evidencias adjuntas. Puedes subir el recibo de pago manualmente aquí.
                           </span>
                         )}
@@ -3685,9 +3685,9 @@ export function BandejaPedidosTienda({
                             gap: "5px",
                             padding: "6px 11px",
                             borderRadius: "7px",
-                            border: "1px solid #D5CFC4",
-                            background: "#FFFFFF",
-                            color: "#1F1C19",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            color: "var(--ct-1f1c19, #1F1C19)",
                             textDecoration: "none",
                             fontSize: "0.75rem",
                             fontWeight: 600,
@@ -3730,8 +3730,8 @@ export function BandejaPedidosTienda({
                 {/* 3. Evidencia Fotográfica Permanente de Confirmación de Entrega */}
                 <div
                   style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E6E2DA",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     borderRadius: "9px",
                     padding: "12px",
                     display: "flex",
@@ -3739,7 +3739,7 @@ export function BandejaPedidosTienda({
                     gap: "8px",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#1F1C19" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--ct-1f1c19, #1F1C19)" }}>
                     <Camera size={15} color="#2F4737" />
                     <strong style={{ fontSize: "0.82rem" }}>
                       Confirmación Fotográfica de Entrega
@@ -3755,7 +3755,7 @@ export function BandejaPedidosTienda({
                         aria-label="Ampliar Foto"
                         style={{
                           padding: 0,
-                          border: "1px solid #D5CFC4",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                           borderRadius: "8px",
                           overflow: "hidden",
                           background: "#1F1C19",
@@ -3775,7 +3775,7 @@ export function BandejaPedidosTienda({
                         />
                       </button>
 
-                      <div style={{ fontSize: "0.75rem", color: "#57524C", lineHeight: 1.42 }}>
+                      <div style={{ fontSize: "0.75rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.42 }}>
                         {p.evidenciaEntrega.capturadoEn && (
                           <div>
                             <strong>Fecha/Hora entrega:</strong>{" "}
@@ -3841,9 +3841,9 @@ export function BandejaPedidosTienda({
                                 gap: "5px",
                                 padding: "6px 11px",
                                 borderRadius: "7px",
-                                border: "1px solid #D5CFC4",
-                                background: "#FFFFFF",
-                                color: "#1F1C19",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                color: "var(--ct-1f1c19, #1F1C19)",
                                 textDecoration: "none",
                                 fontSize: "0.74rem",
                                 fontWeight: 600,
@@ -3860,10 +3860,10 @@ export function BandejaPedidosTienda({
                       style={{
                         padding: "14px",
                         borderRadius: "8px",
-                        border: "1px dashed #D5CFC4",
-                        background: "#F8F7F4",
+                        border: "1px dashed var(--cb-d5cfc4, #D5CFC4)",
+                        background: "var(--cf-f8f7f4, #F8F7F4)",
                         fontSize: "0.76rem",
-                        color: "#847D74",
+                        color: "var(--ct-847d74, #847D74)",
                         lineHeight: 1.45,
                         display: "flex",
                         flexDirection: "column",
@@ -4004,7 +4004,7 @@ export function BandejaPedidosTienda({
             onClick={(ev) => ev.stopPropagation()}
             onSubmit={(e) => void handleGuardarEdicionPedido(e)}
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "20px",
               maxWidth: "560px",
@@ -4019,10 +4019,10 @@ export function BandejaPedidosTienda({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <strong style={{ fontSize: "1rem", color: "#1F1C19" }}>
+                <strong style={{ fontSize: "1rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                   ✏️ Editar Datos del Pedido ({formEdicionPedido.pedidoBase.codigoOrden})
                 </strong>
-                <div style={{ fontSize: "0.75rem", color: "#847D74" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--ct-847d74, #847D74)" }}>
                   {formEdicionPedido.clasificacionPedido === "EXEQUIALES"
                     ? "Orden Exequiales · Se sincroniza con Envíos, Taller e Informe."
                     : "Se sincroniza automáticamente con Envíos, Taller y Tarjeta Dedicatoria."}
@@ -4035,7 +4035,7 @@ export function BandejaPedidosTienda({
                 aria-label="Cerrar"
                 style={{
                   border: "none",
-                  background: "#F4F2EE",
+                  background: "var(--cf-f4f2ee, #F4F2EE)",
                   borderRadius: "8px",
                   width: "30px",
                   height: "30px",
@@ -4052,13 +4052,13 @@ export function BandejaPedidosTienda({
             {errorModalEdicion && (
               <div
                 style={{
-                  background: "#FAF2F2",
-                  border: "1px solid #E5CACA",
+                  background: "var(--cf-faf2f2, #FAF2F2)",
+                  border: "1px solid var(--cb-e5caca, #E5CACA)",
                   borderRadius: "8px",
                   padding: "8px 11px",
                   fontSize: "0.78rem",
                   fontWeight: 600,
-                  color: "#8A2E2E",
+                  color: "var(--ct-8a2e2e, #8A2E2E)",
                 }}
               >
                 {errorModalEdicion}
@@ -4067,7 +4067,7 @@ export function BandejaPedidosTienda({
 
             {/* 1. TIPO / CLASIFICACIÓN DE PEDIDO */}
             <div>
-              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "4px" }}>
                 Tipo de Pedido *
               </label>
               <SelectConBuscador
@@ -4093,7 +4093,7 @@ export function BandejaPedidosTienda({
                     };
                   });
                 }}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem" }}
               >
                 {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((op) => (
                   <option key={op.clave} value={op.clave}>
@@ -4106,7 +4106,7 @@ export function BandejaPedidosTienda({
             {/* 2. FECHA DE ENTREGA Y SALA (CUANDO ES EXEQUIALES) O HORA DE ENTREGA */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "3px" }}>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "3px" }}>
                   Fecha de Entrega *
                 </label>
                 <input
@@ -4118,13 +4118,13 @@ export function BandejaPedidosTienda({
                       prev ? { ...prev, fechaEntrega: e.target.value } : null
                     )
                   }
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem", boxSizing: "border-box" }}
                 />
               </div>
 
               {formEdicionPedido.clasificacionPedido === "EXEQUIALES" ? (
                 <div>
-                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#3A3530", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-3a3530, #3A3530)", marginBottom: "3px" }}>
                     Sala Exequiales
                   </label>
                   <SelectConBuscador
@@ -4134,7 +4134,7 @@ export function BandejaPedidosTienda({
                         prev ? { ...prev, salaServicio: e.target.value } : null
                       )
                     }
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem" }}
                   >
                     <option value="">Por confirmar</option>
                     {OPCIONES_SALA_EXEQUIALES.map((s) => (
@@ -4146,7 +4146,7 @@ export function BandejaPedidosTienda({
                 </div>
               ) : (
                 <div>
-                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "3px" }}>
                     Hora de Entrega *
                   </label>
                   <SelectConBuscador
@@ -4166,7 +4166,7 @@ export function BandejaPedidosTienda({
                           : null
                       );
                     }}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem" }}
                   >
                     {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
                       <option key={r.codigo} value={r.valor}>
@@ -4190,7 +4190,7 @@ export function BandejaPedidosTienda({
                 }}
               >
                 <div>
-                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "3px" }}>
                     Hora de Entrega *
                   </label>
                   <SelectConBuscador
@@ -4210,7 +4210,7 @@ export function BandejaPedidosTienda({
                           : null
                       );
                     }}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem" }}
                   >
                     <option value="LO_ANTES_POSIBLE">⚡ Lo antes posible</option>
                     {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
@@ -4224,7 +4224,7 @@ export function BandejaPedidosTienda({
 
                 {formEdicionPedido.modoHorario === "HORA_EXACTA" && (
                   <div>
-                    <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#2F4737", marginBottom: "3px" }}>
+                    <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-2f4737, #2F4737)", marginBottom: "3px" }}>
                       Indicar Hora Exacta *
                     </label>
                     <input
@@ -4244,7 +4244,7 @@ export function BandejaPedidosTienda({
             ) : (
               formEdicionPedido.modoHorario === "HORA_EXACTA" && (
                 <div>
-                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#2F4737", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-2f4737, #2F4737)", marginBottom: "3px" }}>
                     Indicar Hora Exacta de Entrega *
                   </label>
                   <input
@@ -4265,7 +4265,7 @@ export function BandejaPedidosTienda({
             {/* 3. COMPRADOR / QUIÉN SOLICITA (+ TELÉFONO EXCEPTO EN EXEQUIALES) */}
             {formEdicionPedido.clasificacionPedido === "EXEQUIALES" ? (
               <div>
-                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "3px" }}>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "3px" }}>
                   Solicita / Coordinador
                 </label>
                 <input
@@ -4277,13 +4277,13 @@ export function BandejaPedidosTienda({
                     )
                   }
                   placeholder="Ej. Cristina, Cristian Montaluisa..."
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem", boxSizing: "border-box" }}
                 />
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "3px" }}>
                     Comprador / De parte de
                   </label>
                   <input
@@ -4294,11 +4294,11 @@ export function BandejaPedidosTienda({
                         prev ? { ...prev, compradorNombre: e.target.value } : null
                       )
                     }
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem", boxSizing: "border-box" }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "3px" }}>
                     Teléfono / WhatsApp
                   </label>
                   <input
@@ -4310,7 +4310,7 @@ export function BandejaPedidosTienda({
                       )
                     }
                     placeholder="099..."
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem", boxSizing: "border-box" }}
                   />
                 </div>
               </div>
@@ -4325,8 +4325,8 @@ export function BandejaPedidosTienda({
                   fontWeight: 700,
                   color:
                     formEdicionPedido.clasificacionPedido === "EXEQUIALES"
-                      ? "#3A3530"
-                      : "#57524C",
+                      ? "var(--ct-3a3530, #3A3530)"
+                      : "var(--ct-57524c, #57524C)",
                   marginBottom: "3px",
                 }}
               >
@@ -4359,8 +4359,8 @@ export function BandejaPedidosTienda({
                   borderRadius: "8px",
                   border:
                     formEdicionPedido.clasificacionPedido === "EXEQUIALES"
-                      ? "1.5px solid #4A453F"
-                      : "1px solid #D5CFC4",
+                      ? "1.5px solid var(--cb-4a453f, #4A453F)"
+                      : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.82rem",
                   boxSizing: "border-box",
                 }}
@@ -4372,10 +4372,10 @@ export function BandejaPedidosTienda({
               <>
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
-                    <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#57524C" }}>
+                    <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
                       Dirección de Entrega
                     </label>
-                    <label style={{ fontSize: "0.74rem", color: "#57524C", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                    <label style={{ fontSize: "0.74rem", color: "var(--ct-57524c, #57524C)", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
                       <input
                         type="checkbox"
                         checked={formEdicionPedido.retiroEnLocal}
@@ -4398,12 +4398,12 @@ export function BandejaPedidosTienda({
                       )
                     }
                     placeholder="Sector, calles, edificio o funeraria"
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem", boxSizing: "border-box" }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "3px" }}>
                     Enlace Google Maps (opcional)
                   </label>
                   <input
@@ -4415,13 +4415,13 @@ export function BandejaPedidosTienda({
                       )
                     }
                     placeholder="https://maps.app.goo.gl/..."
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem", boxSizing: "border-box" }}
                   />
                 </div>
 
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
-                    <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#57524C" }}>
+                    <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
                       {formEdicionPedido.clasificacionPedido === "CONDOLENCIAS"
                         ? "Mensaje de la Tarjeta de Condolencias"
                         : "Mensaje de la Tarjeta Dedicatoria"}
@@ -4436,7 +4436,7 @@ export function BandejaPedidosTienda({
                       style={{
                         border: "none",
                         background: "transparent",
-                        color: "#221E1B",
+                        color: "var(--ct-221e1b, #221E1B)",
                         fontSize: "0.72rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -4455,14 +4455,14 @@ export function BandejaPedidosTienda({
                       )
                     }
                     placeholder="Mensaje para la tarjeta impresa y digital"
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem", boxSizing: "border-box" }}
                   />
                 </div>
               </>
             )}
 
             <div>
-              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "3px" }}>
+              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)", marginBottom: "3px" }}>
                 Notas / Indicaciones para Taller
               </label>
               <input
@@ -4474,7 +4474,7 @@ export function BandejaPedidosTienda({
                   )
                 }
                 placeholder="Papel negro, tonos pastel, referencia de entrega..."
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #D5CFC4", fontSize: "0.82rem", boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem", boxSizing: "border-box" }}
               />
             </div>
 
@@ -4485,9 +4485,9 @@ export function BandejaPedidosTienda({
                 style={{
                   padding: "8px 14px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#57524C",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-57524c, #57524C)",
                   fontSize: "0.82rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -4537,7 +4537,7 @@ export function BandejaPedidosTienda({
             style={{
               width: "100%",
               maxWidth: "460px",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "20px",
               display: "flex",
@@ -4547,7 +4547,7 @@ export function BandejaPedidosTienda({
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1rem", color: "#8A2E2E" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", color: "var(--ct-8a2e2e, #8A2E2E)" }}>
                 {pedidoAEliminar.eliminadoEn
                   ? `Eliminar definitivamente ${pedidoAEliminar.codigoOrden}`
                   : `Eliminar pedido ${pedidoAEliminar.codigoOrden}`}
@@ -4560,7 +4560,7 @@ export function BandejaPedidosTienda({
                   border: "none",
                   background: "transparent",
                   cursor: "pointer",
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                 }}
               >
                 <X size={18} />
@@ -4571,27 +4571,27 @@ export function BandejaPedidosTienda({
               style={{
                 padding: "10px 12px",
                 borderRadius: "9px",
-                background: "#F8F7F4",
-                border: "1px solid #E6E2DA",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 fontSize: "0.82rem",
-                color: "#57524C",
+                color: "var(--ct-57524c, #57524C)",
               }}
             >
               <strong>{pedidoAEliminar.compradorNombre}</strong>
-              <div style={{ fontSize: "0.75rem", color: "#847D74", marginTop: "3px" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--ct-847d74, #847D74)", marginTop: "3px" }}>
                 {pedidoAEliminar.items.map((it) => `${it.cantidad}x ${it.descripcion}`).join(", ")} · $
                 {pedidoAEliminar.total.toFixed(2)}
               </div>
             </div>
 
             {pedidoAEliminar.eliminadoEn ? (
-              <p style={{ margin: 0, fontSize: "0.82rem", color: "#8A2E2E", lineHeight: 1.45 }}>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--ct-8a2e2e, #8A2E2E)", lineHeight: 1.45 }}>
                 Esta acción eliminará el registro de forma <strong>permanente e irreversible</strong>{" "}
                 de la base de datos.
               </p>
             ) : (
               <>
-                <p style={{ margin: 0, fontSize: "0.81rem", color: "#57524C", lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: "0.81rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.45 }}>
                   {esAdminEstricto
                     ? "Como Administrador puedes enviarlo a Papelera (borrado lógico reversible) o eliminarlo definitivamente."
                     : "El pedido dejará de mostrarse en las bandejas operativas y quedará archivado en la Papelera (solo visible para el Administrador)."}
@@ -4602,7 +4602,7 @@ export function BandejaPedidosTienda({
                       display: "block",
                       fontSize: "0.76rem",
                       fontWeight: 700,
-                      color: "#57524C",
+                      color: "var(--ct-57524c, #57524C)",
                       marginBottom: "4px",
                     }}
                   >
@@ -4617,7 +4617,7 @@ export function BandejaPedidosTienda({
                       width: "100%",
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                       fontSize: "0.82rem",
                       boxSizing: "border-box",
                     }}
@@ -4634,9 +4634,9 @@ export function BandejaPedidosTienda({
                 style={{
                   padding: "8px 13px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#57524C",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-57524c, #57524C)",
                   fontSize: "0.8rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -4656,9 +4656,9 @@ export function BandejaPedidosTienda({
                     gap: "5px",
                     padding: "8px 14px",
                     borderRadius: "8px",
-                    border: "1px solid #DEBABA",
-                    background: esAdminEstricto ? "#FAF2F2" : "#8A2E2E",
-                    color: esAdminEstricto ? "#8A2E2E" : "#FFFFFF",
+                    border: "1px solid var(--cb-debaba, #DEBABA)",
+                    background: esAdminEstricto ? "var(--cf-faf2f2, #FAF2F2)" : "#8A2E2E",
+                    color: esAdminEstricto ? "var(--ct-8a2e2e, #8A2E2E)" : "#FFFFFF",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     cursor: procesandoEliminacion ? "wait" : "pointer",

@@ -91,7 +91,7 @@ export function ModalDetalleServicioVisual({
     >
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "20px",
           width: "100%",
           maxWidth: "760px",
@@ -147,7 +147,7 @@ export function ModalDetalleServicioVisual({
                     borderRadius: "50%",
                     background: "rgba(2, 132, 199, 0.9)",
                     color: "#FFFFFF",
-                    border: "3px solid #FFFFFF",
+                    border: "3px solid var(--cb-ffffff, #FFFFFF)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -207,7 +207,7 @@ export function ModalDetalleServicioVisual({
               top: "14px",
               right: "14px",
               background: "rgba(15, 23, 42, 0.7)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              border: "1px solid var(--cb-ffffff-a200, rgba(255,255,255,0.2))",
               color: "#FFFFFF",
               width: "34px",
               height: "34px",
@@ -224,7 +224,7 @@ export function ModalDetalleServicioVisual({
 
           {/* Título en Hero */}
           <div style={{ position: "absolute", bottom: "16px", left: "20px", right: "20px" }}>
-            <h2 style={{ margin: 0, color: "#FFFFFF", fontSize: "1.35rem", fontWeight: 800, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
+            <h2 style={{ margin: 0, color: "#FFFFFF", fontSize: "1.35rem", fontWeight: 800, textShadow: "0 2px 4px var(--ct-000000-a500, rgba(0,0,0,0.5))" }}>
               {producto.pro_nombre}
             </h2>
           </div>
@@ -233,14 +233,14 @@ export function ModalDetalleServicioVisual({
         {/* Cuerpo del Modal */}
         <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "20px" }}>
           {/* Descripción */}
-          <p style={{ margin: 0, fontSize: "0.92rem", color: "#334155", lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: "0.92rem", color: "var(--ct-334155, #334155)", lineHeight: 1.5 }}>
             {producto.pro_descripcion}
           </p>
 
           {/* Selector de Modalidades / Tarifas si tiene varias */}
           {producto.variantes.length > 1 && (
-            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px" }}>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#334155", marginBottom: "8px" }}>
+            <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "12px", padding: "14px" }}>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "8px" }}>
                 Selecciona tu plan o modalidad de atención:
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -254,8 +254,8 @@ export function ModalDetalleServicioVisual({
                       style={{
                         padding: "10px 14px",
                         borderRadius: "8px",
-                        border: activa ? "2px solid #0284C7" : "1px solid #CBD5E1",
-                        background: activa ? "#EFF6FF" : "#FFFFFF",
+                        border: activa ? "2px solid #0284C7" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                        background: activa ? "var(--cf-eff6ff, #EFF6FF)" : "var(--cf-ffffff, #FFFFFF)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
@@ -269,19 +269,19 @@ export function ModalDetalleServicioVisual({
                             width: "18px",
                             height: "18px",
                             borderRadius: "50%",
-                            border: activa ? "5px solid #0284C7" : "2px solid #94A3B8",
-                            background: "#FFFFFF",
+                            border: activa ? "5px solid #0284C7" : "2px solid var(--cb-94a3b8, #94A3B8)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                           }}
                         />
-                        <span style={{ fontSize: "0.88rem", fontWeight: activa ? 700 : 500, color: activa ? "#0369A1" : "#1E293B" }}>
+                        <span style={{ fontSize: "0.88rem", fontWeight: activa ? 700 : 500, color: activa ? "var(--ct-0369a1, #0369A1)" : "var(--ct-1e293b, #1E293B)" }}>
                           {v.var_nombre}
                         </span>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A" }}>
+                        <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                           ${v.precio_total.toFixed(2)}
                         </span>
-                        <span style={{ fontSize: "0.7rem", color: "#64748B", display: "block" }}>
+                        <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748B)", display: "block" }}>
                           IVA 15% incl.
                         </span>
                       </div>
@@ -294,7 +294,7 @@ export function ModalDetalleServicioVisual({
 
           {/* Pestañas de Información */}
           <div>
-            <div style={{ display: "flex", borderBottom: "1px solid #E2E8F0", gap: "16px", marginBottom: "14px" }}>
+            <div style={{ display: "flex", borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)", gap: "16px", marginBottom: "14px" }}>
               <button
                 type="button"
                 onClick={() => setPestanaActiva("alcance")}
@@ -304,7 +304,7 @@ export function ModalDetalleServicioVisual({
                   borderBottom: pestanaActiva === "alcance" ? "2px solid #0284C7" : "2px solid transparent",
                   background: "transparent",
                   fontWeight: pestanaActiva === "alcance" ? 700 : 500,
-                  color: pestanaActiva === "alcance" ? "#0284C7" : "#64748B",
+                  color: pestanaActiva === "alcance" ? "var(--ct-0284c7, #0284C7)" : "var(--ct-64748b, #64748B)",
                   fontSize: "0.85rem",
                   cursor: "pointer",
                   display: "flex",
@@ -323,7 +323,7 @@ export function ModalDetalleServicioVisual({
                   borderBottom: pestanaActiva === "requisitos" ? "2px solid #0284C7" : "2px solid transparent",
                   background: "transparent",
                   fontWeight: pestanaActiva === "requisitos" ? 700 : 500,
-                  color: pestanaActiva === "requisitos" ? "#0284C7" : "#64748B",
+                  color: pestanaActiva === "requisitos" ? "var(--ct-0284c7, #0284C7)" : "var(--ct-64748b, #64748B)",
                   fontSize: "0.85rem",
                   cursor: "pointer",
                   display: "flex",
@@ -337,13 +337,13 @@ export function ModalDetalleServicioVisual({
 
             {pestanaActiva === "alcance" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "#0369A1", background: "#F0F9FF", padding: "8px 12px", borderRadius: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "var(--ct-0369a1, #0369A1)", background: "var(--cf-f0f9ff, #F0F9FF)", padding: "8px 12px", borderRadius: "8px" }}>
                   <Clock size={16} />
                   <span><strong>Tiempo estimado de entrega o atención:</strong> {tiempoEntrega}</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {beneficios.map((b, idx) => (
-                    <div key={idx} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "0.85rem", color: "#334155" }}>
+                    <div key={idx} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "0.85rem", color: "var(--ct-334155, #334155)" }}>
                       <CheckCircle2 size={16} color="#059669" style={{ flexShrink: 0, marginTop: "2px" }} />
                       <span>{b}</span>
                     </div>
@@ -355,7 +355,7 @@ export function ModalDetalleServicioVisual({
             {pestanaActiva === "requisitos" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {requisitos.map((r, idx) => (
-                  <div key={idx} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "0.85rem", color: "#334155" }}>
+                  <div key={idx} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "0.85rem", color: "var(--ct-334155, #334155)" }}>
                     <Info size={16} color="#0284C7" style={{ flexShrink: 0, marginTop: "2px" }} />
                     <span>{r}</span>
                   </div>
@@ -369,8 +369,8 @@ export function ModalDetalleServicioVisual({
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid #E2E8F0",
-            background: "#F8FAFC",
+            borderTop: "1px solid var(--cb-e2e8f0, #E2E8F0)",
+            background: "var(--cf-f8fafc, #F8FAFC)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -379,12 +379,12 @@ export function ModalDetalleServicioVisual({
           }}
         >
           <div>
-            <span style={{ fontSize: "0.75rem", color: "#64748B", display: "block" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", display: "block" }}>
               Base: ${currentVar?.var_precio.toFixed(2)} + IVA 15%: ${currentVar?.monto_iva.toFixed(2)}
             </span>
-            <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0F172A" }}>
+            <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
               ${currentVar?.precio_total.toFixed(2)}{" "}
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#64748B" }}>USD</span>
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--ct-64748b, #64748B)" }}>USD</span>
             </div>
           </div>
 
@@ -393,9 +393,9 @@ export function ModalDetalleServicioVisual({
               type="button"
               onClick={onCerrar}
               style={{
-                background: "#FFFFFF",
-                border: "1px solid #CBD5E1",
-                color: "#475569",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                color: "var(--ct-475569, #475569)",
                 padding: "10px 16px",
                 borderRadius: "10px",
                 fontSize: "0.85rem",

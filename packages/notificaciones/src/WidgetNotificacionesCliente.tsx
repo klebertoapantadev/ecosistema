@@ -424,7 +424,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                 <span style={{ fontSize: "0.72rem", color: "#38bdf8", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   Alerta en vivo
                 </span>
-                <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>Ahora</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--ct-94a3b8, #94a3b8)" }}>Ahora</span>
               </div>
               <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#ffffff", marginBottom: "4px" }}>
                 {vista(alertaPushToast).titulo}
@@ -455,7 +455,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           </div>
 
           {/* Botones de Acción en el Toast */}
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: "10px", position: "relative" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", borderTop: "1px solid var(--cb-ffffff-a120, rgba(255,255,255,0.12))", paddingTop: "10px", position: "relative" }}>
             <button
               type="button"
               onClick={() => aceptarNotificacion(alertaPushToast)}
@@ -541,7 +541,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                     gap: "4px"
                   }}
                 >
-                  <div style={{ fontSize: "0.68rem", fontWeight: 800, color: "#94a3b8", padding: "4px 8px", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.68rem", fontWeight: 800, color: "var(--ct-94a3b8, #94a3b8)", padding: "4px 8px", textTransform: "uppercase" }}>
                     Posponer por:
                   </div>
                   {[3, 6, 12, 24].map(h => (
@@ -575,7 +575,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
               onClick={() => eliminarNotificacion(alertaPushToast)}
               style={{
                 background: "transparent",
-                color: "#f87171",
+                color: "var(--ct-f87171, #f87171)",
                 border: "1px solid rgba(239, 68, 68, 0.4)",
                 borderRadius: "8px",
                 padding: "6px 10px",
@@ -618,7 +618,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#64748b",
+                color: "var(--ct-64748b, #64748b)",
                 fontSize: "0.75rem",
                 fontWeight: 600,
                 cursor: "pointer",

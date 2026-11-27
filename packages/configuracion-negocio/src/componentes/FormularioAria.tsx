@@ -728,10 +728,10 @@ export function FormularioAria({
             <Bot size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Agente Conversacional ARIA
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Credenciales aisladas para el chat de <strong>{codigoNegocio}</strong> (cifradas en Supabase Vault).
             </div>
           </div>
@@ -835,9 +835,9 @@ export function FormularioAria({
         {/* Acordeón discreto para claves avanzadas opcionales */}
         <div
           style={{
-            border: "1px solid #E6E2DA",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "10px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             overflow: "hidden",
           }}
         >
@@ -847,7 +847,7 @@ export function FormularioAria({
             style={{
               width: "100%",
               padding: "12px 16px",
-              background: "#F8F7F4",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
               border: "none",
               display: "flex",
               alignItems: "center",
@@ -856,7 +856,7 @@ export function FormularioAria({
               fontFamily: "inherit",
               fontSize: "0.84rem",
               fontWeight: 600,
-              color: "#57524C",
+              color: "var(--ct-57524c, #57524C)",
             }}
           >
             <span>Claves avanzadas de consola ARIA (opcionales)</span>
@@ -867,7 +867,7 @@ export function FormularioAria({
             <div
               style={{
                 padding: "16px",
-                borderTop: "1px solid #E6E2DA",
+                borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 ...estiloGrillaDosColumnas,
               }}
             >
@@ -918,8 +918,8 @@ export function FormularioAria({
         <label
           style={{
             ...estiloCajaToggle,
-            background: activo ? "#F2F6F3" : "#F8F7F4",
-            borderColor: activo ? "#BBF7D0" : "#E6E2DA",
+            background: activo ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f8f7f4, #F8F7F4)",
+            borderColor: activo ? "var(--cb-bbf7d0, #BBF7D0)" : "var(--cb-e6e2da, #E6E2DA)",
           }}
         >
           <input
@@ -929,10 +929,10 @@ export function FormularioAria({
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Activar agente conversacional ARIA en este negocio
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Cuando está activo, el chat público de la tienda consulta en tiempo real a este agente.
             </div>
           </div>
@@ -943,18 +943,18 @@ export function FormularioAria({
           style={{
             padding: "16px",
             borderRadius: "10px",
-            border: "1px solid #E6E2DA",
-            background: "#F8F7F4",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+            background: "var(--cf-f8f7f4, #F8F7F4)",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.83rem", fontWeight: 600, color: "#2E2A26" }}>
+            <span style={{ fontSize: "0.83rem", fontWeight: 600, color: "var(--ct-2e2a26, #2E2A26)" }}>
               Verificación de respuesta en vivo
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#847D74" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--ct-847d74, #847D74)" }}>
               Envía un mensaje corto para comprobar latencia y credenciales
             </span>
           </div>
@@ -988,9 +988,9 @@ export function FormularioAria({
                 marginTop: "4px",
                 padding: "12px 14px",
                 borderRadius: "9px",
-                border: "1px solid #BBF7D0",
-                background: "#FFFFFF",
-                color: "#14532D",
+                border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-14532d, #14532D)",
                 fontSize: "0.86rem",
                 lineHeight: 1.5,
               }}
@@ -1003,13 +1003,13 @@ export function FormularioAria({
                   fontWeight: 700,
                   fontSize: "0.8rem",
                   marginBottom: "4px",
-                  color: "#2F4737",
+                  color: "var(--ct-2f4737, #2F4737)",
                 }}
               >
                 <CheckCircle2 size={15} />
                 <span>Respuesta recibida desde ARIA:</span>
               </div>
-              <p style={{ margin: 0, whiteSpace: "pre-wrap", color: "#2E2A26" }}>{respuestaPrueba}</p>
+              <p style={{ margin: 0, whiteSpace: "pre-wrap", color: "var(--ct-2e2a26, #2E2A26)" }}>{respuestaPrueba}</p>
             </div>
           )}
         </div>
@@ -1068,18 +1068,18 @@ export function FormularioAria({
           <div
             style={{
               ...estiloCajaIconoCabecera,
-              background: "#F2F6F3",
-              color: "#2F4737",
-              borderColor: "#CEDDD3",
+              background: "var(--cf-f2f6f3, #F2F6F3)",
+              color: "var(--ct-2f4737, #2F4737)",
+              borderColor: "var(--cb-ceddd3, #CEDDD3)",
             }}
           >
             <MessageCircle size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Canal WhatsApp Business (YCloud) — Ventas en Vivo & Tomar Control
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Recibe mensajes de WhatsApp en <code>/panel/conversaciones</code>, responde con Mía (ARIA) y permite intervención humana directa.
             </div>
           </div>
@@ -1109,8 +1109,8 @@ export function FormularioAria({
           style={{
             padding: "14px 16px",
             borderRadius: "10px",
-            background: "#F2F6F3",
-            border: "1px solid #CEDDD3",
+            background: "var(--cf-f2f6f3, #F2F6F3)",
+            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
             display: "flex",
             flexDirection: "column",
             gap: "8px",
@@ -1125,7 +1125,7 @@ export function FormularioAria({
               flexWrap: "wrap",
             }}
           >
-            <strong style={{ fontSize: "0.84rem", color: "#14532D" }}>
+            <strong style={{ fontSize: "0.84rem", color: "var(--ct-14532d, #14532D)" }}>
               1. Endpoint URL para pegar en YCloud → Developers → Webhooks
             </strong>
             {urlWebhookTinkay && (
@@ -1141,8 +1141,8 @@ export function FormularioAria({
                   padding: "5px 11px",
                   borderRadius: "8px",
                   border: "1px solid #2F4737",
-                  background: "#FFFFFF",
-                  color: "#2F4737",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-2f4737, #2F4737)",
                   fontSize: "0.76rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -1158,17 +1158,17 @@ export function FormularioAria({
               display: "block",
               padding: "8px 10px",
               borderRadius: "7px",
-              background: "#FFFFFF",
-              border: "1px solid #BBF7D0",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
               fontSize: "0.79rem",
-              color: "#1F1C19",
+              color: "var(--ct-1f1c19, #1F1C19)",
               wordBreak: "break-all",
             }}
           >
             {urlWebhookTinkay ||
               "Pulsa «Guardar WhatsApp» una vez tras ejecutar la migración SQL para generar tu URL única con token."}
           </code>
-          <span style={{ fontSize: "0.76rem", color: "#2B4A36" }}>
+          <span style={{ fontSize: "0.76rem", color: "var(--ct-2b4a36, #2B4A36)" }}>
             Importante: al activar este webhook en YCloud, apaga el switch <strong>«Habilitado»</strong> del canal <code>Tinkay-YCloud</code> en <code>consola.aria.midomo.site → Canales</code> (no lo borres, solo desactívalo) para que Mía no responda duplicado.
           </span>
         </div>
@@ -1253,9 +1253,9 @@ export function FormularioAria({
         {/* Acordeón opcional: Agente específico de WhatsApp y Signing Secret */}
         <div
           style={{
-            border: "1px solid #E6E2DA",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "10px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             overflow: "hidden",
           }}
         >
@@ -1265,7 +1265,7 @@ export function FormularioAria({
             style={{
               width: "100%",
               padding: "11px 16px",
-              background: "#F8F7F4",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
               border: "none",
               display: "flex",
               alignItems: "center",
@@ -1274,7 +1274,7 @@ export function FormularioAria({
               fontFamily: "inherit",
               fontSize: "0.83rem",
               fontWeight: 600,
-              color: "#57524C",
+              color: "var(--ct-57524c, #57524C)",
             }}
           >
             <span>
@@ -1287,13 +1287,13 @@ export function FormularioAria({
             <div
               style={{
                 padding: "16px",
-                borderTop: "1px solid #E6E2DA",
+                borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "12px",
               }}
             >
-              <span style={{ fontSize: "0.78rem", color: "#4B5563" }}>
+              <span style={{ fontSize: "0.78rem", color: "var(--ct-4b5563, #4B5563)" }}>
                 Si en ARIA usas un agente distinto para WhatsApp que para la Web, pega aquí su UUID y su Token; si lo dejas vacío, reutiliza automáticamente el agente principal configurado arriba.
               </span>
               <div style={estiloGrillaDosColumnas}>
@@ -1352,8 +1352,8 @@ export function FormularioAria({
         <label
           style={{
             ...estiloCajaToggle,
-            background: ycloudHabilitado ? "#F2F6F3" : "#F8F7F4",
-            borderColor: ycloudHabilitado ? "#BBF7D0" : "#E6E2DA",
+            background: ycloudHabilitado ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f8f7f4, #F8F7F4)",
+            borderColor: ycloudHabilitado ? "var(--cb-bbf7d0, #BBF7D0)" : "var(--cb-e6e2da, #E6E2DA)",
           }}
         >
           <input
@@ -1363,10 +1363,10 @@ export function FormularioAria({
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Habilitar respuesta automática de Mía (ARIA) en WhatsApp vía Tinkay
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Cuando una asesora pulsa «Pausar IA» en una conversación o responde desde el celular, Mía se silencia automáticamente en ese chat.
             </div>
           </div>
@@ -1375,8 +1375,8 @@ export function FormularioAria({
         <label
           style={{
             ...estiloCajaToggle,
-            background: ycloudModoManualDefecto ? "#FAF6EE" : "#F8F7F4",
-            borderColor: ycloudModoManualDefecto ? "#E5D7BC" : "#E6E2DA",
+            background: ycloudModoManualDefecto ? "var(--cf-faf6ee, #FAF6EE)" : "var(--cf-f8f7f4, #F8F7F4)",
+            borderColor: ycloudModoManualDefecto ? "var(--cb-e5d7bc, #E5D7BC)" : "var(--cb-e6e2da, #E6E2DA)",
           }}
         >
           <input
@@ -1386,10 +1386,10 @@ export function FormularioAria({
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Iniciar chats nuevos de WhatsApp en modo Manual (activar IA individual por chat)
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Si lo marcas, los clientes nuevos llegan en modo Manual para tus asesoras y Mía (ARIA) solo responderá en los chats donde pulses «Activar IA».
             </div>
           </div>
@@ -1401,8 +1401,8 @@ export function FormularioAria({
             style={{
               padding: "12px 14px",
               borderRadius: "10px",
-              background: "#FAF6EE",
-              border: "1px solid #E5D7BC",
+              background: "var(--cf-faf6ee, #FAF6EE)",
+              border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
               display: "flex",
               flexDirection: "column",
               gap: "6px",
@@ -1424,7 +1424,7 @@ export function FormularioAria({
                   gap: "6px",
                   fontSize: "0.8rem",
                   fontWeight: 700,
-                  color: "#745622",
+                  color: "var(--ct-745622, #745622)",
                 }}
               >
                 <RotateCcw size={14} />
@@ -1442,8 +1442,8 @@ export function FormularioAria({
                   padding: "4px 9px",
                   borderRadius: "7px",
                   border: "1px solid #8F6A2E",
-                  background: "#FFFFFF",
-                  color: "#745622",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-745622, #745622)",
                   fontSize: "0.74rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -1453,10 +1453,10 @@ export function FormularioAria({
                 <span>{copiadoTipo === "anterior" ? "Copiado" : "Copiar Anterior"}</span>
               </button>
             </div>
-            <code style={{ fontSize: "0.75rem", color: "#745622", wordBreak: "break-all" }}>
+            <code style={{ fontSize: "0.75rem", color: "var(--ct-745622, #745622)", wordBreak: "break-all" }}>
               {urlRespaldoAriaPrevio}
             </code>
-            <span style={{ fontSize: "0.74rem", color: "#745622" }}>
+            <span style={{ fontSize: "0.74rem", color: "var(--ct-745622, #745622)" }}>
               Canal previo en <code>consola.aria.midomo.site → Canales</code>: <strong>Tinkay-YCloud</strong> · Emisor <code>+593 996438873</code> · Filtro prueba <code>+593 99 972 7844</code>. Para revertir: vuelve a pegar ese URL en YCloud y enciende «Habilitado» en ARIA.
             </span>
           </div>
@@ -1499,18 +1499,18 @@ export function FormularioAria({
           <div
             style={{
               ...estiloCajaIconoCabecera,
-              background: "#EEF4FD",
-              color: "#1877F2",
-              borderColor: "#C7DCFA",
+              background: "var(--cf-eef4fd, #EEF4FD)",
+              color: "var(--ct-1877f2, #1877F2)",
+              borderColor: "var(--cb-c7dcfa, #C7DCFA)",
             }}
           >
             <Share2 size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Canal Facebook Messenger e Instagram Direct (Meta API · $0/msg)
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Recibe y responde chats de Facebook e Instagram directo en <code>/panel/conversaciones</code> con modo Manual por defecto y activación individual de Mía (ARIA).
             </div>
           </div>
@@ -1536,8 +1536,8 @@ export function FormularioAria({
           style={{
             padding: "14px 16px",
             borderRadius: "10px",
-            background: "#F4F7FC",
-            border: "1px solid #D3E1F7",
+            background: "var(--cf-f4f7fc, #F4F7FC)",
+            border: "1px solid var(--cb-d3e1f7, #D3E1F7)",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
@@ -1552,7 +1552,7 @@ export function FormularioAria({
               flexWrap: "wrap",
             }}
           >
-            <strong style={{ fontSize: "0.84rem", color: "#1E3A8A" }}>
+            <strong style={{ fontSize: "0.84rem", color: "var(--ct-1e3a8a, #1E3A8A)" }}>
               1. Callback URL y Verify Token para Meta for Developers → Webhooks (Messenger & Instagram)
             </strong>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -1569,8 +1569,8 @@ export function FormularioAria({
                     padding: "5px 11px",
                     borderRadius: "8px",
                     border: "1px solid #1877F2",
-                    background: "#FFFFFF",
-                    color: "#1877F2",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1877f2, #1877F2)",
                     fontSize: "0.76rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1593,8 +1593,8 @@ export function FormularioAria({
                     padding: "5px 11px",
                     borderRadius: "8px",
                     border: "1px solid #1E3A8A",
-                    background: "#FFFFFF",
-                    color: "#1E3A8A",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1e3a8a, #1E3A8A)",
                     fontSize: "0.76rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1612,10 +1612,10 @@ export function FormularioAria({
               display: "block",
               padding: "8px 10px",
               borderRadius: "7px",
-              background: "#FFFFFF",
-              border: "1px solid #C7DCFA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-c7dcfa, #C7DCFA)",
               fontSize: "0.79rem",
-              color: "#1F1C19",
+              color: "var(--ct-1f1c19, #1F1C19)",
               wordBreak: "break-all",
             }}
           >
@@ -1624,12 +1624,12 @@ export function FormularioAria({
           </code>
 
           {metaVerifyToken && (
-            <div style={{ fontSize: "0.77rem", color: "#1E3A8A", wordBreak: "break-all" }}>
+            <div style={{ fontSize: "0.77rem", color: "var(--ct-1e3a8a, #1E3A8A)", wordBreak: "break-all" }}>
               <strong>Verify Token:</strong> <code>{metaVerifyToken}</code>
             </div>
           )}
 
-          <span style={{ fontSize: "0.76rem", color: "#334155" }}>
+          <span style={{ fontSize: "0.76rem", color: "var(--ct-334155, #334155)" }}>
             Suscribe los campos <code>messages</code>, <code>messaging_postbacks</code>, <code>messaging_referrals</code> y <code>message_echoes</code> en tu App de Meta (`developers.facebook.com`).
           </span>
         </div>
@@ -1725,9 +1725,9 @@ export function FormularioAria({
         {/* Acordeón opcional: Instagram Login Token dedicado y Verify Token */}
         <div
           style={{
-            border: "1px solid #E6E2DA",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "10px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             overflow: "hidden",
           }}
         >
@@ -1737,7 +1737,7 @@ export function FormularioAria({
             style={{
               width: "100%",
               padding: "11px 16px",
-              background: "#F8F7F4",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
               border: "none",
               display: "flex",
               alignItems: "center",
@@ -1746,7 +1746,7 @@ export function FormularioAria({
               fontFamily: "inherit",
               fontSize: "0.83rem",
               fontWeight: 600,
-              color: "#57524C",
+              color: "var(--ct-57524c, #57524C)",
             }}
           >
             <span>Opcional: Token dedicado Instagram Login (IGA...) y Verify Token personalizado</span>
@@ -1757,7 +1757,7 @@ export function FormularioAria({
             <div
               style={{
                 padding: "16px",
-                borderTop: "1px solid #E6E2DA",
+                borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 ...estiloGrillaDosColumnas,
               }}
             >
@@ -1801,8 +1801,8 @@ export function FormularioAria({
         <label
           style={{
             ...estiloCajaToggle,
-            background: metaModoManualDefecto ? "#FAF6EE" : "#F2F6F3",
-            borderColor: metaModoManualDefecto ? "#E5D7BC" : "#BBF7D0",
+            background: metaModoManualDefecto ? "var(--cf-faf6ee, #FAF6EE)" : "var(--cf-f2f6f3, #F2F6F3)",
+            borderColor: metaModoManualDefecto ? "var(--cb-e5d7bc, #E5D7BC)" : "var(--cb-bbf7d0, #BBF7D0)",
           }}
         >
           <input
@@ -1813,10 +1813,10 @@ export function FormularioAria({
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Modo Manual por defecto en Facebook e Instagram (Recomendado)
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Todos los chats nuevos entran en modo <strong>Manual</strong> para tus asesoras sin respuesta automática. En cualquier conversación individual podrás pulsar <strong>«Activar IA»</strong> para que Mía (ARIA) atienda solo ese chat.
             </div>
           </div>
@@ -1826,8 +1826,8 @@ export function FormularioAria({
           <label
             style={{
               ...estiloCajaToggle,
-              background: metaFbHabilitado ? "#EEF4FD" : "#F8F7F4",
-              borderColor: metaFbHabilitado ? "#BFDBFE" : "#E6E2DA",
+              background: metaFbHabilitado ? "var(--cf-eef4fd, #EEF4FD)" : "var(--cf-f8f7f4, #F8F7F4)",
+              borderColor: metaFbHabilitado ? "var(--cb-bfdbfe, #BFDBFE)" : "var(--cb-e6e2da, #E6E2DA)",
             }}
           >
             <input
@@ -1838,10 +1838,10 @@ export function FormularioAria({
               style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
             />
             <div>
-              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Activar Facebook Messenger
               </div>
-              <div style={{ fontSize: "0.77rem", color: "#847D74", marginTop: "2px" }}>
+              <div style={{ fontSize: "0.77rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
                 Recibe chats de la Página en vivo y habilita respuestas directas + IA individual.
               </div>
             </div>
@@ -1850,8 +1850,8 @@ export function FormularioAria({
           <label
             style={{
               ...estiloCajaToggle,
-              background: metaIgHabilitado ? "#FDF2F8" : "#F8F7F4",
-              borderColor: metaIgHabilitado ? "#FBCFE8" : "#E6E2DA",
+              background: metaIgHabilitado ? "var(--cf-fdf2f8, #FDF2F8)" : "var(--cf-f8f7f4, #F8F7F4)",
+              borderColor: metaIgHabilitado ? "var(--cb-fbcfe8, #FBCFE8)" : "var(--cb-e6e2da, #E6E2DA)",
             }}
           >
             <input
@@ -1862,10 +1862,10 @@ export function FormularioAria({
               style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
             />
             <div>
-              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Activar Instagram Direct
               </div>
-              <div style={{ fontSize: "0.77rem", color: "#847D74", marginTop: "2px" }}>
+              <div style={{ fontSize: "0.77rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
                 Recibe mensajes directos e historias en vivo con respuesta directa + IA individual.
               </div>
             </div>
@@ -1920,18 +1920,18 @@ export function FormularioAria({
           <div
             style={{
               ...estiloCajaIconoCabecera,
-              background: "#FDF2F8",
-              color: "#BE185D",
-              borderColor: "#FBCFE8",
+              background: "var(--cf-fdf2f8, #FDF2F8)",
+              color: "var(--ct-be185d, #BE185D)",
+              borderColor: "var(--cb-fbcfe8, #FBCFE8)",
             }}
           >
             <MessageSquareText size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Comentarios en Posts y Reels (Auto-respuesta Corta + Redirección Web)
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Responde automáticamente comentarios públicos en Facebook e Instagram con información básica y enlace a tu web (sin bucles ni duplicados).
             </div>
           </div>
@@ -1947,8 +1947,8 @@ export function FormularioAria({
         <label
           style={{
             ...estiloCajaToggle,
-            background: comHabilitado ? "#F2F6F3" : "#F8F7F4",
-            borderColor: comHabilitado ? "#BBF7D0" : "#E6E2DA",
+            background: comHabilitado ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f8f7f4, #F8F7F4)",
+            borderColor: comHabilitado ? "var(--cb-bbf7d0, #BBF7D0)" : "var(--cb-e6e2da, #E6E2DA)",
           }}
         >
           <input
@@ -1959,10 +1959,10 @@ export function FormularioAria({
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Activar auto-respuesta corta a comentarios en Facebook Posts e Instagram Posts/Reels
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Requiere suscribir los campos <code>feed</code> (Página Facebook) y <code>comments</code> (Instagram) en tu App de Meta (`Tinkay Omnicanal`). Jamás responde a comentarios propios ni repite respuestas.
             </div>
           </div>
@@ -2047,8 +2047,8 @@ export function FormularioAria({
         <label
           style={{
             ...estiloCajaToggle,
-            background: "#F8F7F4",
-            borderColor: "#E6E2DA",
+            background: "var(--cf-f8f7f4, #F8F7F4)",
+            borderColor: "var(--cb-e6e2da, #E6E2DA)",
           }}
         >
           <input
@@ -2059,10 +2059,10 @@ export function FormularioAria({
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19" }}>
+            <div style={{ fontSize: "0.84rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Responder solo comentarios principales (ignorar sub-respuestas anidadas)
             </div>
-            <div style={{ fontSize: "0.76rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.76rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Evita interrumpir hilos donde personas conversan entre sí debajo de un comentario.
             </div>
           </div>
@@ -2071,9 +2071,9 @@ export function FormularioAria({
         {/* Acordeón opcional: Respuestas temáticas + DM privado automático */}
         <div
           style={{
-            border: "1px solid #E6E2DA",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "10px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             overflow: "hidden",
           }}
         >
@@ -2083,7 +2083,7 @@ export function FormularioAria({
             style={{
               width: "100%",
               padding: "11px 16px",
-              background: "#F8F7F4",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
               border: "none",
               display: "flex",
               alignItems: "center",
@@ -2092,7 +2092,7 @@ export function FormularioAria({
               fontFamily: "inherit",
               fontSize: "0.83rem",
               fontWeight: 600,
-              color: "#57524C",
+              color: "var(--ct-57524c, #57524C)",
             }}
           >
             <span>
@@ -2105,7 +2105,7 @@ export function FormularioAria({
             <div
               style={{
                 padding: "16px",
-                borderTop: "1px solid #E6E2DA",
+                borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "12px",
@@ -2138,8 +2138,8 @@ export function FormularioAria({
               <label
                 style={{
                   ...estiloCajaToggle,
-                  background: comEnviarDm ? "#EEF4FD" : "#F8F7F4",
-                  borderColor: comEnviarDm ? "#BFDBFE" : "#E6E2DA",
+                  background: comEnviarDm ? "var(--cf-eef4fd, #EEF4FD)" : "var(--cf-f8f7f4, #F8F7F4)",
+                  borderColor: comEnviarDm ? "var(--cb-bfdbfe, #BFDBFE)" : "var(--cb-e6e2da, #E6E2DA)",
                 }}
               >
                 <input
@@ -2150,10 +2150,10 @@ export function FormularioAria({
                   style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
                 />
                 <div>
-                  <div style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19" }}>
+                  <div style={{ fontSize: "0.84rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                     Enviar además un Mensaje Privado (DM) automático al autor del comentario
                   </div>
-                  <div style={{ fontSize: "0.76rem", color: "#847D74", marginTop: "2px" }}>
+                  <div style={{ fontSize: "0.76rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
                     Usa la función oficial Private Replies de Meta (1 DM por comentario). Si el cliente responde, entrará en Manual a tu panel.
                   </div>
                 </div>
@@ -2181,14 +2181,14 @@ export function FormularioAria({
           style={{
             padding: "14px 16px",
             borderRadius: "10px",
-            border: "1px solid #E6E2DA",
-            background: "#FAF8F5",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+            background: "var(--cf-faf8f5, #FAF8F5)",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
           }}
         >
-          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1F1C19" }}>
+          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
             Simulador instantáneo de comentario (vista previa sin publicar en redes)
           </div>
           <div style={estiloGrillaDosColumnas}>
@@ -2210,27 +2210,27 @@ export function FormularioAria({
               padding: "10px 12px",
               borderRadius: "8px",
               border: vistaPreviaComentario.debeResponder
-                ? "1px solid #BBF7D0"
-                : "1px solid #E6E2DA",
-              background: vistaPreviaComentario.debeResponder ? "#F2F6F3" : "#FFFFFF",
+                ? "1px solid var(--cb-bbf7d0, #BBF7D0)"
+                : "1px solid var(--cb-e6e2da, #E6E2DA)",
+              background: vistaPreviaComentario.debeResponder ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-ffffff, #FFFFFF)",
               fontSize: "0.8rem",
-              color: "#2E2A26",
+              color: "var(--ct-2e2a26, #2E2A26)",
             }}
           >
             {vistaPreviaComentario.debeResponder ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <strong style={{ color: "#14532D" }}>
+                <strong style={{ color: "var(--ct-14532d, #14532D)" }}>
                   ✅ Respondería automáticamente (regla: {vistaPreviaComentario.motivo}):
                 </strong>
                 <span>{vistaPreviaComentario.respuestaPublica}</span>
                 {vistaPreviaComentario.respuestaDm && (
-                  <span style={{ fontSize: "0.75rem", color: "#1E3A8A", marginTop: "2px" }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--ct-1e3a8a, #1E3A8A)", marginTop: "2px" }}>
                     <strong>+ DM Privado:</strong> {vistaPreviaComentario.respuestaDm}
                   </span>
                 )}
               </div>
             ) : (
-              <span style={{ color: "#847D74" }}>
+              <span style={{ color: "var(--ct-847d74, #847D74)" }}>
                 ⚪ No respondería este comentario (motivo: {vistaPreviaComentario.motivo}).
               </span>
             )}
@@ -2243,18 +2243,18 @@ export function FormularioAria({
             style={{
               padding: "12px 14px",
               borderRadius: "10px",
-              border: "1px solid #E6E2DA",
-              background: "#FFFFFF",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              background: "var(--cf-ffffff, #FFFFFF)",
               display: "flex",
               flexDirection: "column",
               gap: "8px",
             }}
           >
-            <strong style={{ fontSize: "0.8rem", color: "#1F1C19" }}>
+            <strong style={{ fontSize: "0.8rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
               Últimos comentarios recibidos ({historialComentarios.length})
             </strong>
             {historialComentarios.length === 0 ? (
-              <span style={{ fontSize: "0.78rem", color: "#847D74" }}>
+              <span style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)" }}>
                 Todavía no han llegado comentarios por webhook en Facebook o Instagram.
               </span>
             ) : (
@@ -2265,8 +2265,8 @@ export function FormularioAria({
                     style={{
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      background: "#F8F7F4",
-                      border: "1px solid #EFECE6",
+                      background: "var(--cf-f8f7f4, #F8F7F4)",
+                      border: "1px solid var(--cb-efece6, #EFECE6)",
                       fontSize: "0.77rem",
                     }}
                   >
@@ -2274,13 +2274,13 @@ export function FormularioAria({
                       <span>
                         {item.canal === "instagram" ? "📸 IG" : "📘 FB"} · {item.autorNombre}
                       </span>
-                      <span style={{ color: item.estado === "RESPONDIDO" ? "#15803D" : item.estado === "ERROR" ? "#B91C1C" : "#64748B" }}>
+                      <span style={{ color: item.estado === "RESPONDIDO" ? "var(--ct-15803d, #15803D)" : item.estado === "ERROR" ? "var(--ct-b91c1c, #B91C1C)" : "var(--ct-64748b, #64748B)" }}>
                         {item.estado} ({item.reglaAplicada || "-"})
                       </span>
                     </div>
-                    <div style={{ color: "#3A3530", marginTop: "3px" }}>“{item.textoComentario}”</div>
+                    <div style={{ color: "var(--ct-3a3530, #3A3530)", marginTop: "3px" }}>“{item.textoComentario}”</div>
                     {item.respuestaPublica && (
-                      <div style={{ color: "#2F4737", marginTop: "3px" }}>
+                      <div style={{ color: "var(--ct-2f4737, #2F4737)", marginTop: "3px" }}>
                         ↳ {item.respuestaPublica}
                       </div>
                     )}
@@ -2336,18 +2336,18 @@ export function FormularioAria({
             <div
               style={{
                 ...estiloCajaIconoCabecera,
-                background: "#FAF6EE",
-                color: "#8F6A2E",
-                borderColor: "#E5D7BC",
+                background: "var(--cf-faf6ee, #FAF6EE)",
+                color: "var(--ct-8f6a2e, #8F6A2E)",
+                borderColor: "var(--cb-e5d7bc, #E5D7BC)",
               }}
             >
               <Camera size={19} />
             </div>
             <div>
-              <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+              <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Estudio IA — Generador de Fotos (OpenRouter / Gemini)
               </div>
-              <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+              <div style={{ fontSize: "0.82rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
                 Genera automáticamente fotografías de <strong>Estudio</strong> y <strong>Taller</strong> (3:4) desde <code>/panel/entrega-inmediata</code> con clave cifrada en Supabase Vault.
               </div>
             </div>
@@ -2456,8 +2456,8 @@ export function FormularioAria({
           <label
             style={{
               ...estiloCajaToggle,
-              background: estudioIaActivo ? "#F2F6F3" : "#F8F7F4",
-              borderColor: estudioIaActivo ? "#BBF7D0" : "#E6E2DA",
+              background: estudioIaActivo ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f8f7f4, #F8F7F4)",
+              borderColor: estudioIaActivo ? "var(--cb-bbf7d0, #BBF7D0)" : "var(--cb-e6e2da, #E6E2DA)",
             }}
           >
             <input
@@ -2468,10 +2468,10 @@ export function FormularioAria({
               style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
             />
             <div>
-              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Activar Estudio IA en Entrega Inmediata
               </div>
-              <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+              <div style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
                 Habilita el botón «Generar IA» en <code>/panel/entrega-inmediata</code> para producir las tomas Estudio y Taller en paralelo.
               </div>
             </div>

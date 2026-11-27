@@ -94,10 +94,10 @@ export function FormularioIngreso({ negocio, intencion = "", destino = "" }: For
     <div className="tarjeta-auth">
       {esAbogado && (
         <div style={{ marginBottom: "16px", padding: "12px", borderRadius: "10px", background: "rgba(80,0,186,0.08)", border: "1px solid rgba(80,0,186,0.2)", textAlign: "center" }}>
-          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#5000BA", textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
             Acceso a Equipo Jurídico — Abogados
           </span>
-          <strong style={{ fontSize: "0.88rem", color: "#111111", display: "block", marginTop: "4px" }}>
+          <strong style={{ fontSize: "0.88rem", color: "var(--ct-111111, #111111)", display: "block", marginTop: "4px" }}>
             Formulario de Registro de Socio
           </strong>
         </div>

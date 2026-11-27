@@ -356,8 +356,8 @@ export function GestorPwaCliente() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "#FFFFFF",
-              color: "#141019",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-141019, #141019)",
               borderRadius: "20px",
               padding: "24px",
               maxWidth: "380px",
@@ -366,27 +366,27 @@ export function GestorPwaCliente() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 900, color: "#5000BA" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 900, color: "var(--ct-5000ba, #5000BA)" }}>
                 Instalar tranqi en tu iPhone / iPad
               </h3>
               <button
                 type="button"
                 onClick={() => setMostrarGuiaIos(false)}
                 aria-label="Cerrar guía"
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B" }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ct-64748b, #64748B)" }}
               >
                 <X size={18} />
               </button>
             </div>
-            <p style={{ fontSize: "0.86rem", color: "#475569", lineHeight: 1.5, marginBottom: "16px" }}>
+            <p style={{ fontSize: "0.86rem", color: "var(--ct-475569, #475569)", lineHeight: 1.5, marginBottom: "16px" }}>
               Para usar <strong>tranqi</strong> a pantalla completa, trabajar sin conexión y recibir notificaciones Push con el navegador cerrado:
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "0.84rem", marginBottom: "18px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "#F8FAFC", padding: "10px 12px", borderRadius: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "var(--cf-f8fafc, #F8FAFC)", padding: "10px 12px", borderRadius: "12px" }}>
                 <Share size={18} color="#5000BA" style={{ flexShrink: 0 }} />
                 <span>1. Toca el botón <strong>Compartir</strong> en la barra de Safari.</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "#F8FAFC", padding: "10px 12px", borderRadius: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "var(--cf-f8fafc, #F8FAFC)", padding: "10px 12px", borderRadius: "12px" }}>
                 <PlusSquare size={18} color="#5000BA" style={{ flexShrink: 0 }} />
                 <span>2. Selecciona <strong>«Agregar a pantalla de inicio»</strong>.</span>
               </div>

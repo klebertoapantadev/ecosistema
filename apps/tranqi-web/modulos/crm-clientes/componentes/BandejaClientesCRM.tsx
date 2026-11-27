@@ -283,7 +283,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
       {/* Cabecera y KPIs Rápidos */}
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           border: "1px solid var(--linea)",
           borderRadius: "16px",
           padding: "20px 24px",
@@ -436,7 +436,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
           {/* Barra de Búsqueda y Filtros */}
           <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           border: "1px solid var(--linea)",
           borderRadius: "12px",
           padding: "14px 18px",
@@ -456,7 +456,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
               padding: "6px 14px",
               borderRadius: "20px",
               border: filtroTipo === "todas" ? "1px solid var(--acento)" : "1px solid var(--linea)",
-              background: filtroTipo === "todas" ? "var(--acento-diluido)" : "#FFFFFF",
+              background: filtroTipo === "todas" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
               color: filtroTipo === "todas" ? "var(--acento)" : "var(--texto-suave)",
               fontSize: "0.82rem",
               fontWeight: 600,
@@ -472,7 +472,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
               padding: "6px 14px",
               borderRadius: "20px",
               border: filtroTipo === "natural" ? "1px solid var(--acento)" : "1px solid var(--linea)",
-              background: filtroTipo === "natural" ? "var(--acento-diluido)" : "#FFFFFF",
+              background: filtroTipo === "natural" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
               color: filtroTipo === "natural" ? "var(--acento)" : "var(--texto-suave)",
               fontSize: "0.82rem",
               fontWeight: 600,
@@ -492,7 +492,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
               padding: "6px 14px",
               borderRadius: "20px",
               border: filtroTipo === "juridica" ? "1px solid var(--acento)" : "1px solid var(--linea)",
-              background: filtroTipo === "juridica" ? "var(--acento-diluido)" : "#FFFFFF",
+              background: filtroTipo === "juridica" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
               color: filtroTipo === "juridica" ? "var(--acento)" : "var(--texto-suave)",
               fontSize: "0.82rem",
               fontWeight: 600,
@@ -546,7 +546,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
       {/* Lista / DataGrid de Clientes */}
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           border: "1px solid var(--linea)",
           borderRadius: "16px",
           overflow: "hidden",
@@ -651,7 +651,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                             fontSize: "0.75rem",
                             fontWeight: 600,
                             background: c.clp_tipo_personeria === "juridica" ? "var(--acento-diluido)" : "var(--acento-diluido)",
-                            color: c.clp_tipo_personeria === "juridica" ? "var(--acento)" : "#7E22CE",
+                            color: c.clp_tipo_personeria === "juridica" ? "var(--acento)" : "var(--ct-7e22ce, #7E22CE)",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "4px",
@@ -819,7 +819,7 @@ export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneria
                               type="button"
                               onClick={() => manejarEliminar(c)}
                               style={{
-                                background: "#FFFFFF",
+                                background: "var(--cf-ffffff, #FFFFFF)",
                                 border: "1px solid var(--error-linea)",
                                 color: "var(--error)",
                                 padding: "6px 8px",

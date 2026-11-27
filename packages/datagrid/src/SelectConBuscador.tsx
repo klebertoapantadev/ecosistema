@@ -407,7 +407,7 @@ export function SelectConBuscador({
           style={{
             padding: "18px 12px",
             textAlign: "center",
-            color: "#71717A",
+            color: "var(--ct-71717a, #71717A)",
             fontSize: "0.8rem",
           }}
         >
@@ -433,7 +433,7 @@ export function SelectConBuscador({
                 fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.04em",
-                color: "#71717A",
+                color: "var(--ct-71717a, #71717A)",
               }}
             >
               {op.grupo}
@@ -451,13 +451,13 @@ export function SelectConBuscador({
               minHeight: esMovil ? "42px" : "34px",
               padding: esMovil ? "9px 11px" : "7px 10px",
               borderRadius: "8px",
-              border: seleccionada ? "1px solid #D4D4D8" : "1px solid transparent",
+              border: seleccionada ? "1px solid var(--cb-d4d4d8, #D4D4D8)" : "1px solid transparent",
               background: seleccionada
-                ? "#F4F4F5"
+                ? "var(--cf-f4f4f5, #F4F4F5)"
                 : resaltada
-                  ? "#FAFAFA"
-                  : "#FFFFFF",
-              color: op.disabled ? "#A1A1AA" : "#18181B",
+                  ? "var(--cf-fafafa, #FAFAFA)"
+                  : "var(--cf-ffffff, #FFFFFF)",
+              color: op.disabled ? "var(--ct-a1a1aa, #A1A1AA)" : "var(--ct-18181b, #18181B)",
               fontSize: esMovil ? "0.86rem" : "0.81rem",
               fontWeight: seleccionada ? 700 : 500,
               fontFamily: "inherit",
@@ -509,9 +509,9 @@ export function SelectConBuscador({
           box-sizing: border-box;
           padding: 7px 10px;
           border-radius: 8px;
-          border: 1px solid #CBD5E1;
-          background: #FFFFFF;
-          color: #0F172A;
+          border: 1px solid var(--cb-cbd5e1, #CBD5E1);
+          background: var(--cf-ffffff, #FFFFFF);
+          color: var(--ct-0f172a, #0F172A);
           font-size: 0.84rem;
           font-weight: 500;
           font-family: inherit;
@@ -520,7 +520,7 @@ export function SelectConBuscador({
           cursor: pointer;
         }
         :where(.eco-select-buscador:disabled) {
-          background: #F1F5F9;
+          background: var(--cf-f1f5f9, #F1F5F9);
           cursor: not-allowed;
           opacity: 0.65;
         }
@@ -651,9 +651,9 @@ export function SelectConBuscador({
                     ? {
                         width: "100%",
                         maxHeight: "80dvh",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         borderRadius: "18px 18px 0 0",
-                        borderTop: "1px solid #E4E4E7",
+                        borderTop: "1px solid var(--cb-e4e4e7, #E4E4E7)",
                         boxShadow: "0 -14px 36px rgba(24, 24, 27, 0.22)",
                         display: "flex",
                         flexDirection: "column",
@@ -667,8 +667,8 @@ export function SelectConBuscador({
                         left: posicionPopover.left,
                         width: `${posicionPopover.width}px`,
                         maxWidth: "calc(100vw - 24px)",
-                        background: "#FFFFFF",
-                        border: "1px solid #D4D4D8",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
                         borderRadius: "12px",
                         boxShadow: "0 14px 34px rgba(24, 24, 27, 0.16)",
                         display: "flex",
@@ -685,7 +685,7 @@ export function SelectConBuscador({
                       display: "flex",
                       flexDirection: "column",
                       gap: "6px",
-                      borderBottom: "1px solid #F4F4F5",
+                      borderBottom: "1px solid var(--cb-f4f4f5, #F4F4F5)",
                     }}
                   >
                     <div
@@ -693,7 +693,7 @@ export function SelectConBuscador({
                         width: "38px",
                         height: "4px",
                         borderRadius: "999px",
-                        background: "#D4D4D8",
+                        background: "var(--cf-d4d4d8, #D4D4D8)",
                         margin: "0 auto",
                       }}
                     />
@@ -708,7 +708,7 @@ export function SelectConBuscador({
                       <strong
                         style={{
                           fontSize: "0.88rem",
-                          color: "#18181B",
+                          color: "var(--ct-18181b, #18181B)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -725,9 +725,9 @@ export function SelectConBuscador({
                           width: "34px",
                           height: "34px",
                           borderRadius: "8px",
-                          border: "1px solid #E4E4E7",
-                          background: "#FAFAFA",
-                          color: "#3F3F46",
+                          border: "1px solid var(--cb-e4e4e7, #E4E4E7)",
+                          background: "var(--cf-fafafa, #FAFAFA)",
+                          color: "var(--ct-3f3f46, #3F3F46)",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -746,8 +746,8 @@ export function SelectConBuscador({
                   <div
                     style={{
                       padding: esMovil ? "8px 12px" : "8px",
-                      borderBottom: "1px solid #F4F4F5",
-                      background: "#FAFAFA",
+                      borderBottom: "1px solid var(--cb-f4f4f5, #F4F4F5)",
+                      background: "var(--cf-fafafa, #FAFAFA)",
                       display: "flex",
                       alignItems: "center",
                       gap: "7px",
@@ -783,7 +783,7 @@ export function SelectConBuscador({
                         border: "none",
                         outline: "none",
                         background: "transparent",
-                        color: "#18181B",
+                        color: "var(--ct-18181b, #18181B)",
                         fontSize: esMovil ? "16px" : "0.81rem",
                         fontFamily: "inherit",
                         padding: "2px 0",
@@ -800,8 +800,8 @@ export function SelectConBuscador({
                         aria-label="Limpiar búsqueda"
                         style={{
                           border: "none",
-                          background: "#E4E4E7",
-                          color: "#3F3F46",
+                          background: "var(--cf-e4e4e7, #E4E4E7)",
+                          color: "var(--ct-3f3f46, #3F3F46)",
                           width: "22px",
                           height: "22px",
                           borderRadius: "999px",

@@ -215,7 +215,7 @@ export function ModalEditarWidget({
     >
       <div
         style={{
-          background: "var(--blanco, #ffffff)",
+          background: "var(--cf-ffffff, var(--blanco, #ffffff))",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "540px",
@@ -245,14 +245,14 @@ export function ModalEditarWidget({
                 padding: "6px",
                 borderRadius: "8px",
                 background: "var(--violeta-suave, var(--acento-diluido))",
-                color: "var(--violeta, #5000BA)",
+                color: "var(--ct-5000ba, var(--violeta, #5000BA))",
                 display: "flex",
               }}
             >
               <Pencil size={18} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1rem", fontWeight: 800, margin: 0, color: "var(--negro, #111111)" }}>
+              <h3 style={{ fontSize: "1rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, var(--negro, #111111))" }}>
                 Editar Configuración del Widget
               </h3>
               <span style={{ fontSize: "0.75rem", color: "var(--panel-gris, var(--texto-suave))" }}>
@@ -311,8 +311,8 @@ export function ModalEditarWidget({
               style={{
                 fontSize: "0.82rem",
                 fontWeight: 700,
-                color: "var(--violeta, #5000BA)",
-                background: "#ffffff",
+                color: "var(--ct-5000ba, var(--violeta, #5000BA))",
+                background: "var(--cf-ffffff, #ffffff)",
                 padding: "6px 10px",
                 borderRadius: "6px",
                 border: "1px solid rgba(80, 0, 186, 0.25)",
@@ -333,7 +333,7 @@ export function ModalEditarWidget({
                 display: "block",
                 fontSize: "0.82rem",
                 fontWeight: 700,
-                color: "var(--negro, #111111)",
+                color: "var(--ct-111111, var(--negro, #111111))",
                 marginBottom: "6px",
               }}
             >
@@ -365,7 +365,7 @@ export function ModalEditarWidget({
                 display: "block",
                 fontSize: "0.82rem",
                 fontWeight: 700,
-                color: "var(--negro, #111111)",
+                color: "var(--ct-111111, var(--negro, #111111))",
                 marginBottom: "6px",
               }}
             >
@@ -400,7 +400,7 @@ export function ModalEditarWidget({
                 gap: "6px",
                 fontSize: "0.82rem",
                 fontWeight: 700,
-                color: "var(--negro, #111111)",
+                color: "var(--ct-111111, var(--negro, #111111))",
                 marginBottom: "8px",
               }}
             >
@@ -434,8 +434,8 @@ export function ModalEditarWidget({
                       height: "40px",
                       borderRadius: "8px",
                       border: seleccionado ? "2px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, var(--linea))",
-                      background: seleccionado ? "var(--violeta-suave, var(--acento-diluido))" : "var(--blanco, #ffffff)",
-                      color: seleccionado ? "var(--violeta, #5000BA)" : "var(--negro, #111111)",
+                      background: seleccionado ? "var(--violeta-suave, var(--acento-diluido))" : "var(--cf-ffffff, var(--blanco, #ffffff))",
+                      color: seleccionado ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--ct-111111, var(--negro, #111111))",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -470,7 +470,7 @@ export function ModalEditarWidget({
                 style={{ marginTop: "2px" }}
               />
               <div>
-                <strong style={{ fontSize: "0.86rem", color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "6px" }}>
+                <strong style={{ fontSize: "0.86rem", color: "var(--ct-111111, var(--negro, #111111))", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Shield size={16} color="var(--violeta, #5000BA)" /> Requerir Autenticación MFA (Doble Factor)
                 </strong>
                 <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, var(--texto-suave))", display: "block", marginTop: "2px" }}>
@@ -488,7 +488,7 @@ export function ModalEditarWidget({
                     gap: "6px",
                     fontSize: "0.8rem",
                     fontWeight: 700,
-                    color: "var(--negro, #111111)",
+                    color: "var(--ct-111111, var(--negro, #111111))",
                     marginBottom: "4px",
                   }}
                 >
@@ -528,7 +528,7 @@ export function ModalEditarWidget({
               style={{
                 background: "var(--panel-papel, var(--fondo-suave))",
                 border: "1px solid var(--panel-linea, var(--linea))",
-                color: "var(--negro, #111111)",
+                color: "var(--ct-111111, var(--negro, #111111))",
                 padding: "8px 16px",
               }}
             >

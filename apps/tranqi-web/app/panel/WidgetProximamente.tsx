@@ -20,7 +20,7 @@ export function WidgetProximamente({
   return (
     <div
       style={{
-        background: "#ffffff",
+        background: "var(--cf-ffffff, #ffffff)",
         borderRadius: "20px",
         border: "1px solid var(--linea)",
         padding: "36px 28px",
@@ -108,7 +108,7 @@ export function WidgetProximamente({
         style={{
           fontSize: "1rem",
           fontWeight: 800,
-          color: "var(--violeta, #5000BA)",
+          color: "var(--ct-5000ba, var(--violeta, #5000BA))",
           margin: "0 0 12px 0",
         }}
       >

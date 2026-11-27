@@ -738,7 +738,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               type="button"
               onClick={onCerrar}
               style={{
-                background: "#ffffff",
+                background: "var(--cf-ffffff, #ffffff)",
                 border: "1px solid var(--linea-fuerte)",
                 borderRadius: "50%",
                 width: "36px",
@@ -769,7 +769,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               type="button"
               onClick={() => setCategoriaActiva(key)}
               style={{
-                background: esActiva ? "var(--acento)" : "#ffffff",
+                background: esActiva ? "var(--acento)" : "var(--cf-ffffff, #ffffff)",
                 color: esActiva ? "#ffffff" : "var(--texto-2)",
                 border: esActiva ? "1px solid var(--acento)" : "1px solid var(--linea)",
                 borderRadius: "10px",
@@ -806,7 +806,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
       {/* BARRA DE BÚSQUEDA Y FILTRO DE VIGENCIA */}
       <div
         style={{
-          background: "#ffffff",
+          background: "var(--cf-ffffff, #ffffff)",
           borderRadius: "14px",
           border: "1px solid var(--linea)",
           padding: "14px 18px",
@@ -845,7 +845,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
               fontWeight: 700,
-              background: "#ffffff"
+              background: "var(--cf-ffffff, #ffffff)"
             }}
           >
             <option value="todos">Todos los estados</option>
@@ -858,7 +858,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
             type="button"
             onClick={cargarDocumentos}
             style={{
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               border: "1px solid var(--linea-fuerte)",
               borderRadius: "10px",
               padding: "10px 14px",
@@ -879,12 +879,12 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
       {/* LISTA GRID DE DOCUMENTOS */}
       {cargando ? (
-        <div style={{ padding: "50px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)" }}>
+        <div style={{ padding: "50px", textAlign: "center", background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1px solid var(--linea)" }}>
           <RefreshCw size={28} className="anim-girar" color="var(--acento)" style={{ marginBottom: "10px" }} />
           <p style={{ fontSize: "0.9rem", color: "var(--texto-suave)", margin: 0 }}>Cargando documentos…</p>
         </div>
       ) : documentosFiltrados.length === 0 ? (
-        <div style={{ padding: "60px 20px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1.5px dashed var(--linea-fuerte)" }}>
+        <div style={{ padding: "60px 20px", textAlign: "center", background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1.5px dashed var(--linea-fuerte)" }}>
           <Folder size={44} color="var(--texto-tenue)" style={{ marginBottom: "12px" }} />
           <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 6px 0" }}>
             No hay documentos en esta categoría
@@ -930,7 +930,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               <div
                 key={doc.doc_id}
                 style={{
-                  background: "#ffffff",
+                  background: "var(--cf-ffffff, #ffffff)",
                   borderRadius: "16px",
                   border: "1px solid var(--linea)",
                   padding: "18px",
@@ -1052,7 +1052,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       type="button"
                       onClick={() => abrirVisor(doc)}
                       style={{
-                        background: "#ffffff",
+                        background: "var(--cf-ffffff, #ffffff)",
                         color: "var(--texto)",
                         border: "1px solid var(--linea-fuerte)",
                         borderRadius: "8px",
@@ -1073,7 +1073,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       type="button"
                       onClick={() => abrirCompartir(doc)}
                       style={{
-                        background: "#ffffff",
+                        background: "var(--cf-ffffff, #ffffff)",
                         color: "var(--acento)",
                         border: "1px solid var(--acento-linea)",
                         borderRadius: "8px",
@@ -1132,7 +1132,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
         >
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               borderRadius: "20px",
               width: "100%",
               maxWidth: "680px",
@@ -1306,7 +1306,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                             left: 0,
                             right: 0,
                             height: "2px",
-                            background: "linear-gradient(90deg, #5000BA, #B1FBE3)",
+                            background: "linear-gradient(90deg, #5000BA, var(--cf-b1fbe3, #B1FBE3))",
                             pointerEvents: "none"
                           }}
                         />
@@ -1314,7 +1314,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
                       {/* Título y Pasos de análisis */}
                       <div style={{ flex: 1 }}>
-                        <h3 style={{ margin: "0 0 10px 0", fontSize: "0.95rem", fontWeight: 800, color: "#5000BA" }}>
+                        <h3 style={{ margin: "0 0 10px 0", fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)" }}>
                           Tranqi está leyendo tu documento
                         </h3>
 
@@ -1449,7 +1449,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "6px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#5000BA", fontSize: "0.86rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)", fontSize: "0.86rem" }}>
                       <Sparkles size={16} /> Datos detectados por Tranqi
                     </div>
                     {analisisDetectado.requiereCaducidad ? (
@@ -1464,22 +1464,22 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "8px", fontSize: "0.78rem", marginBottom: "10px" }}>
-                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+                    <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
                       <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Tipo de documento</span>
                       <strong style={{ color: "var(--texto)" }}>{analisisDetectado.queEs || "Documento"}</strong>
                     </div>
 
-                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+                    <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
                       <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Titular</span>
                       <strong style={{ color: "var(--texto)" }}>{analisisDetectado.titularNombre || "No especificado"}</strong>
                     </div>
 
-                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+                    <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
                       <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Identificación</span>
                       <strong style={{ color: "var(--texto)" }}>{analisisDetectado.titularIdentificacion || "No visible"}</strong>
                     </div>
 
-                    <div style={{ background: "#ffffff", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+                    <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
                       <span style={{ color: "var(--texto-suave)", display: "block", fontSize: "0.7rem", fontWeight: 600 }}>Lugar y fecha</span>
                       <strong style={{ color: "var(--texto)" }}>
                         {analisisDetectado.lugarNacimiento || "—"} {analisisDetectado.fechaNacimiento ? `(${analisisDetectado.fechaNacimiento})` : ""}
@@ -1571,7 +1571,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           setErroresCampos(prev => ({ ...prev, fechaCaducidad: undefined }));
                         }
                       }}
-                      style={{ width: "16px", height: "16px", accentColor: "#5000BA" }}
+                      style={{ width: "16px", height: "16px", accentColor: "var(--ct-5000ba, #5000BA)" }}
                     />
                     <BellRing size={16} color="var(--acento)" /> Avisar antes de que caduque
                   </label>
@@ -1603,7 +1603,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                           borderRadius: "8px",
                           border: erroresCampos.fechaCaducidad ? "1.5px solid var(--error)" : "1px solid var(--error-linea)",
                           fontSize: "0.85rem",
-                          background: "#FFF"
+                          background: "var(--cf-ffffff, #FFF)"
                         }}
                       />
                       {erroresCampos.fechaCaducidad && (
@@ -1620,7 +1620,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                       <select
                         value={mesesAnticipacionAlerta}
                         onChange={(e) => setMesesAnticipacionAlerta(Number(e.target.value))}
-                        style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem", background: "#FFF", fontWeight: 700 }}
+                        style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.85rem", background: "var(--cf-ffffff, #FFF)", fontWeight: 700 }}
                       >
                         {OPCIONES_ANTICIPACION_ALERTA.map((op) => (
                           <option key={op.meses} value={op.meses}>
@@ -1684,7 +1684,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
 
                 {/* LISTADO DE METADATOS DINÁMICOS */}
                 {metadatosDinamicos.length === 0 ? (
-                  <div style={{ padding: "14px", textAlign: "center", background: "#ffffff", borderRadius: "8px", border: "1px dashed var(--linea-fuerte)" }}>
+                  <div style={{ padding: "14px", textAlign: "center", background: "var(--cf-ffffff, #ffffff)", borderRadius: "8px", border: "1px dashed var(--linea-fuerte)" }}>
                     <p style={{ fontSize: "0.76rem", color: "var(--texto-suave)", margin: "0 0 8px 0" }}>
                       No hay datos adicionales registrados.
                     </p>
@@ -1793,7 +1793,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 <button
                   type="button"
                   onClick={() => setModalSubirAbierto(false)}
-                  style={{ background: "#ffffff", border: "1px solid var(--linea-fuerte)", color: "var(--texto)", borderRadius: "10px", padding: "10px 18px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                  style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--linea-fuerte)", color: "var(--texto)", borderRadius: "10px", padding: "10px 18px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
@@ -1851,7 +1851,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
         >
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               borderRadius: "20px",
               width: "100%",
               maxWidth: "580px",
@@ -1904,7 +1904,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     type="button"
                     onClick={() => setModoTtl(op.id)}
                     style={{
-                      background: modoTtl === op.id ? "var(--acento)" : "#ffffff",
+                      background: modoTtl === op.id ? "var(--acento)" : "var(--cf-ffffff, #ffffff)",
                       color: modoTtl === op.id ? "#ffffff" : "var(--texto-2)",
                       border: modoTtl === op.id ? "1px solid var(--acento)" : "1px solid var(--linea-fuerte)",
                       borderRadius: "8px",
@@ -1969,7 +1969,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                     type="text"
                     readOnly
                     value={enlaceGenerado}
-                    style={{ flex: 1, padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--exito-linea)", fontSize: "0.78rem", background: "#ffffff" }}
+                    style={{ flex: 1, padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--exito-linea)", fontSize: "0.78rem", background: "var(--cf-ffffff, #ffffff)" }}
                   />
                   <button
                     type="button"
@@ -2081,7 +2081,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
           >
             <div
               style={{
-                background: "#ffffff",
+                background: "var(--cf-ffffff, #ffffff)",
                 borderRadius: "20px",
                 width: "100%",
                 maxWidth: "780px",
@@ -2181,7 +2181,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               </div>
 
               {/* TABLA DE METADATOS */}
-              <div style={{ background: "#FFFFFF", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
+              <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px", marginBottom: "18px" }}>
                 <h4 style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Layers size={14} color="var(--acento)" /> Datos y parámetros del documento
                 </h4>
@@ -2256,7 +2256,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
                 <button
                   type="button"
                   onClick={() => setDocParaVer(null)}
-                  style={{ background: "#ffffff", border: "1px solid var(--linea-fuerte)", borderRadius: "10px", padding: "9px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", color: "var(--texto)" }}
+                  style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--linea-fuerte)", borderRadius: "10px", padding: "9px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", color: "var(--texto)" }}
                 >
                   Cerrar
                 </button>
@@ -2285,7 +2285,7 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
         >
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               borderRadius: "18px",
               width: "100%",
               maxWidth: "440px",
@@ -2307,14 +2307,14 @@ export function WidgetBilleteraDocumentos({ negocio: _negocio = "TRANQ", onCerra
               <button
                 type="button"
                 onClick={() => setDocParaEliminar(null)}
-                style={{ background: "#ffffff", border: "1px solid var(--linea-fuerte)", borderRadius: "10px", padding: "10px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", color: "var(--texto)" }}
+                style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--linea-fuerte)", borderRadius: "10px", padding: "10px 18px", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", color: "var(--texto)" }}
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={confirmarEliminar}
-                style={{ background: "#ffffff", border: "1px solid var(--error-linea, var(--error))", color: "var(--error)", borderRadius: "10px", padding: "10px 20px", fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}
+                style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--error-linea, var(--error))", color: "var(--error)", borderRadius: "10px", padding: "10px 20px", fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}
               >
                 Sí, eliminar
               </button>

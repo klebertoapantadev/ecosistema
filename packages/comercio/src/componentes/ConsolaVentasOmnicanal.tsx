@@ -203,7 +203,7 @@ function renderTextoConEnlaces(texto: string, esFondoOscuro: boolean): React.Rea
             rel="noreferrer"
             title={info.href}
             style={{
-              color: esFondoOscuro ? "#E6E2DA" : "#221E1B",
+              color: esFondoOscuro ? "#E6E2DA" : "var(--ct-221e1b, #221E1B)",
               textDecoration: "underline",
               textUnderlineOffset: "2px",
               wordBreak: "break-word",
@@ -258,10 +258,10 @@ function TarjetaImagenBurbujaOmnicanal({
             padding: "10px 12px",
             borderRadius: "10px",
             border: esFondoOscuro
-              ? "1px dashed rgba(255,255,255,0.35)"
-              : "1px dashed #D5CFC4",
-            background: esFondoOscuro ? "rgba(255,255,255,0.1)" : "#F8F7F4",
-            color: esFondoOscuro ? "#E6E2DA" : "#6E6861",
+              ? "1px dashed var(--cb-ffffff-a350, rgba(255,255,255,0.35))"
+              : "1px dashed var(--cb-d5cfc4, #D5CFC4)",
+            background: esFondoOscuro ? "rgba(255,255,255,0.1)" : "var(--cf-f8f7f4, #F8F7F4)",
+            color: esFondoOscuro ? "#E6E2DA" : "var(--ct-6e6861, #6E6861)",
             fontSize: "0.75rem",
             lineHeight: 1.4,
           }}
@@ -283,9 +283,9 @@ function TarjetaImagenBurbujaOmnicanal({
             borderRadius: "10px",
             overflow: "hidden",
             border: esFondoOscuro
-              ? "1px solid rgba(255,255,255,0.24)"
-              : "1px solid #E6E2DA",
-            background: "#FFFFFF",
+              ? "1px solid var(--cb-ffffff-a240, rgba(255,255,255,0.24))"
+              : "1px solid var(--cb-e6e2da, #E6E2DA)",
+            background: "var(--cf-ffffff, #FFFFFF)",
           }}
         >
           <img
@@ -314,7 +314,7 @@ function TarjetaImagenBurbujaOmnicanal({
           style={{
             fontSize: "0.72rem",
             fontWeight: 600,
-            color: esFondoOscuro ? "#E6E2DA" : "#6E6861",
+            color: esFondoOscuro ? "#E6E2DA" : "var(--ct-6e6861, #6E6861)",
           }}
         >
           {alt}
@@ -339,9 +339,9 @@ function TarjetaImagenBurbujaOmnicanal({
               minWidth: "32px",
               padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D5CFC4",
-              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
+              border: esFondoOscuro ? "1px solid var(--cb-ffffff-a250, rgba(255,255,255,0.25))" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "var(--cf-ffffff, #FFFFFF)",
+              color: esFondoOscuro ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
               fontSize: "0.71rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -366,9 +366,9 @@ function TarjetaImagenBurbujaOmnicanal({
               minWidth: "32px",
               padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D5CFC4",
-              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
+              border: esFondoOscuro ? "1px solid var(--cb-ffffff-a250, rgba(255,255,255,0.25))" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "var(--cf-ffffff, #FFFFFF)",
+              color: esFondoOscuro ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
               fontSize: "0.71rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -393,9 +393,9 @@ function TarjetaImagenBurbujaOmnicanal({
               minWidth: "32px",
               padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D5CFC4",
-              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
+              border: esFondoOscuro ? "1px solid var(--cb-ffffff-a250, rgba(255,255,255,0.25))" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "var(--cf-ffffff, #FFFFFF)",
+              color: esFondoOscuro ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
               fontSize: "0.71rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -460,8 +460,8 @@ function TarjetaAudioBurbujaOmnicanal({
         gap: "8px",
         padding: "9px 11px",
         borderRadius: "10px",
-        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#F8F7F4",
-        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E6E2DA",
+        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "var(--cf-f8f7f4, #F8F7F4)",
+        border: esFondoOscuro ? "1px solid var(--cb-ffffff-a240, rgba(255,255,255,0.24))" : "1px solid var(--cb-e6e2da, #E6E2DA)",
         minWidth: "min(255px, 100%)",
         maxWidth: "330px",
       }}
@@ -481,7 +481,7 @@ function TarjetaAudioBurbujaOmnicanal({
             gap: "6px",
             fontSize: "0.75rem",
             fontWeight: 700,
-            color: esFondoOscuro ? "#FFFFFF" : "#221E1B",
+            color: esFondoOscuro ? "#FFFFFF" : "var(--ct-221e1b, #221E1B)",
           }}
         >
           <Mic size={14} color={esFondoOscuro ? "#E6E2DA" : "#57524C"} />
@@ -497,9 +497,9 @@ function TarjetaAudioBurbujaOmnicanal({
             style={{
               padding: "2px 8px",
               borderRadius: "999px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.3)" : "1px solid #D5CFC4",
-              background: esFondoOscuro ? "rgba(255,255,255,0.16)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
+              border: esFondoOscuro ? "1px solid var(--cb-ffffff-a300, rgba(255,255,255,0.3))" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: esFondoOscuro ? "rgba(255,255,255,0.16)" : "var(--cf-ffffff, #FFFFFF)",
+              color: esFondoOscuro ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
               fontSize: "0.69rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -540,7 +540,7 @@ function TarjetaAudioBurbujaOmnicanal({
         <div
           style={{
             fontSize: "0.74rem",
-            color: esFondoOscuro ? "#E6E2DA" : "#6E6861",
+            color: esFondoOscuro ? "#E6E2DA" : "var(--ct-6e6861, #6E6861)",
             lineHeight: 1.38,
           }}
         >
@@ -566,9 +566,9 @@ function TarjetaAudioBurbujaOmnicanal({
                 minHeight: "30px",
                 padding: "4px 9px",
                 borderRadius: "7px",
-                border: "1px solid #D5CFC4",
-                background: "#FFFFFF",
-                color: "#3A3530",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-3a3530, #3A3530)",
                 fontSize: "0.71rem",
                 fontWeight: 600,
                 cursor: procesando ? "wait" : "pointer",
@@ -630,8 +630,8 @@ function TarjetaDocumentoBurbujaOmnicanal({
         gap: "10px",
         padding: "9px 11px",
         borderRadius: "10px",
-        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#F8F7F4",
-        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E6E2DA",
+        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "var(--cf-f8f7f4, #F8F7F4)",
+        border: esFondoOscuro ? "1px solid var(--cb-ffffff-a240, rgba(255,255,255,0.24))" : "1px solid var(--cb-e6e2da, #E6E2DA)",
         maxWidth: "320px",
       }}
     >
@@ -641,9 +641,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "32px",
             height: "32px",
             borderRadius: "8px",
-            background: esFondoOscuro ? "rgba(255,255,255,0.18)" : "#F4F2EE",
-            color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
-            border: esFondoOscuro ? "none" : "1px solid #E6E2DA",
+            background: esFondoOscuro ? "rgba(255,255,255,0.18)" : "var(--cf-f4f2ee, #F4F2EE)",
+            color: esFondoOscuro ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
+            border: esFondoOscuro ? "none" : "1px solid var(--cb-e6e2da, #E6E2DA)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -657,7 +657,7 @@ function TarjetaDocumentoBurbujaOmnicanal({
           style={{
             fontSize: "0.77rem",
             fontWeight: 600,
-            color: esFondoOscuro ? "#FFFFFF" : "#221E1B",
+            color: esFondoOscuro ? "#FFFFFF" : "var(--ct-221e1b, #221E1B)",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -681,9 +681,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "30px",
             height: "30px",
             borderRadius: "7px",
-            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #D5CFC4",
-            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#FFFFFF",
-            color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
+            border: esFondoOscuro ? "1px solid var(--cb-ffffff-a280, rgba(255,255,255,0.28))" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "var(--cf-ffffff, #FFFFFF)",
+            color: esFondoOscuro ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
             textDecoration: "none",
           }}
         >
@@ -701,9 +701,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "30px",
             height: "30px",
             borderRadius: "7px",
-            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #D5CFC4",
-            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#FFFFFF",
-            color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
+            border: esFondoOscuro ? "1px solid var(--cb-ffffff-a280, rgba(255,255,255,0.28))" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "var(--cf-ffffff, #FFFFFF)",
+            color: esFondoOscuro ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
             textDecoration: "none",
           }}
         >
@@ -818,37 +818,37 @@ function badgeEstadoAtencion(estado: EstadoAtencionOmnicanal): {
     case "ESCALADO_HUMANO":
       return {
         etiqueta: "Requiere humano",
-        fondo: "#FAF2F2",
-        texto: "#8A2E2E",
-        borde: "#E5CACA",
+        fondo: "var(--cf-faf2f2, #FAF2F2)",
+        texto: "var(--ct-8a2e2e, #8A2E2E)",
+        borde: "var(--cb-e5caca, #E5CACA)",
       };
     case "EN_ATENCION_ASESORA":
       return {
         etiqueta: "Atención humana",
-        fondo: "#F4F2EE",
-        texto: "#3A3530",
-        borde: "#E6E2DA",
+        fondo: "var(--cf-f4f2ee, #F4F2EE)",
+        texto: "var(--ct-3a3530, #3A3530)",
+        borde: "var(--cb-e6e2da, #E6E2DA)",
       };
     case "EN_ESPERA_CLIENTE":
       return {
         etiqueta: "Espera cliente",
-        fondo: "#F4F2EE",
-        texto: "#6E6861",
-        borde: "#E6E2DA",
+        fondo: "var(--cf-f4f2ee, #F4F2EE)",
+        texto: "var(--ct-6e6861, #6E6861)",
+        borde: "var(--cb-e6e2da, #E6E2DA)",
       };
     case "CERRADO":
       return {
         etiqueta: "Cerrado",
-        fondo: "#F4F2EE",
-        texto: "#847D74",
-        borde: "#E6E2DA",
+        fondo: "var(--cf-f4f2ee, #F4F2EE)",
+        texto: "var(--ct-847d74, #847D74)",
+        borde: "var(--cb-e6e2da, #E6E2DA)",
       };
     default:
       return {
         etiqueta: "IA activa",
-        fondo: "#F2F5F3",
-        texto: "#2F4737",
-        borde: "#DCE4DF",
+        fondo: "var(--cf-f2f5f3, #F2F5F3)",
+        texto: "var(--ct-2f4737, #2F4737)",
+        borde: "var(--cb-dce4df, #DCE4DF)",
       };
   }
 }
@@ -3026,8 +3026,8 @@ export function ConsolaVentasOmnicanal({
         valor: (p) => `${p.codigoOrden} ${p.tipoOrigen || ""}`,
         render: (p) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-            <strong style={{ fontSize: "0.84rem", color: "#1F1C19" }}>{p.codigoOrden}</strong>
-            <span style={{ fontSize: "0.72rem", color: "#847D74" }}>
+            <strong style={{ fontSize: "0.84rem", color: "var(--ct-1f1c19, #1F1C19)" }}>{p.codigoOrden}</strong>
+            <span style={{ fontSize: "0.72rem", color: "var(--ct-847d74, #847D74)" }}>
               {p.tipoOrigen === "PROFORMA_EVENTO" ? "✨ Proforma Evento" : "🛍️ Compra Tienda"}
             </span>
           </div>
@@ -3047,9 +3047,9 @@ export function ConsolaVentasOmnicanal({
               borderRadius: "999px",
               fontSize: "0.73rem",
               fontWeight: 700,
-              background: p.esUsuarioRegistrado ? "#F2F6F3" : "#FAF6EE",
-              color: p.esUsuarioRegistrado ? "#2B4A36" : "#745622",
-              border: `1px solid ${p.esUsuarioRegistrado ? "#CEDDD3" : "#E5D7BC"}`,
+              background: p.esUsuarioRegistrado ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-faf6ee, #FAF6EE)",
+              color: p.esUsuarioRegistrado ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-745622, #745622)",
+              border: `1px solid ${p.esUsuarioRegistrado ? "var(--cb-ceddd3, #CEDDD3)" : "var(--cb-e5d7bc, #E5D7BC)"}`,
             }}
           >
             {p.esUsuarioRegistrado ? "✅ Registrado Web" : "🛒 Invitado (Sin Cuenta)"}
@@ -3062,8 +3062,8 @@ export function ConsolaVentasOmnicanal({
         valor: (p) => `${p.compradorNombre} ${p.compradorCorreo} ${p.compradorTelefono}`,
         render: (p) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.83rem", color: "#2E2A26" }}>{p.compradorNombre}</strong>
-            <span style={{ fontSize: "0.73rem", color: "#847D74" }}>
+            <strong style={{ fontSize: "0.83rem", color: "var(--ct-2e2a26, #2E2A26)" }}>{p.compradorNombre}</strong>
+            <span style={{ fontSize: "0.73rem", color: "var(--ct-847d74, #847D74)" }}>
               {p.compradorTelefono || "Sin tel."} · {p.compradorCorreo || "Sin correo"}
             </span>
           </div>
@@ -3075,10 +3075,10 @@ export function ConsolaVentasOmnicanal({
         valor: (p) => Number(p.total) || 0,
         render: (p) => (
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <strong style={{ fontSize: "0.86rem", color: "#1F1C19" }}>
+            <strong style={{ fontSize: "0.86rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
               ${Number(p.total || 0).toFixed(2)}
             </strong>
-            <span style={{ fontSize: "0.7rem", color: "#847D74" }}>
+            <span style={{ fontSize: "0.7rem", color: "var(--ct-847d74, #847D74)" }}>
               {(p.metodoPago || "ONLINE").toUpperCase()}
             </span>
           </div>
@@ -3096,8 +3096,8 @@ export function ConsolaVentasOmnicanal({
               fontSize: "0.72rem",
               fontWeight: 700,
               background:
-                p.estado === "APROBADA" || p.estado === "ENTREGADO" ? "#F2F6F3" : "#FAF6EE",
-              color: p.estado === "APROBADA" || p.estado === "ENTREGADO" ? "#2F4737" : "#745622",
+                p.estado === "APROBADA" || p.estado === "ENTREGADO" ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-faf6ee, #FAF6EE)",
+              color: p.estado === "APROBADA" || p.estado === "ENTREGADO" ? "var(--ct-2f4737, #2F4737)" : "var(--ct-745622, #745622)",
             }}
           >
             {p.estado}
@@ -3109,7 +3109,7 @@ export function ConsolaVentasOmnicanal({
         encabezado: "Fecha",
         valor: (p) => new Date(p.creadoEn).getTime(),
         render: (p) => (
-          <span style={{ fontSize: "0.76rem", color: "#4B5563" }}>
+          <span style={{ fontSize: "0.76rem", color: "var(--ct-4b5563, #4B5563)" }}>
             {new Date(p.creadoEn).toLocaleString("es-EC", {
               dateStyle: "short",
               timeStyle: "short",
@@ -3143,9 +3143,9 @@ export function ConsolaVentasOmnicanal({
               gap: "6px",
               padding: "6px 10px",
               borderRadius: "8px",
-              border: "1px solid #D5CFC4",
-              background: "#FFFFFF",
-              color: "#1F1C19",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-1f1c19, #1F1C19)",
               fontSize: "0.76rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -3194,14 +3194,14 @@ export function ConsolaVentasOmnicanal({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "4px",
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   fontWeight: 700,
                   fontSize: "0.84rem",
                   textAlign: "left",
                 }}
               >
                 <span>{u.nombre}</span>
-                <Pencil size={11} style={{ color: "#847D74", flexShrink: 0 }} />
+                <Pencil size={11} style={{ color: "var(--ct-847d74, #847D74)", flexShrink: 0 }} />
               </button>
               {u.calificacionEstrellas != null && u.calificacionEstrellas > 0 && (
                 <span
@@ -3212,9 +3212,9 @@ export function ConsolaVentasOmnicanal({
                     gap: "2px",
                     padding: "1px 6px",
                     borderRadius: "999px",
-                    background: "#FFFBEB",
-                    border: "1px solid #E8DEC6",
-                    color: "#B45309",
+                    background: "var(--cf-fffbeb, #FFFBEB)",
+                    border: "1px solid var(--cb-e8dec6, #E8DEC6)",
+                    color: "var(--ct-b45309, #B45309)",
                     fontSize: "0.68rem",
                     fontWeight: 700,
                   }}
@@ -3224,14 +3224,14 @@ export function ConsolaVentasOmnicanal({
                 </span>
               )}
             </div>
-            <span style={{ fontSize: "0.73rem", color: "#847D74" }}>
+            <span style={{ fontSize: "0.73rem", color: "var(--ct-847d74, #847D74)" }}>
               {u.correo || "Sin correo"} {u.telefono ? `· ${u.telefono}` : ""}
             </span>
             {u.notasCliente && (
               <span
                 style={{
                   fontSize: "0.71rem",
-                  color: "#745622",
+                  color: "var(--ct-745622, #745622)",
                   fontWeight: 600,
                 }}
               >
@@ -3256,8 +3256,8 @@ export function ConsolaVentasOmnicanal({
               borderRadius: "999px",
               fontSize: "0.73rem",
               fontWeight: 700,
-              background: u.tipoCuenta === "USUARIO_REGISTRADO" ? "#EFECE6" : "#F4F2EE",
-              color: u.tipoCuenta === "USUARIO_REGISTRADO" ? "#3A3530" : "#57524C",
+              background: u.tipoCuenta === "USUARIO_REGISTRADO" ? "var(--cf-efece6, #EFECE6)" : "var(--cf-f4f2ee, #F4F2EE)",
+              color: u.tipoCuenta === "USUARIO_REGISTRADO" ? "var(--ct-3a3530, #3A3530)" : "var(--ct-57524c, #57524C)",
             }}
           >
             {u.tipoCuenta === "USUARIO_REGISTRADO" ? "✅ Usuario Registrado" : "🛒 Invitado"}
@@ -3273,7 +3273,7 @@ export function ConsolaVentasOmnicanal({
             style={{
               fontSize: "0.74rem",
               fontWeight: 600,
-              color: u.autorizaWhatsapp ? "#2F4737" : "#847D74",
+              color: u.autorizaWhatsapp ? "var(--ct-2f4737, #2F4737)" : "var(--ct-847d74, #847D74)",
             }}
           >
             {u.autorizaWhatsapp ? "✔ Autorizado" : "— Sin opt-in"}
@@ -3285,7 +3285,7 @@ export function ConsolaVentasOmnicanal({
         encabezado: "Compras Realizadas",
         valor: (u) => u.totalCompras,
         render: (u) => (
-          <strong style={{ fontSize: "0.83rem", color: "#1F1C19" }}>
+          <strong style={{ fontSize: "0.83rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
             {u.totalCompras} {u.totalCompras === 1 ? "compra" : "compras"}
           </strong>
         ),
@@ -3295,7 +3295,7 @@ export function ConsolaVentasOmnicanal({
         encabezado: "Monto Acumulado",
         valor: (u) => Number(u.montoAcumulado) || 0,
         render: (u) => (
-          <strong style={{ fontSize: "0.84rem", color: "#2F4737" }}>
+          <strong style={{ fontSize: "0.84rem", color: "var(--ct-2f4737, #2F4737)" }}>
             ${Number(u.montoAcumulado || 0).toFixed(2)}
           </strong>
         ),
@@ -3311,7 +3311,7 @@ export function ConsolaVentasOmnicanal({
         render: (u) => (
           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
             {(u.etiquetasIds ?? []).length === 0 && (
-              <span style={{ fontSize: "0.72rem", color: "#9B948B" }}>Sin etiquetas</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--ct-9b948b, #9B948B)" }}>Sin etiquetas</span>
             )}
             {(u.etiquetasIds ?? []).map((id) => {
               const etq = mapaEtiquetas.get(id);
@@ -3354,9 +3354,9 @@ export function ConsolaVentasOmnicanal({
                 gap: "5px",
                 padding: "6px 9px",
                 borderRadius: "8px",
-                border: "1px solid #E6E2DA",
-                background: "#FAF8F5",
-                color: "#3A3530",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                background: "var(--cf-faf8f5, #FAF8F5)",
+                color: "var(--ct-3a3530, #3A3530)",
                 fontSize: "0.75rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -3386,9 +3386,9 @@ export function ConsolaVentasOmnicanal({
                 gap: "6px",
                 padding: "6px 10px",
                 borderRadius: "8px",
-                border: "1px solid #D5CFC4",
-                background: "#FFFFFF",
-                color: "#1F1C19",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 fontSize: "0.76rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -3435,8 +3435,8 @@ export function ConsolaVentasOmnicanal({
       {!ocultarCabeceraModulosEnMovil && (
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid rgba(34, 29, 26, 0.1)",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-221d1a-a100, rgba(34, 29, 26, 0.1))",
           borderRadius: "14px",
           padding: modoLayoutInbox === "movil" ? "7px 9px" : "8px 12px",
           display: "flex",
@@ -3519,9 +3519,9 @@ export function ConsolaVentasOmnicanal({
                   padding: modoLayoutInbox === "movil" ? "7px 10px" : "8px 14px",
                   minHeight: "36px",
                   borderRadius: "10px",
-                  border: activa ? "1px solid #1F1C19" : "1px solid #E6E2DA",
-                  background: activa ? "#1F1C19" : "#F8F7F4",
-                  color: activa ? "#FFFFFF" : "#57524C",
+                  border: activa ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  background: activa ? "#1F1C19" : "var(--cf-f8f7f4, #F8F7F4)",
+                  color: activa ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                   fontSize: modoLayoutInbox === "movil" ? "0.76rem" : "0.83rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -3537,8 +3537,8 @@ export function ConsolaVentasOmnicanal({
                       padding: "1px 6px",
                       borderRadius: "999px",
                       fontSize: "0.7rem",
-                      background: activa ? "rgba(255,255,255,0.2)" : "#E6E2DA",
-                      color: activa ? "#FFFFFF" : "#57524C",
+                      background: activa ? "rgba(255,255,255,0.2)" : "var(--cf-e6e2da, #E6E2DA)",
+                      color: activa ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                     }}
                   >
                     {tab.contador}
@@ -3560,21 +3560,21 @@ export function ConsolaVentasOmnicanal({
               fontSize: "0.74rem",
               padding: "5px 10px",
               borderRadius: "9px",
-              background: "#F8F7F4",
-              border: "1px solid #E6E2DA",
-              color: "#57524C",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              color: "var(--ct-57524c, #57524C)",
             }}
           >
             <span>
-              ARIA: <strong style={{ color: "#221E1B" }}>{metricas.totalRespuestasAria}</strong>
+              ARIA: <strong style={{ color: "var(--ct-221e1b, #221E1B)" }}>{metricas.totalRespuestasAria}</strong>
             </span>
             <span style={{ color: "#D5CFC4" }}>|</span>
             <span>
-              Humanas: <strong style={{ color: "#221E1B" }}>{metricas.totalIntervencionesHumanas}</strong>
+              Humanas: <strong style={{ color: "var(--ct-221e1b, #221E1B)" }}>{metricas.totalIntervencionesHumanas}</strong>
             </span>
             <span style={{ color: "#D5CFC4" }}>|</span>
             <span>
-              Ventas Web: <strong style={{ color: "#221E1B" }}>${metricas.montoTotalVentasUsd.toFixed(2)}</strong>
+              Ventas Web: <strong style={{ color: "var(--ct-221e1b, #221E1B)" }}>${metricas.montoTotalVentasUsd.toFixed(2)}</strong>
             </span>
           </div>
 
@@ -3591,9 +3591,9 @@ export function ConsolaVentasOmnicanal({
                 gap: "6px",
                 padding: "8px 12px",
                 borderRadius: "9px",
-                border: "1px solid #D5CFC4",
-                background: "#FFFFFF",
-                color: "#1F1C19",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -3612,9 +3612,9 @@ export function ConsolaVentasOmnicanal({
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#FAF6EE",
-            border: "1px solid #E5D7BC",
-            color: "#745622",
+            background: "var(--cf-faf6ee, #FAF6EE)",
+            border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+            color: "var(--ct-745622, #745622)",
             fontSize: "0.8rem",
             display: "flex",
             alignItems: "center",
@@ -3639,9 +3639,9 @@ export function ConsolaVentasOmnicanal({
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#F2F6F3",
-            border: "1px solid #CEDDD3",
-            color: "#2B4A36",
+            background: "var(--cf-f2f6f3, #F2F6F3)",
+            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+            color: "var(--ct-2b4a36, #2B4A36)",
             fontSize: "0.82rem",
             display: "flex",
             justifyContent: "space-between",
@@ -3657,7 +3657,7 @@ export function ConsolaVentasOmnicanal({
             style={{
               border: "none",
               background: "transparent",
-              color: "#2B4A36",
+              color: "var(--ct-2b4a36, #2B4A36)",
               fontWeight: 700,
               cursor: "pointer",
             }}
@@ -3672,9 +3672,9 @@ export function ConsolaVentasOmnicanal({
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#FAF2F2",
-            border: "1px solid #E5CACA",
-            color: "#8A2E2E",
+            background: "var(--cf-faf2f2, #FAF2F2)",
+            border: "1px solid var(--cb-e5caca, #E5CACA)",
+            color: "var(--ct-8a2e2e, #8A2E2E)",
             fontSize: "0.82rem",
             display: "flex",
             justifyContent: "space-between",
@@ -3690,7 +3690,7 @@ export function ConsolaVentasOmnicanal({
             style={{
               border: "none",
               background: "transparent",
-              color: "#8A2E2E",
+              color: "var(--ct-8a2e2e, #8A2E2E)",
               fontWeight: 700,
               cursor: "pointer",
             }}
@@ -3731,8 +3731,8 @@ export function ConsolaVentasOmnicanal({
                   : "calc(100dvh - 68px)"
                 : "calc(100vh - 132px)",
             minHeight: modoLayoutInbox === "movil" ? "480px" : "580px",
-            background: "#FFFFFF",
-            border: "1px solid rgba(34, 29, 26, 0.11)",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-221d1a-a110, rgba(34, 29, 26, 0.11))",
             borderRadius: modoLayoutInbox === "movil" ? "12px" : "16px",
             overflow: "hidden",
             boxShadow: "0 8px 26px rgba(34, 29, 26, 0.06)",
@@ -3742,8 +3742,8 @@ export function ConsolaVentasOmnicanal({
           {(modoLayoutInbox !== "movil" || vistaMovilInbox === "lista") && (
             <div
               style={{
-                background: "#FAF8F5",
-                borderBottom: "1px solid #ECE8E1",
+                background: "var(--cf-faf8f5, #FAF8F5)",
+                borderBottom: "1px solid var(--cb-ece8e1, #ECE8E1)",
                 padding: modoLayoutInbox === "movil" ? "8px 10px" : "8px 12px",
                 display: "flex",
                 flexDirection: "column",
@@ -3774,7 +3774,7 @@ export function ConsolaVentasOmnicanal({
                       left: "9px",
                       top: "50%",
                       transform: "translateY(-50%)",
-                      color: "#847D74",
+                      color: "var(--ct-847d74, #847D74)",
                     }}
                   />
                   <input
@@ -3786,8 +3786,8 @@ export function ConsolaVentasOmnicanal({
                       width: "100%",
                       padding: "6px 9px 6px 29px",
                       borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       fontSize: modoLayoutInbox === "movil" ? "16px" : "0.78rem",
                     }}
                   />
@@ -3799,7 +3799,7 @@ export function ConsolaVentasOmnicanal({
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "3px",
-                    background: "#EFECE6",
+                    background: "var(--cf-efece6, #EFECE6)",
                     padding: "3px",
                     borderRadius: "9px",
                     overflowX: "auto",
@@ -3815,8 +3815,8 @@ export function ConsolaVentasOmnicanal({
                       padding: "4px 9px",
                       borderRadius: "7px",
                       border: "none",
-                      background: canalFiltro === "todos" ? "#FFFFFF" : "transparent",
-                      color: canalFiltro === "todos" ? "#1F1C19" : "#57524C",
+                      background: canalFiltro === "todos" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                      color: canalFiltro === "todos" ? "var(--ct-1f1c19, #1F1C19)" : "var(--ct-57524c, #57524C)",
                       fontSize: "0.72rem",
                       fontWeight: canalFiltro === "todos" ? 800 : 600,
                       boxShadow:
@@ -3849,8 +3849,8 @@ export function ConsolaVentasOmnicanal({
                           padding: "4px 7px",
                           borderRadius: "7px",
                           border: "none",
-                          background: activo ? "#FFFFFF" : "transparent",
-                          color: activo ? "#1F1C19" : "#57524C",
+                          background: activo ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                          color: activo ? "var(--ct-1f1c19, #1F1C19)" : "var(--ct-57524c, #57524C)",
                           fontSize: "0.71rem",
                           fontWeight: activo ? 800 : 600,
                           boxShadow: activo ? "0 1px 2px rgba(15,23,42,0.12)" : "none",
@@ -3866,7 +3866,7 @@ export function ConsolaVentasOmnicanal({
                             style={{
                               fontSize: "0.66rem",
                               fontWeight: 800,
-                              color: activo ? c.color : "#847D74",
+                              color: activo ? c.color : "var(--ct-847d74, #847D74)",
                             }}
                           >
                             {conteoCanal}
@@ -3889,9 +3889,9 @@ export function ConsolaVentasOmnicanal({
                       gap: "4px",
                       padding: "6px 9px",
                       borderRadius: "8px",
-                      border: mostrarFiltrosInbox ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-                      background: mostrarFiltrosInbox ? "#1F1C19" : "#FFFFFF",
-                      color: mostrarFiltrosInbox ? "#FFFFFF" : "#57524C",
+                      border: mostrarFiltrosInbox ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: mostrarFiltrosInbox ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                      color: mostrarFiltrosInbox ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                       fontSize: "0.74rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -3937,11 +3937,11 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: "1px solid #D5CFC4",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                         fontSize: "0.75rem",
                         fontWeight: 600,
-                        background: "#FFFFFF",
-                        color: "#221E1B",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-221e1b, #221E1B)",
                       }}
                     >
                       <option value="todos">Abiertos ({metricas.conversacionesAbiertas})</option>
@@ -3984,11 +3984,11 @@ export function ConsolaVentasOmnicanal({
                         style={{
                           padding: "5px 8px",
                           borderRadius: "8px",
-                          border: lineaWhatsappFiltroId ? "1px solid #1D4ED8" : "1px solid #D5CFC4",
+                          border: lineaWhatsappFiltroId ? "1px solid #1D4ED8" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                           fontSize: "0.74rem",
                           fontWeight: 600,
-                          background: lineaWhatsappFiltroId ? "#EEF4FF" : "#FFFFFF",
-                          color: lineaWhatsappFiltroId ? "#1D4ED8" : "#221E1B",
+                          background: lineaWhatsappFiltroId ? "var(--cf-eef4ff, #EEF4FF)" : "var(--cf-ffffff, #FFFFFF)",
+                          color: lineaWhatsappFiltroId ? "var(--ct-1d4ed8, #1D4ED8)" : "var(--ct-221e1b, #221E1B)",
                         }}
                       >
                         <option value="">📱 Todas las líneas</option>
@@ -4009,9 +4009,9 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 9px",
                         borderRadius: "8px",
-                        border: soloNoLeidos ? "1px solid #221E1B" : "1px solid #D5CFC4",
-                        background: soloNoLeidos ? "#221E1B" : "#FFFFFF",
-                        color: soloNoLeidos ? "#FFFFFF" : "#57524C",
+                        border: soloNoLeidos ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: soloNoLeidos ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
+                        color: soloNoLeidos ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                         fontSize: "0.74rem",
                         fontWeight: 600,
                         cursor: "pointer",
@@ -4029,11 +4029,11 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: etiquetaFiltroId ? "1px solid #221E1B" : "1px solid #D5CFC4",
+                        border: etiquetaFiltroId ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                         fontSize: "0.75rem",
                         fontWeight: etiquetaFiltroId ? 700 : 500,
-                        background: etiquetaFiltroId ? "#F4F2EE" : "#FFFFFF",
-                        color: "#221E1B",
+                        background: etiquetaFiltroId ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-221e1b, #221E1B)",
                         maxWidth: "175px",
                       }}
                     >
@@ -4053,11 +4053,11 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: vendedorFiltroId ? "1px solid #221E1B" : "1px solid #D5CFC4",
+                        border: vendedorFiltroId ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                         fontSize: "0.75rem",
                         fontWeight: vendedorFiltroId ? 700 : 500,
-                        background: vendedorFiltroId ? "#F4F2EE" : "#FFFFFF",
-                        color: "#221E1B",
+                        background: vendedorFiltroId ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-221e1b, #221E1B)",
                         maxWidth: "165px",
                       }}
                     >
@@ -4086,9 +4086,9 @@ export function ConsolaVentasOmnicanal({
                           gap: "5px",
                           padding: "5px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
-                          color: "#1F1C19",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-1f1c19, #1F1C19)",
                           fontSize: "0.74rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -4128,11 +4128,11 @@ export function ConsolaVentasOmnicanal({
             {/* COLUMNA 1: LISTA DE CONVERSACIONES CON ÍCONO DE CANAL (SIN TEXTO DE CANAL) */}
             <div
               style={{
-                borderRight: modoLayoutInbox !== "movil" ? "1px solid #ECE8E1" : "none",
+                borderRight: modoLayoutInbox !== "movil" ? "1px solid var(--cb-ece8e1, #ECE8E1)" : "none",
                 display:
                   modoLayoutInbox !== "movil" || vistaMovilInbox === "lista" ? "flex" : "none",
                 flexDirection: "column",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 minWidth: 0,
                 minHeight: 0,
               }}
@@ -4147,9 +4147,9 @@ export function ConsolaVentasOmnicanal({
                       alignItems: "center",
                       justifyContent: "center",
                       gap: "7px",
-                      background: "#F8F7F4",
-                      borderBottom: "1px solid #E6E2DA",
-                      color: "#57524C",
+                      background: "var(--cf-f8f7f4, #F8F7F4)",
+                      borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                      color: "var(--ct-57524c, #57524C)",
                       fontSize: "0.75rem",
                       fontWeight: 700,
                       overflow: "hidden",
@@ -4184,7 +4184,7 @@ export function ConsolaVentasOmnicanal({
                     style={{
                       padding: "32px 18px",
                       textAlign: "center",
-                      color: "#847D74",
+                      color: "var(--ct-847d74, #847D74)",
                       fontSize: "0.82rem",
                       lineHeight: 1.5,
                     }}
@@ -4232,16 +4232,16 @@ export function ConsolaVentasOmnicanal({
                         }}
                         style={{
                           padding: "10px 12px",
-                          borderBottom: "1px solid #F4F2EE",
+                          borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
                           background: seleccionada
-                            ? "#F4F2EE"
+                            ? "var(--cf-f4f2ee, #F4F2EE)"
                             : tieneNoLeidos
-                              ? "#F8F7F4"
-                              : "#FFFFFF",
+                              ? "var(--cf-f8f7f4, #F8F7F4)"
+                              : "var(--cf-ffffff, #FFFFFF)",
                           borderLeft: seleccionada
-                            ? "3px solid #221E1B"
+                            ? "3px solid var(--cb-221e1b, #221E1B)"
                             : tieneNoLeidos
-                              ? "3px solid #847D74"
+                              ? "3px solid var(--cb-847d74, #847D74)"
                               : "3px solid transparent",
                           cursor: "pointer",
                           display: "flex",
@@ -4284,7 +4284,7 @@ export function ConsolaVentasOmnicanal({
                                   style={{
                                     fontSize: "0.83rem",
                                     fontWeight: tieneNoLeidos ? 800 : 600,
-                                    color: "#221E1B",
+                                    color: "var(--ct-221e1b, #221E1B)",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                     whiteSpace: "nowrap",
@@ -4301,8 +4301,8 @@ export function ConsolaVentasOmnicanal({
                                       alignItems: "center",
                                       padding: "1px 5px",
                                       borderRadius: "999px",
-                                      background: "#F3E8FF",
-                                      color: "#6B21A8",
+                                      background: "var(--cf-f3e8ff, #F3E8FF)",
+                                      color: "var(--ct-6b21a8, #6B21A8)",
                                       fontSize: "0.63rem",
                                       fontWeight: 700,
                                       flexShrink: 0,
@@ -4348,7 +4348,7 @@ export function ConsolaVentasOmnicanal({
                                       gap: "2px",
                                       fontSize: "0.66rem",
                                       fontWeight: 700,
-                                      color: "#B45309",
+                                      color: "var(--ct-b45309, #B45309)",
                                       flexShrink: 0,
                                     }}
                                   >
@@ -4362,7 +4362,7 @@ export function ConsolaVentasOmnicanal({
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
-                                    color: "#745622",
+                                    color: "var(--ct-745622, #745622)",
                                     flexShrink: 0,
                                   }}
                                 >
@@ -4397,7 +4397,7 @@ export function ConsolaVentasOmnicanal({
                                   {grupo.noLeidosTotal}
                                 </span>
                               )}
-                              <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
+                              <span style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)" }}>
                                 {formatearTiempoCorto(conv.ultimoMensajeEn)}
                               </span>
                               {esAdminAplicacion && seleccionada && (
@@ -4413,9 +4413,9 @@ export function ConsolaVentasOmnicanal({
                                     width: "22px",
                                     height: "22px",
                                     borderRadius: "6px",
-                                    border: "1px solid #E6E2DA",
-                                    background: "#FFFFFF",
-                                    color: "#847D74",
+                                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                    background: "var(--cf-ffffff, #FFFFFF)",
+                                    color: "var(--ct-847d74, #847D74)",
                                     display: "inline-flex",
                                     alignItems: "center",
                                     justifyContent: "center",
@@ -4432,7 +4432,7 @@ export function ConsolaVentasOmnicanal({
                           <div
                             style={{
                               fontSize: "0.75rem",
-                              color: tieneNoLeidos ? "#221E1B" : "#6E6861",
+                              color: tieneNoLeidos ? "var(--ct-221e1b, #221E1B)" : "var(--ct-6e6861, #6E6861)",
                               fontWeight: tieneNoLeidos ? 600 : 400,
                               overflow: "hidden",
                               textOverflow: "ellipsis",
@@ -4485,10 +4485,10 @@ export function ConsolaVentasOmnicanal({
                                       padding: "1px 6px",
                                       borderRadius: "999px",
                                       border: activoEsteCanal
-                                        ? "1px solid #221E1B"
-                                        : "1px solid #E6E2DA",
-                                      background: activoEsteCanal ? "#221E1B" : "#FFFFFF",
-                                      color: activoEsteCanal ? "#FFFFFF" : "#57524C",
+                                        ? "1px solid var(--cb-221e1b, #221E1B)"
+                                        : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                      background: activoEsteCanal ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
+                                      color: activoEsteCanal ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                                       fontSize: "0.64rem",
                                       fontWeight: 700,
                                       cursor: "pointer",
@@ -4557,9 +4557,9 @@ export function ConsolaVentasOmnicanal({
                                       fontWeight: 600,
                                       padding: "1px 6px",
                                       borderRadius: "999px",
-                                      background: vencido ? "#FAF6EC" : "#F4F2EE",
-                                      color: vencido ? "#745622" : "#6E6861",
-                                      border: vencido ? "1px solid #E8DEC6" : "1px solid #E6E2DA",
+                                      background: vencido ? "var(--cf-faf6ec, #FAF6EC)" : "var(--cf-f4f2ee, #F4F2EE)",
+                                      color: vencido ? "var(--ct-745622, #745622)" : "var(--ct-6e6861, #6E6861)",
+                                      border: vencido ? "1px solid var(--cb-e8dec6, #E8DEC6)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
                                     }}
                                   >
                                     {vencido
@@ -4579,9 +4579,9 @@ export function ConsolaVentasOmnicanal({
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#F4F2EE",
-                                    color: "#6E6861",
-                                    border: "1px solid #E6E2DA",
+                                    background: "var(--cf-f4f2ee, #F4F2EE)",
+                                    color: "var(--ct-6e6861, #6E6861)",
+                                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                   }}
                                 >
                                   {conv.cierre.motivoEtiqueta}
@@ -4595,9 +4595,9 @@ export function ConsolaVentasOmnicanal({
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#FAF2F2",
-                                    color: "#8A2E2E",
-                                    border: "1px solid #E5CACA",
+                                    background: "var(--cf-faf2f2, #FAF2F2)",
+                                    color: "var(--ct-8a2e2e, #8A2E2E)",
+                                    border: "1px solid var(--cb-e5caca, #E5CACA)",
                                   }}
                                 >
                                   Humano
@@ -4611,9 +4611,9 @@ export function ConsolaVentasOmnicanal({
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#F4F2EE",
-                                    color: "#57524C",
-                                    border: "1px solid #E6E2DA",
+                                    background: "var(--cf-f4f2ee, #F4F2EE)",
+                                    color: "var(--ct-57524c, #57524C)",
+                                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                   }}
                                 >
                                   {conv.asesoraNombre?.split(" ")[0] || "Manual"}
@@ -4631,9 +4631,9 @@ export function ConsolaVentasOmnicanal({
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#F8F7F4",
-                                    color: "#57524C",
-                                    border: "1px solid #E6E2DA",
+                                    background: "var(--cf-f8f7f4, #F8F7F4)",
+                                    color: "var(--ct-57524c, #57524C)",
+                                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                   }}
                                 >
                                   <span
@@ -4663,7 +4663,7 @@ export function ConsolaVentasOmnicanal({
             style={{
               borderRight:
                 modoLayoutInbox === "desktop" && fichaDerechaDesktop
-                  ? "1px solid #ECE8E1"
+                  ? "1px solid var(--cb-ece8e1, #ECE8E1)"
                   : "none",
               display:
                 modoLayoutInbox === "desktop" ||
@@ -4672,7 +4672,7 @@ export function ConsolaVentasOmnicanal({
                   ? "flex"
                   : "none",
               flexDirection: "column",
-              background: "#F6F4EF",
+              background: "var(--cf-f6f4ef, #F6F4EF)",
               minWidth: 0,
               minHeight: 0,
             }}
@@ -4687,7 +4687,7 @@ export function ConsolaVentasOmnicanal({
                   justifyContent: "center",
                   padding: "clamp(20px, 5vw, 36px)",
                   textAlign: "center",
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                 }}
               >
                 {modoLayoutInbox === "movil" && (
@@ -4703,9 +4703,9 @@ export function ConsolaVentasOmnicanal({
                       padding: "6px 12px",
                       marginBottom: "16px",
                       borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#1F1C19",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       fontSize: "0.78rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -4715,8 +4715,8 @@ export function ConsolaVentasOmnicanal({
                     <span>Hilos</span>
                   </button>
                 )}
-                <Sparkles size={40} style={{ color: "#221E1B", marginBottom: "12px" }} />
-                <h3 style={{ margin: "0 0 6px", fontSize: "0.9rem", color: "#1F1C19" }}>
+                <Sparkles size={40} style={{ color: "var(--ct-221e1b, #221E1B)", marginBottom: "12px" }} />
+                <h3 style={{ margin: "0 0 6px", fontSize: "0.9rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                   Monitoreo Omnicanal de Ventas e IA ARIA
                 </h3>
                 <p style={{ margin: 0, maxWidth: "400px", fontSize: "0.84rem", lineHeight: 1.55 }}>
@@ -4730,9 +4730,9 @@ export function ConsolaVentasOmnicanal({
                 {/* Cabecera Optimizada Mobile-First + ManyChat: Fila Táctil en Móvil + Bottom Sheet / Popovers */}
                 <div
                   style={{
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: modoLayoutInbox === "movil" ? "8px 10px" : "9px 14px",
-                    borderBottom: "1px solid #E6E2DA",
+                    borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     display: "flex",
                     flexDirection: "column",
                     gap: modoLayoutInbox === "movil" ? "7px" : "6px",
@@ -4792,9 +4792,9 @@ export function ConsolaVentasOmnicanal({
                             width: "36px",
                             height: "36px",
                             borderRadius: "10px",
-                            border: "1px solid #D5CFC4",
-                            background: "#F8F7F4",
-                            color: "#1F1C19",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-f8f7f4, #F8F7F4)",
+                            color: "var(--ct-1f1c19, #1F1C19)",
                             cursor: "pointer",
                             flexShrink: 0,
                           }}
@@ -4859,7 +4859,7 @@ export function ConsolaVentasOmnicanal({
                             <strong
                               style={{
                                 fontSize: "0.88rem",
-                                color: "#1F1C19",
+                                color: "var(--ct-1f1c19, #1F1C19)",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -4869,7 +4869,7 @@ export function ConsolaVentasOmnicanal({
                             </strong>
                             <Pencil
                               size={12}
-                              style={{ color: "#847D74", flexShrink: 0 }}
+                              style={{ color: "var(--ct-847d74, #847D74)", flexShrink: 0 }}
                             />
                           </button>
 
@@ -4888,9 +4888,9 @@ export function ConsolaVentasOmnicanal({
                                 style={{
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  border: "1px solid #E8DEC6",
-                                  background: "#FFFBEB",
-                                  color: "#B45309",
+                                  border: "1px solid var(--cb-e8dec6, #E8DEC6)",
+                                  background: "var(--cf-fffbeb, #FFFBEB)",
+                                  color: "var(--ct-b45309, #B45309)",
                                   fontSize: "0.66rem",
                                   fontWeight: 700,
                                   display: "inline-flex",
@@ -4947,12 +4947,12 @@ export function ConsolaVentasOmnicanal({
                               padding: "1px 7px",
                               borderRadius: "999px",
                               border: conversacionActiva.asesoraAsignadaId
-                                ? "1px solid #D5CFC4"
-                                : "1px solid #E6E2DA",
+                                ? "1px solid var(--cb-d5cfc4, #D5CFC4)"
+                                : "1px solid var(--cb-e6e2da, #E6E2DA)",
                               background: conversacionActiva.asesoraAsignadaId
-                                ? "#F4F2EE"
-                                : "#F8F7F4",
-                              color: conversacionActiva.asesoraAsignadaId ? "#221E1B" : "#847D74",
+                                ? "var(--cf-f4f2ee, #F4F2EE)"
+                                : "var(--cf-f8f7f4, #F8F7F4)",
+                              color: conversacionActiva.asesoraAsignadaId ? "var(--ct-221e1b, #221E1B)" : "var(--ct-847d74, #847D74)",
                               fontSize: "0.68rem",
                               fontWeight: 600,
                               cursor: "pointer",
@@ -4988,9 +4988,9 @@ export function ConsolaVentasOmnicanal({
                                 fontWeight: 600,
                                 padding: "1px 7px",
                                 borderRadius: "999px",
-                                background: "#FAF6EC",
-                                color: "#745622",
-                                border: "1px solid #E8DEC6",
+                                background: "var(--cf-faf6ec, #FAF6EC)",
+                                color: "var(--ct-745622, #745622)",
+                                border: "1px solid var(--cb-e8dec6, #E8DEC6)",
                                 cursor: "pointer",
                                 display: "inline-flex",
                                 alignItems: "center",
@@ -5024,9 +5024,9 @@ export function ConsolaVentasOmnicanal({
                                   fontWeight: 600,
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  background: vencido ? "#FAF6EC" : "#F4F2EE",
-                                  color: vencido ? "#745622" : "#6E6861",
-                                  border: vencido ? "1px solid #E8DEC6" : "1px solid #E6E2DA",
+                                  background: vencido ? "var(--cf-faf6ec, #FAF6EC)" : "var(--cf-f4f2ee, #F4F2EE)",
+                                  color: vencido ? "var(--ct-745622, #745622)" : "var(--ct-6e6861, #6E6861)",
+                                  border: vencido ? "1px solid var(--cb-e8dec6, #E8DEC6)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
                                   whiteSpace: "nowrap",
                                 }}
                               >
@@ -5063,7 +5063,7 @@ export function ConsolaVentasOmnicanal({
                           height: "36px",
                           padding: "0 11px",
                           borderRadius: "10px",
-                          border: "1px solid #1F1C19",
+                          border: "1px solid var(--cb-1f1c19, #1F1C19)",
                           background: "#1F1C19",
                           color: "#FFFFFF",
                           fontSize: "0.75rem",
@@ -5109,11 +5109,11 @@ export function ConsolaVentasOmnicanal({
                               borderRadius: "8px",
                               border:
                                 menuCabeceraAbierto === "etiquetas"
-                                  ? "1px solid #1F1C19"
-                                  : "1px solid #E6E2DA",
+                                  ? "1px solid var(--cb-1f1c19, #1F1C19)"
+                                  : "1px solid var(--cb-e6e2da, #E6E2DA)",
                               background:
-                                menuCabeceraAbierto === "etiquetas" ? "#F4F2EE" : "#FFFFFF",
-                              color: "#57524C",
+                                menuCabeceraAbierto === "etiquetas" ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-57524c, #57524C)",
                               cursor: "pointer",
                             }}
                           >
@@ -5128,8 +5128,8 @@ export function ConsolaVentasOmnicanal({
                                 right: 0,
                                 width: "232px",
                                 maxWidth: "calc(100vw - 24px)",
-                                background: "#FFFFFF",
-                                border: "1px solid #D5CFC4",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                 borderRadius: "12px",
                                 boxShadow: "0 12px 28px rgba(15, 23, 42, 0.14)",
                                 padding: "8px 0",
@@ -5141,8 +5141,8 @@ export function ConsolaVentasOmnicanal({
                                   padding: "4px 12px 6px",
                                   fontSize: "0.73rem",
                                   fontWeight: 700,
-                                  color: "#847D74",
-                                  borderBottom: "1px solid #F4F2EE",
+                                  color: "var(--ct-847d74, #847D74)",
+                                  borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
                                 }}
                               >
                                 Gestionar etiquetas
@@ -5161,14 +5161,14 @@ export function ConsolaVentasOmnicanal({
                                         width: "100%",
                                         padding: "7px 12px",
                                         border: "none",
-                                        background: puesta ? "#F8F7F4" : "#FFFFFF",
+                                        background: puesta ? "var(--cf-f8f7f4, #F8F7F4)" : "var(--cf-ffffff, #FFFFFF)",
                                         display: "flex",
                                         alignItems: "center",
                                         gap: "9px",
                                         cursor: "pointer",
                                         textAlign: "left",
                                         fontSize: "0.8rem",
-                                        color: "#1F1C19",
+                                        color: "var(--ct-1f1c19, #1F1C19)",
                                         fontWeight: puesta ? 700 : 500,
                                       }}
                                     >
@@ -5178,9 +5178,9 @@ export function ConsolaVentasOmnicanal({
                                           height: "16px",
                                           borderRadius: "4px",
                                           border: puesta
-                                            ? "1.5px solid #221E1B"
-                                            : "1.5px solid #D5CFC4",
-                                          background: puesta ? "#221E1B" : "#FFFFFF",
+                                            ? "1.5px solid var(--cb-221e1b, #221E1B)"
+                                            : "1.5px solid var(--cb-d5cfc4, #D5CFC4)",
+                                          background: puesta ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
                                           color: "#FFFFFF",
                                           display: "inline-flex",
                                           alignItems: "center",
@@ -5209,7 +5209,7 @@ export function ConsolaVentasOmnicanal({
                               {Boolean(tablero.esAdminEtiquetas) && (
                                 <div
                                   style={{
-                                    borderTop: "1px solid #F4F2EE",
+                                    borderTop: "1px solid var(--cb-f4f2ee, #F4F2EE)",
                                     padding: "6px 10px 2px",
                                   }}
                                 >
@@ -5224,8 +5224,8 @@ export function ConsolaVentasOmnicanal({
                                       padding: "6px 8px",
                                       borderRadius: "7px",
                                       border: "none",
-                                      background: "#F8F7F4",
-                                      color: "#1F1C19",
+                                      background: "var(--cf-f8f7f4, #F8F7F4)",
+                                      color: "var(--ct-1f1c19, #1F1C19)",
                                       fontSize: "0.75rem",
                                       fontWeight: 700,
                                       display: "flex",
@@ -5265,14 +5265,14 @@ export function ConsolaVentasOmnicanal({
                               border: conversacionActiva.recordatorioEn
                                 ? "1px solid #8F6A2E"
                                 : menuCabeceraAbierto === "recordatorio"
-                                  ? "1px solid #1F1C19"
-                                  : "1px solid #E6E2DA",
+                                  ? "1px solid var(--cb-1f1c19, #1F1C19)"
+                                  : "1px solid var(--cb-e6e2da, #E6E2DA)",
                               background: conversacionActiva.recordatorioEn
-                                ? "#FAF6EE"
+                                ? "var(--cf-faf6ee, #FAF6EE)"
                                 : menuCabeceraAbierto === "recordatorio"
-                                  ? "#F4F2EE"
-                                  : "#FFFFFF",
-                              color: conversacionActiva.recordatorioEn ? "#745622" : "#57524C",
+                                  ? "var(--cf-f4f2ee, #F4F2EE)"
+                                  : "var(--cf-ffffff, #FFFFFF)",
+                              color: conversacionActiva.recordatorioEn ? "var(--ct-745622, #745622)" : "var(--ct-57524c, #57524C)",
                               cursor: "pointer",
                             }}
                           >
@@ -5287,8 +5287,8 @@ export function ConsolaVentasOmnicanal({
                                 right: 0,
                                 width: "240px",
                                 maxWidth: "calc(100vw - 24px)",
-                                background: "#FFFFFF",
-                                border: "1px solid #D5CFC4",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                 borderRadius: "12px",
                                 boxShadow: "0 12px 28px rgba(15, 23, 42, 0.14)",
                                 padding: "8px 0",
@@ -5300,8 +5300,8 @@ export function ConsolaVentasOmnicanal({
                                   padding: "4px 12px 6px",
                                   fontSize: "0.73rem",
                                   fontWeight: 700,
-                                  color: "#847D74",
-                                  borderBottom: "1px solid #F4F2EE",
+                                  color: "var(--ct-847d74, #847D74)",
+                                  borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
                                 }}
                               >
                                 Recuérdamelo en
@@ -5316,10 +5316,10 @@ export function ConsolaVentasOmnicanal({
                                     width: "100%",
                                     padding: "7px 12px",
                                     border: "none",
-                                    background: "#FFFFFF",
+                                    background: "var(--cf-ffffff, #FFFFFF)",
                                     textAlign: "left",
                                     fontSize: "0.8rem",
-                                    color: "#1F1C19",
+                                    color: "var(--ct-1f1c19, #1F1C19)",
                                     fontWeight: 500,
                                     cursor: "pointer",
                                   }}
@@ -5330,7 +5330,7 @@ export function ConsolaVentasOmnicanal({
 
                               <div
                                 style={{
-                                  borderTop: "1px solid #F4F2EE",
+                                  borderTop: "1px solid var(--cb-f4f2ee, #F4F2EE)",
                                   marginTop: "4px",
                                   paddingTop: "4px",
                                 }}
@@ -5342,13 +5342,13 @@ export function ConsolaVentasOmnicanal({
                                     width: "100%",
                                     padding: "7px 12px",
                                     border: "none",
-                                    background: mostrarSelectorFechaCustom ? "#F8F7F4" : "#FFFFFF",
+                                    background: mostrarSelectorFechaCustom ? "var(--cf-f8f7f4, #F8F7F4)" : "var(--cf-ffffff, #FFFFFF)",
                                     display: "flex",
                                     alignItems: "center",
                                     gap: "7px",
                                     fontSize: "0.79rem",
                                     fontWeight: 700,
-                                    color: "#1F1C19",
+                                    color: "var(--ct-1f1c19, #1F1C19)",
                                     cursor: "pointer",
                                   }}
                                 >
@@ -5363,7 +5363,7 @@ export function ConsolaVentasOmnicanal({
                                       display: "flex",
                                       flexDirection: "column",
                                       gap: "6px",
-                                      background: "#F8F7F4",
+                                      background: "var(--cf-f8f7f4, #F8F7F4)",
                                     }}
                                   >
                                     <input
@@ -5374,7 +5374,7 @@ export function ConsolaVentasOmnicanal({
                                         width: "100%",
                                         padding: "5px 7px",
                                         borderRadius: "6px",
-                                        border: "1px solid #D5CFC4",
+                                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                         fontSize: "0.75rem",
                                       }}
                                     />
@@ -5387,7 +5387,7 @@ export function ConsolaVentasOmnicanal({
                                         width: "100%",
                                         padding: "5px 7px",
                                         borderRadius: "6px",
-                                        border: "1px solid #D5CFC4",
+                                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                         fontSize: "0.75rem",
                                       }}
                                     />
@@ -5420,11 +5420,11 @@ export function ConsolaVentasOmnicanal({
                                       width: "100%",
                                       padding: "7px 12px",
                                       border: "none",
-                                      background: "#FFFFFF",
+                                      background: "var(--cf-ffffff, #FFFFFF)",
                                       textAlign: "left",
                                       fontSize: "0.76rem",
                                       fontWeight: 700,
-                                      color: "#8A2E2E",
+                                      color: "var(--ct-8a2e2e, #8A2E2E)",
                                       cursor: "pointer",
                                     }}
                                   >
@@ -5457,11 +5457,11 @@ export function ConsolaVentasOmnicanal({
                                 borderRadius: "8px",
                                 border:
                                   menuCabeceraAbierto === "cierre"
-                                    ? "1px solid #1F1C19"
-                                    : "1px solid #E6E2DA",
+                                    ? "1px solid var(--cb-1f1c19, #1F1C19)"
+                                    : "1px solid var(--cb-e6e2da, #E6E2DA)",
                                 background:
-                                  menuCabeceraAbierto === "cierre" ? "#F4F2EE" : "#FFFFFF",
-                                color: "#57524C",
+                                  menuCabeceraAbierto === "cierre" ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
+                                color: "var(--ct-57524c, #57524C)",
                                 cursor: "pointer",
                               }}
                             >
@@ -5481,8 +5481,8 @@ export function ConsolaVentasOmnicanal({
                                 padding: "6px 9px",
                                 borderRadius: "8px",
                                 border: "1px solid #2F4737",
-                                background: "#F2F6F3",
-                                color: "#2F4737",
+                                background: "var(--cf-f2f6f3, #F2F6F3)",
+                                color: "var(--ct-2f4737, #2F4737)",
                                 fontSize: "0.73rem",
                                 fontWeight: 700,
                                 cursor: "pointer",
@@ -5501,8 +5501,8 @@ export function ConsolaVentasOmnicanal({
                                 right: 0,
                                 width: "272px",
                                 maxWidth: "calc(100vw - 24px)",
-                                background: "#FFFFFF",
-                                border: "1px solid #D5CFC4",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                 borderRadius: "12px",
                                 boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
                                 padding: "8px 0",
@@ -5514,8 +5514,8 @@ export function ConsolaVentasOmnicanal({
                                   padding: "4px 12px 6px",
                                   fontSize: "0.73rem",
                                   fontWeight: 700,
-                                  color: "#1F1C19",
-                                  borderBottom: "1px solid #F4F2EE",
+                                  color: "var(--ct-1f1c19, #1F1C19)",
+                                  borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
                                 }}
                               >
                                 Cerrar chat · Selecciona el motivo
@@ -5531,7 +5531,7 @@ export function ConsolaVentasOmnicanal({
                                     width: "100%",
                                     padding: "5px 8px",
                                     borderRadius: "6px",
-                                    border: "1px solid #D5CFC4",
+                                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                     fontSize: "0.75rem",
                                   }}
                                 />
@@ -5547,7 +5547,7 @@ export function ConsolaVentasOmnicanal({
                                       width: "100%",
                                       padding: "7px 12px",
                                       border: "none",
-                                      background: "#FFFFFF",
+                                      background: "var(--cf-ffffff, #FFFFFF)",
                                       display: "flex",
                                       flexDirection: "column",
                                       gap: "1px",
@@ -5564,7 +5564,7 @@ export function ConsolaVentasOmnicanal({
                                     >
                                       {mot.icono} {mot.etiqueta}
                                     </span>
-                                    <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
+                                    <span style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)" }}>
                                       {mot.descripcion}
                                     </span>
                                   </button>
@@ -5589,16 +5589,16 @@ export function ConsolaVentasOmnicanal({
                             borderRadius: "8px",
                             border:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
-                                ? "1px solid #221E1B"
-                                : "1px solid #E6E2DA",
+                                ? "1px solid var(--cb-221e1b, #221E1B)"
+                                : "1px solid var(--cb-e6e2da, #E6E2DA)",
                             background:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
                                 ? "#221E1B"
-                                : "#FFFFFF",
+                                : "var(--cf-ffffff, #FFFFFF)",
                             color:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
                                 ? "#FFFFFF"
-                                : "#57524C",
+                                : "var(--ct-57524c, #57524C)",
                             cursor: "pointer",
                           }}
                         >
@@ -5619,9 +5619,9 @@ export function ConsolaVentasOmnicanal({
                               gap: "4px",
                               padding: "6px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #D5CFC4",
-                              background: "#FFFFFF",
-                              color: "#221E1B",
+                              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                              background: "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-221e1b, #221E1B)",
                               fontSize: "0.73rem",
                               fontWeight: 600,
                               cursor: "pointer",
@@ -5675,8 +5675,8 @@ export function ConsolaVentasOmnicanal({
                                 padding: "6px 9px",
                                 borderRadius: "8px",
                                 border: "1px solid #1D4ED8",
-                                background: "#EEF4FF",
-                                color: "#1D4ED8",
+                                background: "var(--cf-eef4ff, #EEF4FF)",
+                                color: "var(--ct-1d4ed8, #1D4ED8)",
                                 fontSize: "0.73rem",
                                 fontWeight: 600,
                                 cursor: "pointer",
@@ -5699,9 +5699,9 @@ export function ConsolaVentasOmnicanal({
                                 gap: "4px",
                                 padding: "6px 9px",
                                 borderRadius: "8px",
-                                border: "1px solid #DDD6FE",
-                                background: "#FAF5FF",
-                                color: "#6B21A8",
+                                border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                                background: "var(--cf-faf5ff, #FAF5FF)",
+                                color: "var(--ct-6b21a8, #6B21A8)",
                                 fontSize: "0.73rem",
                                 fontWeight: 600,
                                 cursor: "pointer",
@@ -5732,10 +5732,10 @@ export function ConsolaVentasOmnicanal({
                               height: "34px",
                               borderRadius: "8px",
                               border: fichaDerechaDesktop
-                                ? "1px solid #221E1B"
-                                : "1px solid #E6E2DA",
-                              background: fichaDerechaDesktop ? "#F4F2EE" : "#FFFFFF",
-                              color: fichaDerechaDesktop ? "#221E1B" : "#57524C",
+                                ? "1px solid var(--cb-221e1b, #221E1B)"
+                                : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                              background: fichaDerechaDesktop ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
+                              color: fichaDerechaDesktop ? "var(--ct-221e1b, #221E1B)" : "var(--ct-57524c, #57524C)",
                               cursor: "pointer",
                             }}
                           >
@@ -5757,7 +5757,7 @@ export function ConsolaVentasOmnicanal({
                               gap: "4px",
                               padding: "6px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #221E1B",
+                              border: "1px solid var(--cb-221e1b, #221E1B)",
                               background: "#221E1B",
                               color: "#FFFFFF",
                               fontSize: "0.73rem",
@@ -5798,20 +5798,20 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             menuCabeceraAbierto === "etiquetas"
-                              ? "1.5px solid #221E1B"
+                              ? "1.5px solid var(--cb-221e1b, #221E1B)"
                               : (conversacionActiva.etiquetasIds ?? []).length > 0
-                                ? "1px solid #847D74"
-                                : "1px solid #D5CFC4",
+                                ? "1px solid var(--cb-847d74, #847D74)"
+                                : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                           background:
                             menuCabeceraAbierto === "etiquetas"
                               ? "#221E1B"
                               : (conversacionActiva.etiquetasIds ?? []).length > 0
-                                ? "#F4F2EE"
-                                : "#F8F7F4",
+                                ? "var(--cf-f4f2ee, #F4F2EE)"
+                                : "var(--cf-f8f7f4, #F8F7F4)",
                           color:
                             menuCabeceraAbierto === "etiquetas"
                               ? "#FFFFFF"
-                              : "#3A3530",
+                              : "var(--ct-3a3530, #3A3530)",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -5843,20 +5843,20 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             menuCabeceraAbierto === "recordatorio"
-                              ? "1.5px solid #221E1B"
+                              ? "1.5px solid var(--cb-221e1b, #221E1B)"
                               : conversacionActiva.recordatorioEn
-                                ? "1px solid #847D74"
-                                : "1px solid #D5CFC4",
+                                ? "1px solid var(--cb-847d74, #847D74)"
+                                : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                           background:
                             menuCabeceraAbierto === "recordatorio"
                               ? "#221E1B"
                               : conversacionActiva.recordatorioEn
-                                ? "#F4F2EE"
-                                : "#F8F7F4",
+                                ? "var(--cf-f4f2ee, #F4F2EE)"
+                                : "var(--cf-f8f7f4, #F8F7F4)",
                           color:
                             menuCabeceraAbierto === "recordatorio"
                               ? "#FFFFFF"
-                              : "#3A3530",
+                              : "var(--ct-3a3530, #3A3530)",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -5882,11 +5882,11 @@ export function ConsolaVentasOmnicanal({
                             borderRadius: "9px",
                             border:
                               menuCabeceraAbierto === "cierre"
-                                ? "1.5px solid #221E1B"
-                                : "1px solid #D5CFC4",
+                                ? "1.5px solid var(--cb-221e1b, #221E1B)"
+                                : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                             background:
-                              menuCabeceraAbierto === "cierre" ? "#221E1B" : "#F8F7F4",
-                            color: menuCabeceraAbierto === "cierre" ? "#FFFFFF" : "#3A3530",
+                              menuCabeceraAbierto === "cierre" ? "#221E1B" : "var(--cf-f8f7f4, #F8F7F4)",
+                            color: menuCabeceraAbierto === "cierre" ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -5928,16 +5928,16 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
-                              ? "1px solid #221E1B"
-                              : "1px solid #D5CFC4",
+                              ? "1px solid var(--cb-221e1b, #221E1B)"
+                              : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                           background:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
                               ? "#221E1B"
-                              : "#F8F7F4",
+                              : "var(--cf-f8f7f4, #F8F7F4)",
                           color:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
                               ? "#FFFFFF"
-                              : "#3A3530",
+                              : "var(--ct-3a3530, #3A3530)",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -5957,9 +5957,9 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             height: "38px",
                             borderRadius: "9px",
-                            border: "1px solid #D5CFC4",
-                            background: "#F8F7F4",
-                            color: "#3A3530",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-f8f7f4, #F8F7F4)",
+                            color: "var(--ct-3a3530, #3A3530)",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -6024,7 +6024,7 @@ export function ConsolaVentasOmnicanal({
                         style={{
                           width: "100%",
                           maxHeight: "82dvh",
-                          background: "#FFFFFF",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           borderRadius: "18px 18px 0 0",
                           boxShadow: "0 -12px 36px rgba(15, 23, 42, 0.24)",
                           display: "flex",
@@ -6037,7 +6037,7 @@ export function ConsolaVentasOmnicanal({
                         <div
                           style={{
                             padding: "10px 16px 10px",
-                            borderBottom: "1px solid #E6E2DA",
+                            borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
                             display: "flex",
                             flexDirection: "column",
                             gap: "8px",
@@ -6048,7 +6048,7 @@ export function ConsolaVentasOmnicanal({
                               width: "40px",
                               height: "4px",
                               borderRadius: "999px",
-                              background: "#D5CFC4",
+                              background: "var(--cf-d5cfc4, #D5CFC4)",
                               margin: "0 auto",
                             }}
                           />
@@ -6059,7 +6059,7 @@ export function ConsolaVentasOmnicanal({
                               alignItems: "center",
                             }}
                           >
-                            <strong style={{ fontSize: "0.94rem", color: "#1F1C19" }}>
+                            <strong style={{ fontSize: "0.94rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                               {menuCabeceraAbierto === "etiquetas" && "🏷️ Gestionar etiquetas"}
                               {menuCabeceraAbierto === "recordatorio" && "⏰ Recuérdamelo en…"}
                               {menuCabeceraAbierto === "cierre" &&
@@ -6078,8 +6078,8 @@ export function ConsolaVentasOmnicanal({
                                 height: "34px",
                                 borderRadius: "9px",
                                 border: "none",
-                                background: "#F4F2EE",
-                                color: "#57524C",
+                                background: "var(--cf-f4f2ee, #F4F2EE)",
+                                color: "var(--ct-57524c, #57524C)",
                                 display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -6109,15 +6109,15 @@ export function ConsolaVentasOmnicanal({
                                       minHeight: "46px",
                                       padding: "10px 12px",
                                       borderRadius: "10px",
-                                      border: puesta ? "1px solid #DDD8CE" : "1px solid #F4F2EE",
-                                      background: puesta ? "#F4F2EE" : "#FFFFFF",
+                                      border: puesta ? "1px solid var(--cb-ddd8ce, #DDD8CE)" : "1px solid var(--cb-f4f2ee, #F4F2EE)",
+                                      background: puesta ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
                                       display: "flex",
                                       alignItems: "center",
                                       gap: "10px",
                                       cursor: "pointer",
                                       textAlign: "left",
                                       fontSize: "0.88rem",
-                                      color: "#1F1C19",
+                                      color: "var(--ct-1f1c19, #1F1C19)",
                                       fontWeight: puesta ? 700 : 500,
                                     }}
                                   >
@@ -6127,9 +6127,9 @@ export function ConsolaVentasOmnicanal({
                                         height: "20px",
                                         borderRadius: "6px",
                                         border: puesta
-                                          ? "1.5px solid #221E1B"
-                                          : "1.5px solid #D5CFC4",
-                                        background: puesta ? "#221E1B" : "#FFFFFF",
+                                          ? "1.5px solid var(--cb-221e1b, #221E1B)"
+                                          : "1.5px solid var(--cb-d5cfc4, #D5CFC4)",
+                                        background: puesta ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
                                         color: "#FFFFFF",
                                         display: "inline-flex",
                                         alignItems: "center",
@@ -6168,9 +6168,9 @@ export function ConsolaVentasOmnicanal({
                                     minHeight: "44px",
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    border: "1px solid #D5CFC4",
-                                    background: "#F8F7F4",
-                                    color: "#1F1C19",
+                                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                    background: "var(--cf-f8f7f4, #F8F7F4)",
+                                    color: "var(--ct-1f1c19, #1F1C19)",
                                     fontSize: "0.84rem",
                                     fontWeight: 700,
                                     display: "flex",
@@ -6199,11 +6199,11 @@ export function ConsolaVentasOmnicanal({
                                     minHeight: "46px",
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    border: "1px solid #F4F2EE",
-                                    background: "#FFFFFF",
+                                    border: "1px solid var(--cb-f4f2ee, #F4F2EE)",
+                                    background: "var(--cf-ffffff, #FFFFFF)",
                                     textAlign: "left",
                                     fontSize: "0.88rem",
-                                    color: "#1F1C19",
+                                    color: "var(--ct-1f1c19, #1F1C19)",
                                     fontWeight: 600,
                                     cursor: "pointer",
                                   }}
@@ -6220,14 +6220,14 @@ export function ConsolaVentasOmnicanal({
                                   minHeight: "46px",
                                   padding: "10px 12px",
                                   borderRadius: "10px",
-                                  border: "1px solid #E6E2DA",
-                                  background: mostrarSelectorFechaCustom ? "#F4F2EE" : "#F8F7F4",
+                                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                  background: mostrarSelectorFechaCustom ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-f8f7f4, #F8F7F4)",
                                   display: "flex",
                                   alignItems: "center",
                                   gap: "8px",
                                   fontSize: "0.86rem",
                                   fontWeight: 700,
-                                  color: "#1F1C19",
+                                  color: "var(--ct-1f1c19, #1F1C19)",
                                   cursor: "pointer",
                                 }}
                               >
@@ -6240,8 +6240,8 @@ export function ConsolaVentasOmnicanal({
                                   style={{
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    background: "#F8F7F4",
-                                    border: "1px solid #E6E2DA",
+                                    background: "var(--cf-f8f7f4, #F8F7F4)",
+                                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                     display: "flex",
                                     flexDirection: "column",
                                     gap: "8px",
@@ -6256,9 +6256,9 @@ export function ConsolaVentasOmnicanal({
                                       minHeight: "42px",
                                       padding: "8px 10px",
                                       borderRadius: "8px",
-                                      border: "1px solid #D5CFC4",
+                                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                       fontSize: "16px",
-                                      background: "#FFFFFF",
+                                      background: "var(--cf-ffffff, #FFFFFF)",
                                     }}
                                   />
                                   <input
@@ -6271,9 +6271,9 @@ export function ConsolaVentasOmnicanal({
                                       minHeight: "42px",
                                       padding: "8px 10px",
                                       borderRadius: "8px",
-                                      border: "1px solid #D5CFC4",
+                                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                       fontSize: "16px",
-                                      background: "#FFFFFF",
+                                      background: "var(--cf-ffffff, #FFFFFF)",
                                     }}
                                   />
                                   <button
@@ -6308,12 +6308,12 @@ export function ConsolaVentasOmnicanal({
                                     minHeight: "44px",
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    border: "1px solid #E5CACA",
-                                    background: "#FAF2F2",
+                                    border: "1px solid var(--cb-e5caca, #E5CACA)",
+                                    background: "var(--cf-faf2f2, #FAF2F2)",
                                     textAlign: "center",
                                     fontSize: "0.84rem",
                                     fontWeight: 700,
-                                    color: "#8A2E2E",
+                                    color: "var(--ct-8a2e2e, #8A2E2E)",
                                     cursor: "pointer",
                                   }}
                                 >
@@ -6336,9 +6336,9 @@ export function ConsolaVentasOmnicanal({
                                   padding: "8px 11px",
                                   marginBottom: "4px",
                                   borderRadius: "9px",
-                                  border: "1px solid #D5CFC4",
+                                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                   fontSize: "16px",
-                                  background: "#F8F7F4",
+                                  background: "var(--cf-f8f7f4, #F8F7F4)",
                                 }}
                               />
 
@@ -6352,8 +6352,8 @@ export function ConsolaVentasOmnicanal({
                                     minHeight: "52px",
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    border: "1px solid #E6E2DA",
-                                    background: "#FFFFFF",
+                                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                    background: "var(--cf-ffffff, #FFFFFF)",
                                     display: "flex",
                                     flexDirection: "column",
                                     gap: "2px",
@@ -6370,7 +6370,7 @@ export function ConsolaVentasOmnicanal({
                                   >
                                     {mot.icono} {mot.etiqueta}
                                   </span>
-                                  <span style={{ fontSize: "0.75rem", color: "#847D74" }}>
+                                  <span style={{ fontSize: "0.75rem", color: "var(--ct-847d74, #847D74)" }}>
                                     {mot.descripcion}
                                   </span>
                                 </button>
@@ -6403,9 +6403,9 @@ export function ConsolaVentasOmnicanal({
                               borderRadius: "999px",
                               fontSize: "0.69rem",
                               fontWeight: 600,
-                              border: "1px solid #E6E2DA",
-                              background: "#F8F7F4",
-                              color: "#57524C",
+                              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                              background: "var(--cf-f8f7f4, #F8F7F4)",
+                              color: "var(--ct-57524c, #57524C)",
                               cursor: "pointer",
                             }}
                           >
@@ -6436,9 +6436,9 @@ export function ConsolaVentasOmnicanal({
                         alignItems: "center",
                         justifyContent: "center",
                         gap: "7px",
-                        background: "#FFFFFF",
-                        borderBottom: "1px solid #E6E2DA",
-                        color: "#57524C",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                        color: "var(--ct-57524c, #57524C)",
                         fontSize: "0.74rem",
                         fontWeight: 600,
                         overflow: "hidden",
@@ -6467,8 +6467,8 @@ export function ConsolaVentasOmnicanal({
                       alignItems: "center",
                       gap: "6px",
                       padding: modoLayoutInbox === "movil" ? "6px 10px" : "6px 14px",
-                      background: "#FAF8F5",
-                      borderBottom: "1px solid #E6E2DA",
+                      background: "var(--cf-faf8f5, #FAF8F5)",
+                      borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
                       overflowX: "auto",
                       flexShrink: 0,
                     }}
@@ -6477,7 +6477,7 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         fontSize: "0.69rem",
                         fontWeight: 700,
-                        color: "#847D74",
+                        color: "var(--ct-847d74, #847D74)",
                         whiteSpace: "nowrap",
                         marginRight: "2px",
                       }}
@@ -6521,9 +6521,9 @@ export function ConsolaVentasOmnicanal({
                               gap: "5px",
                               padding: "4px 10px",
                               borderRadius: "999px",
-                              border: esActivo ? "1px solid #221E1B" : "1px solid #E6E2DA",
-                              background: esActivo ? "#221E1B" : "#FFFFFF",
-                              color: esActivo ? "#FFFFFF" : "#3A3530",
+                              border: esActivo ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                              background: esActivo ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
+                              color: esActivo ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
                               fontSize: "0.72rem",
                               fontWeight: 700,
                               cursor: "pointer",
@@ -6578,11 +6578,11 @@ export function ConsolaVentasOmnicanal({
                   }}
                 >
                   {cargandoMensajes ? (
-                    <div style={{ textAlign: "center", padding: "24px", color: "#847D74" }}>
+                    <div style={{ textAlign: "center", padding: "24px", color: "var(--ct-847d74, #847D74)" }}>
                       Cargando historial de la conversación…
                     </div>
                   ) : mensajesActivos.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "24px", color: "#847D74", fontSize: "0.82rem" }}>
+                    <div style={{ textAlign: "center", padding: "24px", color: "var(--ct-847d74, #847D74)", fontSize: "0.82rem" }}>
                       Aún no hay mensajes registrados en este hilo.
                     </div>
                   ) : (
@@ -6595,9 +6595,9 @@ export function ConsolaVentasOmnicanal({
                               alignSelf: "center",
                               padding: "4px 12px",
                               borderRadius: "999px",
-                              background: "#EFECE6",
-                              border: "1px solid #E4E0D8",
-                              color: "#6E6861",
+                              background: "var(--cf-efece6, #EFECE6)",
+                              border: "1px solid var(--cb-e4e0d8, #E4E0D8)",
+                              color: "var(--ct-6e6861, #6E6861)",
                               fontSize: "0.72rem",
                               fontWeight: 500,
                               maxWidth: "90%",
@@ -6631,10 +6631,10 @@ export function ConsolaVentasOmnicanal({
                               fontSize: "0.68rem",
                               fontWeight: 600,
                               color: esNota
-                                ? "#745622"
+                                ? "var(--ct-745622, #745622)"
                                 : esAria
-                                  ? "#2F4737"
-                                  : "#847D74",
+                                  ? "var(--ct-2f4737, #2F4737)"
+                                  : "var(--ct-847d74, #847D74)",
                               textAlign: esCliente ? "left" : "right",
                             }}
                           >
@@ -6645,9 +6645,9 @@ export function ConsolaVentasOmnicanal({
                                   marginRight: "6px",
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  background: "#FAF6EC",
-                                  color: "#745622",
-                                  border: "1px solid #D6C7A9",
+                                  background: "var(--cf-faf6ec, #FAF6EC)",
+                                  color: "var(--ct-745622, #745622)",
+                                  border: "1px solid var(--cb-d6c7a9, #D6C7A9)",
                                   fontSize: "0.63rem",
                                   fontWeight: 700,
                                 }}
@@ -6674,22 +6674,22 @@ export function ConsolaVentasOmnicanal({
                                 ? "14px 14px 14px 4px"
                                 : "14px 14px 4px 14px",
                               background: esCliente
-                                ? "#FFFFFF"
+                                ? "var(--cf-ffffff, #FFFFFF)"
                                 : esAria
-                                  ? "#F2F5F3"
+                                  ? "var(--cf-f2f5f3, #F2F5F3)"
                                   : esNota
-                                    ? "#FAF6EC"
-                                    : "#ECEAE4",
-                              color: esNota ? "#292524" : "#221E1B",
+                                    ? "var(--cf-faf6ec, #FAF6EC)"
+                                    : "var(--cf-eceae4, #ECEAE4)",
+                              color: esNota ? "var(--ct-292524, #292524)" : "var(--ct-221e1b, #221E1B)",
                               border: esResaltado
-                                ? "1.5px solid #221E1B"
+                                ? "1.5px solid var(--cb-221e1b, #221E1B)"
                                 : esCliente
-                                  ? "1px solid #E6E2DA"
+                                  ? "1px solid var(--cb-e6e2da, #E6E2DA)"
                                   : esAria
-                                    ? "1px solid #DCE4DF"
+                                    ? "1px solid var(--cb-dce4df, #DCE4DF)"
                                     : esNota
-                                      ? "1px solid #E8DEC6"
-                                      : "1px solid #DCD8D0",
+                                      ? "1px solid var(--cb-e8dec6, #E8DEC6)"
+                                      : "1px solid var(--cb-dcd8d0, #DCD8D0)",
                               fontSize: "0.83rem",
                               lineHeight: 1.48,
                               boxShadow: esResaltado
@@ -6809,9 +6809,9 @@ export function ConsolaVentasOmnicanal({
                                   gap: "4px",
                                   padding: "2px 7px",
                                   borderRadius: "6px",
-                                  border: "1px solid rgba(24, 24, 27, 0.10)",
-                                  background: "rgba(255, 255, 255, 0.72)",
-                                  color: "#6E6861",
+                                  border: "1px solid var(--cb-18181b-a100, rgba(24, 24, 27, 0.10))",
+                                  background: "var(--cf-ffffff-a720, rgba(255, 255, 255, 0.72))",
+                                  color: "var(--ct-6e6861, #6E6861)",
                                   fontSize: "0.67rem",
                                   fontWeight: 600,
                                   cursor: "pointer",
@@ -6832,8 +6832,8 @@ export function ConsolaVentasOmnicanal({
                 <form
                   onSubmit={handleEnviarMensaje}
                   style={{
-                    background: "#FFFFFF",
-                    borderTop: "1px solid #E6E2DA",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     padding:
                       modoLayoutInbox === "movil"
                         ? "8px 10px calc(8px + env(safe-area-inset-bottom, 0px))"
@@ -6866,8 +6866,8 @@ export function ConsolaVentasOmnicanal({
                         left: modoLayoutInbox === "movil" ? "8px" : "12px",
                         right: modoLayoutInbox === "movil" ? "8px" : "12px",
                         marginBottom: "6px",
-                        background: "#FFFFFF",
-                        border: "1px solid #D5CFC4",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                         borderRadius: "12px",
                         boxShadow: "0 12px 28px rgba(24, 24, 27, 0.12)",
                         maxHeight: "260px",
@@ -6885,13 +6885,13 @@ export function ConsolaVentasOmnicanal({
                             minHeight: "48px",
                             padding: "9px 12px",
                             border: "none",
-                            borderBottom: "1px solid #E6E2DA",
+                            borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
                             background:
                               h.clave === "LINK_PAGO"
-                                ? "#F4FAF6"
+                                ? "var(--cf-f4faf6, #F4FAF6)"
                                 : h.clave === "CONFIANZA"
-                                  ? "#FFFBEB"
-                                  : "#F8F7F4",
+                                  ? "var(--cf-fffbeb, #FFFBEB)"
+                                  : "var(--cf-f8f7f4, #F8F7F4)",
                             textAlign: "left",
                             cursor: "pointer",
                             display: "flex",
@@ -6903,7 +6903,7 @@ export function ConsolaVentasOmnicanal({
                             <strong
                               style={{
                                 fontSize: "0.8rem",
-                                color: "#1F1C19",
+                                color: "var(--ct-1f1c19, #1F1C19)",
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: "6px",
@@ -6916,16 +6916,16 @@ export function ConsolaVentasOmnicanal({
                               ) : (
                                 <Building2 size={13} color="#2F4737" />
                               )}
-                              <code style={{ color: h.clave === "CONFIANZA" ? "#92400E" : "#2F4737", fontWeight: 800 }}>{h.atajo}</code> ·{" "}
+                              <code style={{ color: h.clave === "CONFIANZA" ? "var(--ct-92400e, #92400E)" : "var(--ct-2f4737, #2F4737)", fontWeight: 800 }}>{h.atajo}</code> ·{" "}
                               {h.titulo}
                             </strong>
                             <span
                               style={{
                                 fontSize: "0.66rem",
                                 fontWeight: 700,
-                                color: h.clave === "CONFIANZA" ? "#92400E" : "#2F4737",
-                                background: h.clave === "CONFIANZA" ? "#FEF3C7" : "#EAF3ED",
-                                border: h.clave === "CONFIANZA" ? "1px solid #FDE68A" : "1px solid #C6DEC9",
+                                color: h.clave === "CONFIANZA" ? "var(--ct-92400e, #92400E)" : "var(--ct-2f4737, #2F4737)",
+                                background: h.clave === "CONFIANZA" ? "var(--cf-fef3c7, #FEF3C7)" : "var(--cf-eaf3ed, #EAF3ED)",
+                                border: h.clave === "CONFIANZA" ? "1px solid var(--cb-fde68a, #FDE68A)" : "1px solid var(--cb-c6dec9, #C6DEC9)",
                                 borderRadius: "999px",
                                 padding: "1px 7px",
                                 flexShrink: 0,
@@ -6937,7 +6937,7 @@ export function ConsolaVentasOmnicanal({
                           <span
                             style={{
                               fontSize: "0.73rem",
-                              color: "#57524C",
+                              color: "var(--ct-57524c, #57524C)",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -6958,8 +6958,8 @@ export function ConsolaVentasOmnicanal({
                             minHeight: "46px",
                             padding: "9px 12px",
                             border: "none",
-                            borderBottom: "1px solid #F4F2EE",
-                            background: "#FFFFFF",
+                            borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             textAlign: "left",
                             cursor: "pointer",
                             display: "flex",
@@ -6968,17 +6968,17 @@ export function ConsolaVentasOmnicanal({
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between", gap: "6px" }}>
-                            <strong style={{ fontSize: "0.79rem", color: "#221E1B" }}>
-                              <code style={{ color: "#2F4737" }}>{r.atajo}</code> · {r.titulo}
+                            <strong style={{ fontSize: "0.79rem", color: "var(--ct-221e1b, #221E1B)" }}>
+                              <code style={{ color: "var(--ct-2f4737, #2F4737)" }}>{r.atajo}</code> · {r.titulo}
                             </strong>
-                            <span style={{ fontSize: "0.68rem", color: "#847D74", flexShrink: 0 }}>
+                            <span style={{ fontSize: "0.68rem", color: "var(--ct-847d74, #847D74)", flexShrink: 0 }}>
                               {r.categoria}
                             </span>
                           </div>
                           <span
                             style={{
                               fontSize: "0.74rem",
-                              color: "#6E6861",
+                              color: "var(--ct-6e6861, #6E6861)",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -7000,9 +7000,9 @@ export function ConsolaVentasOmnicanal({
                         gap: "8px",
                         padding: "7px 10px",
                         borderRadius: "9px",
-                        background: "#F0FDF4",
-                        border: "1px solid #BBF7D0",
-                        color: "#166534",
+                        background: "var(--cf-f0fdf4, #F0FDF4)",
+                        border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
+                        color: "var(--ct-166534, #166534)",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         flexWrap: "wrap",
@@ -7045,7 +7045,7 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             border: "none",
                             background: "transparent",
-                            color: "#166534",
+                            color: "var(--ct-166534, #166534)",
                             cursor: "pointer",
                             padding: "2px 4px",
                             display: "inline-flex",
@@ -7067,9 +7067,9 @@ export function ConsolaVentasOmnicanal({
                         gap: "8px",
                         padding: "6px 10px",
                         borderRadius: "9px",
-                        background: "#F5F3FF",
-                        border: "1px solid #DDD6FE",
-                        color: "#4C1D95",
+                        background: "var(--cf-f5f3ff, #F5F3FF)",
+                        border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                        color: "var(--ct-4c1d95, #4C1D95)",
                         fontSize: "0.74rem",
                         fontWeight: 600,
                       }}
@@ -7105,7 +7105,7 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             border: "none",
                             background: "transparent",
-                            color: "#4C1D95",
+                            color: "var(--ct-4c1d95, #4C1D95)",
                             cursor: "pointer",
                             display: "inline-flex",
                             alignItems: "center",
@@ -7126,9 +7126,9 @@ export function ConsolaVentasOmnicanal({
                         gap: "8px",
                         padding: "5px 10px",
                         borderRadius: "8px",
-                        background: "#FAF6EC",
-                        border: "1px solid #E8DEC6",
-                        color: "#745622",
+                        background: "var(--cf-faf6ec, #FAF6EC)",
+                        border: "1px solid var(--cb-e8dec6, #E8DEC6)",
+                        color: "var(--ct-745622, #745622)",
                         fontSize: "0.73rem",
                         fontWeight: 600,
                       }}
@@ -7140,9 +7140,9 @@ export function ConsolaVentasOmnicanal({
                         title="Volver a responder al cliente"
                         aria-label="Cambiar a cliente"
                         style={{
-                          border: "1px solid #D6C7A9",
-                          background: "#FFFFFF",
-                          color: "#745622",
+                          border: "1px solid var(--cb-d6c7a9, #D6C7A9)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-745622, #745622)",
                           borderRadius: "6px",
                           padding: "2px 8px",
                           fontSize: "0.7rem",
@@ -7163,8 +7163,8 @@ export function ConsolaVentasOmnicanal({
                         gap: "10px",
                         padding: "6px 10px",
                         borderRadius: "9px",
-                        background: "#F8F7F4",
-                        border: "1px solid #E6E2DA",
+                        background: "var(--cf-f8f7f4, #F8F7F4)",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                       }}
                     >
                       <img
@@ -7177,7 +7177,7 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "7px",
                         }}
                       />
-                      <span style={{ fontSize: "0.75rem", color: "#3A3530", flex: 1 }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--ct-3a3530, #3A3530)", flex: 1 }}>
                         Imagen lista para enviar
                       </span>
                       <button
@@ -7190,7 +7190,7 @@ export function ConsolaVentasOmnicanal({
                           height: "32px",
                           border: "none",
                           background: "transparent",
-                          color: "#6E6861",
+                          color: "var(--ct-6e6861, #6E6861)",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -7210,8 +7210,8 @@ export function ConsolaVentasOmnicanal({
                         gap: "10px",
                         padding: "6px 10px",
                         borderRadius: "9px",
-                        background: "#F8F7F4",
-                        border: "1px solid #E6E2DA",
+                        background: "var(--cf-f8f7f4, #F8F7F4)",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                       }}
                     >
                       <div
@@ -7219,9 +7219,9 @@ export function ConsolaVentasOmnicanal({
                           width: "36px",
                           height: "36px",
                           borderRadius: "8px",
-                          background: "#F4F2EE",
-                          color: "#3A3530",
-                          border: "1px solid #E6E2DA",
+                          background: "var(--cf-f4f2ee, #F4F2EE)",
+                          color: "var(--ct-3a3530, #3A3530)",
+                          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -7234,7 +7234,7 @@ export function ConsolaVentasOmnicanal({
                         style={{
                           fontSize: "0.75rem",
                           fontWeight: 600,
-                          color: "#221E1B",
+                          color: "var(--ct-221e1b, #221E1B)",
                           flex: 1,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -7253,7 +7253,7 @@ export function ConsolaVentasOmnicanal({
                           height: "32px",
                           border: "none",
                           background: "transparent",
-                          color: "#6E6861",
+                          color: "var(--ct-6e6861, #6E6861)",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -7275,7 +7275,7 @@ export function ConsolaVentasOmnicanal({
                               alignItems: "center",
                               justifyContent: "space-between",
                               paddingBottom: "8px",
-                              borderBottom: "1px solid #F4F2EE",
+                              borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
                             }}
                           >
                             <button
@@ -7284,9 +7284,9 @@ export function ConsolaVentasOmnicanal({
                               title="Volver a Opciones"
                               aria-label="Volver"
                               style={{
-                                border: "1px solid #E6E2DA",
-                                background: "#F8F7F4",
-                                color: "#3A3530",
+                                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                background: "var(--cf-f8f7f4, #F8F7F4)",
+                                color: "var(--ct-3a3530, #3A3530)",
                                 borderRadius: "8px",
                                 padding: "5px 10px",
                                 fontSize: "0.75rem",
@@ -7300,7 +7300,7 @@ export function ConsolaVentasOmnicanal({
                               <ArrowLeft size={14} />
                               <span>Volver</span>
                             </button>
-                            <strong style={{ fontSize: "0.82rem", color: "#221E1B" }}>
+                            <strong style={{ fontSize: "0.82rem", color: "var(--ct-221e1b, #221E1B)" }}>
                               Asignar al equipo
                             </strong>
                           </div>
@@ -7318,12 +7318,12 @@ export function ConsolaVentasOmnicanal({
                               padding: "8px 12px",
                               borderRadius: "10px",
                               border: !conversacionActiva.asesoraAsignadaId
-                                ? "1px solid #221E1B"
-                                : "1px solid #E6E2DA",
+                                ? "1px solid var(--cb-221e1b, #221E1B)"
+                                : "1px solid var(--cb-e6e2da, #E6E2DA)",
                               background: !conversacionActiva.asesoraAsignadaId
-                                ? "#F4F2EE"
-                                : "#FFFFFF",
-                              color: "#221E1B",
+                                ? "var(--cf-f4f2ee, #F4F2EE)"
+                                : "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-221e1b, #221E1B)",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
@@ -7355,9 +7355,9 @@ export function ConsolaVentasOmnicanal({
                                   minHeight: "44px",
                                   padding: "8px 12px",
                                   borderRadius: "10px",
-                                  border: activo ? "1px solid #221E1B" : "1px solid #E6E2DA",
-                                  background: activo ? "#F4F2EE" : "#FFFFFF",
-                                  color: "#221E1B",
+                                  border: activo ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                  background: activo ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
+                                  color: "var(--ct-221e1b, #221E1B)",
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "space-between",
@@ -7372,7 +7372,7 @@ export function ConsolaVentasOmnicanal({
                                       ? `Yo (${m.nombre})`
                                       : m.nombre}
                                   </span>
-                                  <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
+                                  <span style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)" }}>
                                     {m.rol} · {m.chatsActivos} chats activos
                                   </span>
                                 </div>
@@ -7550,7 +7550,7 @@ export function ConsolaVentasOmnicanal({
                                 style={{
                                   border: "none",
                                   background: "transparent",
-                                  color: item.esPeligro ? "#8A2E2E" : "#3A3530",
+                                  color: item.esPeligro ? "var(--ct-8a2e2e, #8A2E2E)" : "var(--ct-3a3530, #3A3530)",
                                   display: "flex",
                                   flexDirection: "column",
                                   alignItems: "center",
@@ -7564,11 +7564,11 @@ export function ConsolaVentasOmnicanal({
                                     width: "50px",
                                     height: "46px",
                                     borderRadius: "14px",
-                                    background: item.esPeligro ? "#FAF2F2" : "#F4F2EE",
+                                    background: item.esPeligro ? "var(--cf-faf2f2, #FAF2F2)" : "var(--cf-f4f2ee, #F4F2EE)",
                                     border: item.esPeligro
-                                      ? "1px solid #E5CACA"
-                                      : "1px solid #E6E2DA",
-                                    color: item.esPeligro ? "#8A2E2E" : "#3A3530",
+                                      ? "1px solid var(--cb-e5caca, #E5CACA)"
+                                      : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                    color: item.esPeligro ? "var(--ct-8a2e2e, #8A2E2E)" : "var(--ct-3a3530, #3A3530)",
                                     display: "inline-flex",
                                     alignItems: "center",
                                     justifyContent: "center",
@@ -7580,7 +7580,7 @@ export function ConsolaVentasOmnicanal({
                                   style={{
                                     fontSize: "0.74rem",
                                     fontWeight: 600,
-                                    color: item.esPeligro ? "#8A2E2E" : "#57524C",
+                                    color: item.esPeligro ? "var(--ct-8a2e2e, #8A2E2E)" : "var(--ct-57524c, #57524C)",
                                     lineHeight: 1.2,
                                     textAlign: "center",
                                   }}
@@ -7621,9 +7621,9 @@ export function ConsolaVentasOmnicanal({
                                   width: "100%",
                                   maxHeight: "82dvh",
                                   overflowY: "auto",
-                                  background: "#FFFFFF",
-                                  color: "#221E1B",
-                                  borderTop: "1px solid #E6E2DA",
+                                  background: "var(--cf-ffffff, #FFFFFF)",
+                                  color: "var(--ct-221e1b, #221E1B)",
+                                  borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                   borderRadius: "20px 20px 0 0",
                                   padding:
                                     "12px 18px calc(20px + env(safe-area-inset-bottom, 0px))",
@@ -7635,7 +7635,7 @@ export function ConsolaVentasOmnicanal({
                                     width: "40px",
                                     height: "4px",
                                     borderRadius: "999px",
-                                    background: "#D5CFC4",
+                                    background: "var(--cf-d5cfc4, #D5CFC4)",
                                     margin: "0 auto 14px",
                                   }}
                                 />
@@ -7715,12 +7715,12 @@ export function ConsolaVentasOmnicanal({
                                   width: "316px",
                                   maxHeight: "72vh",
                                   overflowY: "auto",
-                                  background: "#FFFFFF",
-                                  color: "#221E1B",
+                                  background: "var(--cf-ffffff, #FFFFFF)",
+                                  color: "var(--ct-221e1b, #221E1B)",
                                   borderRadius: "16px",
                                   padding: "14px",
                                   boxShadow: "0 16px 38px rgba(24, 24, 27, 0.14)",
-                                  border: "1px solid #E6E2DA",
+                                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                   zIndex: 50,
                                 }}
                               >
@@ -7749,10 +7749,10 @@ export function ConsolaVentasOmnicanal({
                                 padding: modoLayoutInbox === "movil" ? "0 10px" : "9px 11px",
                                 borderRadius: "10px",
                                 border: mostrarMenuAdjuntar
-                                  ? "1px solid #221E1B"
-                                  : "1px solid #D5CFC4",
-                                background: mostrarMenuAdjuntar ? "#221E1B" : "#F8F7F4",
-                                color: mostrarMenuAdjuntar ? "#FFFFFF" : "#3A3530",
+                                  ? "1px solid var(--cb-221e1b, #221E1B)"
+                                  : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                background: mostrarMenuAdjuntar ? "#221E1B" : "var(--cf-f8f7f4, #F8F7F4)",
+                                color: mostrarMenuAdjuntar ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
                                 fontSize: "0.78rem",
                                 fontWeight: 600,
                                 cursor: subiendoImagenAsesor ? "wait" : "pointer",
@@ -7801,9 +7801,9 @@ export function ConsolaVentasOmnicanal({
                               padding: modoLayoutInbox === "movil" ? "9px 11px" : "8px 11px",
                               lineHeight: 1.35,
                               borderRadius: "10px",
-                              border: modoNotaInterna ? "1px solid #D6C7A9" : "1px solid #D5CFC4",
-                              background: modoNotaInterna ? "#FAF6EC" : "#FFFFFF",
-                              color: "#221E1B",
+                              border: modoNotaInterna ? "1px solid var(--cb-d6c7a9, #D6C7A9)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                              background: modoNotaInterna ? "var(--cf-faf6ec, #FAF6EC)" : "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-221e1b, #221E1B)",
                               fontSize: modoLayoutInbox === "movil" ? "16px" : "0.83rem",
                               fontFamily: "inherit",
                               resize: "none",
@@ -7862,7 +7862,7 @@ export function ConsolaVentasOmnicanal({
             {/* COLUMNA 3: CAMPOS DE VENTA (PEDIDO / ENTREGA / TARJETA) Y FICHA 360° */}
             <div
               style={{
-                background: "#FAF8F5",
+                background: "var(--cf-faf8f5, #FAF8F5)",
                 padding: "12px",
                 display:
                   (modoLayoutInbox === "desktop" && fichaDerechaDesktop) ||
@@ -7884,10 +7884,10 @@ export function ConsolaVentasOmnicanal({
                     justifyContent: "space-between",
                     alignItems: "center",
                     paddingBottom: "8px",
-                    borderBottom: "1px solid #E6E2DA",
+                    borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   }}
                 >
-                  <strong style={{ fontSize: "0.86rem", color: "#221E1B" }}>
+                  <strong style={{ fontSize: "0.86rem", color: "var(--ct-221e1b, #221E1B)" }}>
                     Campos de Venta y Datos 360°
                   </strong>
                   <button
@@ -7907,9 +7907,9 @@ export function ConsolaVentasOmnicanal({
                       gap: "5px",
                       padding: "5px 10px",
                       borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#221E1B",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-221e1b, #221E1B)",
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -7922,19 +7922,19 @@ export function ConsolaVentasOmnicanal({
               )}
 
               {!conversacionActiva ? (
-                <div style={{ fontSize: "0.8rem", color: "#847D74" }}>
-                  <strong style={{ color: "#221E1B" }}>Resumen Rápido del Portal</strong>
+                <div style={{ fontSize: "0.8rem", color: "var(--ct-847d74, #847D74)" }}>
+                  <strong style={{ color: "var(--ct-221e1b, #221E1B)" }}>Resumen Rápido del Portal</strong>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
                     <div
                       style={{
                         padding: "10px",
                         borderRadius: "10px",
-                        background: "#FFFFFF",
-                        border: "1px solid #E6E2DA",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#847D74" }}>Usuarios Registrados Web</div>
-                      <strong style={{ fontSize: "0.92rem", color: "#221E1B" }}>
+                      <div style={{ fontSize: "0.72rem", color: "var(--ct-847d74, #847D74)" }}>Usuarios Registrados Web</div>
+                      <strong style={{ fontSize: "0.92rem", color: "var(--ct-221e1b, #221E1B)" }}>
                         {metricas.totalUsuariosRegistradosWeb}
                       </strong>
                     </div>
@@ -7942,14 +7942,14 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "10px",
                         borderRadius: "10px",
-                        background: "#FFFFFF",
-                        border: "1px solid #E6E2DA",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#847D74" }}>
+                      <div style={{ fontSize: "0.72rem", color: "var(--ct-847d74, #847D74)" }}>
                         Compras Web (Reg. / Invitados)
                       </div>
-                      <strong style={{ fontSize: "0.9rem", color: "#221E1B" }}>
+                      <strong style={{ fontSize: "0.9rem", color: "var(--ct-221e1b, #221E1B)" }}>
                         {metricas.comprasUsuariosRegistrados} reg. ·{" "}
                         {metricas.comprasInvitadosNoRegistrados} inv.
                       </strong>
@@ -7958,14 +7958,14 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "10px",
                         borderRadius: "10px",
-                        background: "#F2F5F3",
-                        border: "1px solid #DCE4DF",
+                        background: "var(--cf-f2f5f3, #F2F5F3)",
+                        border: "1px solid var(--cb-dce4df, #DCE4DF)",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#2F4737" }}>
+                      <div style={{ fontSize: "0.72rem", color: "var(--ct-2f4737, #2F4737)" }}>
                         Resolución Autónoma IA ARIA
                       </div>
-                      <strong style={{ fontSize: "0.92rem", color: "#2F4737" }}>
+                      <strong style={{ fontSize: "0.92rem", color: "var(--ct-2f4737, #2F4737)" }}>
                         {metricas.porcentajeResolucionIa}%
                       </strong>
                     </div>
@@ -8025,8 +8025,8 @@ export function ConsolaVentasOmnicanal({
                     style={{
                       padding: "10px 11px",
                       borderRadius: "11px",
-                      background: "#FFFFFF",
-                      border: "1px solid #E6E2DA",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                       display: "flex",
                       flexDirection: "column",
                       gap: "5px",
@@ -8040,9 +8040,9 @@ export function ConsolaVentasOmnicanal({
                           fontWeight: 600,
                           padding: "2px 7px",
                           borderRadius: "999px",
-                          background: "#F4F2EE",
-                          border: "1px solid #E6E2DA",
-                          color: "#57524C",
+                          background: "var(--cf-f4f2ee, #F4F2EE)",
+                          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                          color: "var(--ct-57524c, #57524C)",
                         }}
                       >
                         {contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
@@ -8055,7 +8055,7 @@ export function ConsolaVentasOmnicanal({
                       <span
                         style={{
                           fontSize: "0.68rem",
-                          color: "#57524C",
+                          color: "var(--ct-57524c, #57524C)",
                           fontWeight: 600,
                           display: "inline-flex",
                           alignItems: "center",
@@ -8068,7 +8068,7 @@ export function ConsolaVentasOmnicanal({
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                      <strong style={{ fontSize: "0.84rem", color: "#221E1B" }}>
+                      <strong style={{ fontSize: "0.84rem", color: "var(--ct-221e1b, #221E1B)" }}>
                         {conversacionActiva.remitenteNombre}
                       </strong>
                       {conversacionActiva.fichaCliente?.calificacionEstrellas != null &&
@@ -8080,7 +8080,7 @@ export function ConsolaVentasOmnicanal({
                               gap: "2px",
                               fontSize: "0.68rem",
                               fontWeight: 700,
-                              color: "#B45309",
+                              color: "var(--ct-b45309, #B45309)",
                             }}
                           >
                             <Star size={11} fill="#D97706" color="#D97706" />
@@ -8090,12 +8090,12 @@ export function ConsolaVentasOmnicanal({
                     </div>
 
                     {conversacionActiva.remitenteTelefono && (
-                      <span style={{ fontSize: "0.74rem", color: "#6E6861" }}>
+                      <span style={{ fontSize: "0.74rem", color: "var(--ct-6e6861, #6E6861)" }}>
                         WhatsApp: {conversacionActiva.remitenteTelefono}
                       </span>
                     )}
                     {conversacionActiva.remitenteCorreo && (
-                      <span style={{ fontSize: "0.74rem", color: "#6E6861", wordBreak: "break-all" }}>
+                      <span style={{ fontSize: "0.74rem", color: "var(--ct-6e6861, #6E6861)", wordBreak: "break-all" }}>
                         {conversacionActiva.remitenteCorreo}
                       </span>
                     )}
@@ -8105,9 +8105,9 @@ export function ConsolaVentasOmnicanal({
                           marginTop: "2px",
                           padding: "5px 8px",
                           borderRadius: "7px",
-                          background: "#FAF6EC",
-                          border: "1px solid #E8DEC6",
-                          color: "#745622",
+                          background: "var(--cf-faf6ec, #FAF6EC)",
+                          border: "1px solid var(--cb-e8dec6, #E8DEC6)",
+                          color: "var(--ct-745622, #745622)",
                           fontSize: "0.72rem",
                           lineHeight: 1.38,
                         }}
@@ -8121,9 +8121,9 @@ export function ConsolaVentasOmnicanal({
                           marginTop: "2px",
                           padding: "5px 8px",
                           borderRadius: "7px",
-                          background: "#F2F6F3",
-                          border: "1px solid #CEDDD3",
-                          color: "#2B4A36",
+                          background: "var(--cf-f2f6f3, #F2F6F3)",
+                          border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                          color: "var(--ct-2b4a36, #2B4A36)",
                           fontSize: "0.71rem",
                           lineHeight: 1.35,
                         }}
@@ -8134,7 +8134,7 @@ export function ConsolaVentasOmnicanal({
                         </strong>
                       </div>
                     )}
-                    <span style={{ fontSize: "0.67rem", color: "#847D74" }}>
+                    <span style={{ fontSize: "0.67rem", color: "var(--ct-847d74, #847D74)" }}>
                       Mensajes IA: {conversacionActiva.mensajesIaConteo} · Humanos:{" "}
                       {conversacionActiva.mensajesHumanoConteo}
                     </span>
@@ -8143,7 +8143,7 @@ export function ConsolaVentasOmnicanal({
                   {/* Historial de Compras y Proformas Web de este contacto */}
                   {comprasDeConversacionActiva.length > 0 && (
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#57524C" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
                         Compras Web Vinculadas ({comprasDeConversacionActiva.length})
                       </span>
                       {comprasDeConversacionActiva.map((ord) => (
@@ -8152,22 +8152,22 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             padding: "8px 10px",
                             borderRadius: "9px",
-                            border: "1px solid #E6E2DA",
-                            background: "#FFFFFF",
+                            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             display: "flex",
                             flexDirection: "column",
                             gap: "2px",
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <strong style={{ fontSize: "0.76rem", color: "#1F1C19" }}>
+                            <strong style={{ fontSize: "0.76rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                               {ord.codigoOrden}
                             </strong>
-                            <strong style={{ fontSize: "0.76rem", color: "#2F4737" }}>
+                            <strong style={{ fontSize: "0.76rem", color: "var(--ct-2f4737, #2F4737)" }}>
                               ${Number(ord.total).toFixed(2)}
                             </strong>
                           </div>
-                          <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
+                          <span style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)" }}>
                             {ord.estado} ·{" "}
                             {new Date(ord.creadoEn).toLocaleDateString("es-EC", {
                               day: "2-digit",
@@ -8187,14 +8187,14 @@ export function ConsolaVentasOmnicanal({
                         flexDirection: "column",
                         gap: "6px",
                         paddingTop: "8px",
-                        borderTop: "1px solid #ECE8E1",
+                        borderTop: "1px solid var(--cb-ece8e1, #ECE8E1)",
                       }}
                     >
                       <span
                         style={{
                           fontSize: "0.7rem",
                           fontWeight: 700,
-                          color: "#745622",
+                          color: "var(--ct-745622, #745622)",
                           textTransform: "uppercase",
                         }}
                       >
@@ -8209,8 +8209,8 @@ export function ConsolaVentasOmnicanal({
                             gap: "8px",
                             padding: "7px 8px",
                             borderRadius: "9px",
-                            border: "1px solid #E5D7BC",
-                            background: "#FAF6EE",
+                            border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                            background: "var(--cf-faf6ee, #FAF6EE)",
                           }}
                         >
                           {disp.imagenUrl && (
@@ -8230,7 +8230,7 @@ export function ConsolaVentasOmnicanal({
                               style={{
                                 display: "block",
                                 fontSize: "0.74rem",
-                                color: "#1F1C19",
+                                color: "var(--ct-1f1c19, #1F1C19)",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -8238,7 +8238,7 @@ export function ConsolaVentasOmnicanal({
                             >
                               {disp.nombre}
                             </strong>
-                            <span style={{ fontSize: "0.71rem", color: "#2F4737", fontWeight: 700 }}>
+                            <span style={{ fontSize: "0.71rem", color: "var(--ct-2f4737, #2F4737)", fontWeight: 700 }}>
                               ${Number(disp.precio).toFixed(2)}
                             </span>
                           </div>
@@ -8280,13 +8280,13 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "8px 10px",
                         borderRadius: "9px",
-                        background: "#FFFFFF",
-                        border: "1px solid #E6E2DA",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                         fontSize: "0.72rem",
-                        color: "#57524C",
+                        color: "var(--ct-57524c, #57524C)",
                       }}
                     >
-                      <strong style={{ display: "block", color: "#1F1C19", marginBottom: "2px" }}>
+                      <strong style={{ display: "block", color: "var(--ct-1f1c19, #1F1C19)", marginBottom: "2px" }}>
                         🌹 Rosas ({formatearFechaCorteInventario(ultimoInvRosas.fechaCorte)})
                       </strong>
                       <span>{formatearResumenInventarioTexto(ultimoInvRosas.resumenColores)}</span>
@@ -8305,8 +8305,8 @@ export function ConsolaVentasOmnicanal({
       {pestana === "compras" && (
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #E6E2DA",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "16px",
             padding: "clamp(14px, 3vw, 20px)",
             display: "flex",
@@ -8324,10 +8324,10 @@ export function ConsolaVentasOmnicanal({
             }}
           >
             <div>
-              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
+              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Compras y Proformas Web — Usuarios Registrados e Invitados
               </h2>
-              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "#847D74" }}>
+              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "var(--ct-847d74, #847D74)" }}>
                 Monitorea todas las ventas generadas en el e-commerce distinguiendo clientes con
                 cuenta registrada vs compradores invitados sin registro, e inicia seguimiento en 1
                 clic.
@@ -8357,9 +8357,9 @@ export function ConsolaVentasOmnicanal({
                     padding: "6px 12px",
                     borderRadius: "8px",
                     border:
-                      filtroTipoComprador === f.id ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-                    background: filtroTipoComprador === f.id ? "#1F1C19" : "#FFFFFF",
-                    color: filtroTipoComprador === f.id ? "#FFFFFF" : "#57524C",
+                      filtroTipoComprador === f.id ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: filtroTipoComprador === f.id ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                    color: filtroTipoComprador === f.id ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                     fontSize: "0.78rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -8380,7 +8380,7 @@ export function ConsolaVentasOmnicanal({
               <div
                 style={{
                   padding: "10px 14px",
-                  background: "#F8F7F4",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
                   borderRadius: "10px",
                   fontSize: "0.8rem",
                   display: "flex",
@@ -8413,8 +8413,8 @@ export function ConsolaVentasOmnicanal({
       {pestana === "usuarios" && (
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #E6E2DA",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "16px",
             padding: "clamp(14px, 3vw, 20px)",
             display: "flex",
@@ -8432,10 +8432,10 @@ export function ConsolaVentasOmnicanal({
             }}
           >
             <div>
-              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
+              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Directorio Unificado de Usuarios Web y Compradores Invitados
               </h2>
-              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "#847D74" }}>
+              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "var(--ct-847d74, #847D74)" }}>
                 Sustituye la base de suscriptores de ManyChat sin cobro por contacto almacenado,
                 cruzando membresías web, autorización LOPDP y compras acumuladas.
               </p>
@@ -8465,9 +8465,9 @@ export function ConsolaVentasOmnicanal({
                     padding: "6px 12px",
                     borderRadius: "8px",
                     border:
-                      filtroTipoUsuarioDir === f.id ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-                    background: filtroTipoUsuarioDir === f.id ? "#1F1C19" : "#FFFFFF",
-                    color: filtroTipoUsuarioDir === f.id ? "#FFFFFF" : "#57524C",
+                      filtroTipoUsuarioDir === f.id ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: filtroTipoUsuarioDir === f.id ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                    color: filtroTipoUsuarioDir === f.id ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                     fontSize: "0.78rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -8496,8 +8496,8 @@ export function ConsolaVentasOmnicanal({
           {/* Bloque 1: Comparativa Respuestas IA (ARIA) vs Intervenciones Humanas */}
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "16px",
               padding: "clamp(14px, 3vw, 20px)",
               display: "grid",
@@ -8509,17 +8509,17 @@ export function ConsolaVentasOmnicanal({
               style={{
                 padding: "14px",
                 borderRadius: "12px",
-                background: "#F2F6F3",
-                border: "1px solid #CEDDD3",
+                background: "var(--cf-f2f6f3, #F2F6F3)",
+                border: "1px solid var(--cb-ceddd3, #CEDDD3)",
               }}
             >
-              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#2B4A36" }}>
+              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-2b4a36, #2B4A36)" }}>
                 🤖 Respuestas Automáticas ARIA
               </div>
-              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#2F4737", marginTop: "4px" }}>
+              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "var(--ct-2f4737, #2F4737)", marginTop: "4px" }}>
                 {metricas.totalRespuestasAria}
               </div>
-              <div style={{ fontSize: "0.73rem", color: "#2B4A36" }}>
+              <div style={{ fontSize: "0.73rem", color: "var(--ct-2b4a36, #2B4A36)" }}>
                 {metricas.porcentajeResolucionIa}% de hilos sin escalamiento humano
               </div>
             </div>
@@ -8528,17 +8528,17 @@ export function ConsolaVentasOmnicanal({
               style={{
                 padding: "14px",
                 borderRadius: "12px",
-                background: "#F4F2EE",
-                border: "1px solid #DDD8CE",
+                background: "var(--cf-f4f2ee, #F4F2EE)",
+                border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
               }}
             >
-              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#3A3530" }}>
+              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-3a3530, #3A3530)" }}>
                 👩‍💼 Intervenciones de Vendedores
               </div>
-              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#221E1B", marginTop: "4px" }}>
+              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "var(--ct-221e1b, #221E1B)", marginTop: "4px" }}>
                 {metricas.totalIntervencionesHumanas}
               </div>
-              <div style={{ fontSize: "0.73rem", color: "#3A3530" }}>
+              <div style={{ fontSize: "0.73rem", color: "var(--ct-3a3530, #3A3530)" }}>
                 {metricas.enAtencionHumana} conversaciones bajo control humano hoy
               </div>
             </div>
@@ -8547,17 +8547,17 @@ export function ConsolaVentasOmnicanal({
               style={{
                 padding: "14px",
                 borderRadius: "12px",
-                background: "#FAF6EE",
-                border: "1px solid #E5D7BC",
+                background: "var(--cf-faf6ee, #FAF6EE)",
+                border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
               }}
             >
-              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#745622" }}>
+              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-745622, #745622)" }}>
                 🚨 Escalados / En Cola
               </div>
-              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#745622", marginTop: "4px" }}>
+              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "var(--ct-745622, #745622)", marginTop: "4px" }}>
                 {metricas.escaladasHumano}
               </div>
-              <div style={{ fontSize: "0.73rem", color: "#745622" }}>
+              <div style={{ fontSize: "0.73rem", color: "var(--ct-745622, #745622)" }}>
                 {metricas.sinAsignar} hilos abiertos sin vendedor asignado
               </div>
             </div>
@@ -8566,8 +8566,8 @@ export function ConsolaVentasOmnicanal({
           {/* Bloque 2: Gestor de Mensajes Predeterminados (/atajo) */}
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "16px",
               padding: "clamp(14px, 3vw, 20px)",
               display: "flex",
@@ -8576,10 +8576,10 @@ export function ConsolaVentasOmnicanal({
             }}
           >
             <div>
-              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#1F1C19" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 ⚡ Mensajes Predeterminados (Snippets para Vendedores)
               </h3>
-              <p style={{ margin: "3px 0 0", fontSize: "0.79rem", color: "#847D74" }}>
+              <p style={{ margin: "3px 0 0", fontSize: "0.79rem", color: "var(--ct-847d74, #847D74)" }}>
                 Invócalos escribiendo <code>/</code> en el chat. Soporta variables dinámicas{" "}
                 <code>{"{{nombre}}"}</code> y <code>{"{{asesor}}"}</code>.
               </p>
@@ -8593,10 +8593,10 @@ export function ConsolaVentasOmnicanal({
                   modoLayoutInbox === "desktop" ? "140px 1fr 150px auto" : "minmax(0, 1fr)",
                 gap: "8px",
                 alignItems: "start",
-                background: "#F8F7F4",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
                 padding: "12px",
                 borderRadius: "12px",
-                border: "1px solid #E6E2DA",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               }}
             >
               <input
@@ -8607,7 +8607,7 @@ export function ConsolaVentasOmnicanal({
                 style={{
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.8rem",
                 }}
               />
@@ -8619,7 +8619,7 @@ export function ConsolaVentasOmnicanal({
                 style={{
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.8rem",
                 }}
               />
@@ -8631,7 +8631,7 @@ export function ConsolaVentasOmnicanal({
                 style={{
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.8rem",
                 }}
               />
@@ -8662,7 +8662,7 @@ export function ConsolaVentasOmnicanal({
                   gridColumn: "1 / -1",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.8rem",
                   fontFamily: "inherit",
                 }}
@@ -8682,7 +8682,7 @@ export function ConsolaVentasOmnicanal({
                   style={{
                     padding: "12px",
                     borderRadius: "10px",
-                    border: "1px solid #E6E2DA",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
@@ -8691,8 +8691,8 @@ export function ConsolaVentasOmnicanal({
                 >
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: "6px" }}>
-                      <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>
-                        <code style={{ color: "#221E1B" }}>{r.atajo}</code> · {r.titulo}
+                      <strong style={{ fontSize: "0.82rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
+                        <code style={{ color: "var(--ct-221e1b, #221E1B)" }}>{r.atajo}</code> · {r.titulo}
                       </strong>
                       <button
                         type="button"
@@ -8706,14 +8706,14 @@ export function ConsolaVentasOmnicanal({
                         style={{
                           border: "none",
                           background: "transparent",
-                          color: "#8A2E2E",
+                          color: "var(--ct-8a2e2e, #8A2E2E)",
                           cursor: "pointer",
                         }}
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
-                    <p style={{ margin: "6px 0 0", fontSize: "0.76rem", color: "#57524C", lineHeight: 1.45 }}>
+                    <p style={{ margin: "6px 0 0", fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.45 }}>
                       {r.contenido}
                     </p>
                   </div>
@@ -8900,9 +8900,9 @@ export function ConsolaVentasOmnicanal({
             style={{
               width: "100%",
               maxWidth: "420px",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
-              border: "1px solid #E5CACA",
+              border: "1px solid var(--cb-e5caca, #E5CACA)",
               boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)",
               padding: "20px",
               display: "flex",
@@ -8916,9 +8916,9 @@ export function ConsolaVentasOmnicanal({
                   width: "40px",
                   height: "40px",
                   borderRadius: "10px",
-                  background: "#FAF2F2",
-                  border: "1px solid #E5CACA",
-                  color: "#8A2E2E",
+                  background: "var(--cf-faf2f2, #FAF2F2)",
+                  border: "1px solid var(--cb-e5caca, #E5CACA)",
+                  color: "var(--ct-8a2e2e, #8A2E2E)",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -8928,12 +8928,12 @@ export function ConsolaVentasOmnicanal({
                 <Trash2 size={20} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
-                <strong style={{ fontSize: "0.96rem", color: "#1F1C19" }}>
+                <strong style={{ fontSize: "0.96rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                   ¿Eliminar conversación completa?
                 </strong>
-                <span style={{ fontSize: "0.82rem", color: "#57524C", lineHeight: 1.48 }}>
+                <span style={{ fontSize: "0.82rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.48 }}>
                   Se eliminará el hilo completo con{" "}
-                  <strong style={{ color: "#1F1C19" }}>
+                  <strong style={{ color: "var(--ct-1f1c19, #1F1C19)" }}>
                     {conversacionAEliminar.remitenteNombre}
                   </strong>
                   {conversacionAEliminar.remitenteTelefono
@@ -8948,9 +8948,9 @@ export function ConsolaVentasOmnicanal({
               style={{
                 padding: "8px 11px",
                 borderRadius: "9px",
-                background: "#FAF6EE",
-                border: "1px solid #E5D7BC",
-                color: "#745622",
+                background: "var(--cf-faf6ee, #FAF6EE)",
+                border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                color: "var(--ct-745622, #745622)",
                 fontSize: "0.75rem",
                 lineHeight: 1.4,
               }}
@@ -8970,9 +8970,9 @@ export function ConsolaVentasOmnicanal({
                   minHeight: "40px",
                   padding: "8px 14px",
                   borderRadius: "10px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#57524C",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-57524c, #57524C)",
                   fontSize: "0.82rem",
                   fontWeight: 700,
                   cursor: eliminandoConversacion ? "not-allowed" : "pointer",

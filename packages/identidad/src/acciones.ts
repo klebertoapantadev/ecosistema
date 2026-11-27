@@ -1908,3 +1908,21 @@ export async function obtenerHistorialConsentimientos(
 
 
 
+
+// TRQ-040: tema del panel. Se guarda en el perfil (no solo en el navegador)
+// para que la elección siga al usuario en cualquier dispositivo; el panel
+// además la deja en localStorage para pintarla antes del primer render.
+const TEMAS_PANEL = ["claro", "oscuro", "sistema"] as const;
+export async function guardarPreferenciaTema(tema: string): Promise<Resultado> {
+  if (!(TEMAS_PANEL as readonly string[]).includes(tema)) return { ok: false, error: "Tema no válido" };
+  const supabase = await crearClienteServidor();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión no encontrada" };
+  const { error } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .update({ usu_preferencia_tema: tema })
+    .eq("usu_id", user.id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: undefined };
+}

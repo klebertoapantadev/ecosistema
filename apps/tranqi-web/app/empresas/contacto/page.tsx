@@ -115,7 +115,7 @@ export default function PaginaContactoEmpresas() {
       {/* Barra Superior de Navegación */}
       <header
         style={{
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          borderBottom: "1px solid var(--cb-ffffff-a080, rgba(255, 255, 255, 0.08))",
           backgroundColor: "rgba(9, 13, 22, 0.9)",
           backdropFilter: "blur(12px)",
           position: "sticky",
@@ -157,7 +157,7 @@ export default function PaginaContactoEmpresas() {
               href="/#planes"
               style={{
                 fontSize: "0.88rem",
-                color: "#94a3b8",
+                color: "var(--ct-94a3b8, #94a3b8)",
                 textDecoration: "none",
                 fontWeight: 600,
                 transition: "color 0.2s"
@@ -178,7 +178,7 @@ export default function PaginaContactoEmpresas() {
                 borderRadius: "999px",
                 textDecoration: "none",
                 fontWeight: 700,
-                border: "1px solid rgba(255, 255, 255, 0.12)"
+                border: "1px solid var(--cb-ffffff-a120, rgba(255, 255, 255, 0.12))"
               }}
             >
               <ArrowLeft size={16} /> Volver a Inicio
@@ -222,10 +222,10 @@ export default function PaginaContactoEmpresas() {
             }}
           >
             Protección Legal Continua para tu <span style={{ color: "#FEE300" }}>Empresa</span> y tu{" "}
-            <span style={{ color: "#a855f7" }}>Nómina</span>
+            <span style={{ color: "var(--ct-a855f7, #a855f7)" }}>Nómina</span>
           </h1>
 
-          <p style={{ fontSize: "1.12rem", color: "#94a3b8", lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontSize: "1.12rem", color: "var(--ct-94a3b8, #94a3b8)", lineHeight: 1.6, margin: 0 }}>
             Optimiza los costos legales de tu empresa, blinda tus contratos y entrega un paquete de bienestar jurídico de
             alto impacto para tus colaboradores. Solicita asesoría y un especialista se comunicará hoy mismo.
           </p>
@@ -244,7 +244,7 @@ export default function PaginaContactoEmpresas() {
           <div
             style={{
               backgroundColor: "rgba(17, 24, 39, 0.7)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              border: "1px solid var(--cb-ffffff-a100, rgba(255, 255, 255, 0.1))",
               borderRadius: "24px",
               padding: "36px 32px",
               backdropFilter: "blur(10px)"
@@ -268,7 +268,7 @@ export default function PaginaContactoEmpresas() {
                 <h2 style={{ fontSize: "1.28rem", fontWeight: 800, margin: 0, color: "#ffffff" }}>
                   Beneficios Corporativos Tranqi
                 </h2>
-                <p style={{ fontSize: "0.84rem", color: "#94a3b8", margin: "2px 0 0 0" }}>
+                <p style={{ fontSize: "0.84rem", color: "var(--ct-94a3b8, #94a3b8)", margin: "2px 0 0 0" }}>
                   Diseñados para gerencia, talento humano y equipos legales
                 </p>
               </div>
@@ -292,7 +292,7 @@ export default function PaginaContactoEmpresas() {
                   <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#f8fafc" }}>
                     Abogado Empresarial Dedicado
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#94a3b8", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-94a3b8, #94a3b8)", lineHeight: 1.5, margin: 0 }}>
                     Asignación de un especialista corporativo para absolver consultas laborales, contractuales,
                     tributarias y societarias de tu organización sin demoras.
                   </p>
@@ -316,7 +316,7 @@ export default function PaginaContactoEmpresas() {
                   <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#f8fafc" }}>
                     Bienestar Legal para tus Empleados (B2B2C)
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#94a3b8", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-94a3b8, #94a3b8)", lineHeight: 1.5, margin: 0 }}>
                     Consultas legales sin costo y descuentos preferenciales para toda tu nómina de colaboradores y sus
                     familias, fortaleciendo el clima laboral.
                   </p>
@@ -340,7 +340,7 @@ export default function PaginaContactoEmpresas() {
                   <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#f8fafc" }}>
                     Portal Empresa con Roles RBAC
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#94a3b8", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-94a3b8, #94a3b8)", lineHeight: 1.5, margin: 0 }}>
                     Consola corporativa para Administrador, Talento Humano y Auditor Legal, con reportes de uso en
                     tiempo real y estricta garantía de confidencialidad y secreto profesional.
                   </p>
@@ -364,7 +364,7 @@ export default function PaginaContactoEmpresas() {
                   <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#f8fafc" }}>
                     Revisión y Blindaje Contractual Preventivo
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#94a3b8", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-94a3b8, #94a3b8)", lineHeight: 1.5, margin: 0 }}>
                     Elaboración, auditoría y firma de contratos comerciales, convenios laborales, acuerdos de
                     confidencialidad (NDA) y cumplimiento normativo.
                   </p>
@@ -388,7 +388,7 @@ export default function PaginaContactoEmpresas() {
                   <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#f8fafc" }}>
                     Tarifas Escalables desde $10.35 / Colaborador
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#94a3b8", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-94a3b8, #94a3b8)", lineHeight: 1.5, margin: 0 }}>
                     Planes por tramos adaptados al número de empleados de tu empresa, reduciendo drásticamente el costo
                     comparado con firmas jurídicas tradicionales.
                   </p>
@@ -535,7 +535,7 @@ export default function PaginaContactoEmpresas() {
                   <h2 style={{ fontSize: "1.35rem", fontWeight: 900, color: "#ffffff", margin: "0 0 6px 0" }}>
                     Solicitar Asesoría Corporativa
                   </h2>
-                  <p style={{ fontSize: "0.88rem", color: "#94a3b8", margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-94a3b8, #94a3b8)", margin: 0 }}>
                     Ingresa los datos de tu empresa para diseñar una propuesta personalizada.
                   </p>
                 </div>
@@ -574,7 +574,7 @@ export default function PaginaContactoEmpresas() {
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: "1px solid #374151",
+                          border: "1px solid var(--cb-374151, #374151)",
                           color: "#ffffff",
                           fontSize: "0.9rem",
                           outline: "none"
@@ -597,7 +597,7 @@ export default function PaginaContactoEmpresas() {
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: "1px solid #374151",
+                          border: "1px solid var(--cb-374151, #374151)",
                           color: "#ffffff",
                           fontSize: "0.9rem",
                           outline: "none"
@@ -623,7 +623,7 @@ export default function PaginaContactoEmpresas() {
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: "1px solid #374151",
+                          border: "1px solid var(--cb-374151, #374151)",
                           color: "#ffffff",
                           fontSize: "0.9rem",
                           outline: "none"
@@ -645,7 +645,7 @@ export default function PaginaContactoEmpresas() {
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: "1px solid #374151",
+                          border: "1px solid var(--cb-374151, #374151)",
                           color: "#ffffff",
                           fontSize: "0.9rem",
                           outline: "none"
@@ -672,7 +672,7 @@ export default function PaginaContactoEmpresas() {
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: errorCorreo ? "1.5px solid #ef4444" : "1px solid #374151",
+                          border: errorCorreo ? "1.5px solid #ef4444" : "1px solid var(--cb-374151, #374151)",
                           color: "#ffffff",
                           fontSize: "0.9rem",
                           outline: "none"
@@ -683,7 +683,7 @@ export default function PaginaContactoEmpresas() {
                           style={{
                             marginTop: "6px",
                             fontSize: "0.78rem",
-                            color: "#f87171",
+                            color: "var(--ct-f87171, #f87171)",
                             display: "flex",
                             flexDirection: "column",
                             gap: "4px"
@@ -735,7 +735,7 @@ export default function PaginaContactoEmpresas() {
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: "1px solid #374151",
+                          border: "1px solid var(--cb-374151, #374151)",
                           color: "#ffffff",
                           fontSize: "0.9rem",
                           outline: "none"
@@ -758,7 +758,7 @@ export default function PaginaContactoEmpresas() {
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: "1px solid #374151",
+                          border: "1px solid var(--cb-374151, #374151)",
                           color: "#ffffff",
                           fontSize: "0.88rem",
                           outline: "none"
@@ -783,7 +783,7 @@ export default function PaginaContactoEmpresas() {
                           padding: "10px 14px",
                           borderRadius: "10px",
                           backgroundColor: "#1f2937",
-                          border: "1px solid #374151",
+                          border: "1px solid var(--cb-374151, #374151)",
                           color: "#ffffff",
                           fontSize: "0.88rem",
                           outline: "none"
@@ -813,7 +813,7 @@ export default function PaginaContactoEmpresas() {
                         padding: "10px 14px",
                         borderRadius: "10px",
                         backgroundColor: "#1f2937",
-                        border: "1px solid #374151",
+                        border: "1px solid var(--cb-374151, #374151)",
                         color: "#ffffff",
                         fontSize: "0.9rem",
                         outline: "none",
@@ -830,7 +830,7 @@ export default function PaginaContactoEmpresas() {
                       onChange={(e) => setAceptaTerminos(e.target.checked)}
                       style={{ marginTop: "3px", accentColor: "#FEE300" }}
                     />
-                    <span style={{ fontSize: "0.8rem", color: "#94a3b8", lineHeight: 1.4 }}>
+                    <span style={{ fontSize: "0.8rem", color: "var(--ct-94a3b8, #94a3b8)", lineHeight: 1.4 }}>
                       Autorizo a Tranqi el tratamiento de mis datos de contacto para recibir información personalizada y
                       la propuesta corporativa conforme a la LOPDP.
                     </span>

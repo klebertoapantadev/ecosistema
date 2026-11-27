@@ -109,7 +109,7 @@ export function SeccionCoberturaCliente({
           color: "#FFFFFF",
           position: "relative",
           overflow: "hidden",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          border: "1px solid var(--cb-ffffff-a100, rgba(255, 255, 255, 0.1))",
           boxShadow: "0 10px 25px -5px rgba(15, 23, 42, 0.3)",
           marginBottom: "24px",
         }}
@@ -122,7 +122,7 @@ export function SeccionCoberturaCliente({
             <h2 style={{ margin: "0 0 8px", fontSize: "1.4rem", fontWeight: 800, color: "#FFFFFF" }}>
               Activa tu Plan de Amparo & Cobertura Legal
             </h2>
-            <p style={{ margin: 0, fontSize: "0.9rem", color: "#94A3B8", maxWidth: "560px", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--ct-94a3b8, #94A3B8)", maxWidth: "560px", lineHeight: 1.5 }}>
               Obtén citas telemáticas ilimitadas, dictámenes de contratos en 24h, consultas Tranqi IA y hasta 35% de descuento en notarías y juicios para ti y tu familia.
             </p>
           </div>
@@ -161,7 +161,7 @@ export function SeccionCoberturaCliente({
         color: "#FFFFFF",
         position: "relative",
         overflow: "hidden",
-        border: "1px solid rgba(255, 255, 255, 0.15)",
+        border: "1px solid var(--cb-ffffff-a150, rgba(255, 255, 255, 0.15))",
         boxShadow: "0 20px 35px -10px rgba(49, 46, 129, 0.45)",
         marginBottom: "28px",
       }}
@@ -253,7 +253,7 @@ export function SeccionCoberturaCliente({
             onClick={() => setModalHistorialAbierto(true)}
             style={{
               background: "rgba(255, 255, 255, 0.15)",
-              border: "1px solid rgba(255, 255, 255, 0.25)",
+              border: "1px solid var(--cb-ffffff-a250, rgba(255, 255, 255, 0.25))",
               color: "#FFFFFF",
               borderRadius: "10px",
               padding: "8px 14px",
@@ -325,7 +325,7 @@ export function SeccionCoberturaCliente({
               key={idx}
               style={{
                 background: "rgba(15, 23, 42, 0.4)",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
+                border: "1px solid var(--cb-ffffff-a120, rgba(255, 255, 255, 0.12))",
                 borderRadius: "16px",
                 padding: "16px",
                 backdropFilter: "blur(8px)",
@@ -377,7 +377,7 @@ export function SeccionCoberturaCliente({
                 {/* Barra de progreso si tiene cupo numérico */}
                 {!esIlimitado && (
                   <div style={{ marginBottom: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#94A3B8", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--ct-94a3b8, #94A3B8)", marginBottom: "4px" }}>
                       <span>Usadas: {der.consumidos} de {der.incluidos}</span>
                       <span>{Math.round((der.restantes! / der.incluidos!) * 100)}% restante</span>
                     </div>
@@ -498,7 +498,7 @@ export function SeccionCoberturaCliente({
                     style={{
                       width: "100%",
                       background: "rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      border: "1px solid var(--cb-ffffff-a200, rgba(255, 255, 255, 0.2))",
                       color: "#FFFFFF",
                       padding: "8px 12px",
                       borderRadius: "10px",

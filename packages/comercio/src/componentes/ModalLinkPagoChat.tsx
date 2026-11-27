@@ -376,9 +376,9 @@ export function ModalLinkPagoChat({
           maxWidth: esMovil ? "100%" : "490px",
           maxHeight: esMovil ? "92dvh" : "90vh",
           overflowY: "auto",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: esMovil ? "18px 18px 0 0" : "16px",
-          border: "1px solid #E6E2DA",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           boxShadow: "0 20px 50px rgba(15, 23, 42, 0.24)",
           padding: esMovil ? "16px 16px 22px" : "20px 22px",
           display: "flex",
@@ -401,9 +401,9 @@ export function ModalLinkPagoChat({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: "#EAF3ED",
-                border: "1px solid #C6DEC9",
-                color: "#2F4737",
+                background: "var(--cf-eaf3ed, #EAF3ED)",
+                border: "1px solid var(--cb-c6dec9, #C6DEC9)",
+                color: "var(--ct-2f4737, #2F4737)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -413,10 +413,10 @@ export function ModalLinkPagoChat({
               <Link2 size={18} />
             </span>
             <div>
-              <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 800, color: "#1F1C19" }}>
+              <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 800, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 /LinkPago — Generar Enlace
               </h3>
-              <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#6E6861" }}>
+              <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "var(--ct-6e6861, #6E6861)" }}>
                 Para {conversacion.remitenteNombre}
                 {conversacion.canal === "whatsapp" ? " · WhatsApp" : " · Chat Web"}
               </p>
@@ -433,9 +433,9 @@ export function ModalLinkPagoChat({
               width: "32px",
               height: "32px",
               borderRadius: "8px",
-              border: "1px solid #E6E2DA",
-              background: "#FAF8F5",
-              color: "#57524C",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              background: "var(--cf-faf8f5, #FAF8F5)",
+              color: "var(--ct-57524c, #57524C)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -455,9 +455,9 @@ export function ModalLinkPagoChat({
               gap: "8px",
               padding: "9px 11px",
               borderRadius: "10px",
-              background: tarjetaActiva ? "#F0FDF4" : "#FFFBEB",
-              border: tarjetaActiva ? "1px solid #BBF7D0" : "1px solid #FDE68A",
-              color: tarjetaActiva ? "#166534" : "#92400E",
+              background: tarjetaActiva ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-fffbeb, #FFFBEB)",
+              border: tarjetaActiva ? "1px solid var(--cb-bbf7d0, #BBF7D0)" : "1px solid var(--cb-fde68a, #FDE68A)",
+              color: tarjetaActiva ? "var(--ct-166534, #166534)" : "var(--ct-92400e, #92400E)",
               fontSize: "0.76rem",
               fontWeight: 600,
               lineHeight: 1.35,
@@ -489,8 +489,8 @@ export function ModalLinkPagoChat({
               style={{
                 padding: "12px 14px",
                 borderRadius: "12px",
-                background: "#FAF8F5",
-                border: "1px solid #E6E2DA",
+                background: "var(--cf-faf8f5, #FAF8F5)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               }}
             >
               <div
@@ -504,7 +504,7 @@ export function ModalLinkPagoChat({
               >
                 <label
                   htmlFor="eco-link-pago-monto"
-                  style={{ fontSize: "0.78rem", fontWeight: 800, color: "#221E1B" }}
+                  style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--ct-221e1b, #221E1B)" }}
                 >
                   Valor a cobrar (USD) *
                 </label>
@@ -514,9 +514,9 @@ export function ModalLinkPagoChat({
                     onClick={() => setMontoTexto(totalDesdeCamposChat.toFixed(2))}
                     title="Restaurar valor tomado de Campos de Venta"
                     style={{
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#2F4737",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-2f4737, #2F4737)",
                       borderRadius: "999px",
                       padding: "2px 8px",
                       fontSize: "0.7rem",
@@ -536,7 +536,7 @@ export function ModalLinkPagoChat({
                     left: "12px",
                     fontSize: "1.15rem",
                     fontWeight: 800,
-                    color: "#2F4737",
+                    color: "var(--ct-2f4737, #2F4737)",
                   }}
                 >
                   $
@@ -563,8 +563,8 @@ export function ModalLinkPagoChat({
                     padding: "10px 12px 10px 30px",
                     borderRadius: "10px",
                     border: "1.5px solid #2F4737",
-                    background: "#FFFFFF",
-                    color: "#1F1C19",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     fontSize: "1.25rem",
                     fontWeight: 800,
                     boxSizing: "border-box",
@@ -574,7 +574,7 @@ export function ModalLinkPagoChat({
               </div>
 
               {desgloseOrigenChat && (
-                <p style={{ margin: "6px 0 0", fontSize: "0.71rem", color: "#6E6861" }}>
+                <p style={{ margin: "6px 0 0", fontSize: "0.71rem", color: "var(--ct-6e6861, #6E6861)" }}>
                   {desgloseOrigenChat} (puedes editar el valor libremente).
                 </p>
               )}
@@ -588,7 +588,7 @@ export function ModalLinkPagoChat({
                   display: "block",
                   fontSize: "0.76rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -604,9 +604,9 @@ export function ModalLinkPagoChat({
                   width: "100%",
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.85rem",
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   boxSizing: "border-box",
                   fontFamily: "inherit",
                 }}
@@ -621,7 +621,7 @@ export function ModalLinkPagoChat({
                     display: "block",
                     fontSize: "0.75rem",
                     fontWeight: 700,
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     marginBottom: "4px",
                   }}
                 >
@@ -638,9 +638,9 @@ export function ModalLinkPagoChat({
                         style={{
                           padding: "8px 6px",
                           borderRadius: "8px",
-                          border: sel ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
-                          background: sel ? "#EAF3ED" : "#FFFFFF",
-                          color: sel ? "#1F352C" : "#57524C",
+                          border: sel ? "1.5px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: sel ? "var(--cf-eaf3ed, #EAF3ED)" : "var(--cf-ffffff, #FFFFFF)",
+                          color: sel ? "var(--ct-1f352c, #1F352C)" : "var(--ct-57524c, #57524C)",
                           fontSize: "0.76rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -660,7 +660,7 @@ export function ModalLinkPagoChat({
                     display: "block",
                     fontSize: "0.75rem",
                     fontWeight: 700,
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     marginBottom: "4px",
                   }}
                 >
@@ -676,9 +676,9 @@ export function ModalLinkPagoChat({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.82rem",
-                    color: "#1F1C19",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     boxSizing: "border-box",
                     fontFamily: "inherit",
                   }}
@@ -694,7 +694,7 @@ export function ModalLinkPagoChat({
                   display: "block",
                   fontSize: "0.75rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -710,9 +710,9 @@ export function ModalLinkPagoChat({
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.82rem",
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   boxSizing: "border-box",
                   fontFamily: "inherit",
                 }}
@@ -725,9 +725,9 @@ export function ModalLinkPagoChat({
                 style={{
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  background: "#FEF2F2",
-                  border: "1px solid #FECACA",
-                  color: "#B91C1C",
+                  background: "var(--cf-fef2f2, #FEF2F2)",
+                  border: "1px solid var(--cb-fecaca, #FECACA)",
+                  color: "var(--ct-b91c1c, #B91C1C)",
                   fontSize: "0.78rem",
                   fontWeight: 600,
                 }}
@@ -753,9 +753,9 @@ export function ModalLinkPagoChat({
                   gap: "6px",
                   padding: "10px 12px",
                   borderRadius: "10px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#221E1B",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-221e1b, #221E1B)",
                   fontSize: "0.82rem",
                   fontWeight: 700,
                   cursor: generando || !montoValido ? "not-allowed" : "pointer",
@@ -802,14 +802,14 @@ export function ModalLinkPagoChat({
               style={{
                 padding: "12px 14px",
                 borderRadius: "12px",
-                background: "#F0FDF4",
-                border: "1px solid #BBF7D0",
+                background: "var(--cf-f0fdf4, #F0FDF4)",
+                border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "6px",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#166534" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--ct-166534, #166534)" }}>
                 <CheckCircle2 size={17} />
                 <strong style={{ fontSize: "0.86rem" }}>
                   Link generado · {linkGenerado.codigo} (${linkGenerado.montoTotal.toFixed(2)} USD)
@@ -821,7 +821,7 @@ export function ModalLinkPagoChat({
                 rel="noopener noreferrer"
                 style={{
                   fontSize: "0.78rem",
-                  color: "#15803D",
+                  color: "var(--ct-15803d, #15803D)",
                   wordBreak: "break-all",
                   textDecoration: "underline",
                   display: "inline-flex",
@@ -838,10 +838,10 @@ export function ModalLinkPagoChat({
               style={{
                 padding: "10px 12px",
                 borderRadius: "10px",
-                background: "#FAF8F5",
-                border: "1px solid #E6E2DA",
+                background: "var(--cf-faf8f5, #FAF8F5)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 fontSize: "0.77rem",
-                color: "#3A3530",
+                color: "var(--ct-3a3530, #3A3530)",
                 whiteSpace: "pre-wrap",
                 lineHeight: 1.45,
                 maxHeight: "170px",
@@ -866,9 +866,9 @@ export function ModalLinkPagoChat({
                   gap: "5px",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#221E1B",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-221e1b, #221E1B)",
                   fontSize: "0.8rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -895,9 +895,9 @@ export function ModalLinkPagoChat({
                   gap: "5px",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FAF8F5",
-                  color: "#221E1B",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-faf8f5, #FAF8F5)",
+                  color: "var(--ct-221e1b, #221E1B)",
                   fontSize: "0.8rem",
                   fontWeight: 700,
                   cursor: "pointer",

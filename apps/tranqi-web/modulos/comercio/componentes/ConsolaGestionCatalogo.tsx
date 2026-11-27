@@ -102,8 +102,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
       {/* Header Operativo */}
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
           borderRadius: "16px",
           padding: "20px 24px",
           display: "flex",
@@ -118,8 +118,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
             <span
               style={{
-                background: "#E0F2FE",
-                color: "#0369A1",
+                background: "var(--cf-e0f2fe, #E0F2FE)",
+                color: "var(--ct-0369a1, #0369A1)",
                 fontSize: "0.72rem",
                 fontWeight: 700,
                 padding: "2px 8px",
@@ -130,8 +130,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
             </span>
             <span
               style={{
-                background: "#FEF3C7",
-                color: "#92400E",
+                background: "var(--cf-fef3c7, #FEF3C7)",
+                color: "var(--ct-92400e, #92400E)",
                 fontSize: "0.72rem",
                 fontWeight: 700,
                 padding: "2px 8px",
@@ -141,10 +141,10 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
               Consola del Operador
             </span>
           </div>
-          <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "#0F172A" }}>
+          <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
             Gestión y Administración del Catálogo Comercial
           </h2>
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
+          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--ct-64748b, #64748B)" }}>
             Administra honorarios, servicios jurídicos, suscripciones y sus recursos multimedia asociados.
           </p>
         </div>
@@ -182,9 +182,9 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
             title="Crear nueva categoría de servicios"
             aria-label="Crear nueva categoría de servicios"
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #CBD5E1",
-              color: "#334155",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+              color: "var(--ct-334155, #334155)",
               padding: "8px 14px",
               borderRadius: "8px",
               fontSize: "0.82rem",
@@ -207,9 +207,9 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
             title="Refrescar catálogo"
             aria-label="Refrescar catálogo"
             style={{
-              background: "#F1F5F9",
-              border: "1px solid #E2E8F0",
-              color: "#475569",
+              background: "var(--cf-f1f5f9, #F1F5F9)",
+              border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
+              color: "var(--ct-475569, #475569)",
               padding: "8px 12px",
               borderRadius: "8px",
               fontSize: "0.82rem",
@@ -259,38 +259,38 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
           gap: "14px",
         }}
       >
-        <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px 18px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600, textTransform: "uppercase" }}>
+        <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "12px", padding: "14px 18px" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600, textTransform: "uppercase" }}>
             Total Productos / Honorarios
           </span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", marginTop: "4px" }}>
+          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", marginTop: "4px" }}>
             {productos.length}
           </div>
         </div>
 
-        <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px 18px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600, textTransform: "uppercase" }}>
+        <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "12px", padding: "14px 18px" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600, textTransform: "uppercase" }}>
             Categorías Comerciales
           </span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0284C7", marginTop: "4px" }}>
+          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-0284c7, #0284C7)", marginTop: "4px" }}>
             {categoriasLista.length}
           </div>
         </div>
 
-        <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px 18px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600, textTransform: "uppercase" }}>
+        <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "12px", padding: "14px 18px" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600, textTransform: "uppercase" }}>
             Tarifa SRI Vigente
           </span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#059669", marginTop: "4px" }}>
+          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-059669, #059669)", marginTop: "4px" }}>
             IVA 15%
           </div>
         </div>
 
-        <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "14px 18px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600, textTransform: "uppercase" }}>
+        <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "12px", padding: "14px 18px" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600, textTransform: "uppercase" }}>
             Con Recursos Digitales
           </span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#7C3AED", marginTop: "4px" }}>
+          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-7c3aed, #7C3AED)", marginTop: "4px" }}>
             {productos.filter((p) => p.pro_detalle_producto?.imagen_url || p.pro_detalle_producto?.video_url).length}
           </div>
         </div>
@@ -299,8 +299,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
       {/* Buscador y Filtros */}
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
           borderRadius: "14px",
           padding: "14px 18px",
           display: "flex",
@@ -316,7 +316,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
               left: "14px",
               top: "50%",
               transform: "translateY(-50%)",
-              color: "#94A3B8",
+              color: "var(--ct-94a3b8, #94A3B8)",
             }}
           />
           <input
@@ -328,9 +328,9 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
               width: "100%",
               padding: "8px 14px 8px 40px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
               fontSize: "0.85rem",
-              background: "#F8FAFC",
+              background: "var(--cf-f8fafc, #F8FAFC)",
             }}
           />
         </div>
@@ -345,8 +345,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
               fontSize: "0.78rem",
               fontWeight: 700,
               border: "none",
-              background: categoriaSeleccionada === "todas" ? "#0284C7" : "#F1F5F9",
-              color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#475569",
+              background: categoriaSeleccionada === "todas" ? "#0284C7" : "var(--cf-f1f5f9, #F1F5F9)",
+              color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "var(--ct-475569, #475569)",
               cursor: "pointer",
             }}
           >
@@ -363,8 +363,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 border: "none",
-                background: categoriaSeleccionada === c.ctg_slug ? "#0284C7" : "#F1F5F9",
-                color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "#475569",
+                background: categoriaSeleccionada === c.ctg_slug ? "#0284C7" : "var(--cf-f1f5f9, #F1F5F9)",
+                color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "var(--ct-475569, #475569)",
                 cursor: "pointer",
                 whiteSpace: "nowrap",
               }}
@@ -377,13 +377,13 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
 
       {/* Lista Técnica de Gestión */}
       {cargando ? (
-        <div style={{ padding: "40px", textAlign: "center", color: "#64748B" }}>
-          <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 8px", color: "#0284C7" }} />
+        <div style={{ padding: "40px", textAlign: "center", color: "var(--ct-64748b, #64748B)" }}>
+          <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 8px", color: "var(--ct-0284c7, #0284C7)" }} />
           <div>Cargando registros comerciales...</div>
         </div>
       ) : productosFiltrados.length === 0 ? (
-        <div style={{ padding: "40px", textAlign: "center", background: "#FFFFFF", borderRadius: "14px", border: "1px dashed #CBD5E1" }}>
-          <p style={{ margin: 0, color: "#64748B", fontSize: "0.9rem" }}>No se encontraron registros en esta categoría.</p>
+        <div style={{ padding: "40px", textAlign: "center", background: "var(--cf-ffffff, #FFFFFF)", borderRadius: "14px", border: "1px dashed var(--cb-cbd5e1, #CBD5E1)" }}>
+          <p style={{ margin: 0, color: "var(--ct-64748b, #64748B)", fontSize: "0.9rem" }}>No se encontraron registros en esta categoría.</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -396,8 +396,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
               <div
                 key={p.pro_id}
                 style={{
-                  background: "#FFFFFF",
-                  border: "1px solid #E2E8F0",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                   borderRadius: "14px",
                   padding: "16px 20px",
                   display: "flex",
@@ -416,8 +416,8 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
                       width: "48px",
                       height: "48px",
                       borderRadius: "10px",
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
+                      background: "var(--cf-f8fafc, #F8FAFC)",
+                      border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                       overflow: "hidden",
                       display: "flex",
                       alignItems: "center",
@@ -438,38 +438,38 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
 
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--ct-64748b, #64748B)", textTransform: "uppercase" }}>
                         {p.categoria?.ctg_nombre || "Servicio"}
                       </span>
                       {p.pro_destacado && (
-                        <span style={{ background: "#FEF3C7", color: "#B45309", fontSize: "0.68rem", fontWeight: 800, padding: "1px 6px", borderRadius: "4px" }}>
+                        <span style={{ background: "var(--cf-fef3c7, #FEF3C7)", color: "var(--ct-b45309, #B45309)", fontSize: "0.68rem", fontWeight: 800, padding: "1px 6px", borderRadius: "4px" }}>
                           DESTACADO
                         </span>
                       )}
                       {tieneVideo && (
-                        <span style={{ background: "#E0F2FE", color: "#0369A1", fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                        <span style={{ background: "var(--cf-e0f2fe, #E0F2FE)", color: "var(--ct-0369a1, #0369A1)", fontSize: "0.68rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px", display: "inline-flex", alignItems: "center", gap: "2px" }}>
                           <Video size={10} /> Video
                         </span>
                       )}
                     </div>
 
-                    <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#0F172A" }}>
+                    <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                       {p.pro_nombre}
                     </h4>
 
-                    <div style={{ fontSize: "0.78rem", color: "#64748B", marginTop: "2px" }}>
-                      SKU: <strong style={{ color: "#334155" }}>{varPrincipal?.var_sku || "N/A"}</strong> • {p.variantes.length} modalidad(es)
+                    <div style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)", marginTop: "2px" }}>
+                      SKU: <strong style={{ color: "var(--ct-334155, #334155)" }}>{varPrincipal?.var_sku || "N/A"}</strong> • {p.variantes.length} modalidad(es)
                     </div>
                   </div>
                 </div>
 
                 {/* Precios e Impuestos */}
                 <div style={{ textAlign: "right", minWidth: "140px" }}>
-                  <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0F172A" }}>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                     ${varPrincipal?.precio_total.toFixed(2) || "0.00"}{" "}
-                    <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 500 }}>USD</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", fontWeight: 500 }}>USD</span>
                   </div>
-                  <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                  <div style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)" }}>
                     Base: ${varPrincipal?.var_precio.toFixed(2)} + IVA 15%
                   </div>
                 </div>
@@ -486,9 +486,9 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
                     title="Editar producto, tarifas y recursos digitales"
                     aria-label="Editar producto, tarifas y recursos digitales"
                     style={{
-                      background: "#FFFFFF",
-                      border: "1px solid #CBD5E1",
-                      color: "#334155",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                      color: "var(--ct-334155, #334155)",
                       padding: "6px 12px",
                       borderRadius: "8px",
                       fontSize: "0.78rem",
@@ -510,9 +510,9 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
                     title="Desactivar producto del catálogo"
                     aria-label="Desactivar producto del catálogo"
                     style={{
-                      background: "#FFF1F2",
-                      border: "1px solid #FECDD3",
-                      color: "#E11D48",
+                      background: "var(--cf-fff1f2, #FFF1F2)",
+                      border: "1px solid var(--cb-fecdd3, #FECDD3)",
+                      color: "var(--ct-e11d48, #E11D48)",
                       padding: "6px 10px",
                       borderRadius: "8px",
                       fontSize: "0.78rem",

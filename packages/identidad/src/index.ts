@@ -26,6 +26,7 @@ export {
   obtenerHistorialVersionesTermino,
   registrarConsentimientoUsuario,
   obtenerHistorialConsentimientos,
+  guardarPreferenciaTema,
 } from "./acciones";
 export type {
   ConfigTerminosCategoria,

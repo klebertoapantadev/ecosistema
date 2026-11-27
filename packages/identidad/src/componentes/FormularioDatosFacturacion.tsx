@@ -123,15 +123,15 @@ export function FormularioDatosFacturacion({
             style={{
               padding: "8px",
               borderRadius: "8px",
-              background: "var(--esmeralda-suave, #E6F4F1)",
-              color: "var(--esmeralda, #05876E)",
+              background: "var(--cf-e6f4f1, var(--esmeralda-suave, #E6F4F1))",
+              color: "var(--ct-05876e, var(--esmeralda, #05876E))",
               display: "flex",
             }}
           >
             <Receipt size={20} />
           </div>
           <div>
-            <strong style={{ fontSize: "0.92rem", display: "block", color: "var(--negro, #111111)" }}>
+            <strong style={{ fontSize: "0.92rem", display: "block", color: "var(--ct-111111, var(--negro, #111111))" }}>
               Comprobantes Electrónicos SRI
             </strong>
             <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)" }}>
@@ -148,9 +148,9 @@ export function FormularioDatosFacturacion({
             title="Usar Nombres del Registro"
             aria-label="Usar Nombres del Registro"
             style={{
-              background: "var(--blanco, #ffffff)",
+              background: "var(--cf-ffffff, var(--blanco, #ffffff))",
               border: "1px solid var(--panel-linea, #E4E4E4)",
-              color: "var(--violeta, #5000BA)",
+              color: "var(--ct-5000ba, var(--violeta, #5000BA))",
               fontWeight: 700,
               gap: "6px",
               display: "inline-flex",

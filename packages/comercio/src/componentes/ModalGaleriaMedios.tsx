@@ -230,7 +230,7 @@ export function ModalGaleriaMedios({
     >
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "14px",
           width: "100%",
           maxWidth: "960px",
@@ -240,7 +240,7 @@ export function ModalGaleriaMedios({
           flexDirection: "column",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
           overflow: "hidden",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
         }}
       >
         {/* CABECERA */}
@@ -290,7 +290,7 @@ export function ModalGaleriaMedios({
                   {negocio.toUpperCase()}
                 </span>
               </div>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.72rem", color: "#94A3B8" }}>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.72rem", color: "var(--ct-94a3b8, #94A3B8)" }}>
                 Biblioteca en la nube (Supabase Storage). Sube fotos de tu equipo o selecciona existentes.
               </p>
             </div>
@@ -302,7 +302,7 @@ export function ModalGaleriaMedios({
             style={{
               background: "transparent",
               border: "none",
-              color: "#94A3B8",
+              color: "var(--ct-94a3b8, #94A3B8)",
               cursor: "pointer",
               padding: "6px",
               borderRadius: "6px",
@@ -317,8 +317,8 @@ export function ModalGaleriaMedios({
         <div
           style={{
             padding: "10px 20px",
-            background: "#F8FAFC",
-            borderBottom: "1px solid #E2E8F0",
+            background: "var(--cf-f8fafc, #F8FAFC)",
+            borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -338,9 +338,9 @@ export function ModalGaleriaMedios({
                 borderRadius: "8px",
                 fontSize: "0.8rem",
                 fontWeight: tabActiva === "biblioteca" ? 800 : 600,
-                border: tabActiva === "biblioteca" ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                background: tabActiva === "biblioteca" ? "#0284C7" : "#FFFFFF",
-                color: tabActiva === "biblioteca" ? "#FFFFFF" : "#475569",
+                border: tabActiva === "biblioteca" ? "1.5px solid #0284C7" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                background: tabActiva === "biblioteca" ? "#0284C7" : "var(--cf-ffffff, #FFFFFF)",
+                color: tabActiva === "biblioteca" ? "#FFFFFF" : "var(--ct-475569, #475569)",
                 cursor: "pointer",
               }}
             >
@@ -359,9 +359,9 @@ export function ModalGaleriaMedios({
                 borderRadius: "8px",
                 fontSize: "0.8rem",
                 fontWeight: tabActiva === "subir" ? 800 : 600,
-                border: tabActiva === "subir" ? "1.5px solid #059669" : "1px solid #CBD5E1",
-                background: tabActiva === "subir" ? "#059669" : "#FFFFFF",
-                color: tabActiva === "subir" ? "#FFFFFF" : "#475569",
+                border: tabActiva === "subir" ? "1.5px solid #059669" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                background: tabActiva === "subir" ? "#059669" : "var(--cf-ffffff, #FFFFFF)",
+                color: tabActiva === "subir" ? "#FFFFFF" : "var(--ct-475569, #475569)",
                 cursor: "pointer",
               }}
             >
@@ -388,10 +388,10 @@ export function ModalGaleriaMedios({
                     width: "100%",
                     padding: "6px 10px 6px 30px",
                     borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.78rem",
                     boxSizing: "border-box",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                   }}
                 />
               </div>
@@ -403,10 +403,10 @@ export function ModalGaleriaMedios({
                 style={{
                   padding: "6px 10px",
                   borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontSize: "0.78rem",
-                  background: "#FFFFFF",
-                  color: "#334155",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-334155, #334155)",
                   fontWeight: 600,
                 }}
               >
@@ -424,12 +424,12 @@ export function ModalGaleriaMedios({
                 disabled={cargando}
                 title="Recargar archivos de la galería"
                 style={{
-                  background: "#FFFFFF",
-                  border: "1px solid #CBD5E1",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   borderRadius: "6px",
                   padding: "6px 8px",
                   cursor: cargando ? "wait" : "pointer",
-                  color: "#475569",
+                  color: "var(--ct-475569, #475569)",
                   display: "flex",
                 }}
               >
@@ -443,9 +443,9 @@ export function ModalGaleriaMedios({
         {error && (
           <div
             style={{
-              background: "#FEF2F2",
-              borderBottom: "1px solid #FCA5A5",
-              color: "#991B1B",
+              background: "var(--cf-fef2f2, #FEF2F2)",
+              borderBottom: "1px solid var(--cb-fca5a5, #FCA5A5)",
+              color: "var(--ct-991b1b, #991B1B)",
               padding: "8px 16px",
               fontSize: "0.78rem",
               display: "flex",
@@ -459,7 +459,7 @@ export function ModalGaleriaMedios({
             </div>
             <button
               onClick={() => setError(null)}
-              style={{ background: "none", border: "none", color: "#991B1B", cursor: "pointer", padding: 0 }}
+              style={{ background: "none", border: "none", color: "var(--ct-991b1b, #991B1B)", cursor: "pointer", padding: 0 }}
             >
               <X size={14} />
             </button>
@@ -469,9 +469,9 @@ export function ModalGaleriaMedios({
         {exito && (
           <div
             style={{
-              background: "#F0FDF4",
+              background: "var(--cf-f0fdf4, #F0FDF4)",
               borderBottom: "1px solid #86EFAC",
-              color: "#166534",
+              color: "var(--ct-166534, #166534)",
               padding: "8px 16px",
               fontSize: "0.78rem",
               display: "flex",
@@ -485,7 +485,7 @@ export function ModalGaleriaMedios({
             </div>
             <button
               onClick={() => setExito(null)}
-              style={{ background: "none", border: "none", color: "#166534", cursor: "pointer", padding: 0 }}
+              style={{ background: "none", border: "none", color: "var(--ct-166534, #166534)", cursor: "pointer", padding: 0 }}
             >
               <X size={14} />
             </button>
@@ -498,7 +498,7 @@ export function ModalGaleriaMedios({
           {tabActiva === "biblioteca" && (
             <div>
               {cargando ? (
-                <div style={{ padding: "60px 0", textAlign: "center", color: "#64748B" }}>
+                <div style={{ padding: "60px 0", textAlign: "center", color: "var(--ct-64748b, #64748B)" }}>
                   <Loader2 size={32} className="eco-spin" style={{ margin: "0 auto 12px" }} />
                   <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>
                     Consultando biblioteca multimedia de {negocio.toUpperCase()}...
@@ -509,16 +509,16 @@ export function ModalGaleriaMedios({
                   style={{
                     padding: "60px 20px",
                     textAlign: "center",
-                    background: "#F8FAFC",
+                    background: "var(--cf-f8fafc, #F8FAFC)",
                     borderRadius: "12px",
-                    border: "2px dashed #CBD5E1",
+                    border: "2px dashed var(--cb-cbd5e1, #CBD5E1)",
                   }}
                 >
                   <ImageIcon size={44} color="#94A3B8" style={{ margin: "0 auto 10px" }} />
-                  <h4 style={{ margin: "0 0 6px 0", fontSize: "0.95rem", color: "#334155" }}>
+                  <h4 style={{ margin: "0 0 6px 0", fontSize: "0.95rem", color: "var(--ct-334155, #334155)" }}>
                     No hay imágenes disponibles en esta carpeta
                   </h4>
-                  <p style={{ margin: "0 0 16px 0", fontSize: "0.78rem", color: "#64748B" }}>
+                  <p style={{ margin: "0 0 16px 0", fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                     Sube fotos desde tu equipo o disco local para utilizarlas en los productos.
                   </p>
                   <button
@@ -573,10 +573,10 @@ export function ModalGaleriaMedios({
                           }
                         }}
                         style={{
-                          border: esActivo ? "2.5px solid #0284C7" : "1px solid #E2E8F0",
+                          border: esActivo ? "2.5px solid #0284C7" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
                           borderRadius: "10px",
                           overflow: "hidden",
-                          background: "#FFFFFF",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           cursor: "pointer",
                           transition: "all 0.15s ease",
                           position: "relative",
@@ -665,7 +665,7 @@ export function ModalGaleriaMedios({
                               style={{
                                 fontSize: "0.72rem",
                                 fontWeight: 700,
-                                color: "#1E293B",
+                                color: "var(--ct-1e293b, #1E293B)",
                                 whiteSpace: "nowrap",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
@@ -673,7 +673,7 @@ export function ModalGaleriaMedios({
                             >
                               {item.nombre}
                             </div>
-                            <div style={{ fontSize: "0.65rem", color: "#94A3B8", marginTop: "2px" }}>
+                            <div style={{ fontSize: "0.65rem", color: "var(--ct-94a3b8, #94A3B8)", marginTop: "2px" }}>
                               {formatBytes(item.tamanioBytes)}
                             </div>
                           </div>
@@ -685,7 +685,7 @@ export function ModalGaleriaMedios({
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
-                              borderTop: "1px solid #F1F5F9",
+                              borderTop: "1px solid var(--cb-f1f5f9, #F1F5F9)",
                               paddingTop: "6px",
                             }}
                           >
@@ -696,7 +696,7 @@ export function ModalGaleriaMedios({
                               onClick={(e) => e.stopPropagation()}
                               title="Ver imagen en tamaño completo"
                               style={{
-                                color: "#64748B",
+                                color: "var(--ct-64748b, #64748B)",
                                 fontSize: "0.68rem",
                                 display: "inline-flex",
                                 alignItems: "center",
@@ -718,7 +718,7 @@ export function ModalGaleriaMedios({
                               style={{
                                 background: "none",
                                 border: "none",
-                                color: "#EF4444",
+                                color: "var(--ct-ef4444, #EF4444)",
                                 cursor: "pointer",
                                 padding: "2px",
                                 display: "flex",
@@ -758,8 +758,8 @@ export function ModalGaleriaMedios({
                   }
                 }}
                 style={{
-                  border: arrastrando ? "2.5px dashed #0284C7" : "2px dashed #CBD5E1",
-                  background: arrastrando ? "#F0F9FF" : "#F8FAFC",
+                  border: arrastrando ? "2.5px dashed #0284C7" : "2px dashed var(--cb-cbd5e1, #CBD5E1)",
+                  background: arrastrando ? "var(--cf-f0f9ff, #F0F9FF)" : "var(--cf-f8fafc, #F8FAFC)",
                   borderRadius: "14px",
                   padding: "48px 24px",
                   textAlign: "center",
@@ -774,20 +774,20 @@ export function ModalGaleriaMedios({
                     width: "56px",
                     height: "56px",
                     borderRadius: "12px",
-                    background: "#E2E8F0",
+                    background: "var(--cf-e2e8f0, #E2E8F0)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     margin: "0 auto 12px",
-                    color: "#0F172A",
+                    color: "var(--ct-0f172a, #0F172A)",
                   }}
                 >
                   <Upload size={28} />
                 </div>
-                <h4 style={{ margin: "0 0 4px 0", fontSize: "1rem", color: "#0F172A", fontWeight: 800 }}>
+                <h4 style={{ margin: "0 0 4px 0", fontSize: "1rem", color: "var(--ct-0f172a, #0F172A)", fontWeight: 800 }}>
                   Arrastra y suelta fotos aquí, o haz clic para examinar
                 </h4>
-                <p style={{ margin: "0 0 14px 0", fontSize: "0.78rem", color: "#64748B" }}>
+                <p style={{ margin: "0 0 14px 0", fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                   Archivos compatibles: JPG, PNG, WEBP, GIF, SVG (Hasta 5 MB por imagen).
                 </p>
 
@@ -842,13 +842,13 @@ export function ModalGaleriaMedios({
               {archivosProgreso.length > 0 && (
                 <div
                   style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E2E8F0",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                     borderRadius: "10px",
                     padding: "14px",
                   }}
                 >
-                  <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "#1E293B", marginBottom: "8px" }}>
+                  <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--ct-1e293b, #1E293B)", marginBottom: "8px" }}>
                     Archivos en cola ({archivosProgreso.length}):
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -861,23 +861,23 @@ export function ModalGaleriaMedios({
                           justifyContent: "space-between",
                           padding: "6px 10px",
                           borderRadius: "6px",
-                          background: "#F8FAFC",
+                          background: "var(--cf-f8fafc, #F8FAFC)",
                           fontSize: "0.74rem",
                         }}
                       >
-                        <span style={{ fontWeight: 600, color: "#334155" }}>{p.nombre}</span>
+                        <span style={{ fontWeight: 600, color: "var(--ct-334155, #334155)" }}>{p.nombre}</span>
                         {p.estado === "subiendo" && (
-                          <span style={{ color: "#0284C7", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ color: "var(--ct-0284c7, #0284C7)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                             <Loader2 size={12} className="eco-spin" /> Subiendo...
                           </span>
                         )}
                         {p.estado === "listo" && (
-                          <span style={{ color: "#15803D", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ color: "var(--ct-15803d, #15803D)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
                             <CheckCircle2 size={12} /> Listo
                           </span>
                         )}
                         {p.estado === "error" && (
-                          <span style={{ color: "#B91C1C", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ color: "var(--ct-b91c1c, #B91C1C)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
                             <AlertCircle size={12} /> Error
                           </span>
                         )}
@@ -909,7 +909,7 @@ export function ModalGaleriaMedios({
           >
             <div
               style={{
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 borderRadius: "12px",
                 padding: "20px",
                 maxWidth: "400px",
@@ -917,11 +917,11 @@ export function ModalGaleriaMedios({
                 boxShadow: "0 20px 25px -5px rgba(0,0,0,0.3)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#DC2626", marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "var(--ct-dc2626, #DC2626)", marginBottom: "12px" }}>
                 <AlertCircle size={24} />
                 <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800 }}>¿Eliminar esta imagen?</h4>
               </div>
-              <p style={{ margin: "0 0 14px 0", fontSize: "0.8rem", color: "#475569", lineHeight: 1.4 }}>
+              <p style={{ margin: "0 0 14px 0", fontSize: "0.8rem", color: "var(--ct-475569, #475569)", lineHeight: 1.4 }}>
                 Se eliminará el archivo <strong>"{confirmarEliminar.nombre}"</strong> de la galería en la nube de {negocio.toUpperCase()}.
                 Los productos que usen este enlace podrían dejar de mostrar la foto.
               </p>
@@ -930,9 +930,9 @@ export function ModalGaleriaMedios({
                   type="button"
                   onClick={() => setConfirmarEliminar(null)}
                   style={{
-                    background: "#F1F5F9",
-                    border: "1px solid #CBD5E1",
-                    color: "#475569",
+                    background: "var(--cf-f1f5f9, #F1F5F9)",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    color: "var(--ct-475569, #475569)",
                     padding: "7px 14px",
                     borderRadius: "6px",
                     fontSize: "0.78rem",
@@ -967,25 +967,25 @@ export function ModalGaleriaMedios({
         <div
           style={{
             padding: "12px 20px",
-            background: "#F8FAFC",
-            borderTop: "1px solid #E2E8F0",
+            background: "var(--cf-f8fafc, #F8FAFC)",
+            borderTop: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
-          <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)" }}>
             {modoSeleccion === "multiple" ? (
               seleccionadosMultiples.length > 0 ? (
                 <span>
-                  Seleccionadas: <strong style={{ color: "#0F172A" }}>{seleccionadosMultiples.length} imagen(es)</strong>
+                  Seleccionadas: <strong style={{ color: "var(--ct-0f172a, #0F172A)" }}>{seleccionadosMultiples.length} imagen(es)</strong>
                 </span>
               ) : (
                 <span>Haz clic en una o varias imágenes para seleccionarlas</span>
               )
             ) : seleccionado ? (
               <span>
-                Seleccionado: <strong style={{ color: "#0F172A" }}>{seleccionado.nombre}</strong> ({formatBytes(seleccionado.tamanioBytes)})
+                Seleccionado: <strong style={{ color: "var(--ct-0f172a, #0F172A)" }}>{seleccionado.nombre}</strong> ({formatBytes(seleccionado.tamanioBytes)})
               </span>
             ) : (
               <span>Haz clic en una imagen para seleccionarla</span>
@@ -997,9 +997,9 @@ export function ModalGaleriaMedios({
               type="button"
               onClick={onCerrar}
               style={{
-                background: "#FFFFFF",
-                border: "1px solid #CBD5E1",
-                color: "#475569",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                color: "var(--ct-475569, #475569)",
                 padding: "8px 16px",
                 borderRadius: "8px",
                 fontSize: "0.8rem",

@@ -160,7 +160,7 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
     return (
       <div className="tarjeta-mfa" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "28px" }}>
         <RefreshCw size={20} className="animate-spin text-muted" />
-        <span style={{ fontSize: "0.9rem", color: "#666" }}>Comprobando configuración de seguridad...</span>
+        <span style={{ fontSize: "0.9rem", color: "var(--ct-666666, #666)" }}>Comprobando configuración de seguridad...</span>
       </div>
     );
   }
@@ -169,16 +169,16 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
 
   if (requiereInscripcion) {
     return (
-      <div className="tarjeta-mfa" style={{ maxWidth: "480px", margin: "0 auto", padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+      <div className="tarjeta-mfa" style={{ maxWidth: "480px", margin: "0 auto", padding: "24px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1px solid var(--linea)", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
         {!qr ? (
           <div style={{ textAlign: "center" }}>
             <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "var(--acento-diluido)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
               <Smartphone size={26} color="var(--violeta, #5000BA)" />
             </div>
-            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", marginBottom: "8px" }}>
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--ct-111111, #111)", marginBottom: "8px" }}>
               Segundo Factor Requerido
             </h3>
-            <p style={{ fontSize: "0.88rem", color: "#666", lineHeight: 1.5, marginBottom: "20px" }}>
+            <p style={{ fontSize: "0.88rem", color: "var(--ct-666666, #666)", lineHeight: 1.5, marginBottom: "20px" }}>
               Para acceder a este módulo operativo, vincula una app de autenticación (Google Authenticator, Authy o Microsoft Authenticator).
             </p>
             <button
@@ -194,10 +194,10 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
           </div>
         ) : (
           <div style={{ textAlign: "center" }}>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111", marginBottom: "6px" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--ct-111111, #111)", marginBottom: "6px" }}>
               Escanea el Código QR
             </h3>
-            <p style={{ fontSize: "0.82rem", color: "#666", marginBottom: "16px" }}>
+            <p style={{ fontSize: "0.82rem", color: "var(--ct-666666, #666)", marginBottom: "16px" }}>
               Abre tu app autenticadora, escanea el QR e ingresa el código de 6 dígitos que aparezca:
             </p>
 
@@ -207,9 +207,9 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
             </div>
 
             {secretKey && (
-              <div style={{ marginBottom: "16px", fontSize: "0.78rem", color: "#666" }}>
+              <div style={{ marginBottom: "16px", fontSize: "0.78rem", color: "var(--ct-666666, #666)" }}>
                 <span>O ingresa esta clave manualmente: </span>
-                <code style={{ fontWeight: 800, color: "var(--violeta, #5000BA)", wordBreak: "break-all" }}>{secretKey}</code>
+                <code style={{ fontWeight: 800, color: "var(--ct-5000ba, var(--violeta, #5000BA))", wordBreak: "break-all" }}>{secretKey}</code>
               </div>
             )}
 
@@ -254,14 +254,14 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
   }
 
   return (
-    <div className="tarjeta-mfa" style={{ maxWidth: "440px", margin: "0 auto", padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)", boxShadow: "0 4px 16px rgba(0,0,0,0.04)", textAlign: "center" }}>
+    <div className="tarjeta-mfa" style={{ maxWidth: "440px", margin: "0 auto", padding: "24px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1px solid var(--linea)", boxShadow: "0 4px 16px rgba(0,0,0,0.04)", textAlign: "center" }}>
       <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "var(--acento-diluido)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto" }}>
         <ShieldCheck size={28} color="var(--violeta, #5000BA)" />
       </div>
-      <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", marginBottom: "6px" }}>
+      <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--ct-111111, #111)", marginBottom: "6px" }}>
         Ingresa tu Código de 6 Dígitos
       </h3>
-      <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: "18px" }}>
+      <p style={{ fontSize: "0.85rem", color: "var(--ct-666666, #666)", marginBottom: "18px" }}>
         Ingresa el código temporal de tu app de autenticación para desbloquear la sesión:
       </p>
 
@@ -298,7 +298,7 @@ export function VerificacionMFA({ necesitaInscripcion: propNecesitaInscripcion }
           type="button"
           onClick={iniciarInscripcion}
           disabled={enviando}
-          style={{ background: "transparent", border: "none", color: "var(--violeta, #5000BA)", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}
+          style={{ background: "transparent", border: "none", color: "var(--ct-5000ba, var(--violeta, #5000BA))", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}
         >
           ¿Reconfigurar o cambiar app autenticadora?
         </button>

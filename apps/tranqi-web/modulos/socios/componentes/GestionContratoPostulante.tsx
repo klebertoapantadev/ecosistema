@@ -297,7 +297,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             padding: "14px 18px",
             borderRadius: "12px",
             border: `2px solid ${seccionActiva === "FIRMAR" ? "#0E6648" : "var(--linea)"}`,
-            background: seccionActiva === "FIRMAR" ? "var(--exito-diluido)" : "#FFFFFF",
+            background: seccionActiva === "FIRMAR" ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
             color: seccionActiva === "FIRMAR" ? "var(--exito-texto)" : "var(--texto-2)",
             fontWeight: 800,
             fontSize: "0.95rem",
@@ -321,7 +321,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
             padding: "14px 18px",
             borderRadius: "12px",
             border: `2px solid ${seccionActiva === "OBSERVACIONES" ? "var(--aviso)" : "var(--linea)"}`,
-            background: seccionActiva === "OBSERVACIONES" ? "var(--aviso-diluido)" : "#FFFFFF",
+            background: seccionActiva === "OBSERVACIONES" ? "var(--aviso-diluido)" : "var(--cf-ffffff, #FFFFFF)",
             color: seccionActiva === "OBSERVACIONES" ? "var(--aviso-texto)" : "var(--texto-2)",
             fontWeight: 800,
             fontSize: "0.95rem",
@@ -340,7 +340,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
 
       {/* SECCIÓN 1: ACEPTAR Y FIRMAR */}
       {seccionActiva === "FIRMAR" && (
-        <div style={{ background: "#FFFFFF", border: "1.5px solid var(--linea)", borderRadius: "14px", padding: "20px" }}>
+        <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1.5px solid var(--linea)", borderRadius: "14px", padding: "20px" }}>
           <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
             <button
               type="button"
@@ -441,7 +441,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
                   padding: "24px",
                   border: "2px dashed var(--linea-fuerte)",
                   borderRadius: "10px",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   cursor: "pointer",
                 }}
               >
@@ -467,7 +467,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
 
       {/* SECCIÓN 2: ENVIAR OBSERVACIONES */}
       {seccionActiva === "OBSERVACIONES" && (
-        <form onSubmit={handleEnviarObservaciones} style={{ background: "#FFFFFF", border: "1.5px solid var(--aviso-linea)", borderRadius: "14px", padding: "20px" }}>
+        <form onSubmit={handleEnviarObservaciones} style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1.5px solid var(--aviso-linea)", borderRadius: "14px", padding: "20px" }}>
           <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "14px" }}>
             <MessageSquare size={24} color="var(--aviso)" />
             <div>

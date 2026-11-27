@@ -840,7 +840,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
     >
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "880px",
@@ -928,7 +928,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 padding: "10px",
                 borderRadius: "10px",
                 border: tipoPersoneria === "natural" ? "2px solid var(--acento)" : "1px solid var(--linea-fuerte)",
-                background: tipoPersoneria === "natural" ? "var(--acento-diluido)" : "#FFFFFF",
+                background: tipoPersoneria === "natural" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                 color: tipoPersoneria === "natural" ? "var(--acento-hondo)" : "var(--texto-2)",
                 fontWeight: 600,
                 display: "flex",
@@ -953,7 +953,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 padding: "10px",
                 borderRadius: "10px",
                 border: tipoPersoneria === "juridica" ? "2px solid var(--acento)" : "1px solid var(--linea-fuerte)",
-                background: tipoPersoneria === "juridica" ? "var(--acento-diluido)" : "#FFFFFF",
+                background: tipoPersoneria === "juridica" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                 color: tipoPersoneria === "juridica" ? "var(--acento-hondo)" : "var(--texto-2)",
                 fontWeight: 600,
                 display: "flex",
@@ -1006,7 +1006,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 <div style={{ display: "flex", gap: "6px" }}>
                   <label
                     style={{
-                      background: "#FFFFFF",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       border: "1px solid var(--exito-linea)",
                       color: "var(--exito-texto)",
                       padding: "6px 12px",
@@ -1196,7 +1196,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
               {/* Panel Desplegable de Log de Extracción y Mapeo */}
               {mostrarLogDetallado && (
-                <div style={{ background: "#FFFFFF", border: "1px solid var(--exito-linea)", borderRadius: "8px", padding: "10px", marginTop: "2px" }}>
+                <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1px solid var(--exito-linea)", borderRadius: "8px", padding: "10px", marginTop: "2px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", borderBottom: "1px solid var(--linea)", paddingBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
                     <div style={{ display: "flex", gap: "6px" }}>
                       <button
@@ -1356,7 +1356,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           {tipoPersoneria === "natural" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {/* Bloque 1: Identificación y Nombres Completos (Editable) */}
-              <div style={{ border: "1px solid var(--linea)", borderRadius: "10px", padding: "12px 14px", background: "#FFFFFF", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ border: "1px solid var(--linea)", borderRadius: "10px", padding: "12px 14px", background: "var(--cf-ffffff, #FFFFFF)", display: "flex", flexDirection: "column", gap: "10px" }}>
                 <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
                   <User size={15} color="var(--acento)" /> Identificación y Nombres del Titular
                 </span>
@@ -1406,7 +1406,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           : "1px solid var(--linea-fuerte)",
                         background: camposAria["identificacion"] && !camposModificados["identificacion"]
                           ? "var(--exito-diluido)"
-                          : "#FFFFFF",
+                          : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.82rem"
                       }}
                     />
@@ -1438,7 +1438,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           : "1px solid var(--linea-fuerte)",
                         background: camposAria["nombres"] && !camposModificados["nombres"]
                           ? "var(--exito-diluido)"
-                          : "#FFFFFF",
+                          : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.82rem"
                       }}
                     />
@@ -1468,7 +1468,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                           : "1px solid var(--linea-fuerte)",
                         background: camposAria["apellidos"] && !camposModificados["apellidos"]
                           ? "var(--exito-diluido)"
-                          : "#FFFFFF",
+                          : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.82rem"
                       }}
                     />
@@ -1504,7 +1504,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "6px 8px",
                         borderRadius: "6px",
                         border: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
-                        background: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "var(--exito-diluido)" : "#FFFFFF",
+                        background: camposAria["nacionalidad"] && !camposModificados["nacionalidad"] ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1530,7 +1530,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "6px 8px",
                         borderRadius: "6px",
                         border: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
-                        background: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "var(--exito-diluido)" : "#FFFFFF",
+                        background: camposAria["fechaNacimiento"] && !camposModificados["fechaNacimiento"] ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1557,7 +1557,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "6px 8px",
                         borderRadius: "6px",
                         border: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
-                        background: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "var(--exito-diluido)" : "#FFFFFF",
+                        background: camposAria["lugarNacimiento"] && !camposModificados["lugarNacimiento"] ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1584,7 +1584,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "6px 8px",
                         borderRadius: "6px",
                         border: camposAria["sexo"] && !camposModificados["sexo"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
-                        background: camposAria["sexo"] && !camposModificados["sexo"] ? "var(--exito-diluido)" : "#FFFFFF",
+                        background: camposAria["sexo"] && !camposModificados["sexo"] ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.8rem"
                       }}
                     >
@@ -1613,7 +1613,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "6px 8px",
                         borderRadius: "6px",
                         border: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
-                        background: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "var(--exito-diluido)" : "#FFFFFF",
+                        background: camposAria["estadoCivil"] && !camposModificados["estadoCivil"] ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.8rem"
                       }}
                     >
@@ -1646,7 +1646,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "6px 8px",
                         borderRadius: "6px",
                         border: camposAria["conyuge"] && !camposModificados["conyuge"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
-                        background: camposAria["conyuge"] && !camposModificados["conyuge"] ? "var(--exito-diluido)" : "#FFFFFF",
+                        background: camposAria["conyuge"] && !camposModificados["conyuge"] ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1672,7 +1672,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         padding: "6px 8px",
                         borderRadius: "6px",
                         border: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "1px solid var(--exito-linea)" : "1px solid var(--linea-fuerte)",
-                        background: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "var(--exito-diluido)" : "#FFFFFF",
+                        background: camposAria["fechaExpiracionDocumento"] && !camposModificados["fechaExpiracionDocumento"] ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.8rem"
                       }}
                     />
@@ -1785,7 +1785,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                         : "1px solid var(--linea-fuerte)",
                       background: camposAria["razonSocial"] && !camposModificados["razonSocial"]
                         ? "var(--exito-diluido)"
-                        : "#FFFFFF",
+                        : "var(--cf-ffffff, #FFFFFF)",
                       fontSize: "0.85rem"
                     }}
                   />
@@ -1840,7 +1840,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   {/* Tarjeta A: Cédula del Representante Legal (Obligatorio) */}
-                  <div style={{ background: "#FFFFFF", border: archivoRepCedula ? "1.5px solid var(--exito-linea)" : "1.5px dashed var(--acento)", borderRadius: "10px", padding: "10px 12px" }}>
+                  <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: archivoRepCedula ? "1.5px solid var(--exito-linea)" : "1.5px dashed var(--acento)", borderRadius: "10px", padding: "10px 12px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--texto)" }}>
@@ -1882,7 +1882,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   </div>
 
                   {/* Tarjeta B: Nombramiento Inscrito en Registro Mercantil (Obligatorio) */}
-                  <div style={{ background: "#FFFFFF", border: archivoNombramiento ? "1.5px solid var(--exito-linea)" : "1.5px dashed var(--acento)", borderRadius: "10px", padding: "10px 12px" }}>
+                  <div style={{ background: "var(--cf-ffffff, #FFFFFF)", border: archivoNombramiento ? "1.5px solid var(--exito-linea)" : "1.5px dashed var(--acento)", borderRadius: "10px", padding: "10px 12px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--texto)" }}>
@@ -1970,7 +1970,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                             : "1px solid var(--linea-fuerte)",
                           background: camposAria["repNombres"] && !camposModificados["repNombres"]
                             ? "var(--exito-diluido)"
-                            : "#FFFFFF",
+                            : "var(--cf-ffffff, #FFFFFF)",
                           fontSize: "0.8rem"
                         }}
                       />
@@ -1999,7 +1999,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                             : "1px solid var(--linea-fuerte)",
                           background: camposAria["repCedula"] && !camposModificados["repCedula"]
                             ? "var(--exito-diluido)"
-                            : "#FFFFFF",
+                            : "var(--cf-ffffff, #FFFFFF)",
                           fontSize: "0.8rem"
                         }}
                       />
@@ -2192,7 +2192,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 padding: "9px 16px",
                 borderRadius: "8px",
                 border: "1px solid var(--linea-fuerte)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 color: "var(--texto-2)",
                 fontSize: "0.85rem",
                 fontWeight: 600,
@@ -2234,7 +2234,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 padding: "9px 16px",
                 borderRadius: "8px",
                 border: "1px solid var(--linea-fuerte)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 color: "var(--texto)",
                 fontSize: "0.85rem",
                 fontWeight: 600,
@@ -2252,7 +2252,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                 padding: "9px 16px",
                 borderRadius: "8px",
                 border: "1px solid var(--linea-fuerte)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 color: "var(--texto)",
                 fontSize: "0.85rem",
                 fontWeight: 600,

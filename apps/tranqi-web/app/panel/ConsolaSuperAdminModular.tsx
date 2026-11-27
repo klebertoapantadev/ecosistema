@@ -1027,7 +1027,7 @@ export function ConsolaSuperAdminModular() {
               fontSize: "0.78rem",
               fontWeight: 700,
               color: "var(--error)",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               padding: "7px 16px",
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
@@ -1071,7 +1071,7 @@ export function ConsolaSuperAdminModular() {
               <div
                 key={m.clave}
                 style={{
-                  background: "#ffffff",
+                  background: "var(--cf-ffffff, #ffffff)",
                   borderRadius: "16px",
                   border: "1px solid var(--linea)",
                   padding: "20px",
@@ -1098,7 +1098,7 @@ export function ConsolaSuperAdminModular() {
                         aria-label="Editar"
                         style={{
                           border: "1px solid var(--linea-fuerte)",
-                          background: "#FFFFFF",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           borderRadius: "6px",
                           padding: "4px 8px",
                           fontSize: "0.74rem",
@@ -1115,7 +1115,7 @@ export function ConsolaSuperAdminModular() {
                     </div>
                   </div>
 
-                  <h4 style={{ fontSize: "0.96rem", fontWeight: 800, color: "#111", margin: "0 0 4px 0" }}>
+                  <h4 style={{ fontSize: "0.96rem", fontWeight: 800, color: "var(--ct-111111, #111)", margin: "0 0 4px 0" }}>
                     {info.titulo}
                   </h4>
                   <p style={{ fontSize: "0.82rem", color: "var(--texto-suave)", margin: 0, lineHeight: 1.4 }}>
@@ -1143,7 +1143,7 @@ export function ConsolaSuperAdminModular() {
       <section
         style={{
           marginTop: "32px",
-          background: "var(--blanco, #ffffff)",
+          background: "var(--cf-ffffff, var(--blanco, #ffffff))",
           borderRadius: "14px",
           border: "1px solid var(--panel-linea, var(--linea))",
           padding: "24px",

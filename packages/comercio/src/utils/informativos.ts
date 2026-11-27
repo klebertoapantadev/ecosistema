@@ -70,7 +70,7 @@ const CAMPANAS_SEMILLA_TRANQI: CampanaInformativa[] = [
     inf_prioridad: "ALTA",
     inf_detalle: {
       categoria: "Inquilinato",
-      color_tag: "#1E3A8A",
+      color_tag: "var(--ct-1e3a8a, #1E3A8A)",
       icono: "home-outline",
       institucion: "Asamblea Nacional del Ecuador",
       cta_texto: "Ver detalles de la reforma",
@@ -101,7 +101,7 @@ const CAMPANAS_SEMILLA_TRANQI: CampanaInformativa[] = [
     inf_prioridad: "ALTA",
     inf_detalle: {
       categoria: "Laboral",
-      color_tag: "#065F46",
+      color_tag: "var(--ct-065f46, #065F46)",
       icono: "briefcase-outline",
       institucion: "Ministerio del Trabajo Ecuador",
       cta_texto: "Revisar cálculo legal",
@@ -132,7 +132,7 @@ const CAMPANAS_SEMILLA_TRANQI: CampanaInformativa[] = [
     inf_prioridad: "MEDIA",
     inf_detalle: {
       categoria: "Corporativo",
-      color_tag: "#9A3412",
+      color_tag: "var(--ct-9a3412, #9A3412)",
       icono: "flash-outline",
       institucion: "Ministerio de Energía y Minas",
       cta_texto: "Leer normativa empresarial",
@@ -163,7 +163,7 @@ const CAMPANAS_SEMILLA_TRANQI: CampanaInformativa[] = [
     inf_prioridad: "ALTA",
     inf_detalle: {
       categoria: "Privacidad",
-      color_tag: "#4C1D95",
+      color_tag: "var(--ct-4c1d95, #4C1D95)",
       icono: "shield-checkmark-outline",
       institucion: "Superintendencia de Protección de Datos",
       cta_texto: "Auditar cumplimiento",
@@ -194,7 +194,7 @@ const CAMPANAS_SEMILLA_TRANQI: CampanaInformativa[] = [
     inf_prioridad: "MEDIA",
     inf_detalle: {
       categoria: "Societario",
-      color_tag: "#1E293B",
+      color_tag: "var(--ct-1e293b, #1E293B)",
       icono: "document-text-outline",
       institucion: "Superintendencia de Compañías (SUPERCIAS)",
       cta_texto: "Ver guía de formalización",
@@ -225,7 +225,7 @@ const CAMPANAS_SEMILLA_TRANQI: CampanaInformativa[] = [
     inf_prioridad: "ALTA",
     inf_detalle: {
       categoria: "Niñez y Familia",
-      color_tag: "#831843",
+      color_tag: "var(--ct-831843, #831843)",
       icono: "scale-outline",
       institucion: "Registro Oficial del Ecuador",
       cta_texto: "Consultar texto aprobado",

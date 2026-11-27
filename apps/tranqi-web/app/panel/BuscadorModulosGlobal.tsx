@@ -30,7 +30,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Clientes",
     minNivel: 1,
     icono: ShoppingBag,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "agendar_cita",
@@ -40,7 +40,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agenda",
     minNivel: 1,
     icono: CalendarPlus,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "mis_citas",
@@ -50,7 +50,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agenda",
     minNivel: 1,
     icono: CalendarCheck,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "citas_programadas",
@@ -60,7 +60,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agenda",
     minNivel: 1,
     icono: CalendarClock,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "disponibilidad",
@@ -70,7 +70,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agenda",
     minNivel: 1,
     icono: CalendarClock,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "asignaciones_agenda",
@@ -80,7 +80,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agenda",
     minNivel: 30,
     icono: Shuffle,
-    colorIcono: "#FE5800"
+    colorIcono: "var(--ct-fe5800, #FE5800)"
   },
   {
     clave: "historial_pagos",
@@ -90,7 +90,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Facturación",
     minNivel: 1,
     icono: CreditCard,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "vitrina_comercial_personas",
@@ -110,7 +110,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Empresas",
     minNivel: 1,
     icono: Building2,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "horarios_atencion_agenda",
@@ -120,7 +120,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agendamiento & Operación",
     minNivel: 30,
     icono: Sliders,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "catalogo_productos",
@@ -190,7 +190,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 20,
     icono: MessageSquare,
-    colorIcono: "#DB2777"
+    colorIcono: "var(--ct-db2777, #DB2777)"
   },
   {
     clave: "directorio_contactos",
@@ -200,7 +200,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 20,
     icono: Users,
-    colorIcono: "#7C3AED"
+    colorIcono: "var(--ct-7c3aed, #7C3AED)"
   },
   {
     clave: "galeria_inmediata",
@@ -220,7 +220,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 20,
     icono: MessageSquare,
-    colorIcono: "#BE185D"
+    colorIcono: "var(--ct-be185d, #BE185D)"
   },
   {
     clave: "envio_pedidos_taller",
@@ -240,7 +240,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Pagos",
     minNivel: 12,
     icono: Users,
-    colorIcono: "#6D28D9"
+    colorIcono: "var(--ct-6d28d9, #6D28D9)"
   },
   {
     clave: "taller_floral",
@@ -300,7 +300,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Herramientas",
     minNivel: 1,
     icono: FileCheck,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "billetera_documentos",
@@ -310,7 +310,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Herramientas",
     minNivel: 1,
     icono: Folder,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "mi_cuenta",
@@ -320,7 +320,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Identidad",
     minNivel: 1,
     icono: CircleUser,
-    colorIcono: "var(--violeta, #5000BA)"
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))"
   },
   {
     clave: "ver_como",
@@ -330,7 +330,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Identidad",
     minNivel: 1,
     icono: Sliders,
-    colorIcono: "var(--violeta, #5000BA)"
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))"
   },
   {
     clave: "historial_accesos",
@@ -360,7 +360,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & B2B",
     minNivel: 50,
     icono: Building2,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "compliance_score_legal",
@@ -370,7 +370,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & B2B",
     minNivel: 30,
     icono: ShieldCheck,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "legal_hr_laboral",
@@ -400,7 +400,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Red Profesional",
     minNivel: 20,
     icono: Sparkles,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "muro_informativo_comunidad",
@@ -420,7 +420,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Agendamiento & Operación",
     minNivel: 30,
     icono: Scale,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "gestion_usuarios",
@@ -430,7 +430,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Administración",
     minNivel: 80,
     icono: UserCog,
-    colorIcono: "var(--violeta, #5000BA)"
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))"
   },
   {
     clave: "gestion_red_abogados",
@@ -440,7 +440,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Red Profesional",
     minNivel: 30,
     icono: Scale,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "mi_perfil_abogado",
@@ -450,7 +450,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Red Profesional",
     minNivel: 20,
     icono: Scale,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "socios",
@@ -460,7 +460,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Operación legal",
     minNivel: 50,
     icono: UserCheck,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "crm_clientes",
@@ -480,7 +480,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Operación legal",
     minNivel: 50,
     icono: Briefcase,
-    colorIcono: "#0E6648"
+    colorIcono: "var(--ct-0e6648, #0E6648)"
   },
   {
     clave: "panel_administrar",
@@ -500,7 +500,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Configuración",
     minNivel: 80,
     icono: Settings,
-    colorIcono: "var(--violeta, #5000BA)"
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))"
   },
   {
     clave: "configuracion_correo",
@@ -510,7 +510,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Configuración",
     minNivel: 80,
     icono: Mail,
-    colorIcono: "var(--violeta, #5000BA)"
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))"
   },
   {
     clave: "perfiles",
@@ -520,7 +520,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Gobernanza",
     minNivel: 80,
     icono: Sliders,
-    colorIcono: "var(--violeta, #5000BA)"
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))"
   },
   {
     clave: "emision_notificaciones",
@@ -540,7 +540,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comunicación",
     minNivel: 50,
     icono: Bell,
-    colorIcono: "#1F6FEB"
+    colorIcono: "var(--ct-1f6feb, #1F6FEB)"
   },
   {
     clave: "bitacora_notificaciones",
@@ -570,7 +570,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Operación legal",
     minNivel: 50,
     icono: FileText,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "gestion_terminos_consentimientos",
@@ -580,7 +580,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Gobernanza",
     minNivel: 80,
     icono: FileText,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   },
   {
     clave: "financiamiento",
@@ -590,7 +590,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     categoria: "Comercio & Clientes",
     minNivel: 1,
     icono: CreditCard,
-    colorIcono: "#5000BA"
+    colorIcono: "var(--ct-5000ba, #5000BA)"
   }
 ];
 
@@ -689,7 +689,7 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
         style={{
           display: "flex",
           alignItems: "center",
-          background: "#ffffff",
+          background: "var(--cf-ffffff, #ffffff)",
           border: abierto ? "1.5px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, var(--linea))",
           boxShadow: abierto ? "0 4px 14px rgba(80,0,186,0.12)" : "0 1px 3px rgba(0,0,0,0.04)",
           borderRadius: "10px",
@@ -719,7 +719,7 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
             background: "transparent",
             fontSize: "0.85rem",
             fontFamily: "inherit",
-            color: "#111111"
+            color: "var(--ct-111111, #111111)"
           }}
         />
 
@@ -746,7 +746,7 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
             top: "calc(100% + 6px)",
             left: 0,
             right: 0,
-            background: "#ffffff",
+            background: "var(--cf-ffffff, #ffffff)",
             borderRadius: "12px",
             border: "1px solid var(--panel-linea, var(--linea))",
             boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
@@ -776,7 +776,7 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
                     alignItems: "center",
                     gap: "10px",
                     cursor: "pointer",
-                    background: activo ? "var(--acento-diluido)" : "#ffffff",
+                    background: activo ? "var(--acento-diluido)" : "var(--cf-ffffff, #ffffff)",
                     borderLeft: activo ? "3px solid var(--acento)" : "3px solid transparent",
                     transition: "all 0.1s ease"
                   }}
@@ -786,7 +786,7 @@ export function BuscadorModulosGlobal({ nivelUsuario, esSuperadmin = false }: Pr
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#111111", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--ct-111111, #111111)", display: "flex", alignItems: "center", gap: "6px" }}>
                       <span>{m.nombre}</span>
                       <span style={{ fontSize: "0.64rem", fontWeight: 700, background: "var(--fondo-hundido)", color: "var(--texto-suave)", padding: "1px 6px", borderRadius: "999px" }}>
                         {m.categoria}

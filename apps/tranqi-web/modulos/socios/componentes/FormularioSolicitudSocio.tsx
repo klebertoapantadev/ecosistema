@@ -170,7 +170,7 @@ async function subirDocumento(
 }
 
 const btnPillStyle: React.CSSProperties = {
-  background: "#ffffff",
+  background: "var(--cf-ffffff, #ffffff)",
   border: "1px solid var(--linea)",
   borderRadius: "6px",
   padding: "4px 8px",
@@ -281,7 +281,7 @@ function RecortadorFotoPerfil({
         <div
           style={{
             width: "210px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1px solid var(--linea)",
             borderRadius: "16px",
             padding: "16px 14px",
@@ -349,7 +349,7 @@ function RecortadorFotoPerfil({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "2px solid #FFFFFF",
+                border: "2px solid var(--cb-ffffff, #FFFFFF)",
               }}
             >
               <CheckCircle2 size={15} />
@@ -444,7 +444,7 @@ function RecortadorFotoPerfil({
               style={{
                 flex: 1,
                 padding: "8px 10px",
-                background: "#ffffff",
+                background: "var(--cf-ffffff, #ffffff)",
                 border: "1px solid var(--linea-fuerte)",
                 borderRadius: "8px",
                 fontSize: "0.78rem",
@@ -595,7 +595,7 @@ function ModalCamaraEnVivo({
     >
       <div
         style={{
-          background: "#ffffff",
+          background: "var(--cf-ffffff, #ffffff)",
           borderRadius: "16px",
           maxWidth: "540px",
           width: "100%",
@@ -676,7 +676,7 @@ function ModalCamaraEnVivo({
               padding: "8px 16px",
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               fontSize: "0.85rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -878,7 +878,7 @@ function CampoSubidaArchivo({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", marginTop: "12px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
-        <label style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
+        <label style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
           <IconoComp size={17} color="var(--violeta, #5000BA)" />
           {etiqueta}
         </label>
@@ -927,7 +927,7 @@ function CampoSubidaArchivo({
           gap: "8px",
         }}
       >
-        <div style={{ background: "#ffffff", padding: "10px", borderRadius: "50%", border: "1px solid rgba(80,0,186,0.2)", color: "var(--violeta, #5000BA)", display: "flex" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "10px", borderRadius: "50%", border: "1px solid rgba(80,0,186,0.2)", color: "var(--ct-5000ba, var(--violeta, #5000BA))", display: "flex" }}>
           <UploadCloud size={22} />
         </div>
         <div>
@@ -959,8 +959,8 @@ function CampoSubidaArchivo({
                 padding: "7px 14px",
                 borderRadius: "999px",
                 border: "1.5px solid #5000BA",
-                background: "#ffffff",
-                color: "#5000BA",
+                background: "var(--cf-ffffff, #ffffff)",
+                color: "var(--ct-5000ba, #5000BA)",
                 fontWeight: 700,
                 fontSize: "0.8rem",
                 cursor: "pointer",
@@ -1019,7 +1019,7 @@ function CampoSubidaArchivo({
                   alignItems: "center",
                   justifyContent: "space-between",
                   padding: "8px 12px",
-                  background: "#ffffff",
+                  background: "var(--cf-ffffff, #ffffff)",
                   borderRadius: "8px",
                   border: "1px solid var(--linea)",
                   fontSize: "0.82rem",
@@ -1206,7 +1206,7 @@ function SelectorMultiSeleccion({
             padding: "10px 14px",
             borderRadius: "10px",
             border: "1px solid var(--linea)",
-            background: "#ffffff",
+            background: "var(--cf-ffffff, #ffffff)",
             fontSize: "0.86rem",
             fontWeight: 700,
             color: "var(--texto)",
@@ -1230,7 +1230,7 @@ function SelectorMultiSeleccion({
               top: "calc(100% + 4px)",
               left: 0,
               right: 0,
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               borderRadius: "12px",
               border: "1px solid var(--linea)",
               boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
@@ -1273,7 +1273,7 @@ function SelectorMultiSeleccion({
                       gap: "10px",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      background: checked ? "var(--acento-diluido)" : "#FFFFFF",
+                      background: checked ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                       border: checked ? "1px solid var(--acento)" : "1px solid var(--linea)",
                       cursor: "pointer",
                       fontSize: "0.86rem",
@@ -1291,7 +1291,7 @@ function SelectorMultiSeleccion({
                         height: "18px",
                         borderRadius: "4px",
                         border: checked ? "2px solid var(--acento)" : "1.5px solid var(--linea-fuerte)",
-                        background: checked ? "var(--acento)" : "#FFFFFF",
+                        background: checked ? "var(--acento)" : "var(--cf-ffffff, #FFFFFF)",
                         color: "#FFFFFF",
                         display: "flex",
                         alignItems: "center",
@@ -1928,7 +1928,7 @@ Como socio acreditado tendrás:
 
         {/* Tarjetas de Beneficios Clave */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
-          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
+          <div style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
             <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "var(--acento-diluido)", color: "var(--acento)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Scale size={20} />
             </div>
@@ -1938,7 +1938,7 @@ Como socio acreditado tendrás:
             </p>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
+          <div style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
             <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "var(--fondo-suave)", color: "var(--acento)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Lock size={20} />
             </div>
@@ -1948,7 +1948,7 @@ Como socio acreditado tendrás:
             </p>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
+          <div style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
             <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "var(--fondo-suave)", color: "var(--acento)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Award size={20} />
             </div>
@@ -1960,7 +1960,7 @@ Como socio acreditado tendrás:
         </div>
 
         {/* Sección de Texto Preliminar Editable */}
-        <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "16px", padding: "22px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--linea)", borderRadius: "16px", padding: "22px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
             <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
               <Briefcase size={16} /> Condiciones de participación y beneficios
@@ -2085,7 +2085,7 @@ Como socio acreditado tendrás:
       <div style={{ maxWidth: "720px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
         <div
           style={{
-            background: "#ffffff",
+            background: "var(--cf-ffffff, #ffffff)",
             borderRadius: "18px",
             border: "1px solid var(--linea)",
             padding: "28px",
@@ -2198,7 +2198,7 @@ Como socio acreditado tendrás:
               type="button"
               onClick={() => setPasoActual("formulario")}
               style={{
-                background: "#ffffff",
+                background: "var(--cf-ffffff, #ffffff)",
                 border: "1px solid var(--linea-fuerte)",
                 color: "var(--texto)",
                 padding: "12px 20px",
@@ -2218,7 +2218,7 @@ Como socio acreditado tendrás:
               type="button"
               onClick={() => setModalConfirmarAccion("reiniciar")}
               style={{
-                background: "#ffffff",
+                background: "var(--cf-ffffff, #ffffff)",
                 border: "1px solid var(--linea-fuerte)",
                 color: "var(--texto)",
                 padding: "12px 18px",
@@ -2238,7 +2238,7 @@ Como socio acreditado tendrás:
               type="button"
               onClick={() => setModalConfirmarAccion("eliminar")}
               style={{
-                background: "#ffffff",
+                background: "var(--cf-ffffff, #ffffff)",
                 border: "1px solid var(--linea-fuerte)",
                 color: "var(--error)",
                 padding: "12px 18px",
@@ -2275,7 +2275,7 @@ Como socio acreditado tendrás:
           >
             <div
               style={{
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 borderRadius: "16px",
                 padding: "24px",
                 maxWidth: "460px",
@@ -2318,7 +2318,7 @@ Como socio acreditado tendrás:
                   style={{
                     flex: 1,
                     padding: "10px 16px",
-                    background: "#ffffff",
+                    background: "var(--cf-ffffff, #ffffff)",
                     border: "1px solid var(--linea-fuerte)",
                     color: "var(--texto)",
                     borderRadius: "8px",
@@ -2477,7 +2477,7 @@ Como socio acreditado tendrás:
         {/* Banner de Datos Oficiales Extraídos por ARIA desde el Carnet */}
         {dictamenAriaCarnet && (
           <div style={{ padding: "14px 18px", background: "rgba(14, 102, 72, 0.05)", border: "1.5px solid #0E6648", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "var(--exito-texto)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#0E6648", marginBottom: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "var(--ct-0e6648, #0E6648)", marginBottom: "8px" }}>
               <CheckCircle2 size={18} /> Datos Extraídos por Tranqi desde tu Carnet Profesional
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px" }}>
@@ -2557,7 +2557,7 @@ Como socio acreditado tendrás:
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: "2px solid #ffffff",
+                  border: "2px solid var(--cb-ffffff, #ffffff)",
                 }}
               >
                 <Check size={13} strokeWidth={3} />
@@ -2599,7 +2599,7 @@ Como socio acreditado tendrás:
               <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.82rem", color: "var(--texto-2)", flexWrap: "wrap" }}>
                 <span><strong>Matrícula:</strong> {matriculaProfesional || dictamenAriaCarnet?.matricula_profesional || "Registrada"}</span>
                 {cedula && <span><strong>Cédula:</strong> {cedula}</span>}
-                <span style={{ color: "#0E6648", fontWeight: 700 }}>Foro de Abogados / Judicatura</span>
+                <span style={{ color: "var(--ct-0e6648, #0E6648)", fontWeight: 700 }}>Foro de Abogados / Judicatura</span>
               </div>
             </div>
           </div>
@@ -2607,7 +2607,7 @@ Como socio acreditado tendrás:
 
         {/* Checklist de Criterios de Calidad y Legibilidad del Carnet */}
         <div style={{ background: "rgba(14, 102, 72, 0.04)", border: "1px solid rgba(14, 102, 72, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "var(--exito-texto)" }}>
-          <strong style={{ display: "block", marginBottom: "4px", color: "#0E6648" }}>Requisitos de Legibilidad del Carnet Profesional:</strong>
+          <strong style={{ display: "block", marginBottom: "4px", color: "var(--ct-0e6648, #0E6648)" }}>Requisitos de Legibilidad del Carnet Profesional:</strong>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px" }}>
             <span>Fotografía clara y frontal del carnet sin esquinas recortadas.</span>
             <span>Matrícula No., Cédula y Nombres 100% nítidos y legibles.</span>
@@ -2623,17 +2623,17 @@ Como socio acreditado tendrás:
 
         {/* Previsualizador Rápido con Botón de Inspección Zoom del Carnet */}
         {carnetPreviewUrl && (
-          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid var(--linea)", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "var(--cf-ffffff, #FFFFFF)", padding: "10px 14px", border: "1px solid var(--linea)", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={carnetPreviewUrl} alt="Vista previa carnet profesional" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
+            <img src={carnetPreviewUrl} alt="Vista previa carnet profesional" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid var(--cb-d8b4fe, #D8B4FE)" }} />
             <div>
-              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Carnet Profesional listo para subir</span>
+              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-111111, #111111)" }}>Carnet Profesional listo para subir</span>
               <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)" }}>{carnetArchivos[0]?.name} ({formatoTamanoArchivo(carnetArchivos[0]?.size || 0)})</span>
             </div>
             <button
               type="button"
               onClick={() => setModalInspeccionDoc({ url: carnetPreviewUrl, titulo: "Inspección de Legibilidad — Carnet Profesional" })}
-              style={{ marginLeft: "auto", background: "var(--acento-diluido)", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+              style={{ marginLeft: "auto", background: "var(--acento-diluido)", border: "1px solid var(--cb-d8b4fe, #D8B4FE)", color: "var(--ct-6b21a8, #6B21A8)", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
             >
               <ZoomIn size={14} /> Inspeccionar legibilidad
             </button>
@@ -2644,10 +2644,10 @@ Como socio acreditado tendrás:
           <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(14, 102, 72, 0.04)", border: "1px solid rgba(14, 102, 72, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
             <Scale size={18} color="#0E6648" />
             <div>
-              <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Carnet Profesional actual registrado</span>
+              <span style={{ display: "block", fontWeight: 700, color: "var(--ct-111111, #111111)" }}>Carnet Profesional actual registrado</span>
               <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{carnetExistente.dcs_nombre_archivo}</span>
             </div>
-            <a href={carnetExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#0E6648", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <a href={carnetExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "var(--ct-0e6648, #0E6648)", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
             </a>
           </div>
@@ -2656,7 +2656,7 @@ Como socio acreditado tendrás:
 
       {/* Identidad Oficial: Nombres Completos, Cédula y Matrícula */}
       <div style={{ background: "rgba(80, 0, 186, 0.03)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "14px", padding: "18px", marginBottom: "20px" }}>
-        <span style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+        <span style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
           <ShieldCheck size={16} /> Identidad Oficial del Titular (Extraída por Tranqi desde tu Carnet)
         </span>
 
@@ -2797,17 +2797,17 @@ Como socio acreditado tendrás:
         />
 
         {identificacionPreviewUrl && (
-          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid var(--linea)", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "var(--cf-ffffff, #FFFFFF)", padding: "10px 14px", border: "1px solid var(--linea)", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={identificacionPreviewUrl} alt="Vista previa de cédula" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
+            <img src={identificacionPreviewUrl} alt="Vista previa de cédula" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid var(--cb-d8b4fe, #D8B4FE)" }} />
             <div>
-              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Cédula/Pasaporte adjunto</span>
+              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-111111, #111111)" }}>Cédula/Pasaporte adjunto</span>
               <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)" }}>{identificacionArchivos[0]?.name}</span>
             </div>
             <button
               type="button"
               onClick={() => setModalInspeccionDoc({ url: identificacionPreviewUrl, titulo: "Inspección de Legibilidad — Cédula / Pasaporte" })}
-              style={{ marginLeft: "auto", background: "var(--acento-diluido)", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+              style={{ marginLeft: "auto", background: "var(--acento-diluido)", border: "1px solid var(--cb-d8b4fe, #D8B4FE)", color: "var(--ct-6b21a8, #6B21A8)", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
             >
               <ZoomIn size={14} /> Inspeccionar
             </button>
@@ -2818,10 +2818,10 @@ Como socio acreditado tendrás:
           <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(14, 102, 72, 0.04)", border: "1px solid rgba(14, 102, 72, 0.2)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
             <FileText size={18} color="#0E6648" />
             <div>
-              <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Documento de Identificación actual cargado</span>
+              <span style={{ display: "block", fontWeight: 700, color: "var(--ct-111111, #111111)" }}>Documento de Identificación actual cargado</span>
               <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{identificacionExistente.dcs_nombre_archivo}</span>
             </div>
-            <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#0E6648", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "var(--ct-0e6648, #0E6648)", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
             </a>
           </div>
@@ -2880,7 +2880,7 @@ Como socio acreditado tendrás:
           border: "1px solid var(--panel-linea, var(--linea))",
           borderRadius: "14px",
           overflow: "hidden",
-          background: "#ffffff",
+          background: "var(--cf-ffffff, #ffffff)",
           boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
         }}
       >
@@ -2890,7 +2890,7 @@ Como socio acreditado tendrás:
           style={{
             width: "100%",
             padding: "16px 18px",
-            background: panelEstudiosAbierto ? "rgba(80, 0, 186, 0.04)" : "#ffffff",
+            background: panelEstudiosAbierto ? "rgba(80, 0, 186, 0.04)" : "var(--cf-ffffff, #ffffff)",
             border: "none",
             borderBottom: panelEstudiosAbierto ? "1px solid var(--panel-linea, var(--linea))" : "none",
             cursor: "pointer",
@@ -2919,7 +2919,7 @@ Como socio acreditado tendrás:
             </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.95rem", color: "#111111" }}>
+                <strong style={{ fontSize: "0.95rem", color: "var(--ct-111111, #111111)" }}>
                   Estudios y Formación Académica
                 </strong>
                 <EstadoCampo
@@ -2933,7 +2933,7 @@ Como socio acreditado tendrás:
               </p>
             </div>
           </div>
-          <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+          <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
             {panelEstudiosAbierto ? "▲ Ocultar panel" : "▼ Desplegar panel (Opcional)"}
           </span>
         </button>
@@ -2985,10 +2985,10 @@ Como socio acreditado tendrás:
               <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "4px", fontSize: "0.84rem" }}>
                 <FileText size={18} color="#5000BA" />
                 <div>
-                  <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Título Universitario actual cargado</span>
+                  <span style={{ display: "block", fontWeight: 700, color: "var(--ct-111111, #111111)" }}>Título Universitario actual cargado</span>
                   <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{tituloExistente.dcs_nombre_archivo}</span>
                 </div>
-                <a href={tituloExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <a href={tituloExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "var(--ct-5000ba, #5000BA)", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   <ExternalLink size={14} /> Ver archivo
                 </a>
               </div>
@@ -3004,7 +3004,7 @@ Como socio acreditado tendrás:
           border: "1px solid var(--panel-linea, var(--linea))",
           borderRadius: "14px",
           overflow: "hidden",
-          background: "#ffffff",
+          background: "var(--cf-ffffff, #ffffff)",
           boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
         }}
       >
@@ -3014,7 +3014,7 @@ Como socio acreditado tendrás:
           style={{
             width: "100%",
             padding: "16px 18px",
-            background: panelExperienciaAbierto ? "rgba(80, 0, 186, 0.04)" : "#ffffff",
+            background: panelExperienciaAbierto ? "rgba(80, 0, 186, 0.04)" : "var(--cf-ffffff, #ffffff)",
             border: "none",
             borderBottom: panelExperienciaAbierto ? "1px solid var(--panel-linea, var(--linea))" : "none",
             cursor: "pointer",
@@ -3043,7 +3043,7 @@ Como socio acreditado tendrás:
             </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.95rem", color: "#111111" }}>
+                <strong style={{ fontSize: "0.95rem", color: "var(--ct-111111, #111111)" }}>
                   Experiencia Laboral y Hoja de Vida
                 </strong>
                 <EstadoCampo
@@ -3057,7 +3057,7 @@ Como socio acreditado tendrás:
               </p>
             </div>
           </div>
-          <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+          <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
             {panelExperienciaAbierto ? "▲ Ocultar panel" : "▼ Desplegar panel (Opcional)"}
           </span>
         </button>
@@ -3098,13 +3098,13 @@ Como socio acreditado tendrás:
                       setAnosExperiencia("0");
                     }
                   }}
-                  style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "#0E6648" }}
+                  style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "var(--ct-0e6648, #0E6648)" }}
                 />
                 <div>
-                  <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: sinExperienciaPrevia ? "#0E6648" : "#5000BA", fontSize: "0.88rem" }}>
+                  <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: sinExperienciaPrevia ? "var(--ct-0e6648, #0E6648)" : "var(--ct-5000ba, #5000BA)", fontSize: "0.88rem" }}>
                     <GraduationCap size={17} /> No tengo experiencia laboral previa (estoy buscando mi primera oportunidad)
                   </strong>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "#555555", lineHeight: 1.4 }}>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "var(--ct-555555, #555555)", lineHeight: 1.4 }}>
                     Marca esta casilla si eres recién graduado o estás iniciando tu carrera profesional. En tranqi valoramos el talento emergente.
                   </p>
                 </div>
@@ -3169,12 +3169,12 @@ Como socio acreditado tendrás:
                   <div key={d.dcs_id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", fontSize: "0.84rem" }}>
                     <FileText size={18} color="#5000BA" />
                     <div>
-                      <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>
+                      <span style={{ display: "block", fontWeight: 700, color: "var(--ct-111111, #111111)" }}>
                         {d.dcs_tipo === "cv" ? "Hoja de Vida (CV)" : (d.dcs_comentario || "Certificado")}
                       </span>
                       <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{d.dcs_nombre_archivo}</span>
                     </div>
-                    <a href={d.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <a href={d.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "var(--ct-5000ba, #5000BA)", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                       <ExternalLink size={14} /> Ver archivo
                     </a>
                   </div>
@@ -3266,7 +3266,7 @@ Como socio acreditado tendrás:
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "24px",
               maxWidth: "460px",
@@ -3309,7 +3309,7 @@ Como socio acreditado tendrás:
                 style={{
                   flex: 1,
                   padding: "10px 16px",
-                  background: "#ffffff",
+                  background: "var(--cf-ffffff, #ffffff)",
                   border: "1px solid var(--linea-fuerte)",
                   color: "var(--texto)",
                   borderRadius: "8px",
@@ -3365,7 +3365,7 @@ Como socio acreditado tendrás:
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               maxWidth: "920px",
               width: "100%",

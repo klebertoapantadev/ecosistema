@@ -91,7 +91,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
           title="Cerrar y volver a socios"
           aria-label="Cerrar y volver a socios"
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1.5px solid var(--linea)",
             color: "var(--texto)",
             borderRadius: "50%",
@@ -266,7 +266,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                 <div
                   key={p.dcs_id}
                   style={{
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     border: "1px solid var(--aviso-linea)",
                     borderRadius: "10px",
                     padding: "12px 16px",
@@ -328,7 +328,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
 
       {/* Historial de Revisiones, Acciones y Observaciones Previas */}
       {revisiones.length > 0 && (
-        <div className="tarjeta-panel detalle-solicitud" style={{ border: "1.5px solid var(--linea)", borderRadius: "14px", background: "#FFFFFF", marginBottom: "20px" }}>
+        <div className="tarjeta-panel detalle-solicitud" style={{ border: "1.5px solid var(--linea)", borderRadius: "14px", background: "var(--cf-ffffff, #FFFFFF)", marginBottom: "20px" }}>
           <h2 style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--texto)", fontSize: "1.1rem", marginTop: 0 }}>
             Historial de Revisiones, Acciones y Observaciones
           </h2>
@@ -349,8 +349,8 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                   style={{
                     padding: "14px 16px",
                     borderRadius: "10px",
-                    background: esReingresoItem ? "rgba(243, 232, 255, 0.4)" : esRechazo ? "rgba(254, 226, 226, 0.4)" : esAprobado ? "rgba(220, 252, 231, 0.4)" : "rgba(239, 246, 255, 0.4)",
-                    border: `1px solid ${esReingresoItem ? "#D8B4FE" : esRechazo ? "var(--error-linea)" : esAprobado ? "var(--exito-linea)" : "var(--acento-linea)"}`,
+                    background: esReingresoItem ? "var(--cf-f3e8ff-a400, rgba(243, 232, 255, 0.4))" : esRechazo ? "var(--cf-fee2e2-a400, rgba(254, 226, 226, 0.4))" : esAprobado ? "var(--cf-dcfce7-a400, rgba(220, 252, 231, 0.4))" : "var(--cf-eff6ff-a400, rgba(239, 246, 255, 0.4))",
+                    border: `1px solid ${esReingresoItem ? "var(--cb-d8b4fe, #D8B4FE)" : esRechazo ? "var(--error-linea)" : esAprobado ? "var(--exito-linea)" : "var(--acento-linea)"}`,
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "6px" }}>
@@ -378,7 +378,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                   </div>
 
                   {r.rev_comentario && (
-                    <div style={{ marginTop: "8px", padding: "8px 12px", background: "#FFFFFF", borderRadius: "6px", border: "1px solid rgba(0,0,0,0.06)", fontSize: "0.85rem", color: "var(--texto)", lineHeight: 1.45 }}>
+                    <div style={{ marginTop: "8px", padding: "8px 12px", background: "var(--cf-ffffff, #FFFFFF)", borderRadius: "6px", border: "1px solid var(--cb-000000-a060, rgba(0,0,0,0.06))", fontSize: "0.85rem", color: "var(--texto)", lineHeight: 1.45 }}>
                       <strong>Observación / Detalle:</strong> {r.rev_comentario}
                     </div>
                   )}
@@ -482,7 +482,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "var(--acento-diluido)", color: "#5000BA", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "var(--acento-diluido)", color: "var(--ct-5000ba, #5000BA)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <FileText size={18} />
                   </div>
                   <div>
@@ -507,7 +507,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                         gap: "6px",
                         padding: "8px 14px",
                         borderRadius: "8px",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         border: "1px solid var(--linea-fuerte)",
                         color: "var(--texto-2)",
                         fontSize: "0.82rem",

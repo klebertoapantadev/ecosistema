@@ -123,8 +123,8 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
   return (
     <div
       style={{
-        background: "linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 100%)",
-        border: "1px solid #E9D5FF",
+        background: "linear-gradient(135deg, var(--cf-faf5ff, #FAF5FF) 0%, var(--cf-f5f3ff, #F5F3FF) 100%)",
+        border: "1px solid var(--cb-e9d5ff, #E9D5FF)",
         borderRadius: "12px",
         padding: "12px 14px",
         display: "flex",
@@ -135,7 +135,7 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Sparkles size={16} color="#6B21A8" />
-          <strong style={{ fontSize: "0.82rem", color: "#6B21A8", fontWeight: 800 }}>
+          <strong style={{ fontSize: "0.82rem", color: "var(--ct-6b21a8, #6B21A8)", fontWeight: 800 }}>
             Variables Dinámicas Disponibles (Haz clic para insertar en el texto libremente):
           </strong>
         </div>
@@ -144,13 +144,13 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
           type="button"
           onClick={() => setMostrarAgregar(!mostrarAgregar)}
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1px dashed #A855F7",
             borderRadius: "6px",
             padding: "4px 10px",
             fontSize: "0.74rem",
             fontWeight: 700,
-            color: "#6B21A8",
+            color: "var(--ct-6b21a8, #6B21A8)",
             cursor: "pointer",
             display: "inline-flex",
             alignItems: "center",
@@ -167,8 +167,8 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
         <form
           onSubmit={agregarNuevaVariable}
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #D8B4FE",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-d8b4fe, #D8B4FE)",
             borderRadius: "8px",
             padding: "10px",
             display: "flex",
@@ -178,7 +178,7 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "4px", flex: "1 1 180px" }}>
-            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#6B21A8" }}>{"{{"}</span>
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-6b21a8, #6B21A8)" }}>{"{{"}</span>
             <input
               type="text"
               value={nuevaClave}
@@ -190,12 +190,12 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
                 height: "30px",
                 padding: "0 8px",
                 borderRadius: "6px",
-                border: "1px solid #E4E4E4",
+                border: "1px solid var(--cb-e4e4e4, #E4E4E4)",
                 fontSize: "0.78rem",
                 fontFamily: "monospace",
               }}
             />
-            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#6B21A8" }}>{"}}"}</span>
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-6b21a8, #6B21A8)" }}>{"}}"}</span>
           </div>
 
           <input
@@ -208,7 +208,7 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
               height: "30px",
               padding: "0 8px",
               borderRadius: "6px",
-              border: "1px solid #E4E4E4",
+              border: "1px solid var(--cb-e4e4e4, #E4E4E4)",
               fontSize: "0.78rem",
             }}
           />
@@ -241,8 +241,8 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                background: "#FFFFFF",
-                border: v.esPersonalizada ? "1px solid #A855F7" : "1px solid #D8B4FE",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                border: v.esPersonalizada ? "1px solid #A855F7" : "1px solid var(--cb-d8b4fe, #D8B4FE)",
                 borderRadius: "8px",
                 boxShadow: "0 1px 3px rgba(107, 33, 168, 0.05)",
                 overflow: "hidden",
@@ -258,7 +258,7 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
                   padding: "5px 9px",
                   fontSize: "0.74rem",
                   fontWeight: 700,
-                  color: "#581C87",
+                  color: "var(--ct-581c87, #581C87)",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
@@ -277,12 +277,12 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
                 onClick={(e) => copiarVariable(v.clave, e)}
                 title="Copiar marcador al portapapeles"
                 style={{
-                  background: esCopiado ? "#ECFDF5" : "transparent",
+                  background: esCopiado ? "var(--cf-ecfdf5, #ECFDF5)" : "transparent",
                   border: "none",
-                  borderLeft: "1px solid #E9D5FF",
+                  borderLeft: "1px solid var(--cb-e9d5ff, #E9D5FF)",
                   padding: "5px 6px",
                   cursor: "pointer",
-                  color: esCopiado ? "#059669" : "#9333EA",
+                  color: esCopiado ? "var(--ct-059669, #059669)" : "var(--ct-9333ea, #9333EA)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -299,10 +299,10 @@ export function BarraVariablesDinamicas({ onInsertarVariable, negocio = "tranqi"
                   style={{
                     background: "transparent",
                     border: "none",
-                    borderLeft: "1px solid #E9D5FF",
+                    borderLeft: "1px solid var(--cb-e9d5ff, #E9D5FF)",
                     padding: "5px 6px",
                     cursor: "pointer",
-                    color: "#DC2626",
+                    color: "var(--ct-dc2626, #DC2626)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

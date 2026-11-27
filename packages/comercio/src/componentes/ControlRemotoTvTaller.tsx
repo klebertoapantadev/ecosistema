@@ -214,7 +214,7 @@ export function ControlRemotoTvTaller({
     display: "block",
     fontSize: "0.78rem",
     fontWeight: 700,
-    color: "#57524C",
+    color: "var(--ct-57524c, #57524C)",
     marginBottom: "5px",
   };
 
@@ -222,10 +222,10 @@ export function ControlRemotoTvTaller({
     width: "100%",
     padding: "9px 11px",
     borderRadius: "9px",
-    border: "1px solid #D5CFC4",
+    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
     fontSize: "0.84rem",
-    color: "#1F1C19",
-    background: "#FFFFFF",
+    color: "var(--ct-1f1c19, #1F1C19)",
+    background: "var(--cf-ffffff, #FFFFFF)",
     boxSizing: "border-box",
   };
 
@@ -249,7 +249,7 @@ export function ControlRemotoTvTaller({
           width: "100%",
           maxWidth: "780px",
           maxHeight: "90vh",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
           boxShadow: "0 24px 60px rgba(15, 23, 42, 0.35)",
           display: "flex",
@@ -275,7 +275,7 @@ export function ControlRemotoTvTaller({
               <h2 style={{ margin: 0, fontSize: "1.02rem", fontWeight: 700 }}>
                 Control Remoto Smart TV Taller & Eventos
               </h2>
-              <p style={{ margin: 0, fontSize: "0.76rem", color: "#847D74" }}>
+              <p style={{ margin: 0, fontSize: "0.76rem", color: "var(--ct-847d74, #847D74)" }}>
                 Los cambios se reflejan en vivo en la pantalla del taller.
               </p>
             </div>
@@ -326,8 +326,8 @@ export function ControlRemotoTvTaller({
         <div
           style={{
             padding: "12px 20px",
-            background: "#F8F7F4",
-            borderBottom: "1px solid #E6E2DA",
+            background: "var(--cf-f8f7f4, #F8F7F4)",
+            borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -335,7 +335,7 @@ export function ControlRemotoTvTaller({
             gap: "10px",
           }}
         >
-          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#57524C" }}>
+          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
             Modo actual en la Smart TV:
           </span>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -355,9 +355,9 @@ export function ControlRemotoTvTaller({
                 padding: "7px 14px",
                 borderRadius: "9px",
                 border:
-                  config.modoActivo === "TALLER" ? "2px solid #2F4737" : "1px solid #D5CFC4",
-                background: config.modoActivo === "TALLER" ? "#EAF1EC" : "#FFFFFF",
-                color: config.modoActivo === "TALLER" ? "#2B4A36" : "#57524C",
+                  config.modoActivo === "TALLER" ? "2px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: config.modoActivo === "TALLER" ? "var(--cf-eaf1ec, #EAF1EC)" : "var(--cf-ffffff, #FFFFFF)",
+                color: config.modoActivo === "TALLER" ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-57524c, #57524C)",
                 fontSize: "0.8rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -382,9 +382,9 @@ export function ControlRemotoTvTaller({
                 padding: "7px 14px",
                 borderRadius: "9px",
                 border:
-                  config.modoActivo === "EVENTOS" ? "2px solid #6E3B42" : "1px solid #D5CFC4",
-                background: config.modoActivo === "EVENTOS" ? "#F6F1EE" : "#FFFFFF",
-                color: config.modoActivo === "EVENTOS" ? "#6E3B42" : "#57524C",
+                  config.modoActivo === "EVENTOS" ? "2px solid #6E3B42" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: config.modoActivo === "EVENTOS" ? "var(--cf-f6f1ee, #F6F1EE)" : "var(--cf-ffffff, #FFFFFF)",
+                color: config.modoActivo === "EVENTOS" ? "var(--ct-6e3b42, #6E3B42)" : "var(--ct-57524c, #57524C)",
                 fontSize: "0.8rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -400,10 +400,10 @@ export function ControlRemotoTvTaller({
         <div
           style={{
             display: "flex",
-            borderBottom: "1px solid #E6E2DA",
+            borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
             padding: "0 20px",
             gap: "6px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
           }}
         >
           {(
@@ -420,9 +420,9 @@ export function ControlRemotoTvTaller({
               style={{
                 padding: "11px 14px",
                 border: "none",
-                borderBottom: tab === t.id ? "2.5px solid #221E1B" : "2.5px solid transparent",
+                borderBottom: tab === t.id ? "2.5px solid var(--cb-221e1b, #221E1B)" : "2.5px solid transparent",
                 background: "transparent",
-                color: tab === t.id ? "#3A3530" : "#847D74",
+                color: tab === t.id ? "var(--ct-3a3530, #3A3530)" : "var(--ct-847d74, #847D74)",
                 fontWeight: 700,
                 fontSize: "0.82rem",
                 cursor: "pointer",
@@ -440,9 +440,9 @@ export function ControlRemotoTvTaller({
               style={{
                 padding: "10px 12px",
                 borderRadius: "9px",
-                background: "#FAF2F2",
-                border: "1px solid #E5CACA",
-                color: "#8A2E2E",
+                background: "var(--cf-faf2f2, #FAF2F2)",
+                border: "1px solid var(--cb-e5caca, #E5CACA)",
+                color: "var(--ct-8a2e2e, #8A2E2E)",
                 fontSize: "0.82rem",
                 marginBottom: "14px",
               }}
@@ -455,9 +455,9 @@ export function ControlRemotoTvTaller({
               style={{
                 padding: "10px 12px",
                 borderRadius: "9px",
-                background: "#F2F6F3",
-                border: "1px solid #CEDDD3",
-                color: "#2B4A36",
+                background: "var(--cf-f2f6f3, #F2F6F3)",
+                border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                color: "var(--ct-2b4a36, #2B4A36)",
                 fontSize: "0.82rem",
                 marginBottom: "14px",
               }}
@@ -467,7 +467,7 @@ export function ControlRemotoTvTaller({
           )}
 
           {cargandoCfg ? (
-            <div style={{ padding: "32px", textAlign: "center", color: "#847D74" }}>
+            <div style={{ padding: "32px", textAlign: "center", color: "var(--ct-847d74, #847D74)" }}>
               <Loader2 size={22} /> Cargando configuración de TV...
             </div>
           ) : tab === "prioridad" ? (
@@ -480,12 +480,12 @@ export function ControlRemotoTvTaller({
                   gap: "8px",
                 }}
               >
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "#57524C" }}>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--ct-57524c, #57524C)" }}>
                   Define el orden exacto de elaboración (<strong>#1, #2, #3...</strong>). La TV
                   reflejará este orden al instante.
                 </p>
                 {guardandoOrden && (
-                  <span style={{ fontSize: "0.78rem", color: "#221E1B", fontWeight: 700 }}>
+                  <span style={{ fontSize: "0.78rem", color: "var(--ct-221e1b, #221E1B)", fontWeight: 700 }}>
                     Guardando...
                   </span>
                 )}
@@ -497,8 +497,8 @@ export function ControlRemotoTvTaller({
                     padding: "28px",
                     textAlign: "center",
                     borderRadius: "12px",
-                    border: "1px dashed #D5CFC4",
-                    color: "#847D74",
+                    border: "1px dashed var(--cb-d5cfc4, #D5CFC4)",
+                    color: "var(--ct-847d74, #847D74)",
                     fontSize: "0.85rem",
                   }}
                 >
@@ -517,8 +517,8 @@ export function ControlRemotoTvTaller({
                         gap: "12px",
                         padding: "10px 12px",
                         borderRadius: "11px",
-                        border: idx === 0 ? "1.5px solid #8F6A2E" : "1px solid #E6E2DA",
-                        background: idx === 0 ? "#FAF6EE" : "#FFFFFF",
+                        border: idx === 0 ? "1.5px solid #8F6A2E" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                        background: idx === 0 ? "var(--cf-faf6ee, #FAF6EE)" : "var(--cf-ffffff, #FFFFFF)",
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
@@ -543,7 +543,7 @@ export function ControlRemotoTvTaller({
                             style={{
                               fontWeight: 700,
                               fontSize: "0.85rem",
-                              color: "#1F1C19",
+                              color: "var(--ct-1f1c19, #1F1C19)",
                               display: "flex",
                               alignItems: "center",
                               gap: "6px",
@@ -551,13 +551,13 @@ export function ControlRemotoTvTaller({
                             }}
                           >
                             <span>{o.codigo}</span>
-                            <span style={{ color: "#847D74", fontWeight: 500 }}>·</span>
+                            <span style={{ color: "var(--ct-847d74, #847D74)", fontWeight: 500 }}>·</span>
                             <span>{o.productoResumen}</span>
                           </div>
                           <div
                             style={{
                               fontSize: "0.75rem",
-                              color: "#57524C",
+                              color: "var(--ct-57524c, #57524C)",
                               marginTop: "2px",
                               display: "flex",
                               gap: "8px",
@@ -588,8 +588,8 @@ export function ControlRemotoTvTaller({
                               padding: "6px 8px",
                               borderRadius: "7px",
                               border: "1px solid #8F6A2E",
-                              background: "#FAF6EE",
-                              color: "#745622",
+                              background: "var(--cf-faf6ee, #FAF6EE)",
+                              color: "var(--ct-745622, #745622)",
                               fontSize: "0.74rem",
                               fontWeight: 700,
                               cursor: "pointer",
@@ -610,9 +610,9 @@ export function ControlRemotoTvTaller({
                           style={{
                             padding: "6px",
                             borderRadius: "7px",
-                            border: "1px solid #D5CFC4",
-                            background: "#FFFFFF",
-                            color: idx === 0 ? "#D5CFC4" : "#57524C",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            color: idx === 0 ? "#D5CFC4" : "var(--ct-57524c, #57524C)",
                             cursor: idx === 0 ? "not-allowed" : "pointer",
                             display: "inline-flex",
                           }}
@@ -628,9 +628,9 @@ export function ControlRemotoTvTaller({
                           style={{
                             padding: "6px",
                             borderRadius: "7px",
-                            border: "1px solid #D5CFC4",
-                            background: "#FFFFFF",
-                            color: idx === colaLocal.length - 1 ? "#D5CFC4" : "#57524C",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            color: idx === colaLocal.length - 1 ? "#D5CFC4" : "var(--ct-57524c, #57524C)",
                             cursor: idx === colaLocal.length - 1 ? "not-allowed" : "pointer",
                             display: "inline-flex",
                           }}
@@ -677,10 +677,10 @@ export function ControlRemotoTvTaller({
                           borderRadius: "8px",
                           border:
                             config.posicionLateral === lado
-                              ? "2px solid #221E1B"
-                              : "1px solid #D5CFC4",
-                          background: config.posicionLateral === lado ? "#EFECE6" : "#FFFFFF",
-                          color: config.posicionLateral === lado ? "#3A3530" : "#57524C",
+                              ? "2px solid var(--cb-221e1b, #221E1B)"
+                              : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: config.posicionLateral === lado ? "var(--cf-efece6, #EFECE6)" : "var(--cf-ffffff, #FFFFFF)",
+                          color: config.posicionLateral === lado ? "var(--ct-3a3530, #3A3530)" : "var(--ct-57524c, #57524C)",
                           fontWeight: 700,
                           fontSize: "0.8rem",
                           cursor: "pointer",
@@ -759,7 +759,7 @@ export function ControlRemotoTvTaller({
                     alignItems: "center",
                     gap: "7px",
                     fontSize: "0.82rem",
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     cursor: "pointer",
                   }}
                 >
@@ -782,7 +782,7 @@ export function ControlRemotoTvTaller({
                     alignItems: "center",
                     gap: "7px",
                     fontSize: "0.82rem",
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     cursor: "pointer",
                   }}
                 >
@@ -803,8 +803,8 @@ export function ControlRemotoTvTaller({
                 style={{
                   padding: "12px 14px",
                   borderRadius: "11px",
-                  background: "#F8F7F4",
-                  border: "1px solid #E6E2DA",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   display: "flex",
                   flexDirection: "column",
                   gap: "10px",
@@ -819,7 +819,7 @@ export function ControlRemotoTvTaller({
                     gap: "8px",
                   }}
                 >
-                  <strong style={{ fontSize: "0.83rem", color: "#1F1C19" }}>
+                  <strong style={{ fontSize: "0.83rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                     Enlace Kiosco Smart TV (opcional, sin iniciar sesión)
                   </strong>
                   <div style={{ display: "flex", gap: "12px" }}>
@@ -855,7 +855,7 @@ export function ControlRemotoTvTaller({
                       type="text"
                       readOnly
                       value={enlaceKiosco}
-                      style={{ ...inputStyle, flex: 1, minWidth: "220px", fontSize: "0.76rem", background: "#FFFFFF" }}
+                      style={{ ...inputStyle, flex: 1, minWidth: "220px", fontSize: "0.76rem", background: "var(--cf-ffffff, #FFFFFF)" }}
                     />
                     <button
                       type="button"
@@ -863,8 +863,8 @@ export function ControlRemotoTvTaller({
                       style={{
                         padding: "8px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #D5CFC4",
-                        background: "#FFFFFF",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -888,9 +888,9 @@ export function ControlRemotoTvTaller({
                       style={{
                         padding: "8px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #DEBABA",
-                        background: "#FAF2F2",
-                        color: "#8A2E2E",
+                        border: "1px solid var(--cb-debaba, #DEBABA)",
+                        background: "var(--cf-faf2f2, #FAF2F2)",
+                        color: "var(--ct-8a2e2e, #8A2E2E)",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -904,7 +904,7 @@ export function ControlRemotoTvTaller({
                     </button>
                   </div>
                 ) : (
-                  <p style={{ margin: 0, fontSize: "0.76rem", color: "#847D74" }}>
+                  <p style={{ margin: 0, fontSize: "0.76rem", color: "var(--ct-847d74, #847D74)" }}>
                     Haz clic en &quot;Guardar Cambios&quot; para generar automáticamente el enlace
                     Kiosco revocable para la Smart TV.
                   </p>
@@ -953,7 +953,7 @@ export function ControlRemotoTvTaller({
                     gap: "8px",
                     fontSize: "0.82rem",
                     fontWeight: 600,
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     marginTop: "18px",
                     cursor: "pointer",
                   }}
@@ -977,8 +977,8 @@ export function ControlRemotoTvTaller({
                 style={{
                   padding: "14px",
                   borderRadius: "12px",
-                  border: "1px solid #E6E2DA",
-                  background: "#F8F7F4",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
                   display: "flex",
                   flexDirection: "column",
                   gap: "10px",
@@ -986,7 +986,7 @@ export function ControlRemotoTvTaller({
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                   <ImageIcon size={16} color="#6E3B42" />
-                  <strong style={{ fontSize: "0.85rem", color: "#1F1C19" }}>
+                  <strong style={{ fontSize: "0.85rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                     Álbumes de Google Fotos (Presentación + QR compartible)
                   </strong>
                 </div>
@@ -1029,7 +1029,7 @@ export function ControlRemotoTvTaller({
                 </div>
 
                 {config.albumesGoogleFotos.length === 0 ? (
-                  <p style={{ margin: 0, fontSize: "0.78rem", color: "#847D74" }}>
+                  <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)" }}>
                     Aún no has agregado álbumes de Google Fotos. El Showroom mostrará los productos
                     de Eventos de tu catálogo automáticamente.
                   </p>
@@ -1041,8 +1041,8 @@ export function ControlRemotoTvTaller({
                         style={{
                           padding: "9px 11px",
                           borderRadius: "9px",
-                          background: "#FFFFFF",
-                          border: "1px solid #E6E2DA",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
@@ -1051,13 +1051,13 @@ export function ControlRemotoTvTaller({
                         }}
                       >
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#1F1C19" }}>
+                          <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                             {alb.titulo}
                           </div>
                           <div
                             style={{
                               fontSize: "0.73rem",
-                              color: "#847D74",
+                              color: "var(--ct-847d74, #847D74)",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -1072,8 +1072,8 @@ export function ControlRemotoTvTaller({
                                 fontWeight: 600,
                                 marginTop: "3px",
                                 color: resultadoPruebaAlbum[alb.id]?.startsWith("✓")
-                                  ? "#2F4737"
-                                  : "#745622",
+                                  ? "var(--ct-2f4737, #2F4737)"
+                                  : "var(--ct-745622, #745622)",
                               }}
                             >
                               {resultadoPruebaAlbum[alb.id]}
@@ -1088,8 +1088,8 @@ export function ControlRemotoTvTaller({
                             style={{
                               padding: "6px 10px",
                               borderRadius: "7px",
-                              border: "1px solid #D5CFC4",
-                              background: "#F8F7F4",
+                              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                              background: "var(--cf-f8f7f4, #F8F7F4)",
                               fontSize: "0.74rem",
                               fontWeight: 600,
                               cursor: "pointer",
@@ -1105,9 +1105,9 @@ export function ControlRemotoTvTaller({
                             style={{
                               padding: "6px 9px",
                               borderRadius: "7px",
-                              border: "1px solid #CEDDD3",
-                              background: "#F2F6F3",
-                              color: "#2B4A36",
+                              border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                              background: "var(--cf-f2f6f3, #F2F6F3)",
+                              color: "var(--ct-2b4a36, #2B4A36)",
                               fontSize: "0.74rem",
                               fontWeight: 700,
                               textDecoration: "none",
@@ -1125,9 +1125,9 @@ export function ControlRemotoTvTaller({
                             style={{
                               padding: "6px",
                               borderRadius: "7px",
-                              border: "1px solid #E5CACA",
-                              background: "#FAF2F2",
-                              color: "#8A2E2E",
+                              border: "1px solid var(--cb-e5caca, #E5CACA)",
+                              background: "var(--cf-faf2f2, #FAF2F2)",
+                              color: "var(--ct-8a2e2e, #8A2E2E)",
                               cursor: "pointer",
                               display: "inline-flex",
                             }}
@@ -1149,8 +1149,8 @@ export function ControlRemotoTvTaller({
           <div
             style={{
               padding: "14px 20px",
-              borderTop: "1px solid #E6E2DA",
-              background: "#F8F7F4",
+              borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
               display: "flex",
               justifyContent: "flex-end",
               gap: "10px",
@@ -1162,8 +1162,8 @@ export function ControlRemotoTvTaller({
               style={{
                 padding: "9px 14px",
                 borderRadius: "9px",
-                border: "1px solid #D5CFC4",
-                background: "#FFFFFF",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 fontWeight: 600,
                 fontSize: "0.82rem",
                 cursor: "pointer",

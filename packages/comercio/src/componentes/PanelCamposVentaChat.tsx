@@ -263,7 +263,7 @@ export function PanelCamposVentaChat({
   const estiloLabel: React.CSSProperties = {
     fontSize: "0.69rem",
     fontWeight: 700,
-    color: "#57524C",
+    color: "var(--ct-57524c, #57524C)",
     display: "flex",
     flexDirection: "column",
     gap: "3px",
@@ -273,18 +273,18 @@ export function PanelCamposVentaChat({
     width: "100%",
     padding: "6px 8px",
     borderRadius: "7px",
-    border: "1px solid #D5CFC4",
+    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
     fontSize: "0.79rem",
-    background: "#FFFFFF",
-    color: "#1F1C19",
+    background: "var(--cf-ffffff, #FFFFFF)",
+    color: "var(--ct-1f1c19, #1F1C19)",
     fontFamily: "inherit",
   };
 
   return (
     <div
       style={{
-        background: "#FFFFFF",
-        border: "1px solid #E6E2DA",
+        background: "var(--cf-ffffff, #FFFFFF)",
+        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
         borderRadius: "12px",
         padding: "11px",
         display: "flex",
@@ -301,7 +301,7 @@ export function PanelCamposVentaChat({
           gap: "6px",
         }}
       >
-        <strong style={{ fontSize: "0.79rem", color: "#221E1B" }}>
+        <strong style={{ fontSize: "0.79rem", color: "var(--ct-221e1b, #221E1B)" }}>
           Campos de Venta
         </strong>
         <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
@@ -309,9 +309,9 @@ export function PanelCamposVentaChat({
             style={{
               padding: "2px 8px",
               borderRadius: "999px",
-              background: "#F4F2EE",
-              border: "1px solid #E6E2DA",
-              color: totalCalculado > 0 ? "#221E1B" : "#847D74",
+              background: "var(--cf-f4f2ee, #F4F2EE)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              color: totalCalculado > 0 ? "var(--ct-221e1b, #221E1B)" : "var(--ct-847d74, #847D74)",
               fontSize: "0.74rem",
               fontWeight: 700,
             }}
@@ -330,9 +330,9 @@ export function PanelCamposVentaChat({
                 gap: "4px",
                 padding: "3px 8px",
                 borderRadius: "999px",
-                border: "1px solid #C6DEC9",
-                background: "#EAF3ED",
-                color: "#1F352C",
+                border: "1px solid var(--cb-c6dec9, #C6DEC9)",
+                background: "var(--cf-eaf3ed, #EAF3ED)",
+                color: "var(--ct-1f352c, #1F352C)",
                 fontSize: "0.71rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -351,10 +351,10 @@ export function PanelCamposVentaChat({
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
           gap: "4px",
-          background: "#F4F2EE",
+          background: "var(--cf-f4f2ee, #F4F2EE)",
           padding: "3px",
           borderRadius: "8px",
-          border: "1px solid #E6E2DA",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
         }}
       >
         {(
@@ -538,7 +538,7 @@ export function PanelCamposVentaChat({
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#57524C" }}>
+              <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
                 Fecha de entrega
               </span>
               <div style={{ display: "flex", gap: "4px" }}>
@@ -548,9 +548,9 @@ export function PanelCamposVentaChat({
                   style={{
                     padding: "1px 6px",
                     borderRadius: "5px",
-                    border: "1px solid #D5CFC4",
-                    background: "#F8F7F4",
-                    color: "#3A3530",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
+                    color: "var(--ct-3a3530, #3A3530)",
                     fontSize: "0.66rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -564,9 +564,9 @@ export function PanelCamposVentaChat({
                   style={{
                     padding: "1px 6px",
                     borderRadius: "5px",
-                    border: "1px solid #D5CFC4",
-                    background: "#F8F7F4",
-                    color: "#3A3530",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
+                    color: "var(--ct-3a3530, #3A3530)",
                     fontSize: "0.66rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -610,7 +610,7 @@ export function PanelCamposVentaChat({
           </label>
 
           {form.franjaHora === "HORA_EXACTA" && (
-            <label style={{ ...estiloLabel, color: "#2F4737" }}>
+            <label style={{ ...estiloLabel, color: "var(--ct-2f4737, #2F4737)" }}>
               <span>Indicar Hora Exacta *</span>
               <input
                 type="time"
@@ -622,7 +622,7 @@ export function PanelCamposVentaChat({
           )}
 
           {form.clasificacionPedido === "EXEQUIALES" ? (
-            <label style={{ ...estiloLabel, color: "#3A3530" }}>
+            <label style={{ ...estiloLabel, color: "var(--ct-3a3530, #3A3530)" }}>
               <span>Sala Exequiales</span>
               <SelectConBuscador
                 value={form.salaServicio ?? ""}
@@ -663,7 +663,7 @@ export function PanelCamposVentaChat({
 
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#57524C" }}>
+                  <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
                     Enlace Ubicación GPS
                   </span>
                   {form.ubicacionUrl && /^https?:\/\//i.test(form.ubicacionUrl) && (
@@ -673,7 +673,7 @@ export function PanelCamposVentaChat({
                       rel="noreferrer"
                       style={{
                         fontSize: "0.68rem",
-                        color: "#3A3530",
+                        color: "var(--ct-3a3530, #3A3530)",
                         textDecoration: "underline",
                         display: "inline-flex",
                         alignItems: "center",
@@ -701,9 +701,9 @@ export function PanelCamposVentaChat({
                     style={{
                       padding: "6px 9px",
                       borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      background: "#F8F7F4",
-                      color: "#221E1B",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-f8f7f4, #F8F7F4)",
+                      color: "var(--ct-221e1b, #221E1B)",
                       fontSize: "0.7rem",
                       fontWeight: 600,
                       cursor: cotizandoGps ? "wait" : "pointer",
@@ -809,9 +809,9 @@ export function PanelCamposVentaChat({
           style={{
             padding: "6px 8px",
             borderRadius: "7px",
-            background: "#FAF2F2",
-            border: "1px solid #E5CACA",
-            color: "#8A2E2E",
+            background: "var(--cf-faf2f2, #FAF2F2)",
+            border: "1px solid var(--cb-e5caca, #E5CACA)",
+            color: "var(--ct-8a2e2e, #8A2E2E)",
             fontSize: "0.72rem",
           }}
         >
@@ -836,9 +836,9 @@ export function PanelCamposVentaChat({
             gap: "5px",
             padding: "8px 10px",
             borderRadius: "9px",
-            border: "1px solid #D5CFC4",
-            background: guardadoReciente ? "#F4F2EE" : "#FFFFFF",
-            color: "#221E1B",
+            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+            background: guardadoReciente ? "var(--cf-f4f2ee, #F4F2EE)" : "var(--cf-ffffff, #FFFFFF)",
+            color: "var(--ct-221e1b, #221E1B)",
             fontSize: "0.78rem",
             fontWeight: 600,
             cursor: guardando ? "wait" : "pointer",

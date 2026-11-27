@@ -145,10 +145,10 @@ export function FormularioRegistro({
     <div className="tarjeta-auth">
       {esAbogado && (
         <div style={{ marginBottom: "16px", padding: "12px", borderRadius: "10px", background: "rgba(80,0,186,0.08)", border: "1px solid rgba(80,0,186,0.2)", textAlign: "center" }}>
-          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#5000BA", textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
             Registro de Equipo Jurídico — Abogados
           </span>
-          <strong style={{ fontSize: "0.88rem", color: "#111111", display: "block", marginTop: "4px" }}>
+          <strong style={{ fontSize: "0.88rem", color: "var(--ct-111111, #111111)", display: "block", marginTop: "4px" }}>
             Únete a la Red de Abogados Verificados
           </strong>
         </div>
@@ -174,7 +174,7 @@ export function FormularioRegistro({
             cursor: "pointer",
             fontSize: "0.85rem",
             fontWeight: 600,
-            color: "#1F2937",
+            color: "var(--ct-1f2937, #1F2937)",
           }}
           onClick={(e) => {
             e.preventDefault();
@@ -185,22 +185,22 @@ export function FormularioRegistro({
             type="checkbox"
             checked={aceptaTerminos}
             readOnly
-            style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "#5000BA" }}
+            style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "var(--ct-5000ba, #5000BA)" }}
           />
           <span>
             Acepto los{" "}
-            <span style={{ color: "#5000BA", fontWeight: 800, textDecoration: "underline" }}>
+            <span style={{ color: "var(--ct-5000ba, #5000BA)", fontWeight: 800, textDecoration: "underline" }}>
               Términos de Servicio
             </span>
           </span>
         </label>
 
         {!aceptaTerminos ? (
-          <p style={{ fontSize: "0.75rem", color: "#DC2626", fontWeight: 700, margin: "6px 0 0 28px", lineHeight: "1.3" }}>
+          <p style={{ fontSize: "0.75rem", color: "var(--ct-dc2626, #DC2626)", fontWeight: 700, margin: "6px 0 0 28px", lineHeight: "1.3" }}>
             Para habilitar el botón debes leer los Términos hasta el final.
           </p>
         ) : (
-          <p style={{ fontSize: "0.75rem", color: "#05876E", fontWeight: 700, margin: "6px 0 0 28px", lineHeight: "1.3" }}>
+          <p style={{ fontSize: "0.75rem", color: "var(--ct-05876e, #05876E)", fontWeight: 700, margin: "6px 0 0 28px", lineHeight: "1.3" }}>
             ✓ Términos de servicio aceptados. Registro habilitado.
           </p>
         )}
@@ -251,11 +251,11 @@ export function FormularioRegistro({
             gap: "10px",
             padding: "12px",
             borderRadius: "10px",
-            background: "#F9FAFB",
-            border: "1px solid #E5E7EB",
+            background: "var(--cf-f9fafb, #F9FAFB)",
+            border: "1px solid var(--cb-e5e7eb, #E5E7EB)",
           }}
         >
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#374151" }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-374151, #374151)" }}>
             Número de WhatsApp
           </span>
           <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
@@ -271,11 +271,11 @@ export function FormularioRegistro({
                 flexShrink: 0,
                 padding: "10px 8px",
                 borderRadius: "8px",
-                border: "1px solid #D1D5DB",
-                background: "#FFFFFF",
+                border: "1px solid var(--cb-d1d5db, #D1D5DB)",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 fontSize: "0.88rem",
                 fontWeight: 600,
-                color: "#111827",
+                color: "var(--ct-111827, #111827)",
                 margin: 0,
               }}
             >
@@ -304,7 +304,7 @@ export function FormularioRegistro({
               cursor: "pointer",
               fontSize: "0.8rem",
               lineHeight: 1.4,
-              color: "#374151",
+              color: "var(--ct-374151, #374151)",
               fontWeight: 600,
             }}
           >
@@ -312,7 +312,7 @@ export function FormularioRegistro({
               type="checkbox"
               checked={autorizaWhatsapp}
               onChange={(e) => setAutorizaWhatsapp(e.target.checked)}
-              style={{ width: "17px", height: "17px", marginTop: "2px", flexShrink: 0, accentColor: "#059669", cursor: "pointer" }}
+              style={{ width: "17px", height: "17px", marginTop: "2px", flexShrink: 0, accentColor: "var(--ct-059669, #059669)", cursor: "pointer" }}
             />
             <span>
               Autorizo que me contacten y envíen cotizaciones, estados de pedido e información por WhatsApp conforme a la{" "}
@@ -327,7 +327,7 @@ export function FormularioRegistro({
                   background: "none",
                   border: "none",
                   padding: 0,
-                  color: "#059669",
+                  color: "var(--ct-059669, #059669)",
                   fontWeight: 800,
                   textDecoration: "underline",
                   cursor: "pointer",
@@ -356,8 +356,8 @@ export function FormularioRegistro({
             padding: "14px 20px",
             background: aceptaTerminos
               ? "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)"
-              : "#D1D5DB",
-            color: aceptaTerminos ? "#ffffff" : "#6B7280",
+              : "var(--cf-d1d5db, #D1D5DB)",
+            color: aceptaTerminos ? "#ffffff" : "var(--ct-6b7280, #6B7280)",
             border: "none",
             borderRadius: "10px",
             fontWeight: 800,

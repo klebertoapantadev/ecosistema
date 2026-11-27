@@ -183,7 +183,7 @@ export function BandejaProspectosChat() {
       {/* Barra de Filtros y Acciones */}
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           border: "1px solid var(--linea)",
           borderRadius: "12px",
           padding: "14px 18px",
@@ -211,7 +211,7 @@ export function BandejaProspectosChat() {
                 padding: "6px 14px",
                 borderRadius: "20px",
                 border: filtroEstado === item.clave ? "1px solid var(--acento)" : "1px solid var(--linea)",
-                background: filtroEstado === item.clave ? "var(--acento-diluido)" : "#FFFFFF",
+                background: filtroEstado === item.clave ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                 color: filtroEstado === item.clave ? "var(--acento)" : "var(--texto-suave)",
                 fontSize: "0.82rem",
                 fontWeight: 600,
@@ -261,7 +261,7 @@ export function BandejaProspectosChat() {
           style={{
             textAlign: "center",
             padding: "50px 20px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "16px",
             border: "1px dashed var(--linea-fuerte)",
           }}
@@ -277,7 +277,7 @@ export function BandejaProspectosChat() {
       ) : (
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1px solid var(--linea)",
             borderRadius: "16px",
             overflowX: "auto",
@@ -522,7 +522,7 @@ export function BandejaProspectosChat() {
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "24px",
               maxWidth: "460px",
@@ -567,7 +567,7 @@ export function BandejaProspectosChat() {
                   padding: "8px 16px",
                   borderRadius: "8px",
                   border: "1px solid var(--linea-fuerte)",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   color: "var(--texto-2)",
                   fontWeight: 600,
                   fontSize: "0.85rem",

@@ -59,7 +59,7 @@
 .campo-telefono input { flex: 1; min-width: 0; }
 
 .error-auth { color: var(--eco-peligro); font-size: 0.85rem; text-align: left; }
-.mensaje-ok { color: #05876e; font-size: 0.85rem; }
+.mensaje-ok { color: var(--ct-05876e, #05876e); font-size: 0.85rem; }
 .enlace-auth { font-size: 0.9rem; }
 .enlace-auth a { color: var(--eco-acento); font-weight: 700; }
 
@@ -87,7 +87,7 @@
 .pagina-legal h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; margin-top: 8px; }
 .pagina-legal .seccion-legal { display: flex; flex-direction: column; gap: 8px; }
 .pagina-legal h2 { font-size: 1.15rem; font-weight: 800; }
-.pagina-legal p, .pagina-legal li { line-height: 1.6; color: rgba(17, 17, 17, 0.85); }
+.pagina-legal p, .pagina-legal li { line-height: 1.6; color: var(--ct-111111-a850, rgba(17, 17, 17, 0.85)); }
 .pagina-legal ul { padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 .pagina-legal a { color: var(--eco-acento); font-weight: 700; }
 .fecha-legal { font-size: 0.85rem; color: var(--eco-gris); }
@@ -129,11 +129,11 @@
   .panel-barra-movil {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
     padding: 10px 14px; background: var(--eco-negro); color: var(--eco-blanco);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); position: sticky; top: 0; z-index: 940;
+    border-bottom: 1px solid var(--cb-ffffff-a100, rgba(255, 255, 255, 0.1)); position: sticky; top: 0; z-index: 940;
   }
   .panel-barra-movil-izq { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .panel-btn-hamburguesa {
-    width: 38px; height: 38px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.18);
+    width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--cb-ffffff-a180, rgba(255, 255, 255, 0.18));
     background: rgba(255, 255, 255, 0.08); color: var(--eco-blanco);
     display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
   }
@@ -173,12 +173,12 @@
 .btn-mini { padding: 8px 16px; border-radius: 999px; border: none; background: var(--eco-negro); color: var(--eco-blanco); font-weight: 700; font-size: 0.82rem; cursor: pointer; }
 .btn-mini:hover { background: var(--eco-acento); }
 .btn-mini:disabled { opacity: 0.5; cursor: wait; }
-.mensaje-fila { font-size: 0.78rem; color: #05876e; margin-left: 6px; }
+.mensaje-fila { font-size: 0.78rem; color: var(--ct-05876e, #05876e); margin-left: 6px; }
 
 .tabla-panel-envoltura { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--eco-borde); background: var(--eco-blanco); }
 .tabla-panel { width: 100%; min-width: 620px; border-collapse: collapse; background: var(--eco-blanco); border-radius: 12px; }
 .tabla-panel th, .tabla-panel td { padding: 12px 14px; text-align: left; font-size: 0.88rem; border-bottom: 1px solid var(--eco-borde); }
-.tabla-panel th { background: #eef2ff; font-weight: 700; }
+.tabla-panel th { background: var(--cf-eef2ff, #eef2ff); font-weight: 700; }
 .tabla-panel select, .tabla-panel .eco-select-buscador { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--eco-borde); font-family: inherit; }
 
 .perfiles-usuario { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -202,8 +202,8 @@
 .datagrid-chip-agrupado button { background: none; border: none; color: inherit; cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 2px; }
 .datagrid-envoltura { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--eco-borde); background: var(--eco-blanco); }
 .datagrid-tabla { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--eco-blanco); }
-.datagrid-tabla td { padding: 12px 14px; font-size: 0.85rem; border-bottom: 1px solid rgba(17, 17, 17, 0.07); font-variant-numeric: tabular-nums; }
-.datagrid-th { background: #f8fafc; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--eco-gris); border-bottom: 1px solid var(--eco-borde); padding: 0; white-space: nowrap; }
+.datagrid-tabla td { padding: 12px 14px; font-size: 0.85rem; border-bottom: 1px solid var(--cb-111111-a070, rgba(17, 17, 17, 0.07)); font-variant-numeric: tabular-nums; }
+.datagrid-th { background: var(--cf-f8fafc, #f8fafc); font-weight: 800; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--eco-gris); border-bottom: 1px solid var(--eco-borde); padding: 0; white-space: nowrap; }
 .datagrid-th-arrastrar { padding: 10px 4px 10px 12px; cursor: grab; color: var(--eco-gris); user-select: none; touch-action: none; }
 .datagrid-th-boton { background: none; border: none; font: inherit; font-weight: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; padding: 10px 10px 10px 2px; }
 .datagrid-th-agrupar { background: none; border: 1px solid transparent; border-radius: 6px; color: var(--eco-gris); cursor: pointer; font: inherit; font-size: 0.92rem; line-height: 1; padding: 3px 6px; margin-right: 8px; opacity: 0.6; }
@@ -211,7 +211,7 @@
 .datagrid-boton-expandir, .datagrid-toggle-grupo { background: none; border: none; cursor: pointer; color: var(--eco-gris); font: inherit; }
 .datagrid-toggle-grupo { font-weight: 700; color: var(--eco-negro); padding: 10px 14px; }
 .datagrid-fila-grupo { background: rgba(17, 17, 17, 0.04); }
-.datagrid-fila-detalle td { padding: 6px 14px 14px; border-top: 1px solid rgba(17, 17, 17, 0.07); }
+.datagrid-fila-detalle td { padding: 6px 14px 14px; border-top: 1px solid var(--cb-111111-a070, rgba(17, 17, 17, 0.07)); }
 
 .rejilla-auto {
   display: grid;

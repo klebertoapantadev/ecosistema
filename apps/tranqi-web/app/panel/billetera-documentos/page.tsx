@@ -24,7 +24,7 @@ export default async function PaginaBilleteraDocumentos() {
           title="Cerrar y volver al panel"
           aria-label="Cerrar y volver al panel"
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1.5px solid var(--linea)",
             color: "var(--texto)",
             borderRadius: "50%",

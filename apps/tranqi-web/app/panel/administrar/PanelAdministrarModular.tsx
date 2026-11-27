@@ -49,7 +49,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Bandeja unificada (reemplazo ManyChat): chats web en vivo, intervención humana vs ARIA, etiquetas, respuestas rápidas y compras web",
     ruta: "/panel/conversaciones",
     icono: MessageSquare,
-    colorIcono: "#DB2777",
+    colorIcono: "var(--ct-db2777, #DB2777)",
     categoria: "Comercio & Comunicación"
   },
   {
@@ -58,7 +58,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Extracción multi-fuente (.vcf/.csv/.xlsx/celular), lista personal a ignorar y múltiples teléfonos WhatsApp",
     ruta: "/panel/contactos",
     icono: Users,
-    colorIcono: "#7C3AED",
+    colorIcono: "var(--ct-7c3aed, #7C3AED)",
     categoria: "Comercio & Comunicación"
   },
   {
@@ -76,7 +76,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Conversación interna de trabajo con @menciones, fotografías y reenvío de consultas",
     ruta: "/panel/administrar?widget=chat_equipo",
     icono: Users,
-    colorIcono: "#6D28D9",
+    colorIcono: "var(--ct-6d28d9, #6D28D9)",
     categoria: "Comercio y Pagos"
   },
   {
@@ -112,7 +112,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Alianzas corporativas, asignación de bolsas de consultas y descuentos automáticos",
     ruta: "/panel/administrar?widget=gestion_convenios_corporativos",
     icono: Building2,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio & B2B"
   },
   {
@@ -121,7 +121,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Matriz de obligaciones normativas, monitoreo de caducidades con Tranqi y cálculo del Legal Health Score",
     ruta: "/panel/administrar?widget=compliance_score_legal",
     icono: ShieldCheck,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio & B2B"
   },
   {
@@ -139,7 +139,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Horario laborable por defecto (telemático y oficina), fechas exactas (ej. Navidad) y cupo máximo por hora",
     ruta: "/panel/administrar?widget=disponibilidad_abogados",
     icono: Scale,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Agendamiento & Operación"
   },
   {
@@ -148,7 +148,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado, registro de pagos y emisión/descarga de facturas electrónicas SRI",
     ruta: "/panel/administrar?widget=historial_pagos",
     icono: Receipt,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio y Pagos"
   },
   {
@@ -175,7 +175,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Catálogo de perfiles, jerarquía (1–100) y matriz de gobernanza BDD",
     ruta: "/panel/administrar?widget=perfiles",
     icono: Sliders,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Usuarios & Permisos"
   },
   {
@@ -193,7 +193,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Búsqueda de usuarios registrados para convertirlos en socios abogados, registro manual y gestión de especialidades, cobertura y disponibilidad",
     ruta: "/panel/administrar?widget=gestion_red_abogados",
     icono: Scale,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Operación Legal"
   },
   {
@@ -202,7 +202,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Validación de matrículas, acreditación y verificación de abogados",
     ruta: "/panel/administrar?widget=socios",
     icono: Users,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Operación Legal"
   },
   {
@@ -211,7 +211,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Procesamiento de postulaciones y formularios de postulación socio",
     ruta: "/panel/administrar?widget=solicitud_socio",
     icono: ClipboardList,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Operación Legal"
   },
   {
@@ -220,7 +220,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
     ruta: "/panel/administrar?widget=monitoreo_notificaciones_usuarios",
     icono: Bell,
-    colorIcono: "#1F6FEB",
+    colorIcono: "var(--ct-1f6feb, #1F6FEB)",
     categoria: "Comunicación"
   },
   {
@@ -229,7 +229,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Configuración centralizada de cláusulas LOPDP, notificaciones y contrato de socios",
     ruta: "/panel/administrar?widget=gestion_terminos_consentimientos",
     icono: FileText,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Gobernanza & Legales"
   },
   {
@@ -238,7 +238,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
     ruta: "/panel/administrar?widget=configuracion_contrato_abogado",
     icono: FileText,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Gobernanza & Legales"
   },
   {
@@ -247,7 +247,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura)",
     ruta: "/panel/administrar?widget=consulta_usuarios",
     icono: Users,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Usuarios & Permisos"
   },
   {
@@ -256,7 +256,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura)",
     ruta: "/panel/administrar?widget=consulta_usuarios_perfiles",
     icono: Users,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Usuarios & Permisos"
   },
   {
@@ -274,7 +274,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
     ruta: "/panel/administrar?widget=gestion_usuarios",
     icono: Sliders,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Usuarios & Permisos"
   }
 ];
@@ -515,9 +515,9 @@ export function SociosWidget() {
 function SolicitudSocioWidget() {
   return (
     <div style={{ padding: "24px", textAlign: "center", background: "var(--fondo-suave)", borderRadius: "12px", border: "1px solid var(--linea)" }}>
-      <ClipboardList style={{ width: 42, height: 42, color: "#0E6648", margin: "0 auto 12px", display: "block" }} />
+      <ClipboardList style={{ width: 42, height: 42, color: "var(--ct-0e6648, #0E6648)", margin: "0 auto 12px", display: "block" }} />
       <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 0 8px 0" }}>Formulario de Solicitud de Socio Abogado</h3>
-      <p style={{ margin: "0 0 20px 0", color: "#666", fontSize: "0.88rem", maxWidth: "540px", marginInline: "auto" }}>
+      <p style={{ margin: "0 0 20px 0", color: "var(--ct-666666, #666)", fontSize: "0.88rem", maxWidth: "540px", marginInline: "auto" }}>
         Únete a la red de abogados de tranqi. Completa tus datos de acreditación SENESCYT y foro de abogados para revisión.
       </p>
       <Link href="/panel/solicitud-socio" className="btn btn-primario" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
@@ -853,7 +853,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
   if (widgetActivo && moduloActualDef && moduloInfoActual) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
-        <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--panel-linea, var(--linea))" }}>
+        <section className="tarjeta-seccion" style={{ background: "var(--cf-ffffff, var(--blanco, #ffffff))", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--panel-linea, var(--linea))" }}>
           <header
             style={{
               padding: "16px 20px",
@@ -869,7 +869,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                 style={{
                   padding: "8px",
                   borderRadius: "8px",
-                  background: "var(--blanco, #ffffff)",
+                  background: "var(--cf-ffffff, var(--blanco, #ffffff))",
                   border: "1px solid var(--panel-linea, var(--linea))",
                   display: "flex"
                 }}
@@ -878,7 +878,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                  <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
+                  <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", margin: 0 }}>
                     {moduloInfoActual.titulo}
                   </h2>
                   {favoritos.includes(widgetActivo) && (
@@ -1172,7 +1172,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                       });
                     }}
                     style={{
-                      background: "rgba(255,255,255,0.9)",
+                      background: "var(--cf-ffffff-a900, rgba(255,255,255,0.9))",
                       border: "1px solid var(--panel-linea, var(--linea))",
                       borderRadius: "6px",
                       cursor: "pointer",
@@ -1217,7 +1217,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                         style={{
                           fontSize: "0.58rem",
                           fontWeight: 800,
-                          color: "var(--violeta, #5000BA)",
+                          color: "var(--ct-5000ba, var(--violeta, #5000BA))",
                           background: "var(--violeta-suave, var(--acento-diluido))",
                           padding: "1px 6px",
                           borderRadius: "999px",
@@ -1264,7 +1264,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                     justifyContent: "flex-end",
                     marginTop: "auto",
                     paddingTop: "10px",
-                    color: "var(--violeta, #5000BA)"
+                    color: "var(--ct-5000ba, var(--violeta, #5000BA))"
                   }}
                 >
                   <ChevronRight size={16} />

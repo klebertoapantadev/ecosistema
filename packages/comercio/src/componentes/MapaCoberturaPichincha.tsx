@@ -428,11 +428,11 @@ export function MapaCoberturaPichincha({
           : "Cálculo por km";
 
       const poly = L.polygon(zona.poligono, {
-        color: zona.color || "#0284C7",
+        color: zona.color || "var(--ct-0284c7, #0284C7)",
         weight: resaltada ? 3.2 : 1.6,
         opacity: resaltada ? 1 : 0.72,
         dashArray: resaltada ? undefined : "5, 4",
-        fillColor: zona.color || "#0284C7",
+        fillColor: zona.color || "var(--ct-0284c7, #0284C7)",
         fillOpacity: resaltada ? 0.22 : zona.modoCobro === "GRATIS" ? 0.11 : 0.07,
         bubblingMouseEvents: true,
         interactive: !modoDibujoPoligono,
@@ -485,7 +485,7 @@ export function MapaCoberturaPichincha({
             }
           }
 
-          const colorZona = zona.color || (zona.modoCobro === "GRATIS" ? "#16A34A" : "#0284C7");
+          const colorZona = zona.color || (zona.modoCobro === "GRATIS" ? "var(--ct-16a34a, #16A34A)" : "var(--ct-0284c7, #0284C7)");
           const precioTexto =
             zona.tarifaFija % 1 === 0
               ? `$${zona.tarifaFija.toFixed(0)}`
@@ -507,8 +507,8 @@ export function MapaCoberturaPichincha({
             .replace(/>/g, "&gt;");
           const esGratis = zona.modoCobro === "GRATIS";
           const bgPill = esGratis
-            ? "rgba(236, 253, 245, 0.92)"
-            : "rgba(255, 255, 255, 0.92)";
+            ? "var(--cf-ecfdf5-a920, rgba(236, 253, 245, 0.92))"
+            : "var(--cf-ffffff-a920, rgba(255, 255, 255, 0.92))";
           const fgPill = esGratis ? "#166534" : "#1E293B";
           const borderPill = esGratis ? "#16A34A" : colorZona;
 
@@ -684,7 +684,7 @@ export function MapaCoberturaPichincha({
 
     if (rutaGeometria && rutaGeometria.length >= 2) {
       L.polyline(rutaGeometria, {
-        color: "#18181B",
+        color: "var(--ct-18181b, #18181B)",
         weight: 3.5,
         opacity: 0.75,
         dashArray: "6, 6",
@@ -741,15 +741,15 @@ export function MapaCoberturaPichincha({
         style={{
           height: altoFinal,
           borderRadius: "10px",
-          border: "1px solid #E4E4E7",
-          background: "#FAFAFA",
+          border: "1px solid var(--cb-e4e4e7, #E4E4E7)",
+          background: "var(--cf-fafafa, #FAFAFA)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           padding: "16px",
           textAlign: "center",
           fontSize: "0.82rem",
-          color: "#52525B",
+          color: "var(--ct-52525b, #52525B)",
         }}
       >
         Visor de mapa no disponible en esta red. Puedes pegar directamente el enlace de Google Maps, Apple Maps o Waze para calcular el envío exacto.
@@ -766,9 +766,9 @@ export function MapaCoberturaPichincha({
           width: "100%",
           height: "100%",
           borderRadius: altoFinal === "100%" ? 0 : "10px",
-          border: modoDibujoPoligono ? "2px solid #DC2626" : "1px solid #E4E4E7",
+          border: modoDibujoPoligono ? "2px solid #DC2626" : "1px solid var(--cb-e4e4e7, #E4E4E7)",
           overflow: "hidden",
-          background: "#F4F4F5",
+          background: "var(--cf-f4f4f5, #F4F4F5)",
           cursor: modoDibujoPoligono || esSeleccionable ? "crosshair" : "grab",
           zIndex: 1,
         }}
@@ -817,13 +817,13 @@ export function MapaCoberturaPichincha({
             position: "absolute",
             inset: 0,
             borderRadius: "10px",
-            background: "rgba(250, 250, 250, 0.88)",
+            background: "var(--cf-fafafa-a880, rgba(250, 250, 250, 0.88))",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "0.82rem",
             fontWeight: 600,
-            color: "#52525B",
+            color: "var(--ct-52525b, #52525B)",
             zIndex: 2,
           }}
         >

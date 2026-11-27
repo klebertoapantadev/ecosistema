@@ -124,9 +124,9 @@ export function ModalAdministrarEtiquetas({
           maxWidth: "500px",
           maxHeight: "88vh",
           overflowY: "auto",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
           boxShadow: "0 20px 50px rgba(15, 23, 42, 0.24)",
           padding: "18px",
           display: "flex",
@@ -136,12 +136,12 @@ export function ModalAdministrarEtiquetas({
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Tag size={18} style={{ color: "#0F172A" }} />
+            <Tag size={18} style={{ color: "var(--ct-0f172a, #0F172A)" }} />
             <div>
-              <strong style={{ fontSize: "0.96rem", color: "#0F172A", display: "block" }}>
+              <strong style={{ fontSize: "0.96rem", color: "var(--ct-0f172a, #0F172A)", display: "block" }}>
                 Administrar Etiquetas Comerciales
               </strong>
-              <span style={{ fontSize: "0.73rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.73rem", color: "var(--ct-64748b, #64748B)" }}>
                 Clasificación de chats y clientes (exclusivo Administrador / Operador)
               </span>
             </div>
@@ -153,7 +153,7 @@ export function ModalAdministrarEtiquetas({
             aria-label="Cerrar"
             style={{
               border: "none",
-              background: "#F1F5F9",
+              background: "var(--cf-f1f5f9, #F1F5F9)",
               borderRadius: "8px",
               width: "30px",
               height: "30px",
@@ -170,8 +170,8 @@ export function ModalAdministrarEtiquetas({
         <form
           onSubmit={handleGuardar}
           style={{
-            background: "#F8FAFC",
-            border: "1px solid #E2E8F0",
+            background: "var(--cf-f8fafc, #F8FAFC)",
+            border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             borderRadius: "12px",
             padding: "12px",
             display: "flex",
@@ -192,9 +192,9 @@ export function ModalAdministrarEtiquetas({
                 padding: "7px",
                 textAlign: "center",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                 fontSize: "0.95rem",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
               }}
             />
             <input
@@ -206,9 +206,9 @@ export function ModalAdministrarEtiquetas({
                 flex: 1,
                 padding: "7px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                 fontSize: "0.84rem",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
               }}
             />
           </div>
@@ -235,7 +235,7 @@ export function ModalAdministrarEtiquetas({
                     height: "22px",
                     borderRadius: "999px",
                     background: col,
-                    border: color === col ? "2.5px solid #0F172A" : "2px solid #FFFFFF",
+                    border: color === col ? "2.5px solid #0F172A" : "2px solid var(--cb-ffffff, #FFFFFF)",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.16)",
                     cursor: "pointer",
                   }}
@@ -253,9 +253,9 @@ export function ModalAdministrarEtiquetas({
                   style={{
                     padding: "6px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: "#FFFFFF",
-                    color: "#475569",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-475569, #475569)",
                     fontSize: "0.76rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -295,9 +295,9 @@ export function ModalAdministrarEtiquetas({
             style={{
               padding: "8px 10px",
               borderRadius: "8px",
-              background: "#FEF2F2",
-              border: "1px solid #FECACA",
-              color: "#991B1B",
+              background: "var(--cf-fef2f2, #FEF2F2)",
+              border: "1px solid var(--cb-fecaca, #FECACA)",
+              color: "var(--ct-991b1b, #991B1B)",
               fontSize: "0.78rem",
             }}
           >
@@ -306,11 +306,11 @@ export function ModalAdministrarEtiquetas({
         )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B" }}>
+          <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-64748b, #64748B)" }}>
             Etiquetas activas ({etiquetas.length})
           </span>
           {etiquetas.length === 0 ? (
-            <div style={{ fontSize: "0.8rem", color: "#64748B", padding: "12px 0" }}>
+            <div style={{ fontSize: "0.8rem", color: "var(--ct-64748b, #64748B)", padding: "12px 0" }}>
               Aún no hay etiquetas creadas.
             </div>
           ) : (
@@ -323,8 +323,8 @@ export function ModalAdministrarEtiquetas({
                   alignItems: "center",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  border: editandoId === etq.id ? "1.5px solid #0F172A" : "1px solid #E2E8F0",
-                  background: "#FFFFFF",
+                  border: editandoId === etq.id ? "1.5px solid #0F172A" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                 }}
               >
                 <span
@@ -352,11 +352,11 @@ export function ModalAdministrarEtiquetas({
                     title={`Editar etiqueta ${etq.nombre}`}
                     aria-label={`Editar ${etq.nombre}`}
                     style={{
-                      border: "1px solid #E2E8F0",
-                      background: "#F8FAFC",
+                      border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                      background: "var(--cf-f8fafc, #F8FAFC)",
                       borderRadius: "7px",
                       padding: "5px 8px",
-                      color: "#334155",
+                      color: "var(--ct-334155, #334155)",
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
@@ -371,11 +371,11 @@ export function ModalAdministrarEtiquetas({
                     title={`Eliminar etiqueta ${etq.nombre}`}
                     aria-label={`Eliminar ${etq.nombre}`}
                     style={{
-                      border: "1px solid #FECACA",
-                      background: "#FEF2F2",
+                      border: "1px solid var(--cb-fecaca, #FECACA)",
+                      background: "var(--cf-fef2f2, #FEF2F2)",
                       borderRadius: "7px",
                       padding: "5px 8px",
-                      color: "#DC2626",
+                      color: "var(--ct-dc2626, #DC2626)",
                       cursor: eliminandoId === etq.id ? "wait" : "pointer",
                       display: "inline-flex",
                       alignItems: "center",

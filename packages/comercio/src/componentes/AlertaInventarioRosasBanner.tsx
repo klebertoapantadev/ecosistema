@@ -91,9 +91,9 @@ export function AlertaInventarioRosasBanner({
         margin: "0 0 14px 0",
         padding: "11px 14px",
         borderRadius: "12px",
-        background: "#FFFBEB",
+        background: "var(--cf-fffbeb, #FFFBEB)",
         border: "1.5px solid #F59E0B",
-        color: "#78350F",
+        color: "var(--ct-78350f, #78350F)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -120,12 +120,12 @@ export function AlertaInventarioRosasBanner({
             width: "32px",
             height: "32px",
             borderRadius: "9px",
-            background: "#FEF3C7",
+            background: "var(--cf-fef3c7, #FEF3C7)",
             border: "1px solid #FCD34D",
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#B45309",
+            color: "var(--ct-b45309, #B45309)",
             flexShrink: 0,
             marginTop: "1px",
           }}
@@ -144,7 +144,7 @@ export function AlertaInventarioRosasBanner({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "7px", flexWrap: "wrap" }}>
-            <strong style={{ fontSize: "0.84rem", color: "#92400E" }}>
+            <strong style={{ fontSize: "0.84rem", color: "var(--ct-92400e, #92400E)" }}>
               Inventario de rosas pendiente
             </strong>
             <span
@@ -154,9 +154,9 @@ export function AlertaInventarioRosasBanner({
                 gap: "4px",
                 padding: "1.5px 8px",
                 borderRadius: "999px",
-                background: "#FEF3C7",
+                background: "var(--cf-fef3c7, #FEF3C7)",
                 border: "1px solid #F59E0B",
-                color: "#92400E",
+                color: "var(--ct-92400e, #92400E)",
                 fontSize: "0.69rem",
                 fontWeight: 700,
               }}
@@ -167,7 +167,7 @@ export function AlertaInventarioRosasBanner({
               </span>
             </span>
           </div>
-          <span style={{ fontSize: "0.76rem", color: "#78350F", lineHeight: 1.4 }}>
+          <span style={{ fontSize: "0.76rem", color: "var(--ct-78350f, #78350F)", lineHeight: 1.4 }}>
             No se ha registrado un inventario de rosas en las últimas {estado.horasLimite} horas.
             Realízalo para contar con los colores disponibles actualizados en la tienda.
           </span>
@@ -211,8 +211,8 @@ export function AlertaInventarioRosasBanner({
           aria-label="Ocultar aviso"
           style={{
             border: "1px solid #FCD34D",
-            background: "#FFFFFF",
-            color: "#92400E",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            color: "var(--ct-92400e, #92400E)",
             width: "30px",
             height: "30px",
             borderRadius: "8px",

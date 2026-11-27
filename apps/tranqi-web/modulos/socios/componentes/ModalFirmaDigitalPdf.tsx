@@ -378,7 +378,7 @@ export function ModalFirmaDigitalPdf({
           overflow-y: auto;
         }
         .modal-firma-contenedor {
-          background: #FFFFFF;
+          background: var(--cf-ffffff, #FFFFFF);
           border-radius: 20px;
           width: 100%;
           max-width: 1400px;
@@ -403,7 +403,7 @@ export function ModalFirmaDigitalPdf({
           display: flex;
           flex-direction: column;
           gap: 14px;
-          background: #FFFFFF;
+          background: var(--cf-ffffff, #FFFFFF);
           overflow-y: auto;
         }
         .modal-firma-visor-col {
@@ -533,7 +533,7 @@ export function ModalFirmaDigitalPdf({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: pasoActual === "1_VALIDAR_CERTIFICADO" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--texto-suave)",
+              color: pasoActual === "1_VALIDAR_CERTIFICADO" ? (esTranqi ? "var(--ct-5000ba, #5000BA)" : "var(--exito-texto)") : "var(--texto-suave)",
             }}
           >
             <span
@@ -561,7 +561,7 @@ export function ModalFirmaDigitalPdf({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: pasoActual === "2_UBICAR_FIRMA" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--texto-suave)",
+              color: pasoActual === "2_UBICAR_FIRMA" ? (esTranqi ? "var(--ct-5000ba, #5000BA)" : "var(--exito-texto)") : "var(--texto-suave)",
             }}
           >
             <span
@@ -589,7 +589,7 @@ export function ModalFirmaDigitalPdf({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              color: pasoActual === "3_REVISAR_Y_ENVIAR" ? (esTranqi ? "#5000BA" : "var(--exito-texto)") : "var(--texto-suave)",
+              color: pasoActual === "3_REVISAR_Y_ENVIAR" ? (esTranqi ? "var(--ct-5000ba, #5000BA)" : "var(--exito-texto)") : "var(--texto-suave)",
             }}
           >
             <span
@@ -622,7 +622,7 @@ export function ModalFirmaDigitalPdf({
             justifyContent: "space-between",
             fontSize: "0.78rem",
             fontWeight: 800,
-            color: esTranqi ? "#5000BA" : "var(--exito-texto)",
+            color: esTranqi ? "var(--ct-5000ba, #5000BA)" : "var(--exito-texto)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -956,7 +956,7 @@ export function ModalFirmaDigitalPdf({
                       onClick={() => setPosicionYPorcentaje((y) => Math.max(5, y - 4))}
                       style={{
                         padding: "6px",
-                        background: "#FFF",
+                        background: "var(--cf-ffffff, #FFF)",
                         border: "1px solid var(--linea-fuerte)",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
@@ -975,7 +975,7 @@ export function ModalFirmaDigitalPdf({
                       onClick={() => setPosicionYPorcentaje((y) => Math.min(85, y + 4))}
                       style={{
                         padding: "6px",
-                        background: "#FFF",
+                        background: "var(--cf-ffffff, #FFF)",
                         border: "1px solid var(--linea-fuerte)",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
@@ -994,7 +994,7 @@ export function ModalFirmaDigitalPdf({
                       onClick={() => setPosicionXPorcentaje((x) => Math.max(5, x - 4))}
                       style={{
                         padding: "6px",
-                        background: "#FFF",
+                        background: "var(--cf-ffffff, #FFF)",
                         border: "1px solid var(--linea-fuerte)",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
@@ -1013,7 +1013,7 @@ export function ModalFirmaDigitalPdf({
                       onClick={() => setPosicionXPorcentaje((x) => Math.min(65, x + 4))}
                       style={{
                         padding: "6px",
-                        background: "#FFF",
+                        background: "var(--cf-ffffff, #FFF)",
                         border: "1px solid var(--linea-fuerte)",
                         borderRadius: "6px",
                         fontSize: "0.72rem",
@@ -1345,7 +1345,7 @@ export function ModalFirmaDigitalPdf({
                     height: "100%",
                     maxHeight: "calc(92vh - 160px)",
                     aspectRatio: "595.28 / 841.89",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
                     borderRadius: "4px",
                     overflow: "hidden",
@@ -1385,7 +1385,7 @@ export function ModalFirmaDigitalPdf({
                         left: `${posicionXPorcentaje}%`,
                         width: `${((230 / 595.28) * 100).toFixed(2)}%`,
                         height: `${((72 / 841.89) * 100).toFixed(2)}%`,
-                        background: "rgba(255, 255, 255, 0.98)",
+                        background: "var(--cf-ffffff-a980, rgba(255, 255, 255, 0.98))",
                         border: `1.5px solid ${esTranqi ? "#5000BA" : "var(--exito-texto)"}`,
                         borderRadius: "3px",
                         padding: "2px 4px",
@@ -1447,7 +1447,7 @@ export function ModalFirmaDigitalPdf({
                           style={{
                             fontSize: "clamp(6px, 0.85vw, 8.5px)",
                             fontWeight: 800,
-                            color: esTranqi ? "#5000BA" : "var(--exito-texto)",
+                            color: esTranqi ? "var(--ct-5000ba, #5000BA)" : "var(--exito-texto)",
                             textTransform: "uppercase",
                             letterSpacing: "0.2px",
                             whiteSpace: "nowrap",

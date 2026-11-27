@@ -181,8 +181,8 @@ export function EditorContratoOperador({
           onClick={() => setPanelAbierto(true)}
           style={{
             padding: "8px 16px",
-            background: "#FFFFFF",
-            color: "#5000BA",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            color: "var(--ct-5000ba, #5000BA)",
             border: "1.5px solid #5000BA",
             borderRadius: "8px",
             fontWeight: 700,
@@ -204,7 +204,7 @@ export function EditorContratoOperador({
   return (
     <div
       style={{
-        background: "#FFFFFF",
+        background: "var(--cf-ffffff, #FFFFFF)",
         border: "1.5px solid var(--linea)",
         borderRadius: "16px",
         padding: "22px 26px",
@@ -235,8 +235,8 @@ export function EditorContratoOperador({
             onClick={() => setModo("EDITAR")}
             style={{
               padding: "6px 14px",
-              background: modo === "EDITAR" ? "#FFFFFF" : "transparent",
-              color: modo === "EDITAR" ? "#5000BA" : "var(--texto-suave)",
+              background: modo === "EDITAR" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+              color: modo === "EDITAR" ? "var(--ct-5000ba, #5000BA)" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
               borderRadius: "8px",
@@ -254,8 +254,8 @@ export function EditorContratoOperador({
             disabled={cargandoPreview}
             style={{
               padding: "6px 14px",
-              background: modo === "PREVIEW" ? "#FFFFFF" : "transparent",
-              color: modo === "PREVIEW" ? "#5000BA" : "var(--texto-suave)",
+              background: modo === "PREVIEW" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+              color: modo === "PREVIEW" ? "var(--ct-5000ba, #5000BA)" : "var(--texto-suave)",
               fontWeight: 700,
               fontSize: "0.82rem",
               borderRadius: "8px",
@@ -416,7 +416,7 @@ export function EditorContratoOperador({
             style={{
               background: "none",
               border: "none",
-              color: "#5000BA",
+              color: "var(--ct-5000ba, #5000BA)",
               fontSize: "0.82rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -538,7 +538,7 @@ export function EditorContratoOperador({
                           style={{
                             background: "none",
                             border: "none",
-                            color: "#5000BA",
+                            color: "var(--ct-5000ba, #5000BA)",
                             fontSize: "0.75rem",
                             fontWeight: 700,
                             cursor: "pointer",

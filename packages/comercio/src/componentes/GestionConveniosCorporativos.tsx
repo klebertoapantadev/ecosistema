@@ -566,9 +566,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
             justifyContent: "space-between",
             padding: "12px 16px",
             borderRadius: "12px",
-            background: mensajeNotificacion.tipo === "ok" ? "#ECFDF5" : "#FEF2F2",
+            background: mensajeNotificacion.tipo === "ok" ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-fef2f2, #FEF2F2)",
             border: mensajeNotificacion.tipo === "ok" ? "1px solid #10B981" : "1px solid #EF4444",
-            color: mensajeNotificacion.tipo === "ok" ? "#065F46" : "#991B1B",
+            color: mensajeNotificacion.tipo === "ok" ? "var(--ct-065f46, #065F46)" : "var(--ct-991b1b, #991B1B)",
             fontSize: "0.875rem",
             fontWeight: 600,
           }}
@@ -620,45 +620,45 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
 
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             padding: "18px 20px",
             borderRadius: "16px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748B" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ct-64748b, #64748B)" }}>
               Beneficios Desplegados
             </span>
             <Gift size={20} color="#0284C7" />
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0F172A" }}>2 Citas + 15% Desc.</div>
-          <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "4px" }}>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>2 Citas + 15% Desc.</div>
+          <div style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", marginTop: "4px" }}>
             Bienvenida automática por correo al registrarse
           </div>
         </div>
 
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             padding: "18px 20px",
             borderRadius: "16px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748B" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ct-64748b, #64748B)" }}>
               Control de Colaboradores
             </span>
             <Users size={20} color="#10B981" />
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0F172A" }}>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
             {totalRegistradosGlobal}{" "}
-            <span style={{ fontSize: "1rem", fontWeight: 700, color: "#64748B" }}>
+            <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--ct-64748b, #64748B)" }}>
               / {totalCuposHabilitadosGlobal} habilitados
             </span>
           </div>
-          <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "4px" }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", marginTop: "4px" }}>
             {Math.max(0, totalCuposHabilitadosGlobal - totalRegistradosGlobal)} cupos disponibles en convenios activos
           </div>
         </div>
@@ -672,15 +672,15 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
           alignItems: "center",
           justifyContent: "space-between",
           gap: "12px",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           padding: "14px 18px",
           borderRadius: "14px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: "260px" }}>
           <div style={{ position: "relative", width: "100%", maxWidth: "380px" }}>
-            <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }} />
+            <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--ct-94a3b8, #94A3B8)" }} />
             <input
               type="text"
               placeholder="Buscar empresa por nombre, RUC o dominio..."
@@ -690,14 +690,14 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 width: "100%",
                 padding: "8px 12px 8px 36px",
                 borderRadius: "10px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                 fontSize: "0.85rem",
                 outline: "none",
               }}
             />
           </div>
 
-          <div style={{ display: "flex", background: "#F1F5F9", padding: "3px", borderRadius: "10px" }}>
+          <div style={{ display: "flex", background: "var(--cf-f1f5f9, #F1F5F9)", padding: "3px", borderRadius: "10px" }}>
             <button
               type="button"
               onClick={() => setFiltroEstado("todos")}
@@ -707,8 +707,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 border: "none",
                 fontSize: "0.78rem",
                 fontWeight: 700,
-                background: filtroEstado === "todos" ? "#FFFFFF" : "transparent",
-                color: filtroEstado === "todos" ? "#0F172A" : "#64748B",
+                background: filtroEstado === "todos" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                color: filtroEstado === "todos" ? "var(--ct-0f172a, #0F172A)" : "var(--ct-64748b, #64748B)",
                 boxShadow: filtroEstado === "todos" ? "0 2px 4px rgba(0,0,0,0.06)" : "none",
                 cursor: "pointer",
               }}
@@ -724,8 +724,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 border: "none",
                 fontSize: "0.78rem",
                 fontWeight: 700,
-                background: filtroEstado === "activos" ? "#FFFFFF" : "transparent",
-                color: filtroEstado === "activos" ? "#16A34A" : "#64748B",
+                background: filtroEstado === "activos" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                color: filtroEstado === "activos" ? "var(--ct-16a34a, #16A34A)" : "var(--ct-64748b, #64748B)",
                 boxShadow: filtroEstado === "activos" ? "0 2px 4px rgba(0,0,0,0.06)" : "none",
                 cursor: "pointer",
               }}
@@ -741,8 +741,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 border: "none",
                 fontSize: "0.78rem",
                 fontWeight: 700,
-                background: filtroEstado === "inactivos" ? "#FFFFFF" : "transparent",
-                color: filtroEstado === "inactivos" ? "#DC2626" : "#64748B",
+                background: filtroEstado === "inactivos" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                color: filtroEstado === "inactivos" ? "var(--ct-dc2626, #DC2626)" : "var(--ct-64748b, #64748B)",
                 boxShadow: filtroEstado === "inactivos" ? "0 2px 4px rgba(0,0,0,0.06)" : "none",
                 cursor: "pointer",
               }}
@@ -765,8 +765,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
               gap: "6px",
               padding: "8px 14px",
               borderRadius: "10px",
-              border: "1px solid #CBD5E1",
-              background: "#F8FAFC",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+              background: "var(--cf-f8fafc, #F8FAFC)",
               fontSize: "0.85rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -804,7 +804,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
 
       {/* Grid de Tarjetas de Convenios */}
       {cargando ? (
-        <div style={{ padding: "40px", textAlign: "center", color: "#64748B", fontSize: "0.9rem" }}>
+        <div style={{ padding: "40px", textAlign: "center", color: "var(--ct-64748b, #64748B)", fontSize: "0.9rem" }}>
           Cargando convenios corporativos...
         </div>
       ) : conveniosFiltrados.length === 0 ? (
@@ -812,14 +812,14 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
           style={{
             padding: "50px 20px",
             textAlign: "center",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "16px",
-            border: "1.5px dashed #CBD5E1",
+            border: "1.5px dashed var(--cb-cbd5e1, #CBD5E1)",
           }}
         >
           <Building2 size={40} color="#94A3B8" style={{ margin: "0 auto 12px" }} />
-          <h3 style={{ margin: "0 0 6px", color: "#0F172A", fontSize: "1.1rem" }}>No se encontraron convenios</h3>
-          <p style={{ margin: "0 0 16px", color: "#64748B", fontSize: "0.85rem" }}>
+          <h3 style={{ margin: "0 0 6px", color: "var(--ct-0f172a, #0F172A)", fontSize: "1.1rem" }}>No se encontraron convenios</h3>
+          <p style={{ margin: "0 0 16px", color: "var(--ct-64748b, #64748B)", fontSize: "0.85rem" }}>
             No hay convenios corporativos que coincidan con los criterios de búsqueda.
           </p>
           <button
@@ -863,9 +863,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
               <article
                 key={c.cve_id}
                 style={{
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   borderRadius: "16px",
-                  border: c.cve_activo ? "1.5px solid #E2E8F0" : "1.5px dashed #CBD5E1",
+                  border: c.cve_activo ? "1.5px solid var(--cb-e2e8f0, #E2E8F0)" : "1.5px dashed var(--cb-cbd5e1, #CBD5E1)",
                   padding: "18px 20px",
                   display: "flex",
                   flexDirection: "column",
@@ -882,8 +882,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                         width: "44px",
                         height: "44px",
                         borderRadius: "12px",
-                        background: c.cve_activo ? "#EEF2FF" : "#F1F5F9",
-                        color: c.cve_activo ? "#4F46E5" : "#64748B",
+                        background: c.cve_activo ? "var(--cf-eef2ff, #EEF2FF)" : "var(--cf-f1f5f9, #F1F5F9)",
+                        color: c.cve_activo ? "var(--ct-4f46e5, #4F46E5)" : "var(--ct-64748b, #64748B)",
                         display: "grid",
                         placeItems: "center",
                         fontWeight: 800,
@@ -893,11 +893,11 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       {c.cve_empresa_nombre.charAt(0)}
                     </div>
                     <div>
-                      <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                         {c.cve_empresa_nombre}
                       </h3>
                       {c.cve_empresa_ruc && (
-                        <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>
                           RUC: {c.cve_empresa_ruc}
                         </span>
                       )}
@@ -911,8 +911,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                     aria-label={c.cve_activo ? "Pausar convenio" : "Activar convenio"}
                     style={{
                       border: "none",
-                      background: c.cve_activo ? "#DCFCE7" : "#F1F5F9",
-                      color: c.cve_activo ? "#166534" : "#64748B",
+                      background: c.cve_activo ? "var(--cf-dcfce7, #DCFCE7)" : "var(--cf-f1f5f9, #F1F5F9)",
+                      color: c.cve_activo ? "var(--ct-166534, #166534)" : "var(--ct-64748b, #64748B)",
                       padding: "4px 10px",
                       borderRadius: "999px",
                       fontSize: "0.72rem",
@@ -936,8 +936,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       justifyContent: "space-between",
                       gap: "6px",
                       fontSize: "0.78rem",
-                      color: "#4F46E5",
-                      background: "#EEF2FF",
+                      color: "var(--ct-4f46e5, #4F46E5)",
+                      background: "var(--cf-eef2ff, #EEF2FF)",
                       padding: "6px 10px",
                       borderRadius: "8px",
                       fontWeight: 600,
@@ -949,7 +949,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                         Auto-afiliación: <strong>{c.cve_dominio_correo}</strong>
                       </span>
                     </div>
-                    <span style={{ fontSize: "0.7rem", color: "#05876E", fontWeight: 800 }}>
+                    <span style={{ fontSize: "0.7rem", color: "var(--ct-05876e, #05876E)", fontWeight: 800 }}>
                       ✉️ Bienvenida Activa
                     </span>
                   </div>
@@ -958,8 +958,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 {/* Control de Cupo de Colaboradores Habilitados */}
                 <div
                   style={{
-                    background: cupoLleno ? "#FEF2F2" : "#F0FDF4",
-                    border: cupoLleno ? "1px solid #FECACA" : "1px solid #BBF7D0",
+                    background: cupoLleno ? "var(--cf-fef2f2, #FEF2F2)" : "var(--cf-f0fdf4, #F0FDF4)",
+                    border: cupoLleno ? "1px solid var(--cb-fecaca, #FECACA)" : "1px solid var(--cb-bbf7d0, #BBF7D0)",
                     borderRadius: "12px",
                     padding: "10px 14px",
                     display: "flex",
@@ -968,7 +968,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 800, color: "#0F172A" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                       <Users size={15} color={cupoLleno ? "#DC2626" : "#059669"} />
                       <span>
                         Colaboradores: {registrados} / {cupoMax} habilitados
@@ -980,8 +980,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                         fontWeight: 800,
                         padding: "2px 8px",
                         borderRadius: "999px",
-                        background: cupoLleno ? "#FEE2E2" : "#DCFCE7",
-                        color: cupoLleno ? "#991B1B" : "#166534",
+                        background: cupoLleno ? "var(--cf-fee2e2, #FEE2E2)" : "var(--cf-dcfce7, #DCFCE7)",
+                        color: cupoLleno ? "var(--ct-991b1b, #991B1B)" : "var(--ct-166534, #166534)",
                       }}
                     >
                       {cupoLleno ? "Cupo Lleno" : `${disponibles} disponibles`}
@@ -993,7 +993,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       width: "100%",
                       height: "7px",
                       borderRadius: "999px",
-                      background: "#E2E8F0",
+                      background: "var(--cf-e2e8f0, #E2E8F0)",
                       overflow: "hidden",
                     }}
                   >
@@ -1012,26 +1012,26 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 {/* Resumen del Paquete de Beneficios */}
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "var(--cf-f8fafc, #F8FAFC)",
+                    border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                     borderRadius: "12px",
                     padding: "12px 14px",
                     display: "grid",
                     gap: "8px",
                   }}
                 >
-                  <div style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "#475569" }}>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ct-475569, #475569)" }}>
                     🎁 Paquete de Beneficios (Enviado en Correo de Bienvenida):
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "#0F172A" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "var(--ct-0f172a, #0F172A)" }}>
                     <Video size={16} color="#0284C7" />
                     <span>
                       <strong>{consultas} Consultas Telemáticas ({frecuencia})</strong> al 100% ($0.00).
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "#0F172A" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "var(--ct-0f172a, #0F172A)" }}>
                     <Percent size={16} color="#10B981" />
                     <span>
                       <strong>{descGeneral}% de descuento</strong> general en servicios jurídicos.
@@ -1039,8 +1039,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                   </div>
 
                   {excepciones.length > 0 && (
-                    <div style={{ marginTop: "2px", borderTop: "1px dashed #CBD5E1", paddingTop: "6px", fontSize: "0.78rem", color: "#64748B" }}>
-                      <strong style={{ color: "#334155" }}>Reglas específicas:</strong>
+                    <div style={{ marginTop: "2px", borderTop: "1px dashed var(--cb-cbd5e1, #CBD5E1)", paddingTop: "6px", fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
+                      <strong style={{ color: "var(--ct-334155, #334155)" }}>Reglas específicas:</strong>
                       <ul style={{ margin: "4px 0 0", paddingLeft: "16px" }}>
                         {excepciones.map((ex, idx) => (
                           <li key={idx}>
@@ -1053,8 +1053,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 </div>
 
                 {/* Pie de Tarjeta / Acciones */}
-                <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "10px", borderTop: "1px solid #F1F5F9", flexWrap: "wrap", gap: "8px" }}>
-                  <div style={{ fontSize: "0.75rem", color: "#64748B", display: "flex", alignItems: "center", gap: "4px" }}>
+                <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "10px", borderTop: "1px solid var(--cb-f1f5f9, #F1F5F9)", flexWrap: "wrap", gap: "8px" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", display: "flex", alignItems: "center", gap: "4px" }}>
                     <Calendar size={13} />
                     <span>Vence: {c.cve_valido_hasta ? new Date(c.cve_valido_hasta).toLocaleDateString() : "Indefinido"}</span>
                   </div>
@@ -1069,9 +1069,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       style={{
                         padding: "6px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #A7F3D0",
-                        background: "#ECFDF5",
-                        color: "#065F46",
+                        border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
+                        background: "var(--cf-ecfdf5, #ECFDF5)",
+                        color: "var(--ct-065f46, #065F46)",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -1093,9 +1093,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       style={{
                         padding: "6px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        background: "#FFFFFF",
-                        color: "#0F172A",
+                        border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-0f172a, #0F172A)",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -1114,9 +1114,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       style={{
                         padding: "6px 8px",
                         borderRadius: "8px",
-                        border: "1px solid #FCA5A5",
-                        background: "#FEF2F2",
-                        color: "#DC2626",
+                        border: "1px solid var(--cb-fca5a5, #FCA5A5)",
+                        background: "var(--cf-fef2f2, #FEF2F2)",
+                        color: "var(--ct-dc2626, #DC2626)",
                         fontSize: "0.78rem",
                         cursor: "pointer",
                       }}
@@ -1149,7 +1149,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "20px",
               width: "min(660px, 100%)",
               maxHeight: "92vh",
@@ -1158,17 +1158,17 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
               padding: "24px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", borderBottom: "1px solid #F1F5F9", paddingBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", borderBottom: "1px solid var(--cb-f1f5f9, #F1F5F9)", paddingBottom: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <Building2 size={22} color="#4F46E5" />
-                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#0F172A" }}>
+                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                   {convenioEnEdicion ? `Editar Convenio · ${convenioEnEdicion.cve_empresa_nombre}` : "Nuevo Convenio Corporativo B2B"}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setModalAbierto(false)}
-                style={{ border: "none", background: "transparent", cursor: "pointer", color: "#64748B" }}
+                style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--ct-64748b, #64748B)" }}
                 title="Cerrar modal"
                 aria-label="Cerrar modal"
               >
@@ -1180,7 +1180,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
               {/* Sección 1: Datos de la Empresa */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "4px" }}>
                     Razón Social / Nombre Empresa *
                   </label>
                   <input
@@ -1189,12 +1189,12 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                     placeholder="Ej. SATCOM"
                     value={formNombre}
                     onChange={(e) => setFormNombre(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.85rem" }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "4px" }}>
                     RUC Corporativo
                   </label>
                   <input
@@ -1202,14 +1202,14 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                     placeholder="1790019283001"
                     value={formRuc}
                     onChange={(e) => setFormRuc(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.85rem" }}
                   />
                 </div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "4px" }}>
                     Dominio de Correo (Auto-afiliación)
                   </label>
                   <input
@@ -1217,19 +1217,19 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                     placeholder="@satcom.com.ec"
                     value={formDominio}
                     onChange={(e) => setFormDominio(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.85rem" }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "4px" }}>
                     Fecha de Vencimiento
                   </label>
                   <input
                     type="date"
                     value={formValidoHasta}
                     onChange={(e) => setFormValidoHasta(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.85rem" }}
                   />
                 </div>
               </div>
@@ -1237,8 +1237,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
               {/* Control de Número de Colaboradores Habilitados */}
               <div
                 style={{
-                  background: "#ECFDF5",
-                  border: "1.5px solid #A7F3D0",
+                  background: "var(--cf-ecfdf5, #ECFDF5)",
+                  border: "1.5px solid var(--cb-a7f3d0, #A7F3D0)",
                   borderRadius: "12px",
                   padding: "12px 14px",
                   display: "grid",
@@ -1248,7 +1248,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 }}
               >
                 <div>
-                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", fontWeight: 800, color: "#065F46", marginBottom: "4px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", fontWeight: 800, color: "var(--ct-065f46, #065F46)", marginBottom: "4px" }}>
                     <Users size={15} color="#059669" />
                     N° de Colaboradores Habilitados *
                   </label>
@@ -1264,20 +1264,20 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       padding: "8px 12px",
                       borderRadius: "8px",
                       border: "1.5px solid #10B981",
-                      background: "#FFFFFF",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       fontSize: "0.92rem",
                       fontWeight: 800,
-                      color: "#0F172A",
+                      color: "var(--ct-0f172a, #0F172A)",
                     }}
                   />
-                  <span style={{ display: "block", fontSize: "0.72rem", color: "#047857", marginTop: "3px", fontWeight: 600 }}>
+                  <span style={{ display: "block", fontSize: "0.72rem", color: "var(--ct-047857, #047857)", marginTop: "3px", fontWeight: 600 }}>
                     Registrados: {convenioEnEdicion?.beneficiarios_activos ?? 0} · Disponibles:{" "}
                     {Math.max(0, formCupoColaboradores - (convenioEnEdicion?.beneficiarios_activos ?? 0))}
                   </span>
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#065F46", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-065f46, #065F46)", marginBottom: "4px" }}>
                     Correo Contacto RRHH (Opcional)
                   </label>
                   <input
@@ -1289,27 +1289,27 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #A7F3D0",
-                      background: "#FFFFFF",
+                      border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       fontSize: "0.85rem",
                     }}
                   />
-                  <span style={{ display: "block", fontSize: "0.72rem", color: "#047857", marginTop: "3px" }}>
+                  <span style={{ display: "block", fontSize: "0.72rem", color: "var(--ct-047857, #047857)", marginTop: "3px" }}>
                     Control de nómina y alertas de cupo
                   </span>
                 </div>
               </div>
 
               {/* Sección 2: Configuración del Paquete de Beneficios */}
-              <div style={{ background: "#F8FAFC", border: "1.5px solid #E2E8F0", borderRadius: "14px", padding: "14px 16px", display: "grid", gap: "12px" }}>
-                <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#1E1B4B", display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1.5px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "14px", padding: "14px 16px", display: "grid", gap: "12px" }}>
+                <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--ct-1e1b4b, #1E1B4B)", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Gift size={16} color="#4F46E5" /> Canasta de Beneficios Corporativos
                 </div>
 
                 {/* 1. Consultas Telemáticas */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "3px" }}>
+                    <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "3px" }}>
                       ⚖️ Consultas Telemáticas ($0.00):
                     </label>
                     <input
@@ -1318,18 +1318,18 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       max={50}
                       value={formConsultasGratis}
                       onChange={(e) => setFormConsultasGratis(Number(e.target.value))}
-                      style={{ width: "100%", padding: "7px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                      style={{ width: "100%", padding: "7px 10px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.85rem" }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "3px" }}>
+                    <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "3px" }}>
                       Frecuencia de Renovación:
                     </label>
                     <SelectConBuscador
                       value={formFrecuenciaConsultas}
                       onChange={(e: any) => setFormFrecuenciaConsultas(e.target.value)}
-                      style={{ width: "100%", padding: "7px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
+                      style={{ width: "100%", padding: "7px 10px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.85rem" }}
                     >
                       <option value="ANUAL">Anual ({formConsultasGratis} al año)</option>
                       <option value="MENSUAL">Mensual ({formConsultasGratis} al mes)</option>
@@ -1339,7 +1339,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
 
                 {/* 2. Descuento General */}
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "3px" }}>
                     🏷️ Descuento General en Servicios (%):
                   </label>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1349,9 +1349,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       max={100}
                       value={formDescuentoGeneral}
                       onChange={(e) => setFormDescuentoGeneral(Number(e.target.value))}
-                      style={{ width: "120px", padding: "7px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem", fontWeight: 700 }}
+                      style={{ width: "120px", padding: "7px 10px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.85rem", fontWeight: 700 }}
                     />
-                    <span style={{ fontSize: "0.78rem", color: "#64748B" }}>
+                    <span style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                       Aplica para todo el tarifario de trámites y servicios legales
                     </span>
                   </div>
@@ -1360,7 +1360,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 {/* 3. Excepciones / Descuentos específicos por producto */}
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#475569" }}>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-475569, #475569)" }}>
                       🎯 Excepciones de Descuento por Producto:
                     </label>
                     {productosDisponibles.length > 0 && (
@@ -1370,7 +1370,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                           if (p) handleAgregarExcepcion(p.pro_nombre, p.pro_slug);
                         }}
                         defaultValue=""
-                        style={{ fontSize: "0.72rem", padding: "3px 6px", borderRadius: "6px", border: "1px solid #CBD5E1" }}
+                        style={{ fontSize: "0.72rem", padding: "3px 6px", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)" }}
                       >
                         <option value="" disabled>+ Agregar producto específico...</option>
                         {productosDisponibles.map((p) => (
@@ -1388,14 +1388,14 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          background: "#FFFFFF",
-                          border: "1px solid #CBD5E1",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                           borderRadius: "8px",
                           padding: "6px 10px",
                           fontSize: "0.8rem",
                         }}
                       >
-                        <span style={{ fontWeight: 600, color: "#0F172A", flex: 1 }}>{ex.producto_nombre}</span>
+                        <span style={{ fontWeight: 600, color: "var(--ct-0f172a, #0F172A)", flex: 1 }}>{ex.producto_nombre}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           <input
                             type="number"
@@ -1403,13 +1403,13 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                             max={100}
                             value={ex.descuento_pct}
                             onChange={(e) => handleActualizarDescuentoExcepcion(index, Number(e.target.value))}
-                            style={{ width: "60px", padding: "4px 6px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.78rem", fontWeight: 700, textAlign: "center" }}
+                            style={{ width: "60px", padding: "4px 6px", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.78rem", fontWeight: 700, textAlign: "center" }}
                           />
-                          <span style={{ fontSize: "0.78rem", color: "#64748B" }}>%</span>
+                          <span style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>%</span>
                           <button
                             type="button"
                             onClick={() => handleQuitarExcepcion(index)}
-                            style={{ border: "none", background: "transparent", cursor: "pointer", color: "#DC2626", padding: "2px" }}
+                            style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--ct-dc2626, #DC2626)", padding: "2px" }}
                             title="Quitar excepción"
                             aria-label="Quitar excepción"
                           >
@@ -1424,12 +1424,12 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 {/* Nota informativa del correo automático */}
                 <div
                   style={{
-                    background: "#EEF2FF",
-                    border: "1px solid #C7D2FE",
+                    background: "var(--cf-eef2ff, #EEF2FF)",
+                    border: "1px solid var(--cb-c7d2fe, #C7D2FE)",
                     borderRadius: "8px",
                     padding: "8px 12px",
                     fontSize: "0.75rem",
-                    color: "#3730A3",
+                    color: "var(--ct-3730a3, #3730A3)",
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
@@ -1443,15 +1443,15 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
               </div>
 
               {/* Botones de Acción */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px", borderTop: "1px solid #F1F5F9", paddingTop: "12px" }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px", borderTop: "1px solid var(--cb-f1f5f9, #F1F5F9)", paddingTop: "12px" }}>
                 <button
                   type="button"
                   onClick={() => setModalAbierto(false)}
                   style={{
                     padding: "8px 16px",
                     borderRadius: "10px",
-                    border: "1px solid #CBD5E1",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.85rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1501,7 +1501,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "20px",
               width: "min(840px, 100%)",
               maxHeight: "92vh",
@@ -1514,16 +1514,16 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
             }}
           >
             {/* Cabecera del Modal de Colaboradores */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E2E8F0", paddingBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)", paddingBottom: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#ECFDF5", color: "#059669", display: "grid", placeItems: "center" }}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "var(--cf-ecfdf5, #ECFDF5)", color: "var(--ct-059669, #059669)", display: "grid", placeItems: "center" }}>
                   <Users size={20} />
                 </div>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
+                  <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                     Control de Colaboradores · {convenioColaboradoresModal.cve_empresa_nombre}
                   </h2>
-                  <span style={{ fontSize: "0.78rem", color: "#64748B" }}>
+                  <span style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                     Dominio: <strong>{convenioColaboradoresModal.cve_dominio_correo || "Manual"}</strong> · RUC:{" "}
                     {convenioColaboradoresModal.cve_empresa_ruc || "N/D"}
                   </span>
@@ -1532,7 +1532,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
               <button
                 type="button"
                 onClick={() => setConvenioColaboradoresModal(null)}
-                style={{ border: "none", background: "transparent", cursor: "pointer", color: "#64748B" }}
+                style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--ct-64748b, #64748B)" }}
                 title="Cerrar ventana"
                 aria-label="Cerrar ventana"
               >
@@ -1551,36 +1551,36 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
 
               return (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
-                  <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "12px 14px" }}>
-                    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>
+                  <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "12px", padding: "12px 14px" }}>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--ct-64748b, #64748B)", textTransform: "uppercase" }}>
                       Colaboradores Habilitados
                     </div>
-                    <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", marginTop: "2px" }}>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", marginTop: "2px" }}>
                       {cupoMax}
                     </div>
                   </div>
 
-                  <div style={{ background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: "12px", padding: "12px 14px" }}>
-                    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#4338CA", textTransform: "uppercase" }}>
+                  <div style={{ background: "var(--cf-eef2ff, #EEF2FF)", border: "1px solid var(--cb-c7d2fe, #C7D2FE)", borderRadius: "12px", padding: "12px 14px" }}>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--ct-4338ca, #4338CA)", textTransform: "uppercase" }}>
                       Personas Registradas
                     </div>
-                    <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#312E81", marginTop: "2px" }}>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-312e81, #312E81)", marginTop: "2px" }}>
                       {activos}
                     </div>
                   </div>
 
                   <div
                     style={{
-                      background: lleno ? "#FEF2F2" : "#ECFDF5",
-                      border: lleno ? "1px solid #FECACA" : "1px solid #A7F3D0",
+                      background: lleno ? "var(--cf-fef2f2, #FEF2F2)" : "var(--cf-ecfdf5, #ECFDF5)",
+                      border: lleno ? "1px solid var(--cb-fecaca, #FECACA)" : "1px solid var(--cb-a7f3d0, #A7F3D0)",
                       borderRadius: "12px",
                       padding: "12px 14px",
                     }}
                   >
-                    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: lleno ? "#991B1B" : "#065F46", textTransform: "uppercase" }}>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 700, color: lleno ? "var(--ct-991b1b, #991B1B)" : "var(--ct-065f46, #065F46)", textTransform: "uppercase" }}>
                       Cupos Disponibles
                     </div>
-                    <div style={{ fontSize: "1.4rem", fontWeight: 800, color: lleno ? "#DC2626" : "#059669", marginTop: "2px" }}>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 800, color: lleno ? "var(--ct-dc2626, #DC2626)" : "var(--ct-059669, #059669)", marginTop: "2px" }}>
                       {disponibles}
                     </div>
                   </div>
@@ -1592,15 +1592,15 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
             <form
               onSubmit={handleRegistrarColaborador}
               style={{
-                background: "#F8FAFC",
-                border: "1.5px solid #E2E8F0",
+                background: "var(--cf-f8fafc, #F8FAFC)",
+                border: "1.5px solid var(--cb-e2e8f0, #E2E8F0)",
                 borderRadius: "14px",
                 padding: "14px 16px",
                 display: "grid",
                 gap: "10px",
               }}
             >
-              <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <UserPlus size={15} color="#059669" />
                 <span>Registrar / Habilitar Persona en este Convenio</span>
               </div>
@@ -1612,7 +1612,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                   placeholder="Nombres y Apellidos *"
                   value={nuevoColabNombre}
                   onChange={(e) => setNuevoColabNombre(e.target.value)}
-                  style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+                  style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.82rem" }}
                 />
                 <input
                   type="email"
@@ -1620,24 +1620,24 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                   placeholder={`Correo (${convenioColaboradoresModal.cve_dominio_correo || "corporativo"}) *`}
                   value={nuevoColabCorreo}
                   onChange={(e) => setNuevoColabCorreo(e.target.value)}
-                  style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+                  style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.82rem" }}
                 />
                 <input
                   type="text"
                   placeholder="Cédula / ID (opcional)"
                   value={nuevoColabIdentificacion}
                   onChange={(e) => setNuevoColabIdentificacion(e.target.value)}
-                  style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+                  style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", fontSize: "0.82rem" }}
                 />
               </div>
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.78rem", color: "#334155", fontWeight: 600, cursor: "pointer" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.78rem", color: "var(--ct-334155, #334155)", fontWeight: 600, cursor: "pointer" }}>
                   <input
                     type="checkbox"
                     checked={nuevoColabEnviarBienvenida}
                     onChange={(e) => setNuevoColabEnviarBienvenida(e.target.checked)}
-                    style={{ width: "16px", height: "16px", accentColor: "#059669" }}
+                    style={{ width: "16px", height: "16px", accentColor: "var(--ct-059669, #059669)" }}
                   />
                   <span>Enviar correo de bienvenida indicando los beneficios del convenio</span>
                 </label>
@@ -1668,7 +1668,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
             {/* Buscador y Tabla de Personas Registradas */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
               <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
-                <Search size={15} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }} />
+                <Search size={15} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--ct-94a3b8, #94A3B8)" }} />
                 <input
                   type="text"
                   placeholder="Buscar colaborador por nombre, correo o cédula..."
@@ -1678,18 +1678,18 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                     width: "100%",
                     padding: "7px 10px 7px 32px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.82rem",
                   }}
                 />
               </div>
-              <span style={{ fontSize: "0.78rem", color: "#64748B", fontWeight: 600 }}>
+              <span style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>
                 Mostrando {colaboradoresFiltrados.length} de {listaColaboradores.length} personas
               </span>
             </div>
 
             {cargandoColaboradores ? (
-              <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+              <div style={{ padding: "30px", textAlign: "center", color: "var(--ct-64748b, #64748B)", fontSize: "0.85rem" }}>
                 Verificando personas registradas bajo el convenio...
               </div>
             ) : colaboradoresFiltrados.length === 0 ? (
@@ -1697,20 +1697,20 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 style={{
                   padding: "32px 16px",
                   textAlign: "center",
-                  background: "#F8FAFC",
+                  background: "var(--cf-f8fafc, #F8FAFC)",
                   borderRadius: "12px",
-                  border: "1px dashed #CBD5E1",
-                  color: "#64748B",
+                  border: "1px dashed var(--cb-cbd5e1, #CBD5E1)",
+                  color: "var(--ct-64748b, #64748B)",
                   fontSize: "0.85rem",
                 }}
               >
                 Aún no hay personas registradas en este convenio o que coincidan con tu búsqueda.
               </div>
             ) : (
-              <div style={{ border: "1px solid #E2E8F0", borderRadius: "12px", overflow: "hidden" }}>
+              <div style={{ border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "12px", overflow: "hidden" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
                   <thead>
-                    <tr style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", textAlign: "left", color: "#475569" }}>
+                    <tr style={{ background: "var(--cf-f8fafc, #F8FAFC)", borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)", textAlign: "left", color: "var(--ct-475569, #475569)" }}>
                       <th style={{ padding: "10px 12px", fontWeight: 800 }}>Colaborador</th>
                       <th style={{ padding: "10px 12px", fontWeight: 800 }}>Estado Cupo</th>
                       <th style={{ padding: "10px 12px", fontWeight: 800 }}>Correo Bienvenida</th>
@@ -1723,16 +1723,16 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       const bienvenidaEnviada = Boolean(b.bnf_detalle_beneficiario?.correo_bienvenida_enviado);
 
                       return (
-                        <tr key={b.bnf_id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                        <tr key={b.bnf_id} style={{ borderBottom: "1px solid var(--cb-f1f5f9, #F1F5F9)" }}>
                           <td style={{ padding: "10px 12px" }}>
-                            <div style={{ fontWeight: 700, color: "#0F172A" }}>
+                            <div style={{ fontWeight: 700, color: "var(--ct-0f172a, #0F172A)" }}>
                               {b.bnf_nombres || "Colaborador Corporativo"}
                             </div>
-                            <div style={{ fontSize: "0.75rem", color: "#4F46E5", fontWeight: 600 }}>
+                            <div style={{ fontSize: "0.75rem", color: "var(--ct-4f46e5, #4F46E5)", fontWeight: 600 }}>
                               {b.bnf_correo_corporativo || b.bnf_identificacion}
                             </div>
                             {b.bnf_identificacion && b.bnf_identificacion !== b.bnf_correo_corporativo && (
-                              <div style={{ fontSize: "0.7rem", color: "#64748B" }}>
+                              <div style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748B)" }}>
                                 ID: {b.bnf_identificacion}
                               </div>
                             )}
@@ -1748,8 +1748,8 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                                 borderRadius: "999px",
                                 fontSize: "0.72rem",
                                 fontWeight: 800,
-                                background: activo ? "#DCFCE7" : "#F1F5F9",
-                                color: activo ? "#166534" : "#64748B",
+                                background: activo ? "var(--cf-dcfce7, #DCFCE7)" : "var(--cf-f1f5f9, #F1F5F9)",
+                                color: activo ? "var(--ct-166534, #166534)" : "var(--ct-64748b, #64748B)",
                               }}
                             >
                               {activo ? "🟢 Habilitado" : "⚪ Pausado"}
@@ -1758,11 +1758,11 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
 
                           <td style={{ padding: "10px 12px" }}>
                             {bienvenidaEnviada ? (
-                              <span style={{ color: "#059669", fontWeight: 700, fontSize: "0.75rem" }}>
+                              <span style={{ color: "var(--ct-059669, #059669)", fontWeight: 700, fontSize: "0.75rem" }}>
                                 ✓ Enviado con beneficios
                               </span>
                             ) : (
-                              <span style={{ color: "#D97706", fontWeight: 600, fontSize: "0.75rem" }}>
+                              <span style={{ color: "var(--ct-d97706, #D97706)", fontWeight: 600, fontSize: "0.75rem" }}>
                                 Pendiente de envío
                               </span>
                             )}
@@ -1780,9 +1780,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                                 style={{
                                   padding: "5px 9px",
                                   borderRadius: "7px",
-                                  border: "1px solid #C7D2FE",
-                                  background: "#EEF2FF",
-                                  color: "#4338CA",
+                                  border: "1px solid var(--cb-c7d2fe, #C7D2FE)",
+                                  background: "var(--cf-eef2ff, #EEF2FF)",
+                                  color: "var(--ct-4338ca, #4338CA)",
                                   fontSize: "0.74rem",
                                   fontWeight: 700,
                                   cursor: "pointer",
@@ -1806,9 +1806,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                                 style={{
                                   padding: "5px 9px",
                                   borderRadius: "7px",
-                                  border: "1px solid #CBD5E1",
-                                  background: "#FFFFFF",
-                                  color: "#334155",
+                                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                                  background: "var(--cf-ffffff, #FFFFFF)",
+                                  color: "var(--ct-334155, #334155)",
                                   fontSize: "0.74rem",
                                   fontWeight: 700,
                                   cursor: "pointer",
@@ -1829,9 +1829,9 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                                 style={{
                                   padding: "5px 7px",
                                   borderRadius: "7px",
-                                  border: "1px solid #FCA5A5",
-                                  background: "#FEF2F2",
-                                  color: "#DC2626",
+                                  border: "1px solid var(--cb-fca5a5, #FCA5A5)",
+                                  background: "var(--cf-fef2f2, #FEF2F2)",
+                                  color: "var(--ct-dc2626, #DC2626)",
                                   cursor: "pointer",
                                 }}
                               >

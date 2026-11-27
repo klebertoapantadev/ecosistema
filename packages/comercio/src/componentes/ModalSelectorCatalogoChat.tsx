@@ -297,10 +297,10 @@ export function ModalSelectorCatalogoChat({
           width: "100%",
           maxWidth: esMovil ? "100%" : "780px",
           maxHeight: esMovil ? "92dvh" : "86vh",
-          backgroundColor: "#FFFFFF",
+          backgroundColor: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: esMovil ? "20px 20px 0 0" : "18px",
           boxShadow: "0 24px 54px rgba(15, 23, 42, 0.28)",
-          border: "1px solid #E6E2DA",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -310,12 +310,12 @@ export function ModalSelectorCatalogoChat({
         <div
           style={{
             padding: esMovil ? "14px 16px 12px" : "16px 20px",
-            borderBottom: "1px solid #E6E2DA",
+            borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: "12px",
-            backgroundColor: "#F8F7F4",
+            backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
@@ -324,8 +324,8 @@ export function ModalSelectorCatalogoChat({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                backgroundColor: "#F2F6F3",
-                color: "#2F4737",
+                backgroundColor: "var(--cf-f2f6f3, #F2F6F3)",
+                color: "var(--ct-2f4737, #2F4737)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -339,13 +339,13 @@ export function ModalSelectorCatalogoChat({
                 style={{
                   fontSize: "15px",
                   fontWeight: 700,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   lineHeight: 1.2,
                 }}
               >
                 Enviar Producto del Catálogo
               </div>
-              <div style={{ fontSize: "12px", color: "#847D74", marginTop: "2px" }}>
+              <div style={{ fontSize: "12px", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
                 Foto principal · Link web · Álbum de fotos
               </div>
             </div>
@@ -360,9 +360,9 @@ export function ModalSelectorCatalogoChat({
               width: "36px",
               height: "36px",
               borderRadius: "10px",
-              border: "1px solid #E6E2DA",
-              backgroundColor: "#FFFFFF",
-              color: "#57524C",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-57524c, #57524C)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -378,7 +378,7 @@ export function ModalSelectorCatalogoChat({
         <div
           style={{
             padding: "10px 16px",
-            borderBottom: "1px solid #F4F2EE",
+            borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
             display: "flex",
             flexDirection: "column",
             gap: "8px",
@@ -389,10 +389,10 @@ export function ModalSelectorCatalogoChat({
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              border: "1px solid #D5CFC4",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
               borderRadius: "10px",
               padding: "0 12px",
-              backgroundColor: "#FFFFFF",
+              backgroundColor: "var(--cf-ffffff, #FFFFFF)",
               height: "40px",
             }}
           >
@@ -407,7 +407,7 @@ export function ModalSelectorCatalogoChat({
                 border: "none",
                 outline: "none",
                 fontSize: "16px",
-                color: "#1F1C19",
+                color: "var(--ct-1f1c19, #1F1C19)",
                 backgroundColor: "transparent",
               }}
             />
@@ -420,7 +420,7 @@ export function ModalSelectorCatalogoChat({
                 style={{
                   border: "none",
                   background: "transparent",
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                   cursor: "pointer",
                   padding: "4px",
                   display: "flex",
@@ -451,10 +451,10 @@ export function ModalSelectorCatalogoChat({
                   borderRadius: "999px",
                   border:
                     categoriaFiltro === "TODAS"
-                      ? "1px solid #1F1C19"
-                      : "1px solid #E6E2DA",
-                  backgroundColor: categoriaFiltro === "TODAS" ? "#1F1C19" : "#F8F7F4",
-                  color: categoriaFiltro === "TODAS" ? "#FFFFFF" : "#57524C",
+                      ? "1px solid var(--cb-1f1c19, #1F1C19)"
+                      : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  backgroundColor: categoriaFiltro === "TODAS" ? "#1F1C19" : "var(--cf-f8f7f4, #F8F7F4)",
+                  color: categoriaFiltro === "TODAS" ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                   fontSize: "12px",
                   fontWeight: 600,
                   whiteSpace: "nowrap",
@@ -475,9 +475,9 @@ export function ModalSelectorCatalogoChat({
                     style={{
                       padding: "5px 11px",
                       borderRadius: "999px",
-                      border: activa ? "1px solid #2F4737" : "1px solid #E6E2DA",
-                      backgroundColor: activa ? "#F2F6F3" : "#F8F7F4",
-                      color: activa ? "#2B4A36" : "#57524C",
+                      border: activa ? "1px solid #2F4737" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                      backgroundColor: activa ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f8f7f4, #F8F7F4)",
+                      color: activa ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-57524c, #57524C)",
                       fontSize: "12px",
                       fontWeight: 600,
                       whiteSpace: "nowrap",
@@ -508,8 +508,8 @@ export function ModalSelectorCatalogoChat({
               flex: esMovil ? "0 0 auto" : "1 1 54%",
               maxHeight: esMovil ? "245px" : "none",
               overflowY: "auto",
-              borderRight: esMovil ? "none" : "1px solid #E6E2DA",
-              borderBottom: esMovil ? "1px solid #E6E2DA" : "none",
+              borderRight: esMovil ? "none" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+              borderBottom: esMovil ? "1px solid var(--cb-e6e2da, #E6E2DA)" : "none",
               padding: "10px 12px",
               display: "flex",
               flexDirection: "column",
@@ -525,7 +525,7 @@ export function ModalSelectorCatalogoChat({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "10px",
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                   fontSize: "13px",
                 }}
               >
@@ -537,7 +537,7 @@ export function ModalSelectorCatalogoChat({
                 style={{
                   padding: "28px 16px",
                   textAlign: "center",
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                   fontSize: "13px",
                 }}
               >
@@ -567,8 +567,8 @@ export function ModalSelectorCatalogoChat({
                       borderRadius: "12px",
                       border: seleccionado
                         ? "2px solid #2F4737"
-                        : "1px solid #E6E2DA",
-                      backgroundColor: seleccionado ? "#F2F6F3" : "#FFFFFF",
+                        : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                      backgroundColor: seleccionado ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-ffffff, #FFFFFF)",
                       cursor: "pointer",
                       transition: "border-color 120ms ease, background-color 120ms ease",
                     }}
@@ -584,8 +584,8 @@ export function ModalSelectorCatalogoChat({
                           borderRadius: "10px",
                           objectFit: "cover",
                           flexShrink: 0,
-                          border: "1px solid #E6E2DA",
-                          backgroundColor: "#F8F7F4",
+                          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                          backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
                         }}
                       />
                     ) : (
@@ -594,8 +594,8 @@ export function ModalSelectorCatalogoChat({
                           width: "52px",
                           height: "52px",
                           borderRadius: "10px",
-                          backgroundColor: "#F4F2EE",
-                          color: "#847D74",
+                          backgroundColor: "var(--cf-f4f2ee, #F4F2EE)",
+                          color: "var(--ct-847d74, #847D74)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -611,7 +611,7 @@ export function ModalSelectorCatalogoChat({
                         style={{
                           fontSize: "13.5px",
                           fontWeight: 700,
-                          color: "#1F1C19",
+                          color: "var(--ct-1f1c19, #1F1C19)",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -634,7 +634,7 @@ export function ModalSelectorCatalogoChat({
                             style={{
                               fontSize: "12px",
                               fontWeight: 700,
-                              color: "#2F4737",
+                              color: "var(--ct-2f4737, #2F4737)",
                             }}
                           >
                             ${precio.toFixed(2)}
@@ -646,8 +646,8 @@ export function ModalSelectorCatalogoChat({
                               fontSize: "11px",
                               padding: "1px 6px",
                               borderRadius: "6px",
-                              backgroundColor: "#F4F2EE",
-                              color: "#221E1B",
+                              backgroundColor: "var(--cf-f4f2ee, #F4F2EE)",
+                              color: "var(--ct-221e1b, #221E1B)",
                               fontWeight: 600,
                             }}
                           >
@@ -659,8 +659,8 @@ export function ModalSelectorCatalogoChat({
                             fontSize: "11px",
                             padding: "1px 6px",
                             borderRadius: "6px",
-                            backgroundColor: "#F4F2EE",
-                            color: "#57524C",
+                            backgroundColor: "var(--cf-f4f2ee, #F4F2EE)",
+                            color: "var(--ct-57524c, #57524C)",
                             fontWeight: 600,
                           }}
                         >
@@ -672,8 +672,8 @@ export function ModalSelectorCatalogoChat({
                               fontSize: "11px",
                               padding: "1px 6px",
                               borderRadius: "6px",
-                              backgroundColor: "#F8F7F4",
-                              color: "#7E22CE",
+                              backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
+                              color: "var(--ct-7e22ce, #7E22CE)",
                               fontWeight: 600,
                             }}
                           >
@@ -712,7 +712,7 @@ export function ModalSelectorCatalogoChat({
               flex: esMovil ? "1 1 auto" : "1 1 46%",
               overflowY: esMovil ? "visible" : "auto",
               padding: "14px 16px",
-              backgroundColor: "#F8F7F4",
+              backgroundColor: "var(--cf-f8f7f4, #F8F7F4)",
               display: "flex",
               flexDirection: "column",
               gap: "12px",
@@ -727,7 +727,7 @@ export function ModalSelectorCatalogoChat({
                         display: "block",
                         fontSize: "11.5px",
                         fontWeight: 700,
-                        color: "#57524C",
+                        color: "var(--ct-57524c, #57524C)",
                         marginBottom: "4px",
                       }}
                     >
@@ -745,11 +745,11 @@ export function ModalSelectorCatalogoChat({
                         width: "100%",
                         height: "38px",
                         borderRadius: "9px",
-                        border: "1px solid #D5CFC4",
-                        backgroundColor: "#FFFFFF",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        backgroundColor: "var(--cf-ffffff, #FFFFFF)",
                         padding: "0 10px",
                         fontSize: "14px",
-                        color: "#1F1C19",
+                        color: "var(--ct-1f1c19, #1F1C19)",
                       }}
                     >
                       {variantesActivas.map((v, idx) => (
@@ -765,8 +765,8 @@ export function ModalSelectorCatalogoChat({
                 {/* Checkboxes de elementos a enviar */}
                 <div
                   style={{
-                    backgroundColor: "#FFFFFF",
-                    border: "1px solid #E6E2DA",
+                    backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     borderRadius: "12px",
                     padding: "10px 12px",
                     display: "flex",
@@ -778,7 +778,7 @@ export function ModalSelectorCatalogoChat({
                     style={{
                       fontSize: "11.5px",
                       fontWeight: 700,
-                      color: "#57524C",
+                      color: "var(--ct-57524c, #57524C)",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                     }}
@@ -793,7 +793,7 @@ export function ModalSelectorCatalogoChat({
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13px",
-                      color: imgSeleccionada ? "#1F1C19" : "#847D74",
+                      color: imgSeleccionada ? "var(--ct-1f1c19, #1F1C19)" : "var(--ct-847d74, #847D74)",
                       cursor: imgSeleccionada ? "pointer" : "not-allowed",
                     }}
                   >
@@ -802,7 +802,7 @@ export function ModalSelectorCatalogoChat({
                       checked={incluirFotoPrincipal && Boolean(imgSeleccionada)}
                       disabled={!imgSeleccionada}
                       onChange={(e) => setIncluirFotoPrincipal(e.target.checked)}
-                      style={{ width: "16px", height: "16px", accentColor: "#2F4737" }}
+                      style={{ width: "16px", height: "16px", accentColor: "var(--ct-2f4737, #2F4737)" }}
                     />
                     <ImageIcon size={15} color={imgSeleccionada ? "#221E1B" : "#847D74"} />
                     <span style={{ fontWeight: 600 }}>
@@ -818,7 +818,7 @@ export function ModalSelectorCatalogoChat({
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13px",
-                      color: "#1F1C19",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       cursor: "pointer",
                     }}
                   >
@@ -826,7 +826,7 @@ export function ModalSelectorCatalogoChat({
                       type="checkbox"
                       checked={incluirLinkWeb}
                       onChange={(e) => setIncluirLinkWeb(e.target.checked)}
-                      style={{ width: "16px", height: "16px", accentColor: "#2F4737" }}
+                      style={{ width: "16px", height: "16px", accentColor: "var(--ct-2f4737, #2F4737)" }}
                     />
                     <ExternalLink size={15} color="#2F4737" />
                     <span style={{ fontWeight: 600 }}>Link para revisar en la web</span>
@@ -839,7 +839,7 @@ export function ModalSelectorCatalogoChat({
                       alignItems: "center",
                       gap: "8px",
                       fontSize: "13px",
-                      color: "#1F1C19",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                       cursor: "pointer",
                     }}
                   >
@@ -847,7 +847,7 @@ export function ModalSelectorCatalogoChat({
                       type="checkbox"
                       checked={incluirLinkAlbum}
                       onChange={(e) => setIncluirLinkAlbum(e.target.checked)}
-                      style={{ width: "16px", height: "16px", accentColor: "#2F4737" }}
+                      style={{ width: "16px", height: "16px", accentColor: "var(--ct-2f4737, #2F4737)" }}
                     />
                     <Images size={15} color="#7E22CE" />
                     <span style={{ fontWeight: 600 }}>Link del álbum del producto</span>
@@ -863,10 +863,10 @@ export function ModalSelectorCatalogoChat({
                         width: "100%",
                         height: "36px",
                         borderRadius: "8px",
-                        border: "1px solid #D5CFC4",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                         padding: "0 10px",
                         fontSize: "14px",
-                        color: "#1F1C19",
+                        color: "var(--ct-1f1c19, #1F1C19)",
                         boxSizing: "border-box",
                       }}
                     />
@@ -876,8 +876,8 @@ export function ModalSelectorCatalogoChat({
                 {/* Vista previa de cómo le llegará al cliente */}
                 <div
                   style={{
-                    backgroundColor: "#DCF8C6",
-                    border: "1px solid #BBF7D0",
+                    backgroundColor: "var(--cf-dcf8c6, #DCF8C6)",
+                    border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
                     borderRadius: "12px",
                     padding: "10px 12px",
                     display: "flex",
@@ -889,7 +889,7 @@ export function ModalSelectorCatalogoChat({
                     style={{
                       fontSize: "11px",
                       fontWeight: 700,
-                      color: "#2B4A36",
+                      color: "var(--ct-2b4a36, #2B4A36)",
                       display: "flex",
                       alignItems: "center",
                       gap: "5px",
@@ -916,7 +916,7 @@ export function ModalSelectorCatalogoChat({
                   <div
                     style={{
                       fontSize: "12.5px",
-                      color: "#14532D",
+                      color: "var(--ct-14532d, #14532D)",
                       whiteSpace: "pre-wrap",
                       wordBreak: "break-word",
                       lineHeight: 1.4,
@@ -930,7 +930,7 @@ export function ModalSelectorCatalogoChat({
               <div
                 style={{
                   fontSize: "13px",
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                   padding: "20px 8px",
                   textAlign: "center",
                 }}
@@ -947,8 +947,8 @@ export function ModalSelectorCatalogoChat({
             padding: esMovil
               ? "12px 16px calc(12px + env(safe-area-inset-bottom, 0px))"
               : "12px 20px",
-            borderTop: "1px solid #E6E2DA",
-            backgroundColor: "#FFFFFF",
+            borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
+            backgroundColor: "var(--cf-ffffff, #FFFFFF)",
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-end",
@@ -965,9 +965,9 @@ export function ModalSelectorCatalogoChat({
               height: "42px",
               padding: "0 16px",
               borderRadius: "10px",
-              border: "1px solid #D5CFC4",
-              backgroundColor: "#FFFFFF",
-              color: "#1F1C19",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              backgroundColor: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-1f1c19, #1F1C19)",
               fontSize: "13.5px",
               fontWeight: 700,
               cursor: !vistaPrevia || enviandoDirecto ? "not-allowed" : "pointer",
