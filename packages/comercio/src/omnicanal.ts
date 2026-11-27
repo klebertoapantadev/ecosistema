@@ -1688,7 +1688,7 @@ export interface RegistroComentarioMetaOmnicanal {
 }
 
 export const PALABRAS_CLAVE_COMENTARIOS_META_DEFECTO =
-  "precio, precios, info, informacion, información, catalogo, catálogo, cuanto, cuánto, valor, costo, envio, envío, disponible, rosas, arreglo, arreglos, ramo, ramos, donde, dónde, ubicacion, ubicación, horario, quiero, pedir, comprar, whatsapp, ?";
+  "precio, precios, info, informacion, información, catalogo, catálogo, cuanto, cuánto, valor, costo, envio, envío, disponible, rosas, arreglo, arreglos, ramo, ramos, donde, dónde, ubicacion, ubicación, horario, quiero, pedir, comprar, whatsapp, necesito, corona, coronas, condolencias, velorio, boda, evento, eventos, cotizacion, cotización, direccion, dirección, ?";
 
 export function evaluarAutoRespuestaComentarioMeta(entrada: {
   textoComentario: string;
@@ -1728,15 +1728,24 @@ export function evaluarAutoRespuestaComentarioMeta(entrada: {
     };
   }
 
+  const esCondolencias =
+    /(condolencia|corona|velaci[oó]n|velorio|funeral|p[eé]same|fallec|f[uú]nebre|exequi)/i.test(
+      texto
+    );
+  const esEventos =
+    /(evento|boda|matrimonio|decoraci[oó]n|proforma|corporativo|quincea[ñn])/i.test(texto);
+
   const textoMin = texto.toLowerCase();
   const coincide =
-    r.modo === "TODOS"
+    esCondolencias ||
+    esEventos ||
+    (r.modo === "TODOS"
       ? texto.length >= 2
       : String(r.palabrasClave || "")
           .split(/[,;\n]+/)
           .map((k) => k.trim().toLowerCase())
           .filter(Boolean)
-          .some((k) => textoMin.includes(k));
+          .some((k) => textoMin.includes(k)));
 
   if (!coincide) {
     return {
@@ -1749,10 +1758,10 @@ export function evaluarAutoRespuestaComentarioMeta(entrada: {
 
   let motivo: "CONDOLENCIAS" | "EVENTOS" | "PALABRA_CLAVE" | "GENERAL_TODOS";
   let plantilla = r.respuestaCorta;
-  if (/(condolencia|corona|velaci[oó]n|funeral|p[eé]same|fallec|f[uú]nebre|exequi)/i.test(texto)) {
+  if (esCondolencias) {
     motivo = "CONDOLENCIAS";
     plantilla = r.respuestaCondolencias || r.respuestaCorta;
-  } else if (/(evento|boda|matrimonio|decoraci[oó]n|proforma|corporativo|quincea[ñn])/i.test(texto)) {
+  } else if (esEventos) {
     motivo = "EVENTOS";
     plantilla = r.respuestaEventos || r.respuestaCorta;
   } else {

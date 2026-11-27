@@ -105,10 +105,20 @@ export function SimuladorChatAriaPanel({
     }
   }, []);
 
-  useEffect(() => {
-    if (scrollRef.current) {
+  function desplazarAlFondo() {
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
+    } else if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
+  }
+
+  useEffect(() => {
+    desplazarAlFondo();
   }, [mensajes, enviando]);
 
   function reiniciarSimulacion(nuevoCanal?: CanalSimulador, nuevaIntencion?: IntencionSimulador) {
@@ -436,7 +446,7 @@ export function SimuladorChatAriaPanel({
       <div
         ref={scrollRef}
         style={{
-          height: compacto ? "340px" : "440px",
+          height: compacto ? "320px" : "370px",
           overflowY: "auto",
           padding: "16px",
           background: "var(--cf-f5f3ee, #F5F3EE)",
@@ -567,10 +577,13 @@ export function SimuladorChatAriaPanel({
                             <img
                               src={seg.url}
                               alt={seg.alt || "Imagen sugerida por ARIA"}
+                              onLoad={desplazarAlFondo}
                               style={{
-                                width: "100%",
-                                maxHeight: "240px",
-                                objectFit: "cover",
+                                width: "auto",
+                                maxWidth: "240px",
+                                maxHeight: "260px",
+                                objectFit: "contain",
+                                background: "#FAF9F6",
                                 borderRadius: "10px",
                                 border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                 display: "block",

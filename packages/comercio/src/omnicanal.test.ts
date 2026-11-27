@@ -582,11 +582,11 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
     );
     expect(rPrecio.respuestaDm).toContain("https://www.tinkay.net");
 
-    // 2. Comentario de condolencias -> aplica plantilla sobria sin emojis festivos
+    // 2. Comentario de condolencias sin "?" ni "precio" -> dispara igual la plantilla sobria
     const rCond = evaluarAutoRespuestaComentarioMeta({
-      textoComentario: "Precio de una corona de condolencias para hoy",
+      textoComentario: "Necesito una corona de condolencias para un velorio hoy",
       autorNombre: "@carlos_uio",
-      regla: reglaBase,
+      regla: { ...reglaBase, palabrasClave: "precio, ?" },
     });
     expect(rCond.debeResponder).toBe(true);
     expect(rCond.motivo).toBe("CONDOLENCIAS");

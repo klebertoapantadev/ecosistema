@@ -5601,4 +5601,74 @@ export async function marcarChatPrivacidadOmnicanalAction(entrada: {
   }
 }
 
+export interface ResultadoSincronizacionMetaPage {
+  paginaId: string;
+  paginaNombre: string | null;
+  igId: string | null;
+  igUsername: string | null;
+  suscripcionActualizada: boolean;
+  errorSuscripcion: string | null;
+  camposSuscritosPage: string[];
+  feedSuscrito: boolean;
+  permisosConcedidos: string[];
+}
+
+export async function sincronizarSuscripcionMetaOmnicanalAction(
+  negocio: string,
+  suscribirFeed = true
+): Promise<
+  | { ok: true; datos: ResultadoSincronizacionMetaPage }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_sincronizar_meta_page", {
+      p_negocio: neg,
+      p_suscribir_feed: Boolean(suscribirFeed),
+    });
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se pudo verificar o suscribir la Página en Meta."),
+      };
+    }
+
+    return {
+      ok: true,
+      datos: {
+        paginaId: String(data.paginaId || ""),
+        paginaNombre: data.paginaNombre ? String(data.paginaNombre) : null,
+        igId: data.igId ? String(data.igId) : null,
+        igUsername: data.igUsername ? String(data.igUsername) : null,
+        suscripcionActualizada: Boolean(data.suscripcionActualizada),
+        errorSuscripcion: data.errorSuscripcion ? String(data.errorSuscripcion) : null,
+        camposSuscritosPage: Array.isArray(data.camposSuscritosPage)
+          ? data.camposSuscritosPage.map((x: unknown) => String(x))
+          : [],
+        feedSuscrito: Boolean(data.feedSuscrito),
+        permisosConcedidos: Array.isArray(data.permisosConcedidos)
+          ? data.permisosConcedidos.map((x: unknown) => String(x))
+          : [],
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error inesperado sincronizando suscripción de Página en Meta.",
+    };
+  }
+}
+
+
 

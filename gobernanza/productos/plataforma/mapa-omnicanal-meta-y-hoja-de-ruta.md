@@ -178,7 +178,7 @@ flowchart TD
 
     subgraph P1["Prioridad 1 — Impacto Directo en Ventas y Costo de Ads (Corto Plazo)"]
         F1["1. CAPI Purchase desde Ventas Cerradas en Chat (Optimiza ROAS Meta Ads)"]
-        F2["2. Comentarios en Posts/Reels a DM Automatico (Reemplazo total ManyChat)"]
+        F2["2. Comentarios en Posts/Reels a Respuesta Corta + DM (Implementado — Pendiente Token System User y Activo)"]
         F3["3. Horarios Inteligentes (Manual de dia / Mia IA de noche y SLA sin respuesta)"]
         F4["4. Modo Copiloto IA (Boton Sugerir Respuesta sin auto-enviar)"]
     end
@@ -210,10 +210,9 @@ flowchart TD
    - *Hoy:* CAPI envía compras cerradas en la web (`www.tinkay.net`).
    - *Lo nuevo:* cuando una asesora marca un pedido como **Pagado** en `/panel/conversaciones` o `/panel/pedidos` y ese cliente llegó por un anuncio (`ctwa_clid` / `ad_id` / `fbclid`), el servidor dispara `Purchase` a Meta CAPI con el monto real en USD.
    - *Impacto:* el algoritmo de Meta deja de optimizar solo por "gente que pregunta precio" y aprende a buscar **clientes que sí compran**, bajando el costo por venta.
-2. **Automatización de Comentarios en Posts y Reels → DM ("Comenta PRECIO / ROSAS"):**
-   - *Hoy:* escuchamos mensajes directos (`messages`), no comentarios públicos.
-   - *Lo nuevo:* suscribir `feed` (Facebook) y `comments` (Instagram) en `Tinkay Omnicanal`. Cuando alguien comente una palabra clave en un Reel/Post, el sistema responde el comentario públicamente y le envía un DM privado con foto + enlace directo a `www.tinkay.net`.
-   - *Impacto:* captura tráfico orgánico y viral al 100% sin pagar ManyChat.
+2. **Automatización de Comentarios en Posts y Reels → Respuesta Corta + Redirección Web / DM (`✅ Implementado`):**
+   - *Implementado hoy:* webhooks `feed` (Facebook) y `comments` (Instagram) suscritos a nivel de app en `Tinkay Omnicanal`, reglas temáticas automáticas (`CONDOLENCIAS` sobrio, `EVENTOS`, palabras clave), probador instantáneo, bitácora `agc_comentario_meta` y botón **`Sincronizar Meta`** en `/panel/aria#meta-comentarios`.
+   - *Falta solo activación Meta:* generar **System User Token permanente** en `Tinkay Quito` con `pages_manage_engagement` + `instagram_manage_comments`, pulsar **`Sincronizar Meta`** (para suscribir `feed` en la Página `109525757999859`) y encender el switch en `/panel/aria#meta-comentarios`.
 3. **Reglas de Horario y Respaldo SLA (Manual de día / Mía IA de noche):**
    - *Lo nuevo:* configurar horario laboral (ej. 08:30–19:00 en Manual para asesoras; fuera de horario o si pasan 5 minutos sin que nadie responda en un chat Manual, activar automáticamente a Mía ARIA).
    - *Impacto:* no se pierde ni una venta nocturna o de madrugada sin perder el control humano en el día.

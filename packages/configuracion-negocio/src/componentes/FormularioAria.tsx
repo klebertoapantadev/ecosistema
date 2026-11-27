@@ -25,7 +25,9 @@ import {
   listarComentariosMetaOmnicanalAction,
   PALABRAS_CLAVE_COMENTARIOS_META_DEFECTO,
   SimuladorChatAriaPanel,
+  sincronizarSuscripcionMetaOmnicanalAction,
   type RegistroComentarioMetaOmnicanal,
+  type ResultadoSincronizacionMetaPage,
 } from "@eco/comercio";
 import {
   borrarClaveAria,
@@ -253,6 +255,9 @@ export function FormularioAria({
   >([]);
   const [mostrarHistorialCom, setMostrarHistorialCom] = useState<boolean>(false);
   const [cargandoHistorialCom, setCargandoHistorialCom] = useState<boolean>(false);
+  const [sincronizandoMetaPage, setSincronizandoMetaPage] = useState<boolean>(false);
+  const [diagnosticoMetaPage, setDiagnosticoMetaPage] =
+    useState<ResultadoSincronizacionMetaPage | null>(null);
 
   // Estado Estudio IA (Generador de Fotos Estudio + Taller vía OpenRouter / Gemini en Vault)
   const [estudioIaProveedor, setEstudioIaProveedor] = useState<ProveedorEstudioIa>(
@@ -715,6 +720,31 @@ export function FormularioAria({
       setHistorialComentarios(res.items);
     } else {
       setMensajeCom({ tipo: "error", texto: res.error });
+    }
+  }
+
+  async function alSincronizarWebhooksMetaPage() {
+    setMensajeCom(null);
+    setSincronizandoMetaPage(true);
+    const res = await sincronizarSuscripcionMetaOmnicanalAction(codigoNegocio, true);
+    setSincronizandoMetaPage(false);
+    if (!res.ok) {
+      setMensajeCom({ tipo: "error", texto: res.error });
+      return;
+    }
+    setDiagnosticoMetaPage(res.datos);
+    if (res.datos.feedSuscrito) {
+      setMensajeCom({
+        tipo: "ok",
+        texto: `Página ${res.datos.paginaNombre || res.datos.paginaId} verificada y suscrita a comentarios (feed) en Meta.`,
+      });
+    } else {
+      setMensajeCom({
+        tipo: "error",
+        texto:
+          res.datos.errorSuscripcion ||
+          "La Página respondió, pero el token actual aún no tiene permisos para suscribir 'feed'. Genera un System User Token con pages_manage_engagement e instagram_manage_comments.",
+      });
     }
   }
 
@@ -2291,24 +2321,101 @@ export function FormularioAria({
           </div>
         )}
 
+        {diagnosticoMetaPage && (
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: "10px",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              fontSize: "0.78rem",
+              color: "var(--ct-3a3530, #3A3530)",
+            }}
+          >
+            <div style={{ fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
+              Diagnóstico en vivo de Meta Graph API v21.0
+            </div>
+            <div>
+              <strong>Página FB:</strong> {diagnosticoMetaPage.paginaNombre || diagnosticoMetaPage.paginaId}{" "}
+              (<code>{diagnosticoMetaPage.paginaId}</code>)
+              {diagnosticoMetaPage.igUsername && (
+                <>
+                  {" · "}
+                  <strong>Instagram:</strong> @{diagnosticoMetaPage.igUsername}
+                </>
+              )}
+            </div>
+            <div>
+              <strong>Suscripción `feed` (Comentarios FB):</strong>{" "}
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: diagnosticoMetaPage.feedSuscrito
+                    ? "var(--ct-15803d, #15803D)"
+                    : "var(--ct-b91c1c, #B91C1C)",
+                }}
+              >
+                {diagnosticoMetaPage.feedSuscrito ? "✅ Activa en Página" : "⚠️ Pendiente de permisos en token"}
+              </span>
+            </div>
+            {diagnosticoMetaPage.camposSuscritosPage.length > 0 && (
+              <div>
+                <strong>Campos suscritos en Página:</strong>{" "}
+                <code>{diagnosticoMetaPage.camposSuscritosPage.join(", ")}</code>
+              </div>
+            )}
+            {diagnosticoMetaPage.permisosConcedidos.length > 0 && (
+              <div>
+                <strong>Permisos del token:</strong>{" "}
+                <code>{diagnosticoMetaPage.permisosConcedidos.join(", ")}</code>
+              </div>
+            )}
+            {diagnosticoMetaPage.errorSuscripcion && (
+              <div style={{ color: "var(--ct-b91c1c, #B91C1C)" }}>
+                <strong>Detalle Meta:</strong> {diagnosticoMetaPage.errorSuscripcion}
+              </div>
+            )}
+          </div>
+        )}
+
         {mensajeCom && <div style={estiloAlertaMensaje(mensajeCom.tipo)}>{mensajeCom.texto}</div>}
       </div>
 
       <div style={estiloPieTarjeta}>
-        <button
-          type="button"
-          className="btn-responsive-accion"
-          onClick={() => void cargarBitacoraComentariosMeta()}
-          disabled={cargandoHistorialCom}
-          title="Consultar bitácora de comentarios atendidos en Facebook e Instagram"
-          aria-label="Ver Bitácora"
-          style={{ ...estiloBotonSecundario, opacity: cargandoHistorialCom ? 0.65 : 1 }}
-        >
-          <RefreshCw size={14} />
-          <span className="btn-texto-responsive">
-            {cargandoHistorialCom ? "Cargando…" : "Ver Bitácora"}
-          </span>
-        </button>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn-responsive-accion"
+            onClick={() => void alSincronizarWebhooksMetaPage()}
+            disabled={sincronizandoMetaPage}
+            title="Verificar conexión con Meta y suscribir comentarios (feed) en tu Página de Facebook"
+            aria-label="Sincronizar Meta"
+            style={{ ...estiloBotonSecundario, opacity: sincronizandoMetaPage ? 0.65 : 1 }}
+          >
+            <Share2 size={14} />
+            <span className="btn-texto-responsive">
+              {sincronizandoMetaPage ? "Sincronizando…" : "Sincronizar Meta"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-responsive-accion"
+            onClick={() => void cargarBitacoraComentariosMeta()}
+            disabled={cargandoHistorialCom}
+            title="Consultar bitácora de comentarios atendidos en Facebook e Instagram"
+            aria-label="Ver Bitácora"
+            style={{ ...estiloBotonSecundario, opacity: cargandoHistorialCom ? 0.65 : 1 }}
+          >
+            <RefreshCw size={14} />
+            <span className="btn-texto-responsive">
+              {cargandoHistorialCom ? "Cargando…" : "Ver Bitácora"}
+            </span>
+          </button>
+        </div>
 
         <button
           type="submit"
