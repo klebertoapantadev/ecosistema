@@ -114,7 +114,7 @@ function existeModalPluxVisible(): boolean {
   return false;
 }
 
-// Traza del navegador en comun_auditoria.aud_traza (TRQ-039). Sin await: el
+// Traza del navegador en comun_auditoria.aud_traza (TRQ-040). Sin await: el
 // pago no espera a la traza, y si falla da igual.
 function trazaNavegador(
   negocio: string,

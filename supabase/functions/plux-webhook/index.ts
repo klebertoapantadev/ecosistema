@@ -35,7 +35,7 @@ function igualSeguro(a: string, b: string): boolean {
 
 type Supa = ReturnType<typeof createClient>;
 
-// Traza en comun_auditoria.aud_traza (TRQ-039): misma correlación que el
+// Traza en comun_auditoria.aud_traza (TRQ-040): misma correlación que el
 // checkout (el identificador PLUX que llega en "extras"), así se ve si el
 // webhook llegó y qué contestó. Nunca lanza.
 async function traza(

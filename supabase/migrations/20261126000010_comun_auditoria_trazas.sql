@@ -1,4 +1,4 @@
--- comun_auditoria.aud_traza: trazas de ejecución de flujos (TRQ-039).
+-- comun_auditoria.aud_traza: trazas de ejecución de flujos (TRQ-040).
 --
 -- aud_registro guarda cambios de datos y aud_log_api llamadas a APIs externas;
 -- ninguna explica por qué un flujo se quedó a medias. Ejemplo que lo motivó:

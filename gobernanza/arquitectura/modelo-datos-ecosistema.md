@@ -818,7 +818,7 @@ erDiagram
 #### Tabla `comun_auditoria.aud_traza`
 *Definida en:* [`supabase/migrations/20261126000010_comun_auditoria_trazas.sql`](../../supabase/migrations/20261126000010_comun_auditoria_trazas.sql)
 
-Trazas de ejecución de flujos (TRQ-039): cada paso de un flujo deja una fila con la misma `tra_correlacion` (en pagos PLUX, el identificador `XXX-PLX-…`) desde el navegador, el servidor o una Edge Function, para ver dónde se quedó uno que no terminó. Escritura solo con el cliente admin (`registrarTraza` en `@eco/auditoria/trazas`; el navegador pasa por `registrarTrazaClienteAction`, que valida y limita), lectura solo superadmin de plataforma por RLS, retención de 90 días con pg_cron (`aud_traza_retencion`). Sin trigger de auditoría: es bitácora de diagnóstico, no dato de negocio. Vista `aud_v_traza_resumen`: un renglón por correlación con su último paso. Visor: `/panel/auditoria/trazas` en tranqi-web.
+Trazas de ejecución de flujos (TRQ-040): cada paso de un flujo deja una fila con la misma `tra_correlacion` (en pagos PLUX, el identificador `XXX-PLX-…`) desde el navegador, el servidor o una Edge Function, para ver dónde se quedó uno que no terminó. Escritura solo con el cliente admin (`registrarTraza` en `@eco/auditoria/trazas`; el navegador pasa por `registrarTrazaClienteAction`, que valida y limita), lectura solo superadmin de plataforma por RLS, retención de 90 días con pg_cron (`aud_traza_retencion`). Sin trigger de auditoría: es bitácora de diagnóstico, no dato de negocio. Vista `aud_v_traza_resumen`: un renglón por correlación con su último paso. Visor: `/panel/auditoria/trazas` en tranqi-web.
 
 | Columna | Tipo de Dato | Nulabilidad | Rol (`PK` / `FK`) | Valor por Defecto |
 | :--- | :--- | :---: | :--- | :--- |

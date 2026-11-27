@@ -180,7 +180,7 @@ const esquemaPrepararProforma = z.object({
 
 // El monto lo fija la base de datos a partir de la variante: el navegador
 // solo dice QUÉ compra, nunca CUÁNTO.
-// Trazas del flujo PAGO_PLUX (TRQ-039): cada acción deja su resultado y su
+// Trazas del flujo PAGO_PLUX (TRQ-040): cada acción deja su resultado y su
 // duración en comun_auditoria.aud_traza con el identificador PLUX como
 // correlación, para ver dónde se quedó un pago que no terminó.
 function trazaPlux(

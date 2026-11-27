@@ -1,6 +1,6 @@
 import { crearClienteAdmin } from "@eco/supabase/servidor";
 
-// Trazas de ejecución de flujos (comun_auditoria.aud_traza, TRQ-039).
+// Trazas de ejecución de flujos (comun_auditoria.aud_traza, TRQ-040).
 //
 // Cada paso de un flujo (preparar pago, abrir PLUX, confirmar, webhook...)
 // deja una fila con la misma `correlacion`, y así se ve dónde se quedó uno que

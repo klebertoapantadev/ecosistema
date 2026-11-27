@@ -11,7 +11,7 @@ import {
 export const metadata: Metadata = { title: "Trazas — tranqi" };
 export const dynamic = "force-dynamic";
 
-// Trazas de flujos (TRQ-039): qué pagos PLUX se quedaron a medias y en qué
+// Trazas de flujos (TRQ-040): qué pagos PLUX se quedaron a medias y en qué
 // paso. Solo el superadmin de plataforma ve filas (RLS de aud_traza).
 
 const NEGOCIO = "tranqi";

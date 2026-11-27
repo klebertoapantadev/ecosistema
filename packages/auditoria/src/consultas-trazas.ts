@@ -1,6 +1,6 @@
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
-// Lectura de comun_auditoria.aud_traza (TRQ-039). Con el cliente del usuario:
+// Lectura de comun_auditoria.aud_traza (TRQ-040). Con el cliente del usuario:
 // la RLS solo deja ver filas al superadmin de plataforma.
 
 export interface ResumenTraza {

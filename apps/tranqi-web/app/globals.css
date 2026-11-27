@@ -3375,7 +3375,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
   .abg-hero-velo { background: linear-gradient(to bottom, rgba(30, 0, 70, 0.88) 0%, rgba(30, 0, 70, 0.8) 60%, rgba(51, 0, 122, 0.62) 100%); }
 }
 
-/* Trazas de flujos (TRQ-039, /panel/auditoria/trazas) */
+/* Trazas de flujos (TRQ-040, /panel/auditoria/trazas) */
 .tabla-trazas { border-collapse: collapse; background: #fff; border: 1px solid var(--linea); border-radius: 12px; }
 .tabla-trazas th, .tabla-trazas td { padding: 8px 10px; border-bottom: 1px solid var(--linea); text-align: left; vertical-align: top; }
 .tabla-trazas th { font-weight: 700; background: var(--fondo-hundido); }
