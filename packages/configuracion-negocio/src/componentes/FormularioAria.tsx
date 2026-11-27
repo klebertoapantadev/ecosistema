@@ -2349,7 +2349,7 @@ export function FormularioAria({
               )}
             </div>
             <div>
-              <strong>Suscripción `feed` (Comentarios FB):</strong>{" "}
+              <strong>Suscripción <code>feed</code> (Comentarios FB):</strong>{" "}
               <span
                 style={{
                   fontWeight: 700,

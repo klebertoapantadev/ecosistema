@@ -269,7 +269,10 @@ as $$
 declare
   v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_es_service boolean := coalesce(auth.role(), '') = 'service_role';
+  v_page_sec_id uuid := null;
   v_page_token text := null;
+  v_derived_page_token text := null;
+  v_token_intercambiado boolean := false;
   v_page_id text := '';
   v_ig_id text := '';
   v_status integer;
@@ -294,10 +297,11 @@ begin
   end if;
 
   select
+    a.ari_meta_page_token_secreto_id,
     dp.decrypted_secret,
     coalesce(btrim(a.ari_detalle_aria->>'meta_page_id'), ''),
     coalesce(btrim(a.ari_detalle_aria->>'meta_ig_account_id'), '')
-  into v_page_token, v_page_id, v_ig_id
+  into v_page_sec_id, v_page_token, v_page_id, v_ig_id
   from comun_configuracion.cfg_aria a
   left join vault.decrypted_secrets dp on dp.id = a.ari_meta_page_token_secreto_id
   where a.ari_negocio = v_negocio
@@ -316,12 +320,34 @@ begin
   perform extensions.http_set_curlopt('CURLOPT_TIMEOUT', '20');
   perform extensions.http_set_curlopt('CURLOPT_CONNECTTIMEOUT', '8');
 
-  -- A. Consultar datos de Página + cuenta Instagram Business vinculada
+  -- A. Consultar permisos concedidos ANTES de derivar Page Token (System User Token expone /me/permissions)
   begin
     select h.status, h.content into v_status, v_content
     from extensions.http((
       'GET',
-      'https://graph.facebook.com/v21.0/' || v_page_id || '?fields=id,name,instagram_business_account%7Bid,username%7D',
+      'https://graph.facebook.com/v21.0/me/permissions',
+      array[extensions.http_header('Authorization', 'Bearer ' || btrim(v_page_token))],
+      null,
+      null
+    )::extensions.http_request) as h;
+
+    begin v_json := v_content::jsonb; exception when others then v_json := null; end;
+    if v_status >= 200 and v_status < 300 and jsonb_typeof(v_json->'data') = 'array' then
+      select coalesce(jsonb_agg(p->>'permission' order by p->>'permission'), '[]'::jsonb)
+        into v_permisos
+      from jsonb_array_elements(v_json->'data') as p
+      where lower(coalesce(p->>'status', '')) = 'granted';
+    end if;
+  exception when others then
+    null;
+  end;
+
+  -- B. Consultar datos de Página + IG vinculado y derivar Page Access Token permanente si se ingresó System User Token
+  begin
+    select h.status, h.content into v_status, v_content
+    from extensions.http((
+      'GET',
+      'https://graph.facebook.com/v21.0/' || v_page_id || '?fields=id,name,access_token,instagram_business_account%7Bid,username%7D',
       array[extensions.http_header('Authorization', 'Bearer ' || btrim(v_page_token))],
       null,
       null
@@ -332,6 +358,28 @@ begin
       v_pagina_nombre := v_json->>'name';
       v_ig_detectado := v_json->'instagram_business_account'->>'id';
       v_ig_username := v_json->'instagram_business_account'->>'username';
+      v_derived_page_token := nullif(btrim(coalesce(v_json->>'access_token', '')), '');
+
+      if v_derived_page_token is not null and v_derived_page_token <> btrim(v_page_token) then
+        v_page_sec_id := comun_configuracion.cfg_fn_upsert_vault_secreto(
+          v_page_sec_id,
+          v_derived_page_token,
+          'meta_page_token_' || v_negocio,
+          'Page Access Token permanente derivado de System User Token para ' || v_negocio
+        );
+        update comun_configuracion.cfg_aria
+           set ari_meta_page_token_secreto_id = v_page_sec_id,
+               ari_detalle_aria = case
+                 when v_ig_detectado is not null and coalesce(ari_detalle_aria->>'meta_ig_account_id', '') = ''
+                 then jsonb_set(coalesce(ari_detalle_aria, '{}'::jsonb), '{meta_ig_account_id}', to_jsonb(v_ig_detectado), true)
+                 else ari_detalle_aria
+               end,
+               ari_actualizado_en = now()
+         where ari_negocio = v_negocio
+           and ari_eliminado_en is null;
+        v_page_token := v_derived_page_token;
+        v_token_intercambiado := true;
+      end if;
     else
       return jsonb_build_object(
         'ok', false,
@@ -342,7 +390,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'No se pudo consultar Meta Graph API (' || sqlerrm || ').');
   end;
 
-  -- B. Suscribir `feed` + mensajería en `/{page_id}/subscribed_apps`
+  -- C. Suscribir `feed` + mensajería en `/{page_id}/subscribed_apps` usando el Page Access Token
   if coalesce(p_suscribir_feed, true) then
     begin
       select h.status, h.content into v_status, v_content
@@ -368,7 +416,7 @@ begin
     end;
   end if;
 
-  -- C. Leer de vuelta los campos efectivamente suscritos en `/{page_id}/subscribed_apps`
+  -- D. Leer de vuelta los campos efectivamente suscritos en `/{page_id}/subscribed_apps`
   begin
     select h.status, h.content into v_status, v_content
     from extensions.http((
@@ -394,34 +442,13 @@ begin
     null;
   end;
 
-  -- D. Consultar permisos concedidos al token cuando el endpoint lo soporta (User / System User Token)
-  begin
-    select h.status, h.content into v_status, v_content
-    from extensions.http((
-      'GET',
-      'https://graph.facebook.com/v21.0/me/permissions',
-      array[extensions.http_header('Authorization', 'Bearer ' || btrim(v_page_token))],
-      null,
-      null
-    )::extensions.http_request) as h;
-
-    begin v_json := v_content::jsonb; exception when others then v_json := null; end;
-    if v_status >= 200 and v_status < 300 and jsonb_typeof(v_json->'data') = 'array' then
-      select coalesce(jsonb_agg(p->>'permission' order by p->>'permission'), '[]'::jsonb)
-        into v_permisos
-      from jsonb_array_elements(v_json->'data') as p
-      where lower(coalesce(p->>'status', '')) = 'granted';
-    end if;
-  exception when others then
-    null;
-  end;
-
   return jsonb_build_object(
     'ok', true,
     'paginaId', v_page_id,
     'paginaNombre', v_pagina_nombre,
     'igId', coalesce(v_ig_detectado, nullif(v_ig_id, '')),
     'igUsername', v_ig_username,
+    'tokenIntercambiadoAPagina', v_token_intercambiado,
     'suscripcionActualizada', v_suscripcion_ok,
     'errorSuscripcion', v_error_suscripcion,
     'camposSuscritosPage', v_campos_page,
