@@ -639,6 +639,8 @@ export interface EventoBroadcastIntervencionAsesor {
   esNotaInterna?: boolean;
   mensaje?: MensajeOmnicanal | null;
   eliminada?: boolean;
+  visibilidad?: "EQUIPO_VENTAS" | "SOLO_ADMIN" | "SOLO_TITULAR";
+  titularPrivadoId?: string | null;
 }
 
 export interface EventoBroadcastEstadoPedido {

@@ -940,10 +940,12 @@ export function ConsolaVentasOmnicanal({
     payload: DatosReenvioMensajeModal;
   } | null>(null);
 
-  // Popovers flotantes estilo ManyChat en cabecera (Etiquetas, Recuérdamelo en, Motivo de cierre)
+  // Popovers flotantes estilo ManyChat en cabecera (Etiquetas, Recuérdamelo en, Motivo de cierre, Privacidad Personal)
   const [menuCabeceraAbierto, setMenuCabeceraAbierto] = useState<
-    "etiquetas" | "recordatorio" | "cierre" | null
+    "etiquetas" | "recordatorio" | "cierre" | "privacidad" | null
   >(null);
+  const usuarioActualIdRef = useRef<string | null>(tablero.usuarioActualId ?? null);
+  usuarioActualIdRef.current = tablero.usuarioActualId ?? null;
   const [mostrarSelectorFechaCustom, setMostrarSelectorFechaCustom] = useState<boolean>(false);
   const [recordatorioFecha, setRecordatorioFecha] = useState<string>("");
   const [recordatorioNota, setRecordatorioNota] = useState<string>("");
@@ -1592,6 +1594,20 @@ export function ConsolaVentasOmnicanal({
         ({ payload }: { payload: EventoBroadcastIntervencionAsesor }) => {
           if (!payload) return;
           if (payload.eliminada && payload.conversacionId) {
+            // Si el chat pasó a SOLO_TITULAR y pertenece a este mismo usuario (otra pestaña), mantenerlo y sincronizar
+            if (
+              payload.visibilidad === "SOLO_TITULAR" &&
+              payload.titularPrivadoId &&
+              usuarioActualIdRef.current &&
+              payload.titularPrivadoId === usuarioActualIdRef.current
+            ) {
+              programarSincronizacionSuave();
+              return;
+            }
+            if (payload.visibilidad === "SOLO_ADMIN" && esAdminAplicacion) {
+              programarSincronizacionSuave();
+              return;
+            }
             if (payload.claveHilo) {
               delete mensajesBufferLiveRef.current[payload.claveHilo];
             }
@@ -2452,17 +2468,21 @@ export function ConsolaVentasOmnicanal({
   };
 
   const handleCambiarPrivacidadChat = async (
-    accion: "MARCAR_PERSONAL" | "PASAR_A_VENTAS" | "ACTIVAR_IA_CLIENTE"
+    accion: "MARCAR_PERSONAL" | "PASAR_A_VENTAS" | "ACTIVAR_IA_CLIENTE",
+    politicaPersonal: "SOLO_TITULAR" | "OCULTO_ADMIN" | "IGNORAR_TOTAL" = "SOLO_TITULAR",
+    convObjetivo?: ConversacionOmnicanal
   ) => {
-    if (!conversacionActiva || conversacionActiva.id.startsWith("rt-")) return;
+    const objetivo = convObjetivo ?? conversacionActiva;
+    if (!objetivo || objetivo.id.startsWith("rt-")) return;
     setActualizandoPrivacidad(true);
+    setMenuCabeceraAbierto(null);
     setErrorMsg(null);
     const res = await marcarChatPrivacidadOmnicanalAction({
       negocio: negNorm,
-      conversacionId: conversacionActiva.id,
-      claveHilo: conversacionActiva.claveHilo,
+      conversacionId: objetivo.id,
+      claveHilo: objetivo.claveHilo,
       accion,
-      politicaPersonal: "IGNORAR_TOTAL",
+      politicaPersonal,
     });
     setActualizandoPrivacidad(false);
 
@@ -2475,29 +2495,38 @@ export function ConsolaVentasOmnicanal({
       if (res.ocultoConsola) {
         setTablero((prev) => ({
           ...prev,
-          conversaciones: prev.conversaciones.filter((c) => c.id !== conversacionActiva.id),
+          conversaciones: prev.conversaciones.filter((c) => c.id !== objetivo.id),
         }));
-        setConversacionActivaId(null);
-        setMensajesActivos([]);
+        if (conversacionActiva?.id === objetivo.id) {
+          setConversacionActivaId(null);
+          setMensajesActivos([]);
+        }
         setMensajeInfo(
-          "🔒 Contacto marcado como Personal (Ignorar Total): futuros mensajes solo aparecerán en tu celular."
+          "📵 Contacto en Ignorar Total: oculto para todos en la web; futuros mensajes solo quedarán en tu celular."
         );
       } else {
         setTablero((prev) => ({
           ...prev,
           conversaciones: prev.conversaciones.map((c) =>
-            c.id === conversacionActiva.id
+            c.id === objetivo.id
               ? {
                   ...c,
                   visibilidad: res.visibilidad,
+                  titularPrivadoId: res.titularPrivadoId ?? prev.usuarioActualId ?? c.titularPrivadoId,
                   iaBloqueadaPermanente: true,
                   estadoAtencion: "EN_ATENCION_ASESORA",
+                  asesoraAsignadaId: null,
+                  asesoraNombre: null,
                   contactoClasificacion: "PERSONAL",
                 }
               : c
           ),
         }));
-        setMensajeInfo("🔒 Chat marcado como Personal (oculto a Ventas y sin IA).");
+        setMensajeInfo(
+          res.visibilidad === "SOLO_TITULAR"
+            ? "🔒 Chat convertido a Personal (Solo yo): dejó de ser visible para todos los demás usuarios y se bloqueó ARIA."
+            : "🛡️ Chat marcado como Personal (Solo Administradores): oculto para Ventas y con IA bloqueada."
+        );
       }
       return;
     }
@@ -2505,7 +2534,7 @@ export function ConsolaVentasOmnicanal({
     setTablero((prev) => ({
       ...prev,
       conversaciones: prev.conversaciones.map((c) =>
-        c.id === conversacionActiva.id
+        c.id === objetivo.id
           ? {
               ...c,
               visibilidad: "EQUIPO_VENTAS",
@@ -4021,6 +4050,49 @@ export function ConsolaVentasOmnicanal({
                       No leído
                     </button>
 
+                    {/* Toggle rápido Chats Personales (Privados) */}
+                    {esAdminAplicacion && (() => {
+                      const cantPrivados = tablero.conversaciones.filter(
+                        (c) =>
+                          c.estadoAtencion !== "CERRADO" &&
+                          (c.visibilidad === "SOLO_ADMIN" || c.visibilidad === "SOLO_TITULAR")
+                      ).length;
+                      const activoPrivados = filtroIzquierdo === "privados";
+                      return (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFiltroIzquierdo((prev) => (prev === "privados" ? "todos" : "privados"))
+                          }
+                          title="Ver únicamente tus chats personales (ocultos para los demás usuarios)"
+                          aria-label="Chats Personales"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            padding: "5px 9px",
+                            borderRadius: "8px",
+                            border: activoPrivados
+                              ? "1px solid #6B21A8"
+                              : "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                            background: activoPrivados
+                              ? "#6B21A8"
+                              : "var(--cf-faf5ff, #FAF5FF)",
+                            color: activoPrivados
+                              ? "#FFFFFF"
+                              : "var(--ct-6b21a8, #6B21A8)",
+                            fontSize: "0.74rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <Lock size={12} />
+                          <span>Personales{cantPrivados > 0 ? ` (${cantPrivados})` : ""}</span>
+                        </button>
+                      );
+                    })()}
+
                     {/* Filtro por Etiqueta de Clasificación */}
                     <SelectConBuscador
                       value={etiquetaFiltroId || ""}
@@ -4400,6 +4472,46 @@ export function ConsolaVentasOmnicanal({
                               <span style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)" }}>
                                 {formatearTiempoCorto(conv.ultimoMensajeEn)}
                               </span>
+                              {esAdminAplicacion && seleccionada && (
+                                <button
+                                  type="button"
+                                  onClick={(ev) => {
+                                    ev.stopPropagation();
+                                    setMenuCabeceraAbierto((prev) =>
+                                      prev === "privacidad" ? null : "privacidad"
+                                    );
+                                  }}
+                                  title="Convertir este chat en Personal (oculto a otros usuarios) o gestionar privacidad"
+                                  aria-label={`Privacidad Personal de ${grupo.nombreMostrado}`}
+                                  style={{
+                                    width: "22px",
+                                    height: "22px",
+                                    borderRadius: "6px",
+                                    border:
+                                      convActivaEnGrupo.visibilidad === "SOLO_TITULAR" ||
+                                      convActivaEnGrupo.visibilidad === "SOLO_ADMIN"
+                                        ? "1px solid #6B21A8"
+                                        : "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                                    background:
+                                      convActivaEnGrupo.visibilidad === "SOLO_TITULAR" ||
+                                      convActivaEnGrupo.visibilidad === "SOLO_ADMIN"
+                                        ? "#6B21A8"
+                                        : "var(--cf-faf5ff, #FAF5FF)",
+                                    color:
+                                      convActivaEnGrupo.visibilidad === "SOLO_TITULAR" ||
+                                      convActivaEnGrupo.visibilidad === "SOLO_ADMIN"
+                                        ? "#FFFFFF"
+                                        : "var(--ct-6b21a8, #6B21A8)",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                  }}
+                                >
+                                  <Lock size={11} />
+                                </button>
+                              )}
                               {esAdminAplicacion && seleccionada && (
                                 <button
                                   type="button"
@@ -5656,62 +5768,281 @@ export function ConsolaVentasOmnicanal({
                           </button>
                         )}
 
-                        {/* 5B. PRIVACIDAD WHATSAPP: MARCAR PERSONAL (IGNORAR) / PASAR A VENTAS */}
-                        {esAdminAplicacion && conversacionActiva.canal === "whatsapp" && (
-                          conversacionActiva.visibilidad === "SOLO_ADMIN" ||
-                          conversacionActiva.visibilidad === "SOLO_TITULAR" ||
-                          conversacionActiva.iaBloqueadaPermanente ? (
-                            <button
-                              type="button"
-                              className="btn-responsive-accion"
-                              disabled={actualizandoPrivacidad}
-                              onClick={() => void handleCambiarPrivacidadChat("PASAR_A_VENTAS")}
-                              title="Clasificar como Cliente y mostrar este chat al equipo de Ventas"
-                              aria-label="Pasar a Ventas"
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                padding: "6px 9px",
-                                borderRadius: "8px",
-                                border: "1px solid #1D4ED8",
-                                background: "var(--cf-eef4ff, #EEF4FF)",
-                                color: "var(--ct-1d4ed8, #1D4ED8)",
-                                fontSize: "0.73rem",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                              }}
-                            >
-                              <Shield size={13} />
-                              <span className="btn-texto-responsive">Pasar a Ventas</span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="btn-responsive-accion"
-                              disabled={actualizandoPrivacidad}
-                              onClick={() => void handleCambiarPrivacidadChat("MARCAR_PERSONAL")}
-                              title="Marcar contacto como Personal (Ignorar Total: sin IA y solo visible en tu celular)"
-                              aria-label="Marcar Personal"
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                padding: "6px 9px",
-                                borderRadius: "8px",
-                                border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
-                                background: "var(--cf-faf5ff, #FAF5FF)",
-                                color: "var(--ct-6b21a8, #6B21A8)",
-                                fontSize: "0.73rem",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                              }}
-                            >
-                              <Lock size={13} />
-                              <span className="btn-texto-responsive">Marcar Personal</span>
-                            </button>
-                          )
-                        )}
+                        {/* 5B. PRIVACIDAD PERSONAL: CONVERTIR A SOLO YO / SOLO CELULAR / SOLO ADMIN / VENTAS */}
+                        {(esAdminAplicacion ||
+                          (conversacionActiva.visibilidad === "SOLO_TITULAR" &&
+                            conversacionActiva.titularPrivadoId === tablero.usuarioActualId)) && (() => {
+                            const esChatPersonalActivo =
+                              conversacionActiva.visibilidad === "SOLO_TITULAR" ||
+                              conversacionActiva.visibilidad === "SOLO_ADMIN" ||
+                              Boolean(conversacionActiva.iaBloqueadaPermanente);
+                            return (
+                              <div style={{ position: "relative" }}>
+                                <button
+                                  type="button"
+                                  className="btn-responsive-accion"
+                                  disabled={actualizandoPrivacidad}
+                                  onClick={() =>
+                                    setMenuCabeceraAbierto((prev) =>
+                                      prev === "privacidad" ? null : "privacidad"
+                                    )
+                                  }
+                                  title={
+                                    esChatPersonalActivo
+                                      ? "Chat Personal (oculto a otros usuarios) — clic para cambiar privacidad o devolver a Ventas"
+                                      : "Convertir este chat en Personal para ocultarlo a los demás usuarios"
+                                  }
+                                  aria-label={esChatPersonalActivo ? "Personal activo" : "Hacer Personal"}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    padding: "6px 9px",
+                                    borderRadius: "8px",
+                                    border: esChatPersonalActivo
+                                      ? "1px solid #6B21A8"
+                                      : "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                                    background: esChatPersonalActivo
+                                      ? "#6B21A8"
+                                      : "var(--cf-faf5ff, #FAF5FF)",
+                                    color: esChatPersonalActivo
+                                      ? "#FFFFFF"
+                                      : "var(--ct-6b21a8, #6B21A8)",
+                                    fontSize: "0.73rem",
+                                    fontWeight: 600,
+                                    cursor: actualizandoPrivacidad ? "wait" : "pointer",
+                                  }}
+                                >
+                                  <Lock size={13} />
+                                  <span className="btn-texto-responsive">
+                                    {conversacionActiva.visibilidad === "SOLO_TITULAR"
+                                      ? "Solo yo"
+                                      : conversacionActiva.visibilidad === "SOLO_ADMIN"
+                                        ? "Solo Admin"
+                                        : "Personal"}
+                                  </span>
+                                </button>
+
+                                {menuCabeceraAbierto === "privacidad" && (
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      top: "calc(100% + 6px)",
+                                      right: 0,
+                                      width: "276px",
+                                      maxWidth: "calc(100vw - 24px)",
+                                      background: "var(--cf-ffffff, #FFFFFF)",
+                                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                      borderRadius: "12px",
+                                      boxShadow: "0 14px 32px rgba(15, 23, 42, 0.16)",
+                                      padding: "8px",
+                                      zIndex: 55,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: "6px",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        padding: "2px 6px 6px",
+                                        fontSize: "0.73rem",
+                                        fontWeight: 700,
+                                        color: "var(--ct-6b21a8, #6B21A8)",
+                                        borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
+                                      }}
+                                    >
+                                      🔒 Privacidad del chat
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      disabled={actualizandoPrivacidad}
+                                      onClick={() =>
+                                        void handleCambiarPrivacidadChat(
+                                          "MARCAR_PERSONAL",
+                                          "SOLO_TITULAR"
+                                        )
+                                      }
+                                      style={{
+                                        width: "100%",
+                                        padding: "8px 10px",
+                                        borderRadius: "9px",
+                                        border:
+                                          conversacionActiva.visibilidad === "SOLO_TITULAR"
+                                            ? "1.5px solid #6B21A8"
+                                            : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                        background:
+                                          conversacionActiva.visibilidad === "SOLO_TITULAR"
+                                            ? "var(--cf-faf5ff, #FAF5FF)"
+                                            : "var(--cf-ffffff, #FFFFFF)",
+                                        textAlign: "left",
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "2px",
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          fontSize: "0.78rem",
+                                          fontWeight: 700,
+                                          color: "var(--ct-6b21a8, #6B21A8)",
+                                        }}
+                                      >
+                                        👤 Personal (Solo yo)
+                                        {conversacionActiva.visibilidad === "SOLO_TITULAR"
+                                          ? " · Activo"
+                                          : ""}
+                                      </span>
+                                      <span
+                                        style={{
+                                          fontSize: "0.69rem",
+                                          color: "var(--ct-6e6861, #6E6861)",
+                                          lineHeight: 1.35,
+                                        }}
+                                      >
+                                        Deja de ser visible para todos los demás usuarios y bloquea ARIA. Solo tú lo ves aquí.
+                                      </span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      disabled={actualizandoPrivacidad}
+                                      onClick={() =>
+                                        void handleCambiarPrivacidadChat(
+                                          "MARCAR_PERSONAL",
+                                          "IGNORAR_TOTAL"
+                                        )
+                                      }
+                                      style={{
+                                        width: "100%",
+                                        padding: "8px 10px",
+                                        borderRadius: "9px",
+                                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                        background: "var(--cf-ffffff, #FFFFFF)",
+                                        textAlign: "left",
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "2px",
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          fontSize: "0.78rem",
+                                          fontWeight: 700,
+                                          color: "var(--ct-991b1b, #991B1B)",
+                                        }}
+                                      >
+                                        📵 Solo en mi celular
+                                      </span>
+                                      <span
+                                        style={{
+                                          fontSize: "0.69rem",
+                                          color: "var(--ct-6e6861, #6E6861)",
+                                          lineHeight: 1.35,
+                                        }}
+                                      >
+                                        Lo saca de la web para todos (incluyéndote). Futuros mensajes quedan solo en tu teléfono.
+                                      </span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      disabled={actualizandoPrivacidad}
+                                      onClick={() =>
+                                        void handleCambiarPrivacidadChat(
+                                          "MARCAR_PERSONAL",
+                                          "OCULTO_ADMIN"
+                                        )
+                                      }
+                                      style={{
+                                        width: "100%",
+                                        padding: "8px 10px",
+                                        borderRadius: "9px",
+                                        border:
+                                          conversacionActiva.visibilidad === "SOLO_ADMIN"
+                                            ? "1.5px solid #1D4ED8"
+                                            : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                        background:
+                                          conversacionActiva.visibilidad === "SOLO_ADMIN"
+                                            ? "var(--cf-eef4ff, #EEF4FF)"
+                                            : "var(--cf-ffffff, #FFFFFF)",
+                                        textAlign: "left",
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "2px",
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          fontSize: "0.78rem",
+                                          fontWeight: 700,
+                                          color: "var(--ct-1e40af, #1E40AF)",
+                                        }}
+                                      >
+                                        🛡️ Solo Administradores
+                                        {conversacionActiva.visibilidad === "SOLO_ADMIN"
+                                          ? " · Activo"
+                                          : ""}
+                                      </span>
+                                      <span
+                                        style={{
+                                          fontSize: "0.69rem",
+                                          color: "var(--ct-6e6861, #6E6861)",
+                                          lineHeight: 1.35,
+                                        }}
+                                      >
+                                        Oculto para Ventas/Asesoras y sin IA; visible solo para Admins.
+                                      </span>
+                                    </button>
+
+                                    {esChatPersonalActivo && (
+                                      <button
+                                        type="button"
+                                        disabled={actualizandoPrivacidad}
+                                        onClick={() =>
+                                          void handleCambiarPrivacidadChat("PASAR_A_VENTAS")
+                                        }
+                                        style={{
+                                          width: "100%",
+                                          padding: "8px 10px",
+                                          borderRadius: "9px",
+                                          border: "1px solid #15803D",
+                                          background: "var(--cf-f0fdf4, #F0FDF4)",
+                                          textAlign: "left",
+                                          cursor: "pointer",
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          gap: "2px",
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            fontSize: "0.78rem",
+                                            fontWeight: 700,
+                                            color: "#166534",
+                                          }}
+                                        >
+                                          💼 Devolver a Ventas
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontSize: "0.69rem",
+                                            color: "#166534",
+                                            lineHeight: 1.35,
+                                          }}
+                                        >
+                                          Vuelve a mostrar este chat al equipo comercial.
+                                        </span>
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                         {/* 6. MOSTRAR / PLEGAR PANEL DERECHO */}
                         {modoLayoutInbox === "desktop" ? (
@@ -5778,7 +6109,12 @@ export function ConsolaVentasOmnicanal({
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+                        gridTemplateColumns:
+                          esAdminAplicacion ||
+                          (conversacionActiva.visibilidad === "SOLO_TITULAR" &&
+                            conversacionActiva.titularPrivadoId === tablero.usuarioActualId)
+                            ? "repeat(6, minmax(0, 1fr))"
+                            : "repeat(5, minmax(0, 1fr))",
                         gap: "6px",
                         width: "100%",
                       }}
@@ -5989,10 +6325,53 @@ export function ConsolaVentasOmnicanal({
                           <Play size={16} />
                         </button>
                       )}
+
+                      {/* 6. Privacidad Personal en móvil */}
+                      {(esAdminAplicacion ||
+                        (conversacionActiva.visibilidad === "SOLO_TITULAR" &&
+                          conversacionActiva.titularPrivadoId === tablero.usuarioActualId)) && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMenuCabeceraAbierto((prev) =>
+                              prev === "privacidad" ? null : "privacidad"
+                            )
+                          }
+                          title="Convertir en chat Personal (oculto a los demás usuarios)"
+                          aria-label="Privacidad Personal"
+                          style={{
+                            height: "38px",
+                            borderRadius: "9px",
+                            border:
+                              conversacionActiva.visibilidad === "SOLO_TITULAR" ||
+                              conversacionActiva.visibilidad === "SOLO_ADMIN"
+                                ? "1.5px solid #6B21A8"
+                                : "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                            background:
+                              conversacionActiva.visibilidad === "SOLO_TITULAR" ||
+                              conversacionActiva.visibilidad === "SOLO_ADMIN" ||
+                              menuCabeceraAbierto === "privacidad"
+                                ? "#6B21A8"
+                                : "var(--cf-faf5ff, #FAF5FF)",
+                            color:
+                              conversacionActiva.visibilidad === "SOLO_TITULAR" ||
+                              conversacionActiva.visibilidad === "SOLO_ADMIN" ||
+                              menuCabeceraAbierto === "privacidad"
+                                ? "#FFFFFF"
+                                : "var(--ct-6b21a8, #6B21A8)",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Lock size={16} />
+                        </button>
+                      )}
                     </div>
                   )}
 
-                  {/* BOTTOM SHEET MÓVIL DE PANTALLA COMPLETA (Etiquetas / Recordatorio / Motivo de Cierre) — CERO RECORTE LATERAL */}
+                  {/* BOTTOM SHEET MÓVIL DE PANTALLA COMPLETA (Etiquetas / Recordatorio / Motivo de Cierre / Privacidad) — CERO RECORTE LATERAL */}
                   {modoLayoutInbox === "movil" && menuCabeceraAbierto !== null && (
                     <div
                       role="dialog"
@@ -6002,7 +6381,9 @@ export function ConsolaVentasOmnicanal({
                           ? "Gestionar etiquetas"
                           : menuCabeceraAbierto === "recordatorio"
                             ? "Recuérdamelo en"
-                            : "Seleccionar motivo de cierre"
+                            : menuCabeceraAbierto === "privacidad"
+                              ? "Privacidad del chat"
+                              : "Seleccionar motivo de cierre"
                       }
                       onClick={() => {
                         setMenuCabeceraAbierto(null);
@@ -6062,6 +6443,7 @@ export function ConsolaVentasOmnicanal({
                             <strong style={{ fontSize: "0.94rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                               {menuCabeceraAbierto === "etiquetas" && "🏷️ Gestionar etiquetas"}
                               {menuCabeceraAbierto === "recordatorio" && "⏰ Recuérdamelo en…"}
+                              {menuCabeceraAbierto === "privacidad" && "🔒 Privacidad Personal del chat"}
                               {menuCabeceraAbierto === "cierre" &&
                                 "✅ Cerrar chat · Selecciona el motivo"}
                             </strong>
@@ -6376,6 +6758,147 @@ export function ConsolaVentasOmnicanal({
                                 </button>
                               ))}
                             </>
+                          )}
+
+                          {menuCabeceraAbierto === "privacidad" && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "4px" }}>
+                              <button
+                                type="button"
+                                disabled={actualizandoPrivacidad}
+                                onClick={() =>
+                                  void handleCambiarPrivacidadChat(
+                                    "MARCAR_PERSONAL",
+                                    "SOLO_TITULAR"
+                                  )
+                                }
+                                style={{
+                                  width: "100%",
+                                  minHeight: "56px",
+                                  padding: "11px 13px",
+                                  borderRadius: "11px",
+                                  border:
+                                    conversacionActiva.visibilidad === "SOLO_TITULAR"
+                                      ? "1.5px solid #6B21A8"
+                                      : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                  background:
+                                    conversacionActiva.visibilidad === "SOLO_TITULAR"
+                                      ? "var(--cf-faf5ff, #FAF5FF)"
+                                      : "var(--cf-ffffff, #FFFFFF)",
+                                  textAlign: "left",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "3px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#6B21A8" }}>
+                                  👤 Personal (Solo yo)
+                                  {conversacionActiva.visibilidad === "SOLO_TITULAR" ? " · Activo" : ""}
+                                </span>
+                                <span style={{ fontSize: "0.75rem", color: "var(--ct-6e6861, #6E6861)" }}>
+                                  Deja de ser visible para todos los demás usuarios y bloquea ARIA. Solo tú lo ves aquí.
+                                </span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={actualizandoPrivacidad}
+                                onClick={() =>
+                                  void handleCambiarPrivacidadChat(
+                                    "MARCAR_PERSONAL",
+                                    "IGNORAR_TOTAL"
+                                  )
+                                }
+                                style={{
+                                  width: "100%",
+                                  minHeight: "56px",
+                                  padding: "11px 13px",
+                                  borderRadius: "11px",
+                                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                  background: "var(--cf-ffffff, #FFFFFF)",
+                                  textAlign: "left",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "3px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#991B1B" }}>
+                                  📵 Solo en mi celular
+                                </span>
+                                <span style={{ fontSize: "0.75rem", color: "var(--ct-6e6861, #6E6861)" }}>
+                                  Oculto de la web para todos (incluyéndote). Futuros mensajes quedan solo en tu celular.
+                                </span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={actualizandoPrivacidad}
+                                onClick={() =>
+                                  void handleCambiarPrivacidadChat(
+                                    "MARCAR_PERSONAL",
+                                    "OCULTO_ADMIN"
+                                  )
+                                }
+                                style={{
+                                  width: "100%",
+                                  minHeight: "56px",
+                                  padding: "11px 13px",
+                                  borderRadius: "11px",
+                                  border:
+                                    conversacionActiva.visibilidad === "SOLO_ADMIN"
+                                      ? "1.5px solid #1D4ED8"
+                                      : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                  background:
+                                    conversacionActiva.visibilidad === "SOLO_ADMIN"
+                                      ? "var(--cf-eef4ff, #EEF4FF)"
+                                      : "var(--cf-ffffff, #FFFFFF)",
+                                  textAlign: "left",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "3px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1E40AF" }}>
+                                  🛡️ Solo Administradores
+                                  {conversacionActiva.visibilidad === "SOLO_ADMIN" ? " · Activo" : ""}
+                                </span>
+                                <span style={{ fontSize: "0.75rem", color: "var(--ct-6e6861, #6E6861)" }}>
+                                  Oculto para Ventas/Asesoras y sin IA; visible solo para Admins.
+                                </span>
+                              </button>
+
+                              {(conversacionActiva.visibilidad === "SOLO_TITULAR" ||
+                                conversacionActiva.visibilidad === "SOLO_ADMIN" ||
+                                conversacionActiva.iaBloqueadaPermanente) && (
+                                <button
+                                  type="button"
+                                  disabled={actualizandoPrivacidad}
+                                  onClick={() => void handleCambiarPrivacidadChat("PASAR_A_VENTAS")}
+                                  style={{
+                                    width: "100%",
+                                    minHeight: "52px",
+                                    padding: "11px 13px",
+                                    borderRadius: "11px",
+                                    border: "1px solid #15803D",
+                                    background: "var(--cf-f0fdf4, #F0FDF4)",
+                                    textAlign: "left",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "3px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#166534" }}>
+                                    💼 Devolver a Ventas
+                                  </span>
+                                  <span style={{ fontSize: "0.75rem", color: "#166534" }}>
+                                    Vuelve a mostrar este chat al equipo comercial.
+                                  </span>
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>

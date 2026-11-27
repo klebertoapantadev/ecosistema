@@ -5552,6 +5552,7 @@ export async function marcarChatPrivacidadOmnicanalAction(entrada: {
       ok: true;
       accion: string;
       visibilidad: VisibilidadConversacion;
+      titularPrivadoId?: string | null;
       ocultoConsola?: boolean;
       estadoAtencion?: EstadoAtencionOmnicanal;
     }
@@ -5567,7 +5568,7 @@ export async function marcarChatPrivacidadOmnicanalAction(entrada: {
       p_negocio: neg,
       p_conversacion_id: entrada.conversacionId,
       p_accion: entrada.accion,
-      p_politica_personal: entrada.politicaPersonal ?? "IGNORAR_TOTAL",
+      p_politica_personal: entrada.politicaPersonal ?? "SOLO_TITULAR",
     });
 
     if (error) return { ok: false, error: error.message };
@@ -5575,7 +5576,11 @@ export async function marcarChatPrivacidadOmnicanalAction(entrada: {
       return { ok: false, error: String(data?.error || "No se pudo actualizar la privacidad del chat.") };
     }
 
-    // Si pasó a Personal (IGNORAR_TOTAL o SOLO_ADMIN), emitir señal de retiro inmediato en navegadores de Ventas
+    const visFinal = (data.visibilidad as VisibilidadConversacion) || "EQUIPO_VENTAS";
+    const titularId = data.titularPrivadoId ? String(data.titularPrivadoId) : null;
+
+    // Si pasó a Personal (SOLO_TITULAR, SOLO_ADMIN o IGNORAR_TOTAL), emitir señal de retiro inmediato
+    // para que desaparezca en vivo de las pantallas de los demás usuarios (sin recargar)
     if (entrada.accion === "MARCAR_PERSONAL") {
       await emitirBroadcastServidorOmnicanal(supabase, neg, "intervencion_asesor", {
         eventoId: `priv-${entrada.conversacionId}-${Date.now()}`,
@@ -5583,13 +5588,16 @@ export async function marcarChatPrivacidadOmnicanalAction(entrada: {
         conversacionId: entrada.conversacionId,
         estadoAtencion: "EN_ATENCION_ASESORA",
         eliminada: true,
+        visibilidad: Boolean(data.ocultoConsola) ? undefined : visFinal,
+        titularPrivadoId: Boolean(data.ocultoConsola) ? null : titularId,
       });
     }
 
     return {
       ok: true,
       accion: String(data.accion || entrada.accion),
-      visibilidad: (data.visibilidad as VisibilidadConversacion) || "EQUIPO_VENTAS",
+      visibilidad: visFinal,
+      titularPrivadoId: titularId,
       ocultoConsola: Boolean(data.ocultoConsola),
       estadoAtencion: data.estadoAtencion as EstadoAtencionOmnicanal | undefined,
     };
