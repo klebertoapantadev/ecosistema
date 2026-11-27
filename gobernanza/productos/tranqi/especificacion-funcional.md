@@ -885,6 +885,7 @@ Tranqi habilita un canal comercial corporativo B2B2C donde empresas (personas ju
 #### 5. Canal de Captación Comercial B2B y Formulario de Contacto Personalizado (`/empresas/contacto`)
 - **Punto de Entrada en Landing:** En la tarjeta de **Planes Corporativos** de la página de inicio, el botón redirige con `Más Información` hacia `/empresas/contacto`.
 - **Estructura Informativa y Beneficios:** Presenta la síntesis de beneficios clave (Abogado Empresarial Dedicado, Bienestar Legal B2B2C, Portal Empresa RBAC, Onboarding por dominio `@tuempresa.com`, Blindaje Contractual Preventivo y Tarifas por tramos desde $10.35/mes).
+- **Apariencia:** Fondo blanco con la barra superior en violeta, como la landing; los íconos de los beneficios y los acentos van en violeta de marca. Hasta TRQ-039 (26-nov-2026) la página era de fondo casi negro: negocio pidió aclararla porque se veía fúnebre.
 - **Captura y Persistencia:** Registro de leads corporativos en la tabla `tranqui_legal.trq_contacto_empresa` con RLS, trazabilidad de IP/agente y auditoría transversal.
 - **Despacho Automatizado de Correos:**
   1. **Confirmación al Solicitante:** Notificación con diseño de marca confirmando la recepción y resumen de sus datos, indicando contacto en menos de 24 horas.

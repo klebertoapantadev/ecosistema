@@ -2,7 +2,7 @@
    Cada variable es light-dark(color original, versión oscura según su papel:
    cf = fondo, ct = texto, cb = borde). Solo se resuelve oscura donde
    color-scheme es dark, es decir, dentro del panel con el tema oscuro
-   (ver «Tema oscuro» en globals.css). 514 variables. */
+   (ver «Tema oscuro» en globals.css). 521 variables. */
 :root {
   --cb-000000: light-dark(#000000, #555555);
   --cb-000000-a060: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.06));
@@ -97,6 +97,7 @@
   --cb-d8b4fe: light-dark(#D8B4FE, #453456);
   --cb-d8cfc1: light-dark(#D8CFC1, #40392D);
   --cb-d9c49b: light-dark(#D9C49B, #4C3A14);
+  --cb-d9c8f2: light-dark(#D9C8F2, #443557);
   --cb-d9cff5: light-dark(#D9CFF5, #403756);
   --cb-d9d4cb: light-dark(#D9D4CB, #3C3831);
   --cb-d9d4e6: light-dark(#D9D4E6, #3A3644);
@@ -145,6 +146,7 @@
   --cb-e6e2ef: light-dark(#E6E2EF, #36333D);
   --cb-e6e6e6: light-dark(#E6E6E6, #353535);
   --cb-e7e5e4: light-dark(#E7E5E4, #363434);
+  --cb-e7e5ee: light-dark(#E7E5EE, #35333A);
   --cb-e8c97e: light-dark(#E8C97E, #4A3B13);
   --cb-e8dec6: light-dark(#E8DEC6, #3E3622);
   --cb-e8e8e8: light-dark(#E8E8E8, #343434);
@@ -178,6 +180,7 @@
   --cb-fed7aa: light-dark(#FED7AA, #513716);
   --cb-fee2e2: light-dark(#FEE2E2, #422E2E);
   --cb-fef3c7: light-dark(#FEF3C7, #463D15);
+  --cb-ffc7ad: light-dark(#FFC7AD, #573321);
   --cb-ffffff: light-dark(#FFFFFF, #191919);
   --cb-ffffff-a080: light-dark(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08));
   --cb-ffffff-a100: light-dark(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1));
@@ -233,6 +236,8 @@
   --cf-eae5dc: light-dark(#EAE5DC, #1A1610);
   --cf-eaf1ec: light-dark(#EAF1EC, #111512);
   --cf-eaf3ed: light-dark(#EAF3ED, #101612);
+  --cf-eaf7f2: light-dark(#EAF7F2, #0E1815);
+  --cf-ebe3fa: light-dark(#EBE3FA, #191322);
   --cf-eceae4: light-dark(#ECEAE4, #171511);
   --cf-ececee: light-dark(#ECECEE, #141416);
   --cf-ecfdf5: light-dark(#ECFDF5, #0E1A15);
@@ -255,6 +260,7 @@
   --cf-f1ece4: light-dark(#F1ECE4, #17140E);
   --cf-f1efea: light-dark(#F1EFEA, #151411);
   --cf-f1f1f1: light-dark(#F1F1F1, #151515);
+  --cf-f1f1f4: light-dark(#F1F1F4, #151517);
   --cf-f1f5f9: light-dark(#F1F5F9, #131619);
   --cf-f2f5f3: light-dark(#F2F5F3, #141615);
   --cf-f2f6f3: light-dark(#F2F6F3, #141715);
@@ -450,6 +456,7 @@
   --ct-581c87: light-dark(#581C87, #CB9EFE);
   --ct-58a6ff: light-dark(#58A6FF, #69AEFF);
   --ct-5b21b6: light-dark(#5B21B6, #AF98FE);
+  --ct-5f5f66: light-dark(#5F5F66, #96969E);
   --ct-64748b: light-dark(#64748B, #9BACC5);
   --ct-666666: light-dark(#666666, #919191);
   --ct-6b21a8: light-dark(#6B21A8, #C18EFF);
@@ -491,6 +498,7 @@
   --ct-94a3b8: light-dark(#94A3B8, #9DACC1);
   --ct-991b1b: light-dark(#991B1B, #FE7F74);
   --ct-999999: light-dark(#999999, #868686);
+  --ct-9a3200: light-dark(#9A3200, #F88760);
   --ct-9a3412: light-dark(#9A3412, #F68867);
   --ct-9a8f83: light-dark(#9A8F83, #8F8478);
   --ct-9b948b: light-dark(#9B948B, #8C857C);
@@ -499,7 +507,6 @@
   --ct-9e4438: light-dark(#9E4438, #EE8C7C);
   --ct-a1a1aa: light-dark(#A1A1AA, #85858E);
   --ct-a32100: light-dark(#A32100, #FF8165);
-  --ct-a855f7: light-dark(#A855F7, #C28EFE);
   --ct-a89d8f: light-dark(#A89D8F, #8F8477);
   --ct-b00020: light-dark(#B00020, #FD7F7B);
   --ct-b45309: light-dark(#B45309, #F38C51);
