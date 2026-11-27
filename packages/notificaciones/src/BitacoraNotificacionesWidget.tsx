@@ -56,7 +56,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
       encabezado: "Tipo",
       valor: (c) => c.tipoEmision,
       render: (c) => (
-        <span style={{ padding: "3px 8px", borderRadius: "12px", fontSize: "0.7rem", fontWeight: 800, background: c.tipoEmision === "MANUAL" ? "#DBEAFE" : "#FEF3C7", color: c.tipoEmision === "MANUAL" ? "#1E40AF" : "#92400E" }}>
+        <span style={{ padding: "3px 8px", borderRadius: "12px", fontSize: "0.7rem", fontWeight: 800, background: c.tipoEmision === "MANUAL" ? "var(--cf-dbeafe, #DBEAFE)" : "var(--cf-fef3c7, #FEF3C7)", color: c.tipoEmision === "MANUAL" ? "var(--ct-1e40af, #1E40AF)" : "var(--ct-92400e, #92400E)" }}>
           {c.tipoEmision}
         </span>
       ),
@@ -67,8 +67,8 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
       valor: (c) => `${c.emisorNombre} ${c.emisorCorreo}`.trim(),
       render: (c) => (
         <div>
-          <strong style={{ display: "block", color: "#0F172A" }}>{c.emisorNombre}</strong>
-          <span style={{ fontSize: "0.74rem", color: "#64748B" }}>{c.emisorCorreo}</span>
+          <strong style={{ display: "block", color: "var(--ct-0f172a, #0F172A)" }}>{c.emisorNombre}</strong>
+          <span style={{ fontSize: "0.74rem", color: "var(--ct-64748b, #64748B)" }}>{c.emisorCorreo}</span>
         </div>
       ),
     },
@@ -77,7 +77,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
       encabezado: "Proceso / Origen",
       valor: (c) => c.procesoOrigen,
       render: (c) => (
-        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#4F46E5" }}>{c.procesoOrigen}</span>
+        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-4f46e5, #4F46E5)" }}>{c.procesoOrigen}</span>
       ),
     },
     {
@@ -85,7 +85,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
       encabezado: "Asunto / Contenido",
       valor: (c) => c.asunto,
       render: (c) => (
-        <strong style={{ display: "block", color: "#1E293B", maxWidth: "260px" }}>
+        <strong style={{ display: "block", color: "var(--ct-1e293b, #1E293B)", maxWidth: "260px" }}>
           {c.asunto}
         </strong>
       ),
@@ -95,7 +95,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
       encabezado: "Audiencia",
       valor: (c) => c.audiencia,
       render: (c) => (
-        <span style={{ padding: "3px 8px", borderRadius: "6px", background: "#F1F5F9", color: "#334155", fontWeight: 800, fontSize: "0.72rem" }}>
+        <span style={{ padding: "3px 8px", borderRadius: "6px", background: "var(--cf-f1f5f9, #F1F5F9)", color: "var(--ct-334155, #334155)", fontWeight: 800, fontSize: "0.72rem" }}>
           {c.audiencia}
         </span>
       ),
@@ -114,8 +114,8 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
                 borderRadius: "4px",
                 fontSize: "0.68rem",
                 fontWeight: 800,
-                background: ch === "IN_APP" ? "#DBEAFE" : ch === "PUSH" ? "#E0F2FE" : ch === "EMAIL" ? "#EEF2FF" : "#DCFCE7",
-                color: ch === "IN_APP" ? "#1E40AF" : ch === "PUSH" ? "#0369A1" : ch === "EMAIL" ? "#3730A3" : "#15803D",
+                background: ch === "IN_APP" ? "var(--cf-dbeafe, #DBEAFE)" : ch === "PUSH" ? "var(--cf-e0f2fe, #E0F2FE)" : ch === "EMAIL" ? "var(--cf-eef2ff, #EEF2FF)" : "var(--cf-dcfce7, #DCFCE7)",
+                color: ch === "IN_APP" ? "var(--ct-1e40af, #1E40AF)" : ch === "PUSH" ? "var(--ct-0369a1, #0369A1)" : ch === "EMAIL" ? "var(--ct-3730a3, #3730A3)" : "var(--ct-15803d, #15803D)",
               }}
             >
               {ch}
@@ -128,7 +128,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
       id: "fecha",
       encabezado: "Fecha / Hora",
       valor: (c) => c.fecha,
-      render: (c) => <span style={{ fontSize: "0.76rem", color: "#64748B" }}>{c.fecha}</span>,
+      render: (c) => <span style={{ fontSize: "0.76rem", color: "var(--ct-64748b, #64748B)" }}>{c.fecha}</span>,
     },
     {
       id: "acciones",
@@ -140,9 +140,9 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
           type="button"
           onClick={() => setCampanaSeleccionada(c)}
           style={{
-            background: "#EEF2FF",
-            border: "1px solid #C7D2FE",
-            color: "#4338CA",
+            background: "var(--cf-eef2ff, #EEF2FF)",
+            border: "1px solid var(--cb-c7d2fe, #C7D2FE)",
+            color: "var(--ct-4338ca, #4338CA)",
             padding: "4px 10px",
             borderRadius: "6px",
             fontWeight: 700,
@@ -160,14 +160,14 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
   ], []);
 
   return (
-    <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #E4E4E4", padding: "24px", width: "100%" }}>
+    <div style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", padding: "24px", width: "100%" }}>
       {/* CABECERA WIDGET INDEPENDIENTE BITÁCORA */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px", borderBottom: "1px solid #F1F5F9", paddingBottom: "16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px", borderBottom: "1px solid var(--cb-f1f5f9, #F1F5F9)", paddingBottom: "16px" }}>
         <div>
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: 0, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px" }}>
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: 0, color: "var(--ct-0f172a, #0F172A)", display: "flex", alignItems: "center", gap: "8px" }}>
             <BarChart2 size={22} color="#2563EB" /> Bitácora & Historial de Notificaciones Emitidas ({negocio})
           </h2>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", margin: "2px 0 0 0" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", margin: "2px 0 0 0" }}>
             Consulta auditada en tiempo real para Operadores y Administradores. Detalle completo de notificaciones y destinatarios.
           </p>
         </div>
@@ -176,9 +176,9 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
           type="button"
           onClick={cargarBitacora}
           style={{
-            background: "#F1F5F9",
-            border: "1px solid #CBD5E1",
-            color: "#334155",
+            background: "var(--cf-f1f5f9, #F1F5F9)",
+            border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+            color: "var(--ct-334155, #334155)",
             padding: "8px 16px",
             borderRadius: "20px",
             fontSize: "0.82rem",
@@ -195,7 +195,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
 
       {/* TABLA DATAGRID BITÁCORA */}
       {cargando ? (
-        <div style={{ padding: "40px", textAlign: "center", color: "#64748B" }}>
+        <div style={{ padding: "40px", textAlign: "center", color: "var(--ct-64748b, #64748B)" }}>
           Cargando bitácora de notificaciones auditadas...
         </div>
       ) : (
@@ -205,11 +205,11 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
           idFila={(c) => c.id}
           nombreExportacion={`bitacora-notificaciones-${negocio.toLowerCase()}`}
           contenidoExpandible={(c) => (
-            <div style={{ padding: "14px", background: "#F8FAFC", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
-              <div style={{ fontWeight: 800, marginBottom: "6px", color: "#0F172A" }}>Cuerpo de la Notificación:</div>
-              <div style={{ background: "#ffffff", padding: "12px", borderRadius: "6px", border: "1px solid #CBD5E1", lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: c.contenidoHTML || c.asunto }} />
+            <div style={{ padding: "14px", background: "var(--cf-f8fafc, #F8FAFC)", borderRadius: "8px", border: "1px solid var(--cb-e2e8f0, #E2E8F0)" }}>
+              <div style={{ fontWeight: 800, marginBottom: "6px", color: "var(--ct-0f172a, #0F172A)" }}>Cuerpo de la Notificación:</div>
+              <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "12px", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #CBD5E1)", lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: c.contenidoHTML || c.asunto }} />
               {c.destinatariosDetalle && c.destinatariosDetalle.length > 0 && (
-                <div style={{ marginTop: "8px", fontSize: "0.78rem", color: "#334155" }}>
+                <div style={{ marginTop: "8px", fontSize: "0.78rem", color: "var(--ct-334155, #334155)" }}>
                   <strong>Destinatarios ({c.destinatariosDetalle.length}):</strong> {c.destinatariosDetalle.join(", ")}
                 </div>
               )}
@@ -238,7 +238,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--cf-ffffff, #ffffff)",
               borderRadius: "20px",
               maxWidth: "600px",
               width: "100%",
@@ -264,36 +264,36 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
 
             <div style={{ padding: "24px", overflowY: "auto", flex: 1, fontSize: "0.88rem" }}>
               <div style={{ marginBottom: "16px" }}>
-                <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 800, textTransform: "uppercase" }}>Asunto</span>
-                <h4 style={{ margin: "4px 0 0 0", color: "#0F172A", fontSize: "1.1rem" }}>{campanaSeleccionada.asunto}</h4>
+                <span style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 800, textTransform: "uppercase" }}>Asunto</span>
+                <h4 style={{ margin: "4px 0 0 0", color: "var(--ct-0f172a, #0F172A)", fontSize: "1.1rem" }}>{campanaSeleccionada.asunto}</h4>
               </div>
 
               <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "12px", background: "var(--panel-linea-suave, #F1F1F1)", padding: "14px", borderRadius: "12px", marginBottom: "16px" } as React.CSSProperties}>
                 <div>
-                  <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 700 }}>Emisor:</span>
-                  <strong style={{ display: "block", color: "#1E293B" }}>{campanaSeleccionada.emisorNombre}</strong>
-                  <span style={{ fontSize: "0.74rem", color: "#475569" }}>{campanaSeleccionada.emisorCorreo}</span>
+                  <span style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 700 }}>Emisor:</span>
+                  <strong style={{ display: "block", color: "var(--ct-1e293b, #1E293B)" }}>{campanaSeleccionada.emisorNombre}</strong>
+                  <span style={{ fontSize: "0.74rem", color: "var(--ct-475569, #475569)" }}>{campanaSeleccionada.emisorCorreo}</span>
                 </div>
                 <div>
-                  <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 700 }}>Fecha / Origen:</span>
-                  <strong style={{ display: "block", color: "#1E293B" }}>{campanaSeleccionada.fecha}</strong>
-                  <span style={{ fontSize: "0.74rem", color: "#4F46E5", fontWeight: 700 }}>{campanaSeleccionada.procesoOrigen}</span>
+                  <span style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 700 }}>Fecha / Origen:</span>
+                  <strong style={{ display: "block", color: "var(--ct-1e293b, #1E293B)" }}>{campanaSeleccionada.fecha}</strong>
+                  <span style={{ fontSize: "0.74rem", color: "var(--ct-4f46e5, #4F46E5)", fontWeight: 700 }}>{campanaSeleccionada.procesoOrigen}</span>
                 </div>
               </div>
 
               <div style={{ marginBottom: "16px" }}>
-                <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 800, textTransform: "uppercase" }}>Contenido Notificado</span>
+                <span style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 800, textTransform: "uppercase" }}>Contenido Notificado</span>
                 <div
-                  style={{ marginTop: "6px", padding: "16px", background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: "10px", lineHeight: 1.6 }}
+                  style={{ marginTop: "6px", padding: "16px", background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "10px", lineHeight: 1.6 }}
                   dangerouslySetInnerHTML={{ __html: campanaSeleccionada.contenidoHTML || campanaSeleccionada.asunto }}
                 />
               </div>
 
               <div>
-                <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 800, textTransform: "uppercase" }}>Destinatarios Auditados ({campanaSeleccionada.destinatariosDetalle?.length || campanaSeleccionada.enviados})</span>
-                <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "10px", marginTop: "6px", maxHeight: "120px", overflowY: "auto" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 800, textTransform: "uppercase" }}>Destinatarios Auditados ({campanaSeleccionada.destinatariosDetalle?.length || campanaSeleccionada.enviados})</span>
+                <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "10px", padding: "10px", marginTop: "6px", maxHeight: "120px", overflowY: "auto" }}>
                   {(campanaSeleccionada.destinatariosDetalle || [campanaSeleccionada.emisorCorreo]).map((email, idx) => (
-                    <div key={idx} style={{ fontSize: "0.8rem", color: "#0F172A", fontWeight: 600, padding: "3px 0", borderBottom: idx < (campanaSeleccionada.destinatariosDetalle?.length || 1) - 1 ? "1px dashed #E2E8F0" : "none" }}>
+                    <div key={idx} style={{ fontSize: "0.8rem", color: "var(--ct-0f172a, #0F172A)", fontWeight: 600, padding: "3px 0", borderBottom: idx < (campanaSeleccionada.destinatariosDetalle?.length || 1) - 1 ? "1px dashed var(--cb-e2e8f0, #E2E8F0)" : "none" }}>
                       • {email}
                     </div>
                   ))}
@@ -301,7 +301,7 @@ export function BitacoraNotificacionesWidget({ negocio = "TRANQ" }: Props) {
               </div>
             </div>
 
-            <div style={{ padding: "16px 24px", borderTop: "1px solid #F1F5F9", background: "#F8FAFC", textAlign: "right" }}>
+            <div style={{ padding: "16px 24px", borderTop: "1px solid var(--cb-f1f5f9, #F1F5F9)", background: "var(--cf-f8fafc, #F8FAFC)", textAlign: "right" }}>
               <button
                 type="button"
                 onClick={() => setCampanaSeleccionada(null)}

@@ -21,9 +21,9 @@ export default async function PaginaSocios() {
           href="/panel/administrar"
           title="Cerrar módulo y volver a Administrar"
           style={{
-            background: "var(--blanco, #ffffff)",
+            background: "var(--cf-ffffff, var(--blanco, #ffffff))",
             border: "1.5px solid var(--panel-linea, var(--linea))",
-            color: "var(--negro, #111111)",
+            color: "var(--ct-111111, var(--negro, #111111))",
             borderRadius: "50%",
             width: "36px",
             height: "36px",

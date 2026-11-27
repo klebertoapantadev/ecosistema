@@ -107,14 +107,14 @@ export function FormularioBienvenida({
             type="checkbox"
             checked={autorizaWhatsapp}
             onChange={(e) => toggleAutorizaWhatsapp(e.target.checked)}
-            style={{ width: "18px", height: "18px", accentColor: "#5000BA" }}
+            style={{ width: "18px", height: "18px", accentColor: "var(--ct-5000ba, #5000BA)" }}
           />
           <span>Registrar mi WhatsApp para cotizaciones y seguimiento</span>
         </label>
       </div>
 
       {autorizaWhatsapp && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", background: "#F9FAFB", padding: "14px", borderRadius: "12px", border: "1px solid #E5E7EB", marginBottom: "12px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", background: "var(--cf-f9fafb, #F9FAFB)", padding: "14px", borderRadius: "12px", border: "1px solid var(--cb-e5e7eb, #E5E7EB)", marginBottom: "12px" }}>
           <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
             <SelectConBuscador
               value={paisWhatsapp}
@@ -128,11 +128,11 @@ export function FormularioBienvenida({
                 flexShrink: 0,
                 padding: "10px 8px",
                 borderRadius: "8px",
-                border: "1px solid #D1D5DB",
-                background: "#FFFFFF",
+                border: "1px solid var(--cb-d1d5db, #D1D5DB)",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 fontSize: "0.88rem",
                 fontWeight: 600,
-                color: "#111827",
+                color: "var(--ct-111827, #111827)",
                 margin: 0,
               }}
             >
@@ -153,13 +153,13 @@ export function FormularioBienvenida({
           </div>
 
           <label
-            style={{ display: "flex", alignItems: "flex-start", gap: "8px", cursor: "pointer", fontSize: "0.8rem", color: "#374151", fontWeight: 600 }}
+            style={{ display: "flex", alignItems: "flex-start", gap: "8px", cursor: "pointer", fontSize: "0.8rem", color: "var(--ct-374151, #374151)", fontWeight: 600 }}
           >
             <input
               type="checkbox"
               checked={aceptaTerminosWhatsapp}
               onChange={(e) => setAceptaTerminosWhatsapp(e.target.checked)}
-              style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0, accentColor: "#059669", cursor: "pointer" }}
+              style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0, accentColor: "var(--ct-059669, #059669)", cursor: "pointer" }}
             />
             <span>
               Autorizo que me contacten y envíen cotizaciones e información por WhatsApp conforme a la{" "}
@@ -174,7 +174,7 @@ export function FormularioBienvenida({
                   background: "none",
                   border: "none",
                   padding: 0,
-                  color: "#059669",
+                  color: "var(--ct-059669, #059669)",
                   fontWeight: 800,
                   textDecoration: "underline",
                   cursor: "pointer",
@@ -189,7 +189,7 @@ export function FormularioBienvenida({
           </label>
 
           {!aceptaTerminosWhatsapp && (
-            <p style={{ fontSize: "0.76rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>
+            <p style={{ fontSize: "0.76rem", color: "var(--ct-dc2626, #DC2626)", fontWeight: 700, margin: 0 }}>
               Marca la autorización LOPDP para guardar tu número de WhatsApp (o desmarca la opción si prefieres omitirlo).
             </p>
           )}
@@ -211,8 +211,8 @@ export function FormularioBienvenida({
           padding: "14px 24px",
           background: puedeEnviar
             ? "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)"
-            : "#D1D5DB",
-          color: puedeEnviar ? "#ffffff" : "#6B7280",
+            : "var(--cf-d1d5db, #D1D5DB)",
+          color: puedeEnviar ? "#ffffff" : "var(--ct-6b7280, #6B7280)",
           border: "none",
           borderRadius: "12px",
           fontWeight: 800,

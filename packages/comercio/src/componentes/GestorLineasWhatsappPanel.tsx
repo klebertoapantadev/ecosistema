@@ -175,7 +175,7 @@ export function GestorLineasWhatsappPanel({
       iaClientesActiva: linea.iaClientesActiva,
       politicaPersonales: linea.politicaPersonales,
       visibilidadClientes: linea.visibilidadClientes,
-      colorBadge: linea.colorBadge || COLORES_LINEAS_WHATSAPP[linea.rolLinea]?.color || "#16A34A",
+      colorBadge: linea.colorBadge || COLORES_LINEAS_WHATSAPP[linea.rolLinea]?.color || "var(--ct-16a34a, #16A34A)",
       agenteIaId: linea.agenteIaId || "",
       ycloudApiKey: "",
       ycloudWebhookSecret: "",
@@ -275,8 +275,8 @@ export function GestorLineasWhatsappPanel({
   return (
     <section
       style={{
-        background: "#FFFFFF",
-        border: "1px solid #E6E2DA",
+        background: "var(--cf-ffffff, #FFFFFF)",
+        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
         borderRadius: "14px",
         overflow: "hidden",
       }}
@@ -285,13 +285,13 @@ export function GestorLineasWhatsappPanel({
       <div
         style={{
           padding: compacto ? "14px 16px" : "18px 20px",
-          borderBottom: "1px solid #EFECE6",
+          borderBottom: "1px solid var(--cb-efece6, #EFECE6)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           gap: "12px",
           flexWrap: "wrap",
-          background: "#FCFBF9",
+          background: "var(--cf-fcfbf9, #FCFBF9)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -300,9 +300,9 @@ export function GestorLineasWhatsappPanel({
               width: "38px",
               height: "38px",
               borderRadius: "10px",
-              background: "#EEF4FF",
-              border: "1px solid #C7DAFE",
-              color: "#1D4ED8",
+              background: "var(--cf-eef4ff, #EEF4FF)",
+              border: "1px solid var(--cb-c7dafe, #C7DAFE)",
+              color: "var(--ct-1d4ed8, #1D4ED8)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -312,10 +312,10 @@ export function GestorLineasWhatsappPanel({
             <Smartphone size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1rem", fontWeight: 700, color: "#1F1C19" }}>
+            <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Teléfonos WhatsApp Conectados (Multi-Línea Coexistencia)
             </div>
-            <div style={{ fontSize: "0.8rem", color: "#7B746B", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.8rem", color: "var(--ct-7b746b, #7B746B)", marginTop: "2px" }}>
               Conecta Ventas, Dueño, Administradora y Operador. Define por cada celular si responde Automática o Manual y protege contactos personales.
             </div>
           </div>
@@ -331,9 +331,9 @@ export function GestorLineasWhatsappPanel({
               gap: "6px",
               padding: "7px 12px",
               borderRadius: "9px",
-              border: "1px solid #D5CFC4",
-              background: "#FFFFFF",
-              color: "#2E2A26",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-2e2a26, #2E2A26)",
               fontSize: "0.8rem",
               fontWeight: 600,
               textDecoration: "none",
@@ -356,9 +356,9 @@ export function GestorLineasWhatsappPanel({
               gap: "6px",
               padding: "7px 11px",
               borderRadius: "9px",
-              border: "1px solid #D5CFC4",
-              background: "#F8F7F4",
-              color: "#3A3530",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              color: "var(--ct-3a3530, #3A3530)",
               fontSize: "0.8rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -381,7 +381,7 @@ export function GestorLineasWhatsappPanel({
                 gap: "6px",
                 padding: "7px 13px",
                 borderRadius: "9px",
-                border: "1px solid #1F1C19",
+                border: "1px solid var(--cb-1f1c19, #1F1C19)",
                 background: "#1F1C19",
                 color: "#FFFFFF",
                 fontSize: "0.8rem",
@@ -415,11 +415,11 @@ export function GestorLineasWhatsappPanel({
               flexWrap: "wrap",
               padding: "10px 12px",
               borderRadius: "10px",
-              background: "#F8F7F4",
-              border: "1px solid #EAE6DE",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              border: "1px solid var(--cb-eae6de, #EAE6DE)",
             }}
           >
-            <span style={{ fontSize: "0.77rem", fontWeight: 600, color: "#57524C" }}>
+            <span style={{ fontSize: "0.77rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
               Plantillas rápidas:
             </span>
             {(["VENTAS", "DUENO", "ADMINISTRADORA", "OPERADOR"] as RolLineaWhatsapp[]).map((rol) => {
@@ -436,7 +436,7 @@ export function GestorLineasWhatsappPanel({
                     padding: "4px 10px",
                     borderRadius: "999px",
                     border: `1px solid ${info.color}44`,
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     color: info.color,
                     fontSize: "0.75rem",
                     fontWeight: 700,
@@ -456,10 +456,10 @@ export function GestorLineasWhatsappPanel({
           style={{
             padding: "10px 13px",
             borderRadius: "10px",
-            background: "#F2F6F3",
-            border: "1px solid #CEDDD3",
+            background: "var(--cf-f2f6f3, #F2F6F3)",
+            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
             fontSize: "0.78rem",
-            color: "#22422E",
+            color: "var(--ct-22422e, #22422E)",
             lineHeight: 1.5,
           }}
         >
@@ -474,9 +474,9 @@ export function GestorLineasWhatsappPanel({
             style={{
               padding: "10px 13px",
               borderRadius: "9px",
-              border: mensaje.tipo === "ok" ? "1px solid #BBF7D0" : "1px solid #FECACA",
-              background: mensaje.tipo === "ok" ? "#F0FDF4" : "#FEF2F2",
-              color: mensaje.tipo === "ok" ? "#166534" : "#991B1B",
+              border: mensaje.tipo === "ok" ? "1px solid var(--cb-bbf7d0, #BBF7D0)" : "1px solid var(--cb-fecaca, #FECACA)",
+              background: mensaje.tipo === "ok" ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-fef2f2, #FEF2F2)",
+              color: mensaje.tipo === "ok" ? "var(--ct-166534, #166534)" : "var(--ct-991b1b, #991B1B)",
               fontSize: "0.82rem",
               fontWeight: 600,
             }}
@@ -492,15 +492,15 @@ export function GestorLineasWhatsappPanel({
             style={{
               padding: "16px",
               borderRadius: "12px",
-              border: "1px solid #D5CFC4",
-              background: "#FCFBF9",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-fcfbf9, #FCFBF9)",
               display: "flex",
               flexDirection: "column",
               gap: "12px",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <strong style={{ fontSize: "0.9rem", color: "#1F1C19" }}>
+              <strong style={{ fontSize: "0.9rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                 {form.lineaId ? `Editar línea · ${form.nombre}` : "Registrar teléfono WhatsApp"}
               </strong>
               <button
@@ -510,7 +510,7 @@ export function GestorLineasWhatsappPanel({
                 style={{
                   border: "none",
                   background: "transparent",
-                  color: "#6E6861",
+                  color: "var(--ct-6e6861, #6E6861)",
                   cursor: "pointer",
                   padding: "4px",
                 }}
@@ -526,7 +526,7 @@ export function GestorLineasWhatsappPanel({
                 gap: "12px",
               }}
             >
-              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "#3A3530" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
                 Nombre visible del teléfono
                 <input
                   required
@@ -536,14 +536,14 @@ export function GestorLineasWhatsappPanel({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.85rem",
                   }}
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "#3A3530" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
                 Número WhatsApp (E.164)
                 <input
                   required
@@ -553,15 +553,15 @@ export function GestorLineasWhatsappPanel({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.85rem",
                     fontFamily: "monospace",
                   }}
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "#3A3530" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
                 Rol operativo de la línea
                 <select
                   value={form.rolLinea}
@@ -576,8 +576,8 @@ export function GestorLineasWhatsappPanel({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.85rem",
                   }}
                 >
@@ -590,7 +590,7 @@ export function GestorLineasWhatsappPanel({
                 </select>
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "#3A3530" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
                 Titular de este celular (usuario)
                 <select
                   value={form.titularUsuarioId}
@@ -598,8 +598,8 @@ export function GestorLineasWhatsappPanel({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.85rem",
                   }}
                 >
@@ -628,8 +628,8 @@ export function GestorLineasWhatsappPanel({
                   gap: "9px",
                   padding: "10px 12px",
                   borderRadius: "10px",
-                  border: form.iaDesconocidosActiva ? "1px solid #BBF7D0" : "1px solid #E5D7BC",
-                  background: form.iaDesconocidosActiva ? "#F0FDF4" : "#FAF6EE",
+                  border: form.iaDesconocidosActiva ? "1px solid var(--cb-bbf7d0, #BBF7D0)" : "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                  background: form.iaDesconocidosActiva ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-faf6ee, #FAF6EE)",
                   cursor: "pointer",
                 }}
               >
@@ -640,10 +640,10 @@ export function GestorLineasWhatsappPanel({
                   style={{ marginTop: "3px" }}
                 />
                 <div>
-                  <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1F1C19" }}>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                     Desconocidos: {form.iaDesconocidosActiva ? "Automática (IA)" : "Manual por defecto"}
                   </div>
-                  <div style={{ fontSize: "0.74rem", color: "#6E6861", marginTop: "2px" }}>
+                  <div style={{ fontSize: "0.74rem", color: "var(--ct-6e6861, #6E6861)", marginTop: "2px" }}>
                     Activado = ARIA responde a números desconocidos. Desactivado = entra en Manual (ideal para celular personal del Dueño).
                   </div>
                 </div>
@@ -656,8 +656,8 @@ export function GestorLineasWhatsappPanel({
                   gap: "9px",
                   padding: "10px 12px",
                   borderRadius: "10px",
-                  border: form.iaClientesActiva ? "1px solid #BBF7D0" : "1px solid #E5D7BC",
-                  background: form.iaClientesActiva ? "#F0FDF4" : "#FAF6EE",
+                  border: form.iaClientesActiva ? "1px solid var(--cb-bbf7d0, #BBF7D0)" : "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                  background: form.iaClientesActiva ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-faf6ee, #FAF6EE)",
                   cursor: "pointer",
                 }}
               >
@@ -668,10 +668,10 @@ export function GestorLineasWhatsappPanel({
                   style={{ marginTop: "3px" }}
                 />
                 <div>
-                  <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1F1C19" }}>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                     Clientes conocidos: {form.iaClientesActiva ? "Automática (IA)" : "Manual por defecto"}
                   </div>
-                  <div style={{ fontSize: "0.74rem", color: "#6E6861", marginTop: "2px" }}>
+                  <div style={{ fontSize: "0.74rem", color: "var(--ct-6e6861, #6E6861)", marginTop: "2px" }}>
                     Aplica a contactos clasificados como CLIENTE (siempre puedes alternar Manual/Auto en cada chat individual).
                   </div>
                 </div>
@@ -686,7 +686,7 @@ export function GestorLineasWhatsappPanel({
                 gap: "12px",
               }}
             >
-              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "#3A3530" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
                 Contactos en lista PERSONAL
                 <select
                   value={form.politicaPersonales}
@@ -699,8 +699,8 @@ export function GestorLineasWhatsappPanel({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.84rem",
                   }}
                 >
@@ -710,7 +710,7 @@ export function GestorLineasWhatsappPanel({
                 </select>
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "#3A3530" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
                 Visibilidad de clientes que escriben a este celular
                 <select
                   value={form.visibilidadClientes}
@@ -723,8 +723,8 @@ export function GestorLineasWhatsappPanel({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.84rem",
                   }}
                 >
@@ -736,7 +736,7 @@ export function GestorLineasWhatsappPanel({
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-              <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.8rem", fontWeight: 600, color: "#3A3530", cursor: "pointer" }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.8rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)", cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={form.habilitado}
@@ -744,7 +744,7 @@ export function GestorLineasWhatsappPanel({
                 />
                 Línea activa
               </label>
-              <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.8rem", fontWeight: 600, color: "#3A3530", cursor: "pointer" }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.8rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)", cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={form.esPrincipal}
@@ -758,7 +758,7 @@ export function GestorLineasWhatsappPanel({
                 style={{
                   border: "none",
                   background: "transparent",
-                  color: "#1D4ED8",
+                  color: "var(--ct-1d4ed8, #1D4ED8)",
                   fontSize: "0.77rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -777,29 +777,29 @@ export function GestorLineasWhatsappPanel({
                   gap: "10px",
                   padding: "12px",
                   borderRadius: "9px",
-                  background: "#FFFFFF",
-                  border: "1px solid #E6E2DA",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 }}
               >
-                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "#57524C" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                   Código interno de ruta
                   <input
                     value={form.codigo}
                     onChange={(e) => setForm((f) => ({ ...f, codigo: e.target.value }))}
                     placeholder="dueno"
-                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid #D5CFC4", fontFamily: "monospace", fontSize: "0.82rem" }}
+                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontFamily: "monospace", fontSize: "0.82rem" }}
                   />
                 </label>
-                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "#57524C" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                   Agente ARIA específico (vacío = hereda)
                   <input
                     value={form.agenteIaId}
                     onChange={(e) => setForm((f) => ({ ...f, agenteIaId: e.target.value }))}
                     placeholder="UUID opcional"
-                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid #D5CFC4", fontFamily: "monospace", fontSize: "0.82rem" }}
+                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontFamily: "monospace", fontSize: "0.82rem" }}
                   />
                 </label>
-                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "#57524C" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                   YCloud API Key propia (vacío = comparte cuenta)
                   <input
                     type="password"
@@ -807,7 +807,7 @@ export function GestorLineasWhatsappPanel({
                     value={form.ycloudApiKey}
                     onChange={(e) => setForm((f) => ({ ...f, ycloudApiKey: e.target.value }))}
                     placeholder="Hereda API Key principal si queda vacío"
-                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid #D5CFC4", fontSize: "0.82rem" }}
+                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.82rem" }}
                   />
                 </label>
               </div>
@@ -820,9 +820,9 @@ export function GestorLineasWhatsappPanel({
                 style={{
                   padding: "7px 13px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#3A3530",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-3a3530, #3A3530)",
                   fontSize: "0.8rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -857,7 +857,7 @@ export function GestorLineasWhatsappPanel({
 
         {/* Listado de líneas registradas */}
         {cargando && lineas.length === 0 ? (
-          <div style={{ fontSize: "0.82rem", color: "#847D74", padding: "12px 0" }}>
+          <div style={{ fontSize: "0.82rem", color: "var(--ct-847d74, #847D74)", padding: "12px 0" }}>
             Cargando teléfonos WhatsApp configurados…
           </div>
         ) : lineas.length === 0 ? (
@@ -865,10 +865,10 @@ export function GestorLineasWhatsappPanel({
             style={{
               padding: "16px",
               borderRadius: "10px",
-              border: "1px dashed #D5CFC4",
-              background: "#FAF9F6",
+              border: "1px dashed var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-faf9f6, #FAF9F6)",
               fontSize: "0.82rem",
-              color: "#6E6861",
+              color: "var(--ct-6e6861, #6E6861)",
             }}
           >
             Aún no hay líneas WhatsApp registradas en la tabla multi-línea. Pulsa <strong>Agregar Celular</strong> para dar de alta Ventas, Dueño, Administradora u Operador.
@@ -888,10 +888,10 @@ export function GestorLineasWhatsappPanel({
                 <div
                   key={linea.id}
                   style={{
-                    border: "1px solid #E6E2DA",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     borderRadius: "12px",
                     padding: "13px 14px",
-                    background: linea.habilitado ? "#FFFFFF" : "#F8F7F4",
+                    background: linea.habilitado ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-f8f7f4, #F8F7F4)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "10px",
@@ -921,8 +921,8 @@ export function GestorLineasWhatsappPanel({
                             style={{
                               padding: "2px 7px",
                               borderRadius: "999px",
-                              background: "#DCFCE7",
-                              color: "#166534",
+                              background: "var(--cf-dcfce7, #DCFCE7)",
+                              color: "var(--ct-166534, #166534)",
                               fontSize: "0.69rem",
                               fontWeight: 700,
                             }}
@@ -931,14 +931,14 @@ export function GestorLineasWhatsappPanel({
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "#1F1C19", marginTop: "5px" }}>
+                      <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)", marginTop: "5px" }}>
                         {linea.nombre}
                       </div>
-                      <div style={{ fontSize: "0.79rem", fontFamily: "monospace", color: "#57524C" }}>
+                      <div style={{ fontSize: "0.79rem", fontFamily: "monospace", color: "var(--ct-57524c, #57524C)" }}>
                         {linea.numeroE164}
                       </div>
                       {linea.titularNombre && (
-                        <div style={{ fontSize: "0.74rem", color: "#7B746B", marginTop: "2px" }}>
+                        <div style={{ fontSize: "0.74rem", color: "var(--ct-7b746b, #7B746B)", marginTop: "2px" }}>
                           Titular: <strong>{linea.titularNombre}</strong>
                         </div>
                       )}
@@ -955,9 +955,9 @@ export function GestorLineasWhatsappPanel({
                             width: "28px",
                             height: "28px",
                             borderRadius: "7px",
-                            border: "1px solid #E6E2DA",
-                            background: "#FFFFFF",
-                            color: "#3A3530",
+                            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            color: "var(--ct-3a3530, #3A3530)",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -977,9 +977,9 @@ export function GestorLineasWhatsappPanel({
                               width: "28px",
                               height: "28px",
                               borderRadius: "7px",
-                              border: "1px solid #FECACA",
-                              background: "#FEF2F2",
-                              color: "#B91C1C",
+                              border: "1px solid var(--cb-fecaca, #FECACA)",
+                              background: "var(--cf-fef2f2, #FEF2F2)",
+                              color: "var(--ct-b91c1c, #B91C1C)",
                               display: "inline-flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -996,7 +996,7 @@ export function GestorLineasWhatsappPanel({
                   {/* Controles rápidos de modo por teléfono (Decisión 3.2) */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", fontSize: "0.77rem" }}>
-                      <span style={{ color: "#57524C", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                      <span style={{ color: "var(--ct-57524c, #57524C)", display: "inline-flex", alignItems: "center", gap: "5px" }}>
                         <Bot size={13} /> Desconocidos:
                       </span>
                       <button
@@ -1009,9 +1009,9 @@ export function GestorLineasWhatsappPanel({
                           borderRadius: "999px",
                           border: linea.iaDesconocidosActiva
                             ? "1px solid #86EFAC"
-                            : "1px solid #E5D7BC",
-                          background: linea.iaDesconocidosActiva ? "#DCFCE7" : "#FAF6EE",
-                          color: linea.iaDesconocidosActiva ? "#166534" : "#745622",
+                            : "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                          background: linea.iaDesconocidosActiva ? "var(--cf-dcfce7, #DCFCE7)" : "var(--cf-faf6ee, #FAF6EE)",
+                          color: linea.iaDesconocidosActiva ? "var(--ct-166534, #166534)" : "var(--ct-745622, #745622)",
                           fontSize: "0.73rem",
                           fontWeight: 700,
                           cursor: esAdmin ? "pointer" : "default",
@@ -1022,7 +1022,7 @@ export function GestorLineasWhatsappPanel({
                     </div>
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", fontSize: "0.77rem" }}>
-                      <span style={{ color: "#57524C", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                      <span style={{ color: "var(--ct-57524c, #57524C)", display: "inline-flex", alignItems: "center", gap: "5px" }}>
                         <CheckCircle2 size={13} /> Clientes conocidos:
                       </span>
                       <button
@@ -1035,9 +1035,9 @@ export function GestorLineasWhatsappPanel({
                           borderRadius: "999px",
                           border: linea.iaClientesActiva
                             ? "1px solid #86EFAC"
-                            : "1px solid #E5D7BC",
-                          background: linea.iaClientesActiva ? "#DCFCE7" : "#FAF6EE",
-                          color: linea.iaClientesActiva ? "#166534" : "#745622",
+                            : "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                          background: linea.iaClientesActiva ? "var(--cf-dcfce7, #DCFCE7)" : "var(--cf-faf6ee, #FAF6EE)",
+                          color: linea.iaClientesActiva ? "var(--ct-166534, #166534)" : "var(--ct-745622, #745622)",
                           fontSize: "0.73rem",
                           fontWeight: 700,
                           cursor: esAdmin ? "pointer" : "default",
@@ -1052,12 +1052,12 @@ export function GestorLineasWhatsappPanel({
                   <div
                     style={{
                       paddingTop: "8px",
-                      borderTop: "1px solid #F1EFEA",
+                      borderTop: "1px solid var(--cb-f1efea, #F1EFEA)",
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
                       fontSize: "0.74rem",
-                      color: "#6E6861",
+                      color: "var(--ct-6e6861, #6E6861)",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -1077,7 +1077,7 @@ export function GestorLineasWhatsappPanel({
                         Contactos aportados: <strong>{linea.totalContactosAportados ?? 0}</strong> ({linea.totalPersonalesAportados ?? 0} personales)
                       </span>
                       {linea.tieneApiKeyPropia && (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#166534", fontWeight: 600 }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "var(--ct-166534, #166534)", fontWeight: 600 }}>
                           <KeyRound size={11} /> Key propia
                         </span>
                       )}

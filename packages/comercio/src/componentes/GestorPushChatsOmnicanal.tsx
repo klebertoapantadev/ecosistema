@@ -483,8 +483,8 @@ export function GestorPushChatsOmnicanal({
             margin: "0 0 10px 0",
             padding: "8px 12px",
             borderRadius: "10px",
-            background: "#FFFFFF",
-            border: "1px solid #E4E4E7",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e4e4e7, #E4E4E7)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -493,7 +493,7 @@ export function GestorPushChatsOmnicanal({
             boxShadow: "0 1px 3px rgba(24, 24, 27, 0.04)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.79rem", color: "#27272A" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.79rem", color: "var(--ct-27272a, #27272A)" }}>
             <Bell size={15} color="#52525B" />
             <span>
               {modoClientePedidos
@@ -537,7 +537,7 @@ export function GestorPushChatsOmnicanal({
                 borderRadius: "7px",
                 border: "none",
                 background: "transparent",
-                color: "#71717A",
+                color: "var(--ct-71717a, #71717A)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -565,7 +565,7 @@ export function GestorPushChatsOmnicanal({
             background: "#18181B",
             color: "#FAFAFA",
             borderRadius: "14px",
-            border: "1px solid #27272A",
+            border: "1px solid var(--cb-27272a, #27272A)",
             boxShadow: "0 16px 36px rgba(0, 0, 0, 0.28)",
             padding: "12px 14px",
             display: "flex",
@@ -612,7 +612,7 @@ export function GestorPushChatsOmnicanal({
             <div
               style={{
                 fontSize: "0.76rem",
-                color: "#A1A1AA",
+                color: "var(--ct-a1a1aa, #A1A1AA)",
                 marginTop: "2px",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -649,7 +649,7 @@ export function GestorPushChatsOmnicanal({
               borderRadius: "7px",
               border: "none",
               background: "transparent",
-              color: "#A1A1AA",
+              color: "var(--ct-a1a1aa, #A1A1AA)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",

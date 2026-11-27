@@ -42,7 +42,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
               fontSize: "0.8rem",
               color: "#c9d1d9",
               background: "#21262d",
-              border: "1px solid #30363d",
+              border: "1px solid var(--cb-30363d, #30363d)",
               borderRadius: "6px",
               padding: "6px 12px",
               textDecoration: "none",
@@ -66,40 +66,40 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
       {/* 1. Toggles por Canal */}
       <section className="tarjeta-seccion" style={{ marginBottom: "20px" }}>
         <header>
-          <h2 style={{ fontSize: "1rem", color: "#58a6ff", display: "flex", alignItems: "center", gap: "8px" }}>
+          <h2 style={{ fontSize: "1rem", color: "var(--ct-58a6ff, #58a6ff)", display: "flex", alignItems: "center", gap: "8px" }}>
             <Bell size={18} /> 1. Canales de Recepción Habilitados
           </h2>
         </header>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0d1117", padding: "12px 16px", borderRadius: "8px", border: "1px solid #30363d" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0d1117", padding: "12px 16px", borderRadius: "8px", border: "1px solid var(--cb-30363d, #30363d)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <Mail size={20} color="#3fb950" />
               <div>
                 <div style={{ fontWeight: 700, fontSize: "0.86rem", color: "#c9d1d9" }}>Correo Electrónico (Email)</div>
-                <div style={{ fontSize: "0.76rem", color: "#8b949e" }}>Notificaciones formales, comprobantes y comunicados</div>
+                <div style={{ fontSize: "0.76rem", color: "var(--ct-8b949e, #8b949e)" }}>Notificaciones formales, comprobantes y comunicados</div>
               </div>
             </div>
             <input type="checkbox" checked={emailActivo} onChange={e => setEmailActivo(e.target.checked)} style={{ transform: "scale(1.2)", cursor: "pointer" }} />
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0d1117", padding: "12px 16px", borderRadius: "8px", border: "1px solid #30363d" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0d1117", padding: "12px 16px", borderRadius: "8px", border: "1px solid var(--cb-30363d, #30363d)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <Smartphone size={20} color="#d29922" />
               <div>
                 <div style={{ fontWeight: 700, fontSize: "0.86rem", color: "#c9d1d9" }}>Notificaciones Push (Web y App Móvil)</div>
-                <div style={{ fontSize: "0.76rem", color: "#8b949e" }}>Alertas instantáneas en pantalla de tu navegador o smartphone</div>
+                <div style={{ fontSize: "0.76rem", color: "var(--ct-8b949e, #8b949e)" }}>Alertas instantáneas en pantalla de tu navegador o smartphone</div>
               </div>
             </div>
             <input type="checkbox" checked={pushActivo} onChange={e => setPushActivo(e.target.checked)} style={{ transform: "scale(1.2)", cursor: "pointer" }} />
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0d1117", padding: "12px 16px", borderRadius: "8px", border: "1px solid #30363d" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0d1117", padding: "12px 16px", borderRadius: "8px", border: "1px solid var(--cb-30363d, #30363d)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <Bell size={20} color="#388bfd" />
               <div>
                 <div style={{ fontWeight: 700, fontSize: "0.86rem", color: "#c9d1d9" }}>Notificaciones In-App (Campana)</div>
-                <div style={{ fontSize: "0.76rem", color: "#8b949e" }}>Indicador de campana persistente dentro de la aplicación</div>
+                <div style={{ fontSize: "0.76rem", color: "var(--ct-8b949e, #8b949e)" }}>Indicador de campana persistente dentro de la aplicación</div>
               </div>
             </div>
             <input type="checkbox" checked={inAppActivo} onChange={e => setInAppActivo(e.target.checked)} style={{ transform: "scale(1.2)", cursor: "pointer" }} />
@@ -114,11 +114,11 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
       {/* 2. Silenciado por Tiempo (Mute Temporal) */}
       <section className="tarjeta-seccion" style={{ marginBottom: "20px" }}>
         <header>
-          <h2 style={{ fontSize: "1rem", color: "#58a6ff", display: "flex", alignItems: "center", gap: "8px" }}>
+          <h2 style={{ fontSize: "1rem", color: "var(--ct-58a6ff, #58a6ff)", display: "flex", alignItems: "center", gap: "8px" }}>
             <VolumeX size={18} color="#f85149" /> 2. Silenciado por Tiempo (Mute Temporal)
           </h2>
         </header>
-        <p style={{ fontSize: "0.8rem", color: "#8b949e", marginTop: "4px", marginBottom: "16px" }}>
+        <p style={{ fontSize: "0.8rem", color: "var(--ct-8b949e, #8b949e)", marginTop: "4px", marginBottom: "16px" }}>
           Pausa temporalmente los avisos no críticos. El despacho se reanudará automáticamente al vencer la vigencia.
         </p>
 
@@ -129,7 +129,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
             style={{
               padding: "10px",
               borderRadius: "6px",
-              border: "1px solid #30363d",
+              border: "1px solid var(--cb-30363d, #30363d)",
               background: muteOpcion === "DESACTIVADO" ? "#238636" : "#0d1117",
               color: "#fff",
               fontSize: "0.78rem",
@@ -145,7 +145,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
             style={{
               padding: "10px",
               borderRadius: "6px",
-              border: "1px solid #30363d",
+              border: "1px solid var(--cb-30363d, #30363d)",
               background: muteOpcion === "HOY" ? "#1f6feb" : "#0d1117",
               color: "#fff",
               fontSize: "0.78rem",
@@ -161,7 +161,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
             style={{
               padding: "10px",
               borderRadius: "6px",
-              border: "1px solid #30363d",
+              border: "1px solid var(--cb-30363d, #30363d)",
               background: muteOpcion === "SEMANA" ? "#1f6feb" : "#0d1117",
               color: "#fff",
               fontSize: "0.78rem",
@@ -177,7 +177,7 @@ export function PreferenciasNotificacionWidget({ negocio }: Props) {
             style={{
               padding: "10px",
               borderRadius: "6px",
-              border: "1px solid #30363d",
+              border: "1px solid var(--cb-30363d, #30363d)",
               background: muteOpcion === "MES" ? "#1f6feb" : "#0d1117",
               color: "#fff",
               fontSize: "0.78rem",

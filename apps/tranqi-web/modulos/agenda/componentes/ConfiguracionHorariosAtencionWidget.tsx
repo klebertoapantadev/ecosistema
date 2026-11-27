@@ -123,7 +123,7 @@ function normalizarConfiguracion(raw: Partial<DatosConfigNegocioAgenda>): DatosC
 const inputBaseStyle: React.CSSProperties = {
   borderRadius: "10px",
   border: "1px solid var(--linea-fuerte)",
-  background: "#FFFFFF",
+  background: "var(--cf-ffffff, #FFFFFF)",
   padding: "8px 12px",
   fontSize: "0.84rem",
   fontWeight: 600,
@@ -521,7 +521,7 @@ export function ConfiguracionHorariosAtencionWidget({
         style={{
           borderRadius: "16px",
           border: "1px solid var(--linea)",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           padding: "24px",
           display: "flex",
           alignItems: "center",
@@ -539,7 +539,7 @@ export function ConfiguracionHorariosAtencionWidget({
   return (
     <div
       style={{
-        background: "#FFFFFF",
+        background: "var(--cf-ffffff, #FFFFFF)",
         borderRadius: "20px",
         border: "1px solid var(--linea)",
         padding: "24px",
@@ -569,7 +569,7 @@ export function ConfiguracionHorariosAtencionWidget({
               height: "46px",
               borderRadius: "12px",
               background: "var(--acento-diluido)",
-              color: "#5000BA",
+              color: "var(--ct-5000ba, #5000BA)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -588,7 +588,7 @@ export function ConfiguracionHorariosAtencionWidget({
                   gap: "6px",
                   background: "var(--acento-diluido)",
                   border: "1px solid var(--acento-linea)",
-                  color: "#5000BA",
+                  color: "var(--ct-5000ba, #5000BA)",
                   padding: "3px 10px",
                   borderRadius: "999px",
                   fontSize: "0.72rem",
@@ -703,7 +703,7 @@ export function ConfiguracionHorariosAtencionWidget({
         {/* Tarjeta Izquierda: Máximo de citas en la misma fecha y hora */}
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "14px",
             border: "1px solid var(--acento-linea)",
             padding: "16px",
@@ -724,7 +724,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 fontWeight: 800,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                color: "#5000BA",
+                color: "var(--ct-5000ba, #5000BA)",
                 marginBottom: "4px",
               }}
             >
@@ -799,7 +799,7 @@ export function ConfiguracionHorariosAtencionWidget({
                   textAlign: "center",
                   fontSize: "1rem",
                   fontWeight: 800,
-                  color: "#3B0087",
+                  color: "var(--ct-3b0087, #3B0087)",
                 }}
               />
 
@@ -866,7 +866,7 @@ export function ConfiguracionHorariosAtencionWidget({
         {/* Tarjeta Derecha: Modo de Disponibilidad Operativa y Especialidad ARIA */}
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "14px",
             border: "1px solid var(--linea)",
             padding: "16px",
@@ -1010,7 +1010,7 @@ export function ConfiguracionHorariosAtencionWidget({
             style={{
               borderRadius: "16px",
               border: "1px solid var(--acento-linea)",
-              background: "#FAF8FF",
+              background: "var(--cf-faf8ff, #FAF8FF)",
               padding: "18px",
               display: "flex",
               flexDirection: "column",
@@ -1065,7 +1065,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     gap: "5px",
                     borderRadius: "8px",
                     border: "1px solid var(--linea-fuerte)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "6px 10px",
                     fontSize: "0.75rem",
                     fontWeight: 700,
@@ -1114,7 +1114,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     gap: "8px",
                     borderRadius: "12px",
                     border: "1px solid var(--linea)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "8px 12px",
                   }}
                 >
@@ -1249,7 +1249,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     gap: "5px",
                     borderRadius: "8px",
                     border: "1px solid var(--linea-fuerte)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "6px 10px",
                     fontSize: "0.75rem",
                     fontWeight: 700,
@@ -1298,7 +1298,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     gap: "8px",
                     borderRadius: "12px",
                     border: "1px solid var(--linea)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "8px 12px",
                   }}
                 >
@@ -1449,7 +1449,7 @@ export function ConfiguracionHorariosAtencionWidget({
               style={{
                 borderRadius: "10px",
                 border: "1px solid var(--aviso)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 padding: "7px 12px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
@@ -1467,7 +1467,7 @@ export function ConfiguracionHorariosAtencionWidget({
               style={{
                 borderRadius: "10px",
                 border: "1px solid var(--aviso)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 padding: "7px 12px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
@@ -1485,7 +1485,7 @@ export function ConfiguracionHorariosAtencionWidget({
               style={{
                 borderRadius: "10px",
                 border: "1px solid var(--aviso)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 padding: "7px 12px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
@@ -1503,7 +1503,7 @@ export function ConfiguracionHorariosAtencionWidget({
               style={{
                 borderRadius: "10px",
                 border: "1px solid var(--linea-fuerte)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 padding: "7px 12px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
@@ -1521,7 +1521,7 @@ export function ConfiguracionHorariosAtencionWidget({
           style={{
             borderRadius: "14px",
             border: "1px solid var(--aviso-linea)",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             padding: "16px",
             display: "flex",
             flexDirection: "column",
@@ -1570,7 +1570,7 @@ export function ConfiguracionHorariosAtencionWidget({
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  color: "#5000BA",
+                  color: "var(--ct-5000ba, #5000BA)",
                   cursor: "pointer",
                 }}
               >
@@ -1743,7 +1743,7 @@ export function ConfiguracionHorariosAtencionWidget({
             style={{
               borderRadius: "12px",
               border: "1px dashed var(--aviso)",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               padding: "16px",
               textAlign: "center",
               fontSize: "0.82rem",
@@ -1770,7 +1770,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     gap: "12px",
                     borderRadius: "14px",
                     border: "1px solid var(--aviso-linea)",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     padding: "12px 16px",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
                   }}
@@ -1855,7 +1855,7 @@ export function ConfiguracionHorariosAtencionWidget({
                               gap: "5px",
                               fontSize: "0.78rem",
                               fontWeight: 800,
-                              color: "#4C1D95",
+                              color: "var(--ct-4c1d95, #4C1D95)",
                               cursor: "pointer",
                             }}
                           >
@@ -2107,7 +2107,7 @@ export function ConfiguracionHorariosAtencionWidget({
               style={{
                 borderRadius: "12px",
                 border: "1px solid var(--linea)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 padding: "14px",
                 display: "flex",
                 flexDirection: "column",
@@ -2135,7 +2135,7 @@ export function ConfiguracionHorariosAtencionWidget({
               )}
               <div style={{ fontSize: "0.8rem", color: "var(--texto-2)" }}>
                 Cupo máximo por bloque:{" "}
-                <strong style={{ color: "#5000BA" }}>
+                <strong style={{ color: "var(--ct-5000ba, #5000BA)" }}>
                   {simulacionDia.cupoEfectivo}{" "}
                   {simulacionDia.cupoEfectivo === 1 ? "cita" : "citas"}
                 </strong>
@@ -2146,14 +2146,14 @@ export function ConfiguracionHorariosAtencionWidget({
               style={{
                 borderRadius: "12px",
                 border: "1px solid var(--linea)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 padding: "14px",
                 display: "flex",
                 flexDirection: "column",
                 gap: "8px",
               }}
             >
-              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#5000BA" }}>
+              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)" }}>
                 Turnos Telemáticos ({simulacionDia.turnosVirtual.length})
               </div>
               {simulacionDia.turnosVirtual.length === 0 ? (
@@ -2172,7 +2172,7 @@ export function ConfiguracionHorariosAtencionWidget({
                         padding: "3px 8px",
                         fontSize: "0.72rem",
                         fontWeight: 700,
-                        color: "#4C1D95",
+                        color: "var(--ct-4c1d95, #4C1D95)",
                       }}
                     >
                       {t}
@@ -2186,7 +2186,7 @@ export function ConfiguracionHorariosAtencionWidget({
               style={{
                 borderRadius: "12px",
                 border: "1px solid var(--linea)",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 padding: "14px",
                 display: "flex",
                 flexDirection: "column",

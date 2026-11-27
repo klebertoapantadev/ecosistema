@@ -87,7 +87,7 @@ function EnlacePantalla({ texto, descripcion, ruta, color = "var(--violeta, #500
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
-      <p style={{ fontSize: "0.88rem", color: "#444", margin: 0, maxWidth: "60ch" }}>{descripcion}</p>
+      <p style={{ fontSize: "0.88rem", color: "var(--ct-444444, #444)", margin: 0, maxWidth: "60ch" }}>{descripcion}</p>
       <Link
         href={ruta}
         style={{
@@ -104,7 +104,7 @@ function EnlacePantalla({ texto, descripcion, ruta, color = "var(--violeta, #500
 function EnlaceConsolaAgentes() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
-      <p style={{ fontSize: "0.88rem", color: "#444", margin: 0, maxWidth: "60ch" }}>
+      <p style={{ fontSize: "0.88rem", color: "var(--ct-444444, #444)", margin: 0, maxWidth: "60ch" }}>
         Los asistentes de IA se configuran en su propia consola, que exige verificación en dos
         pasos: editar el prompt de un agente cambia lo que se le responde a todos los afiliados.
       </p>
@@ -189,7 +189,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Productos y Servicios",
     subtitulo: "Todos los planes, consultas legales y trámites puntuales presentados de forma individual",
     icono: ShoppingBag,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Comercio Personas"
   },
   agendar_cita: {
@@ -203,21 +203,21 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Mis Citas & Consultas Programadas",
     subtitulo: "Consulta tus próximas citas legales, enlaces de videollamada y estado",
     icono: Calendar,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Operación & Citas"
   },
   citas_programadas: {
     titulo: "Citas Programadas & Agenda Legal",
     subtitulo: "Confirma, atiende o reagenda las consultas legales asignadas a tu turno",
     icono: Calendar,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Agenda del Abogado"
   },
   disponibilidad: {
     titulo: "Disponibilidad de Horarios & Citas",
     subtitulo: "Configura tus franjas horarias de atención presencial y teleconsulta virtual",
     icono: Calendar,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Agenda del Abogado"
   },
   vitrina_comercial_personas: {
@@ -231,21 +231,21 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Oferta Corporativa & Empresas",
     subtitulo: "Planes legales corporativos, constitución SAS, convenios de beneficios y asesoría empresarial",
     icono: Building2,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Comercio Corporativo"
   },
   vitrina_comercial: {
     titulo: "Planes, Servicios & Honorarios",
     subtitulo: "Oferta de servicios legales, planes de suscripción y tarifario interactivo",
     icono: Sparkles,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Comercio y Pagos"
   },
   vitrina: {
     titulo: "Planes, Servicios & Honorarios",
     subtitulo: "Oferta de servicios legales, planes de suscripción y tarifario interactivo",
     icono: Sparkles,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Comercio y Pagos"
   },
   catalogo_productos: {
@@ -287,7 +287,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Inventario de Rosas con Conteo IA",
     subtitulo: "Conteo fotográfico de paquetes de rosas por color asistido por ARIA Visión",
     icono: Sparkles,
-    colorIcono: "#BE185D",
+    colorIcono: "var(--ct-be185d, #BE185D)",
     categoria: "Comercio & Catálogo"
   },
   envio_pedidos_taller: {
@@ -301,7 +301,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Chat Grupal del Equipo",
     subtitulo: "Conversación interna de trabajo con @menciones, fotografías y reenvío de consultas",
     icono: Users,
-    colorIcono: "#6D28D9",
+    colorIcono: "var(--ct-6d28d9, #6D28D9)",
     categoria: "Comercio & Catálogo"
   },
   taller_floral: {
@@ -322,84 +322,84 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Historial de Pagos",
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: Receipt,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio y Pagos"
   },
   comprobantes_electronicos: {
     titulo: "Historial de Pagos",
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: Receipt,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio y Pagos"
   },
   historial_pagos: {
     titulo: "Historial de Pagos",
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de facturas electrónicas SRI",
     icono: CreditCard,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio y Pagos"
   },
   crm_clientes: {
     titulo: "CRM Jurídico & Clientes",
     subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
     icono: Users,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Gestión Legal"
   },
   clientes_crm: {
     titulo: "CRM Jurídico & Clientes",
     subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
     icono: Users,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Gestión Legal"
   },
   agentes_ia: {
     titulo: "Agentes de IA",
     subtitulo: "Configuración de los asistentes Tranqi: prompts, modelo y herramientas",
     icono: Bot,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Configuración"
   },
   firma_documentos_pdf: {
     titulo: "Firma Electrónica de Documentos PDF",
     subtitulo: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR",
     icono: FileCheck,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Herramientas Digitales"
   },
   billetera_documentos: {
     titulo: "Billetera Digital de Documentos Seguros",
     subtitulo: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
     icono: Folder,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Herramientas Digitales"
   },
   billetera: {
     titulo: "Billetera Digital de Documentos Seguros",
     subtitulo: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
     icono: Folder,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Herramientas Digitales"
   },
   documentos: {
     titulo: "Billetera Digital de Documentos Seguros",
     subtitulo: "Bóveda digital de documentos personales, vehiculares, contratos y profesionales con OCR y TTL",
     icono: Folder,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Herramientas Digitales"
   },
   firma_documentos: {
     titulo: "Firma Electrónica de Documentos PDF",
     subtitulo: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR",
     icono: FileCheck,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Herramientas Digitales"
   },
   firma_pdf: {
     titulo: "Firma Electrónica de Documentos PDF",
     subtitulo: "Firmado digital con certificado .p12 / .pfx, estampa visual y código QR",
     icono: FileCheck,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Herramientas Digitales"
   },
   mfa_seguridad: {
@@ -441,14 +441,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Ventas Omnicanal & Conversaciones en Vivo",
     subtitulo: "Bandeja unificada (reemplazo ManyChat): chats web, intervención humana vs ARIA, etiquetas, /atajos y compras web",
     icono: MessageSquare,
-    colorIcono: "#DB2777",
+    colorIcono: "var(--ct-db2777, #DB2777)",
     categoria: "Comercio & Pagos"
   },
   directorio_contactos: {
     titulo: "Contactos y Listas WhatsApp (Join/Merge)",
     subtitulo: "Extracción .vcf/.csv/Excel/celular, deduplicación, contactos personales a ignorar y múltiples teléfonos WhatsApp",
     icono: Users,
-    colorIcono: "#7C3AED",
+    colorIcono: "var(--ct-7c3aed, #7C3AED)",
     categoria: "Comercio & Pagos"
   },
   pedidos_tienda: {
@@ -462,7 +462,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Tokens & APIs MCP",
     subtitulo: "Gestión y emisión de tokens de acceso para conectar herramientas MCP con bots y agentes externos",
     icono: KeyRound,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Seguridad & Integraciones"
   },
   seguridad_mfa: {
@@ -483,7 +483,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Monitoreo de Notificaciones por Usuario",
     subtitulo: "Auditoría en tiempo real de notificaciones, fechas de confirmación, tiempo de pospuesto y eliminados",
     icono: Bell,
-    colorIcono: "#1F6FEB",
+    colorIcono: "var(--ct-1f6feb, #1F6FEB)",
     categoria: "Comunicación"
   },
   bitacora_notificaciones: {
@@ -497,14 +497,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Convenios Corporativos & Paquetes B2B",
     subtitulo: "Gestión de alianzas empresariales, bolsas de consultas y descuentos automáticos",
     icono: Building2,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio & B2B"
   },
   compliance_score_legal: {
     titulo: "Compliance & Score Legal Empresarial",
     subtitulo: "Matriz de obligaciones normativas, monitoreo continuo de caducidades con Tranqi y cálculo del Legal Health Score",
     icono: ShieldCheck,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio & B2B"
   },
   legal_hr_laboral: {
@@ -518,77 +518,77 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Mis Beneficios Corporativos & Convenio",
     subtitulo: "Consultas telemáticas gratuitas ($0.00) y descuentos corporativos activos por convenio empresarial",
     icono: Gift,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Comercio Personas"
   },
   disponibilidad_abogados: {
     titulo: "Disponibilidad de Abogados & Horarios",
     subtitulo: "Horario laborable por defecto (telemático y oficina), fechas exactas (ej. Navidad) y cupo máximo por hora",
     icono: Scale,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Agendamiento & Operación"
   },
   disponibilidad_operativa: {
     titulo: "Disponibilidad Operativa & Especialistas",
     subtitulo: "Control de stock de horas y cuadrillas de atención técnica o profesional",
     icono: Scale,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Agendamiento & Operación"
   },
   gestion_usuarios: {
     titulo: "Gestión de Usuarios & Membresías",
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
     icono: UserCog,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Usuarios & Permisos"
   },
   perfiles: {
     titulo: "Gestión de Usuarios & Membresías",
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
     icono: UserCog,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Usuarios & Permisos"
   },
   consulta_usuarios_perfiles: {
     titulo: "Consulta de Usuarios & Perfiles",
     subtitulo: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura)",
     icono: Users,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Consulta & Directorio"
   },
   consulta_perfiles: {
     titulo: "Consulta de Usuarios & Perfiles",
     subtitulo: "Directorio de miembros, matriz de roles y consulta de permisos (Solo Lectura)",
     icono: Users,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Consulta & Directorio"
   },
   gestion_red_abogados: {
     titulo: "Red Profesional & Registro de Abogados",
     subtitulo: "Convertir usuarios registrados en abogados, registro manual y gestión de especialidades, cobertura y disponibilidad",
     icono: Scale,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Red Profesional"
   },
   mi_perfil_abogado: {
     titulo: "Mis Especialidades, Cobertura y Disponibilidad",
     subtitulo: "Configura tus materias legales, provincias de cobertura y horarios de atención presencial y teleconsulta",
     icono: Scale,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Red Profesional"
   },
   socios: {
     titulo: "Aprobación de Socios Abogados",
     subtitulo: "Validación de matrículas, acreditación y verificación de abogados",
     icono: Users,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Operación Legal"
   },
   solicitud_socio: {
     titulo: "Solicitudes de Socios",
     subtitulo: "Procesamiento de postulaciones y formularios de postulación socio",
     icono: ClipboardList,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Operación Legal"
   },
   auditoria: {
@@ -602,21 +602,21 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Términos, Consentimientos & LOPDP",
     subtitulo: "Configuración centralizada de cláusulas LOPDP, notificaciones y contrato de socios",
     icono: FileText,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Gobernanza & Legales"
   },
   configuracion_contrato_abogado: {
     titulo: "Configuración de Contrato de Socios",
     subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
     icono: FileText,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Gobernanza & Legales"
   },
   horarios_atencion_agenda: {
     titulo: "Horarios de Atención (Telemático y Presencial)",
     subtitulo: "Configura los horarios por defecto de consultas telemáticas y presenciales, y la especialidad por defecto para Tranqi",
     icono: Calendar,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Agenda"
   },
   asignaciones_agenda: {
@@ -637,7 +637,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Paquete de Beneficios & Convenios",
     subtitulo: "Muro de beneficios, maestrías, herramientas jurídicas y convenios académicos para socios abogados",
     icono: Sparkles,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Red Profesional"
   },
   muro_informativo_comunidad: {
@@ -658,63 +658,63 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Configuración del Negocio",
     subtitulo: "Parámetros del negocio, RUC, redes sociales y contacto",
     icono: Settings,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Parámetros"
   },
   negocio: {
     titulo: "Configuración del Negocio",
     subtitulo: "Parámetros del negocio, RUC, redes sociales y contacto",
     icono: Settings,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Parámetros"
   },
   configuracion_correo: {
     titulo: "Servidor SMTP & Correo",
     subtitulo: "Credenciales cifradas SMTP y plantillas HTML",
     icono: Settings,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Servicios"
   },
   correo: {
     titulo: "Servidor SMTP & Correo",
     subtitulo: "Credenciales cifradas SMTP y plantillas HTML",
     icono: Settings,
-    colorIcono: "#0E6648",
+    colorIcono: "var(--ct-0e6648, #0E6648)",
     categoria: "Servicios"
   },
   mi_cuenta: {
     titulo: "Perfil & Datos de Contacto",
     subtitulo: "Nombres, apellidos, correo verificado y WhatsApp",
     icono: CircleUser,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Identidad"
   },
   perfil: {
     titulo: "Perfil & Datos de Contacto",
     subtitulo: "Nombres, apellidos, correo verificado y WhatsApp",
     icono: CircleUser,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Identidad"
   },
   ver_como: {
     titulo: "Selector 'Ver Como' (Conmutador de Rol)",
     subtitulo: "Alternar la vista previa del portal según los roles asignados",
     icono: Shield,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Gobernanza"
   },
   rol_activo: {
     titulo: "Selector 'Ver Como' (Conmutador de Rol)",
     subtitulo: "Alternar la vista previa del portal según los roles asignados",
     icono: Shield,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Gobernanza"
   },
   financiamiento: {
     titulo: "Financiamiento & Cuotas para tu Caso",
     subtitulo: "Planes de pago en cuotas flexibles y financiamiento legal (Próximamente disponible)",
     icono: Coins,
-    colorIcono: "#5000BA",
+    colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Comercio Personas"
   }
 };
@@ -1234,7 +1234,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
   if (widgetActivo) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
-        <section className="tarjeta-seccion" style={{ background: "#ffffff", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--linea)" }}>
+        <section className="tarjeta-seccion" style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--linea)" }}>
           <header style={{ padding: "16px 20px", background: "var(--fondo-suave)", borderBottom: "1px solid var(--linea)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <BotonVolverWidget
@@ -1242,10 +1242,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 destino={esPanelRestringidoParaCliente ? "Inicio" : (panelInfo.nombre || "el panel")}
               />
               <div>
-                <h2 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "#111" }}>
+                <h2 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, #111)" }}>
                   {widgetActivoDef?.titulo || widgetActivo.toUpperCase()}
                 </h2>
-                <p style={{ fontSize: "0.78rem", color: "#666", margin: 0 }}>
+                <p style={{ fontSize: "0.78rem", color: "var(--ct-666666, #666)", margin: 0 }}>
                   {widgetActivoDef?.subtitulo || `Panel ${panelInfo.nombre}`}
                 </p>
               </div>
@@ -1258,7 +1258,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 onClick={() => handleCompartirModulo(widgetActivo)}
                 className="btn-responsive-accion"
                 style={{
-                  background: copiadoModulo ? "var(--exito-diluido)" : "#ffffff",
+                  background: copiadoModulo ? "var(--exito-diluido)" : "var(--cf-ffffff, #ffffff)",
                   border: copiadoModulo ? "1px solid var(--exito)" : "1px solid var(--linea-fuerte)",
                   color: copiadoModulo ? "var(--exito-texto)" : "var(--texto-2)",
                   padding: "7px 14px",
@@ -1326,7 +1326,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
             className="btn-responsive-accion"
             style={{
               background: copiadoModulo ? "var(--exito)" : "rgba(255,255,255,0.2)",
-              border: "1px solid rgba(255,255,255,0.3)",
+              border: "1px solid var(--cb-ffffff-a300, rgba(255,255,255,0.3))",
               color: "#ffffff",
               padding: "8px 16px",
               borderRadius: "20px",
@@ -1354,13 +1354,13 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           <h2 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--texto-suave)", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
             MÓDULOS DE {panelInfo.nombre.toUpperCase()} ASIGNADOS
           </h2>
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--violeta, #5000BA)", background: "var(--acento-diluido)", padding: "4px 10px", borderRadius: "12px" }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-5000ba, var(--violeta, #5000BA))", background: "var(--acento-diluido)", padding: "4px 10px", borderRadius: "12px" }}>
             {widgetsAsignados.length} Módulos Activos
           </span>
         </div>
 
         {widgetsAsignados.length === 0 ? (
-          <div style={{ padding: "40px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1.5px dashed var(--linea)" }}>
+          <div style={{ padding: "40px", textAlign: "center", background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1.5px dashed var(--linea)" }}>
             <Wrench size={32} color="var(--texto-tenue)" style={{ marginBottom: "12px" }} />
             <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--texto-2)", margin: "0 0 6px 0" }}>
               No hay módulos asignados a este panel
@@ -1376,7 +1376,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 titulo: wClave.toUpperCase(),
                 subtitulo: `Módulo operativo ${wClave}`,
                 icono: LayoutGrid,
-                colorIcono: "var(--violeta, #5000BA)",
+                colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
                 categoria: "Operación"
               };
               const IconoComp = def.icono;
@@ -1387,7 +1387,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                   key={wClave}
                   onClick={() => abrir(wClave)}
                   style={{
-                    background: "#ffffff",
+                    background: "var(--cf-ffffff, #ffffff)",
                     borderRadius: "16px",
                     border: "1px solid var(--linea)",
                     padding: "20px",
@@ -1437,10 +1437,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                         <ChevronRight size={18} color="var(--texto-tenue)" />
                       </div>
                     </div>
-                    <h3 style={{ fontSize: "0.98rem", fontWeight: 800, color: "#111", margin: "0 0 6px 0" }}>
+                    <h3 style={{ fontSize: "0.98rem", fontWeight: 800, color: "var(--ct-111111, #111)", margin: "0 0 6px 0" }}>
                       {infoCustom.titulo}
                     </h3>
-                    <p style={{ fontSize: "0.82rem", color: "#666", margin: 0, lineHeight: 1.4 }}>
+                    <p style={{ fontSize: "0.82rem", color: "var(--ct-666666, #666)", margin: 0, lineHeight: 1.4 }}>
                       {infoCustom.subtitulo}
                     </p>
                   </div>
@@ -1448,7 +1448,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                     <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-suave)", textTransform: "uppercase" }}>
                       {def.categoria}
                     </span>
-                    <span style={{ fontSize: "0.76rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+                    <span style={{ fontSize: "0.76rem", fontWeight: 800, color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
                       Abrir Módulo →
                     </span>
                   </div>

@@ -441,8 +441,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
       valor: (r) => `${r.usuarioNombre} ${r.usuarioCorreo}`,
       render: (r) => (
         <div>
-          <strong style={{ display: "block", color: "#0F172A", fontSize: "0.85rem" }}>{r.usuarioNombre}</strong>
-          <span style={{ fontSize: "0.75rem", color: "#64748B" }}>{r.usuarioCorreo}</span>
+          <strong style={{ display: "block", color: "var(--ct-0f172a, #0F172A)", fontSize: "0.85rem" }}>{r.usuarioNombre}</strong>
+          <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)" }}>{r.usuarioCorreo}</span>
         </div>
       ),
     },
@@ -455,8 +455,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
           style={{
             padding: "2px 8px",
             borderRadius: "6px",
-            background: "#F3E8FF",
-            color: "#6B21A8",
+            background: "var(--cf-f3e8ff, #F3E8FF)",
+            color: "var(--ct-6b21a8, #6B21A8)",
             fontWeight: 800,
             fontSize: "0.72rem",
             letterSpacing: "0.04em",
@@ -477,10 +477,10 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
         const cat = CATEGORIAS_TERMINOS.find((c) => c.key === r.claveDocumento);
         return (
           <div>
-            <strong style={{ color: "#334155", fontSize: "0.82rem", display: "block" }}>
+            <strong style={{ color: "var(--ct-334155, #334155)", fontSize: "0.82rem", display: "block" }}>
               {cat ? cat.nombre : r.claveDocumento}
             </strong>
-            <code style={{ fontSize: "0.7rem", color: "#64748B" }}>clave: {r.claveDocumento}</code>
+            <code style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748B)" }}>clave: {r.claveDocumento}</code>
           </div>
         );
       },
@@ -497,8 +497,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             gap: "4px",
             padding: "2px 8px",
             borderRadius: "6px",
-            background: "#ECFDF5",
-            color: "#065F46",
+            background: "var(--cf-ecfdf5, #ECFDF5)",
+            color: "var(--ct-065f46, #065F46)",
             fontWeight: 700,
             fontSize: "0.75rem",
           }}
@@ -522,8 +522,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               gap: "4px",
               padding: "3px 8px",
               borderRadius: "6px",
-              background: esAceptado ? "#ECFDF5" : esRechazado ? "#FEF2F2" : "#FFFBEB",
-              color: esAceptado ? "#047857" : esRechazado ? "#B91C1C" : "#B45309",
+              background: esAceptado ? "var(--cf-ecfdf5, #ECFDF5)" : esRechazado ? "var(--cf-fef2f2, #FEF2F2)" : "var(--cf-fffbeb, #FFFBEB)",
+              color: esAceptado ? "var(--ct-047857, #047857)" : esRechazado ? "var(--ct-b91c1c, #B91C1C)" : "var(--ct-b45309, #B45309)",
               fontWeight: 800,
               fontSize: "0.72rem",
             }}
@@ -539,7 +539,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
       encabezado: "Fecha y Hora",
       valor: (r) => new Date(r.fechaAccion).getTime(),
       render: (r) => (
-        <span style={{ fontSize: "0.78rem", color: "#475569" }}>
+        <span style={{ fontSize: "0.78rem", color: "var(--ct-475569, #475569)" }}>
           {new Date(r.fechaAccion).toLocaleString("es-EC", {
             day: "2-digit",
             month: "short",
@@ -556,7 +556,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
       encabezado: "IP / Red",
       valor: (r) => r.ip || "N/A",
       render: (r) => (
-        <span style={{ fontSize: "0.75rem", color: "#64748B", fontFamily: "monospace" }}>
+        <span style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", fontFamily: "monospace" }}>
           {r.ip || "No registrada"}
         </span>
       ),
@@ -568,7 +568,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
   return (
     <div
       style={{
-        background: "var(--blanco, #ffffff)",
+        background: "var(--cf-ffffff, var(--blanco, #ffffff))",
         borderRadius: "14px",
         border: "1px solid var(--panel-linea, #E4E4E4)",
         padding: "20px",
@@ -586,7 +586,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               margin: 0,
               fontSize: "1.1rem",
               fontWeight: 800,
-              color: "var(--negro, #111111)",
+              color: "var(--ct-111111, var(--negro, #111111))",
               display: "flex",
               alignItems: "center",
               gap: "8px",
@@ -605,13 +605,13 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             type="button"
             onClick={() => setPestanaPrincipal("editor")}
             style={{
-              background: pestanaPrincipal === "editor" ? "#FFFFFF" : "transparent",
+              background: pestanaPrincipal === "editor" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
               border: "none",
               borderRadius: "6px",
               padding: "6px 12px",
               fontSize: "0.78rem",
               fontWeight: pestanaPrincipal === "editor" ? 800 : 600,
-              color: pestanaPrincipal === "editor" ? "var(--violeta, #5000BA)" : "#737373",
+              color: pestanaPrincipal === "editor" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--ct-737373, #737373)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -625,13 +625,13 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             type="button"
             onClick={() => setPestanaPrincipal("historial")}
             style={{
-              background: pestanaPrincipal === "historial" ? "#FFFFFF" : "transparent",
+              background: pestanaPrincipal === "historial" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
               border: "none",
               borderRadius: "6px",
               padding: "6px 12px",
               fontSize: "0.78rem",
               fontWeight: pestanaPrincipal === "historial" ? 800 : 600,
-              color: pestanaPrincipal === "historial" ? "var(--violeta, #5000BA)" : "#737373",
+              color: pestanaPrincipal === "historial" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--ct-737373, #737373)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -645,13 +645,13 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             type="button"
             onClick={() => setPestanaPrincipal("auditoria")}
             style={{
-              background: pestanaPrincipal === "auditoria" ? "#FFFFFF" : "transparent",
+              background: pestanaPrincipal === "auditoria" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
               border: "none",
               borderRadius: "6px",
               padding: "6px 12px",
               fontSize: "0.78rem",
               fontWeight: pestanaPrincipal === "auditoria" ? 800 : 600,
-              color: pestanaPrincipal === "auditoria" ? "var(--esmeralda, #05876E)" : "#737373",
+              color: pestanaPrincipal === "auditoria" ? "var(--ct-05876e, var(--esmeralda, #05876E))" : "var(--ct-737373, #737373)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -674,9 +674,9 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            background: mensaje.tipo === "exito" ? "#ECFDF5" : "#FEF2F2",
-            color: mensaje.tipo === "exito" ? "#065F46" : "#991B1B",
-            border: `1px solid ${mensaje.tipo === "exito" ? "#A7F3D0" : "#FECACA"}`,
+            background: mensaje.tipo === "exito" ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-fef2f2, #FEF2F2)",
+            color: mensaje.tipo === "exito" ? "var(--ct-065f46, #065F46)" : "var(--ct-991b1b, #991B1B)",
+            border: `1px solid ${mensaje.tipo === "exito" ? "var(--cb-a7f3d0, #A7F3D0)" : "var(--cb-fecaca, #FECACA)"}`,
           }}
         >
           {mensaje.tipo === "exito" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
@@ -692,9 +692,9 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
           {/* PANEL IZQUIERDO: SELECTOR DE DOCUMENTOS ERGONÓMICO */}
           <div
             style={{
-              background: "#F8FAFC",
+              background: "var(--cf-f8fafc, #F8FAFC)",
               borderRadius: "12px",
-              border: "1px solid #E2E8F0",
+              border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
               padding: "14px",
               display: "flex",
               flexDirection: "column",
@@ -702,14 +702,14 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#1E293B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "var(--ct-1e293b, #1E293B)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                 Documentos ({CATEGORIAS_TERMINOS.length})
               </span>
             </div>
 
             {/* Buscador Rápido de Documentos */}
             <div style={{ position: "relative" }}>
-              <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "#94A3B8" }} />
+              <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "var(--ct-94a3b8, #94A3B8)" }} />
               <input
                 type="text"
                 placeholder="Buscar término o contrato..."
@@ -719,9 +719,9 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   width: "100%",
                   padding: "7px 10px 7px 30px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontSize: "0.8rem",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   boxSizing: "border-box",
                 }}
               />
@@ -737,9 +737,9 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   style={{
                     padding: "4px 6px",
                     borderRadius: "6px",
-                    border: filtroTipo === t ? "1px solid #5000BA" : "1px solid #E2E8F0",
-                    background: filtroTipo === t ? "#5000BA" : "#FFFFFF",
-                    color: filtroTipo === t ? "#FFFFFF" : "#64748B",
+                    border: filtroTipo === t ? "1px solid #5000BA" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                    background: filtroTipo === t ? "#5000BA" : "var(--cf-ffffff, #FFFFFF)",
+                    color: filtroTipo === t ? "#FFFFFF" : "var(--ct-64748b, #64748B)",
                     fontSize: "0.72rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -768,8 +768,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                       gap: "4px",
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      border: esActivo ? "1.5px solid #5000BA" : "1px solid #E2E8F0",
-                      background: esActivo ? "#FFFFFF" : "#FFFFFF",
+                      border: esActivo ? "1.5px solid #5000BA" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                      background: esActivo ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-ffffff, #FFFFFF)",
                       boxShadow: esActivo ? "0 2px 8px rgba(80,0,186,0.12)" : "0 1px 2px rgba(0,0,0,0.02)",
                       cursor: "pointer",
                       textAlign: "left",
@@ -792,14 +792,14 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                         >
                           <IconoCat size={16} color={cat.color} />
                         </div>
-                        <strong style={{ fontSize: "0.82rem", color: esActivo ? "#5000BA" : "#1E293B", fontWeight: 800 }}>
+                        <strong style={{ fontSize: "0.82rem", color: esActivo ? "var(--ct-5000ba, #5000BA)" : "var(--ct-1e293b, #1E293B)", fontWeight: 800 }}>
                           {cat.nombre}
                         </strong>
                       </div>
                       <ChevronRight size={14} color={esActivo ? "#5000BA" : "#CBD5E1"} />
                     </div>
 
-                    <p style={{ margin: "2px 0 0 0", fontSize: "0.72rem", color: "#64748B", lineHeight: 1.3 }}>
+                    <p style={{ margin: "2px 0 0 0", fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", lineHeight: 1.3 }}>
                       {cat.descripcion}
                     </p>
 
@@ -810,8 +810,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                           fontWeight: 800,
                           padding: "1px 6px",
                           borderRadius: "4px",
-                          background: "#F1F5F9",
-                          color: "#475569",
+                          background: "var(--cf-f1f5f9, #F1F5F9)",
+                          color: "var(--ct-475569, #475569)",
                         }}
                       >
                         {cat.defaultVersion}
@@ -822,8 +822,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                           fontWeight: 700,
                           padding: "1px 6px",
                           borderRadius: "4px",
-                          background: cat.tipo === "contratos" ? "#FEF3C7" : cat.tipo === "beneficios" ? "#ECFDF5" : "#EDE9FE",
-                          color: cat.tipo === "contratos" ? "#92400E" : cat.tipo === "beneficios" ? "#065F46" : "#5B21B6",
+                          background: cat.tipo === "contratos" ? "var(--cf-fef3c7, #FEF3C7)" : cat.tipo === "beneficios" ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-ede9fe, #EDE9FE)",
+                          color: cat.tipo === "contratos" ? "var(--ct-92400e, #92400E)" : cat.tipo === "beneficios" ? "var(--ct-065f46, #065F46)" : "var(--ct-5b21b6, #5B21B6)",
                         }}
                       >
                         {cat.tipo}
@@ -845,8 +845,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                 alignItems: "center",
                 flexWrap: "wrap",
                 gap: "10px",
-                background: "#FAF5FF",
-                border: "1px solid #E9D5FF",
+                background: "var(--cf-faf5ff, #FAF5FF)",
+                border: "1px solid var(--cb-e9d5ff, #E9D5FF)",
                 padding: "12px 16px",
                 borderRadius: "10px",
               }}
@@ -866,10 +866,10 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   <IconoCatActual size={20} color={catActualDef.color} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#5000BA" }}>
+                  <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)" }}>
                     {catActualDef.nombre}
                   </h4>
-                  <span style={{ fontSize: "0.75rem", color: "#6B21A8" }}>{catActualDef.descripcion}</span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--ct-6b21a8, #6B21A8)" }}>{catActualDef.descripcion}</span>
                 </div>
               </div>
 
@@ -886,12 +886,12 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    background: "#FFFFFF",
-                    border: "1px solid #E2E8F0",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                     borderRadius: "6px",
                     padding: "5px 10px",
                     fontSize: "0.75rem",
-                    color: "#64748B",
+                    color: "var(--ct-64748b, #64748B)",
                     cursor: "pointer",
                     fontWeight: 600,
                   }}
@@ -904,7 +904,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             {/* Parámetros de Versión, Título y Vigencia */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(175px, 100%), 1fr))", gap: "12px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                   Título del Documento
                 </label>
                 <input
@@ -916,7 +916,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.85rem",
                     boxSizing: "border-box",
                   }}
@@ -924,7 +924,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                   Código de Versión
                 </label>
                 <input
@@ -936,17 +936,17 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.85rem",
                     fontWeight: 800,
-                    color: "#5000BA",
+                    color: "var(--ct-5000ba, #5000BA)",
                     boxSizing: "border-box",
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                   Fecha de Vigencia
                 </label>
                 <input
@@ -957,7 +957,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.85rem",
                     boxSizing: "border-box",
                   }}
@@ -970,9 +970,9 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   id="chk_obligatoria"
                   checked={requiereAceptacion}
                   onChange={(e) => setRequiereAceptacion(e.target.checked)}
-                  style={{ width: "16px", height: "16px", accentColor: "#5000BA", cursor: "pointer" }}
+                  style={{ width: "16px", height: "16px", accentColor: "var(--ct-5000ba, #5000BA)", cursor: "pointer" }}
                 />
-                <label htmlFor="chk_obligatoria" style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", cursor: "pointer" }}>
+                <label htmlFor="chk_obligatoria" style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-1e293b, #1E293B)", cursor: "pointer" }}>
                   Exigir Aceptación Obligatoria
                 </label>
               </div>
@@ -980,7 +980,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
 
             {/* Notas del Cambio / Histórico */}
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                 Notas de la Versión (Razón del cambio para el historial inmutable)
               </label>
               <input
@@ -992,7 +992,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontSize: "0.82rem",
                   boxSizing: "border-box",
                 }}
@@ -1004,11 +1004,11 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
 
             {/* Conmutador Editor / Previsualización */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#334155" }}>
+              <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--ct-334155, #334155)" }}>
                 Contenido del Documento en Markdown (.md)
               </span>
 
-              <div style={{ display: "flex", gap: "6px", background: "#F1F5F9", padding: "3px", borderRadius: "8px" }}>
+              <div style={{ display: "flex", gap: "6px", background: "var(--cf-f1f5f9, #F1F5F9)", padding: "3px", borderRadius: "8px" }}>
                 <button
                   type="button"
                   onClick={() => setModoVista("editor")}
@@ -1019,8 +1019,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                     padding: "4px 10px",
                     borderRadius: "6px",
                     border: "none",
-                    background: modoVista === "editor" ? "#FFFFFF" : "transparent",
-                    color: modoVista === "editor" ? "#5000BA" : "#64748B",
+                    background: modoVista === "editor" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                    color: modoVista === "editor" ? "var(--ct-5000ba, #5000BA)" : "var(--ct-64748b, #64748B)",
                     fontSize: "0.75rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1039,8 +1039,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                     padding: "4px 10px",
                     borderRadius: "6px",
                     border: "none",
-                    background: modoVista === "previsualizacion" ? "#FFFFFF" : "transparent",
-                    color: modoVista === "previsualizacion" ? "#5000BA" : "#64748B",
+                    background: modoVista === "previsualizacion" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                    color: modoVista === "previsualizacion" ? "var(--ct-5000ba, #5000BA)" : "var(--ct-64748b, #64748B)",
                     fontSize: "0.75rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1064,7 +1064,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   width: "100%",
                   padding: "12px",
                   borderRadius: "8px",
-                  border: "1.5px solid #CBD5E1",
+                  border: "1.5px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontFamily: "monospace",
                   fontSize: "0.85rem",
                   lineHeight: 1.5,
@@ -1075,8 +1075,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             ) : (
               <div
                 style={{
-                  background: "#FFFFFF",
-                  border: "1.5px solid #E2E8F0",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: "1.5px solid var(--cb-e2e8f0, #E2E8F0)",
                   borderRadius: "8px",
                   padding: "20px",
                   minHeight: "260px",
@@ -1124,17 +1124,17 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: "#F8FAFC",
+              background: "var(--cf-f8fafc, #F8FAFC)",
               padding: "12px 16px",
               borderRadius: "10px",
-              border: "1px solid #E2E8F0",
+              border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             }}
           >
             <div>
-              <strong style={{ fontSize: "0.95rem", color: "#0F172A", display: "block" }}>
+              <strong style={{ fontSize: "0.95rem", color: "var(--ct-0f172a, #0F172A)", display: "block" }}>
                 Historial Inmutable de Versiones: {catActualDef.nombre}
               </strong>
-              <span style={{ fontSize: "0.78rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                 Registro cronológico de todas las versiones publicadas en la base de datos para {negocio.toUpperCase()}.
               </span>
             </div>
@@ -1148,11 +1148,11 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                 gap: "6px",
                 padding: "6px 12px",
                 borderRadius: "6px",
-                border: "1px solid #CBD5E1",
-                background: "#FFFFFF",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#475569",
+                color: "var(--ct-475569, #475569)",
                 cursor: "pointer",
               }}
             >
@@ -1161,12 +1161,12 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
           </div>
 
           {cargandoHistorial ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748B" }}>Cargando versiones archivadas...</div>
+            <div style={{ padding: "40px", textAlign: "center", color: "var(--ct-64748b, #64748B)" }}>Cargando versiones archivadas...</div>
           ) : listaHistorial.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", background: "#F8FAFC", borderRadius: "10px", border: "1px dashed #CBD5E1" }}>
+            <div style={{ padding: "40px", textAlign: "center", background: "var(--cf-f8fafc, #F8FAFC)", borderRadius: "10px", border: "1px dashed var(--cb-cbd5e1, #CBD5E1)" }}>
               <History size={32} color="#94A3B8" style={{ marginBottom: "8px" }} />
-              <p style={{ margin: 0, fontWeight: 700, color: "#334155" }}>Aún no hay versiones archivadas en la base de datos</p>
-              <p style={{ margin: "4px 0 12px 0", fontSize: "0.8rem", color: "#64748B" }}>
+              <p style={{ margin: 0, fontWeight: 700, color: "var(--ct-334155, #334155)" }}>Aún no hay versiones archivadas en la base de datos</p>
+              <p style={{ margin: "4px 0 12px 0", fontSize: "0.8rem", color: "var(--ct-64748b, #64748B)" }}>
                 Al guardar cambios en el editor, cada versión quedará registrada inmutablemente con su fecha y notas.
               </p>
               <button
@@ -1199,8 +1199,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                       style={{
                         padding: "12px",
                         borderRadius: "8px",
-                        border: esSeleccionado ? "1.5px solid #5000BA" : "1px solid #E2E8F0",
-                        background: esSeleccionado ? "#FAF5FF" : "#FFFFFF",
+                        border: esSeleccionado ? "1.5px solid #5000BA" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                        background: esSeleccionado ? "var(--cf-faf5ff, #FAF5FF)" : "var(--cf-ffffff, #FFFFFF)",
                         cursor: "pointer",
                         display: "flex",
                         flexDirection: "column",
@@ -1208,22 +1208,22 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontWeight: 800, color: "#5000BA", fontSize: "0.88rem" }}>
+                        <span style={{ fontWeight: 800, color: "var(--ct-5000ba, #5000BA)", fontSize: "0.88rem" }}>
                           {hist.version}
                         </span>
                         {index === 0 && (
-                          <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "#ECFDF5", color: "#065F46" }}>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "2px 6px", borderRadius: "4px", background: "var(--cf-ecfdf5, #ECFDF5)", color: "var(--ct-065f46, #065F46)" }}>
                             🟢 Vigente
                           </span>
                         )}
                       </div>
 
-                      <span style={{ fontSize: "0.78rem", color: "#334155", fontWeight: 600 }}>{hist.titulo}</span>
-                      <p style={{ margin: 0, fontSize: "0.72rem", color: "#64748B" }}>
+                      <span style={{ fontSize: "0.78rem", color: "var(--ct-334155, #334155)", fontWeight: 600 }}>{hist.titulo}</span>
+                      <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)" }}>
                         {hist.notasCambio || "Sin notas de versión"}
                       </p>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.68rem", color: "#94A3B8", marginTop: "4px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.68rem", color: "var(--ct-94a3b8, #94A3B8)", marginTop: "4px" }}>
                         <Clock size={11} /> {new Date(hist.creadoEn).toLocaleString("es-EC")}
                       </div>
                     </div>
@@ -1235,8 +1235,8 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               {versionSeleccionadaHistorial ? (
                 <div
                   style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E2E8F0",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                     borderRadius: "10px",
                     padding: "16px",
                     display: "flex",
@@ -1244,12 +1244,12 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                     gap: "12px",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #F1F5F9", paddingBottom: "10px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--cb-f1f5f9, #F1F5F9)", paddingBottom: "10px" }}>
                     <div>
-                      <strong style={{ fontSize: "0.95rem", color: "#0F172A" }}>
+                      <strong style={{ fontSize: "0.95rem", color: "var(--ct-0f172a, #0F172A)" }}>
                         Versión {versionSeleccionadaHistorial.version} · {versionSeleccionadaHistorial.titulo}
                       </strong>
-                      <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "2px" }}>
+                      <div style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", marginTop: "2px" }}>
                         Publicada: {new Date(versionSeleccionadaHistorial.creadoEn).toLocaleString("es-EC")} · Vigencia: {versionSeleccionadaHistorial.fechaVigencia}
                       </div>
                     </div>
@@ -1278,9 +1278,9 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   <div
                     style={{
                       padding: "12px",
-                      background: "#F8FAFC",
+                      background: "var(--cf-f8fafc, #F8FAFC)",
                       borderRadius: "8px",
-                      border: "1px solid #E2E8F0",
+                      border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                       maxHeight: "360px",
                       overflowY: "auto",
                       fontSize: "0.85rem",
@@ -1289,7 +1289,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   />
                 </div>
               ) : (
-                <div style={{ padding: "40px", textAlign: "center", color: "#94A3B8" }}>Selecciona una versión para inspeccionar</div>
+                <div style={{ padding: "40px", textAlign: "center", color: "var(--ct-94a3b8, #94A3B8)" }}>Selecciona una versión para inspeccionar</div>
               )}
             </div>
           )}
@@ -1309,17 +1309,17 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               alignItems: "center",
               flexWrap: "wrap",
               gap: "10px",
-              background: "#F8FAFC",
+              background: "var(--cf-f8fafc, #F8FAFC)",
               padding: "12px 16px",
               borderRadius: "10px",
-              border: "1px solid #E2E8F0",
+              border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             }}
           >
             <div>
-              <strong style={{ fontSize: "0.95rem", color: "#0F172A", display: "block" }}>
+              <strong style={{ fontSize: "0.95rem", color: "var(--ct-0f172a, #0F172A)", display: "block" }}>
                 Bitácora de Aceptación y Rechazo de Consentimientos
               </strong>
-              <span style={{ fontSize: "0.78rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                 Registro inmutable de aceptaciones por usuario, versión exacta, fecha, IP y dispositivo.
               </span>
             </div>
@@ -1331,9 +1331,9 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                 style={{
                   padding: "6px 10px",
                   borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontSize: "0.78rem",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   fontWeight: 600,
                 }}
               >
@@ -1353,11 +1353,11 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                   gap: "6px",
                   padding: "6px 12px",
                   borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  background: "#FFFFFF",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   fontSize: "0.75rem",
                   fontWeight: 700,
-                  color: "#475569",
+                  color: "var(--ct-475569, #475569)",
                   cursor: "pointer",
                 }}
               >
@@ -1368,7 +1368,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
 
           {/* Grid Estandarizado @eco/datagrid */}
           {cargandoConsentimientos ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748B" }}>
+            <div style={{ padding: "40px", textAlign: "center", color: "var(--ct-64748b, #64748B)" }}>
               Cargando bitácora de consentimientos...
             </div>
           ) : (
@@ -1378,22 +1378,22 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               idFila={(r) => r.id}
               nombreExportacion={`auditoria-consentimientos-${negocio}`}
               contenidoExpandible={(r) => (
-                <div style={{ padding: "12px 16px", background: "#F8FAFC", borderRadius: "8px", fontSize: "0.78rem", border: "1px solid #E2E8F0" }}>
-                  <p style={{ margin: "0 0 6px 0", fontWeight: 800, color: "#1E293B" }}>
+                <div style={{ padding: "12px 16px", background: "var(--cf-f8fafc, #F8FAFC)", borderRadius: "8px", fontSize: "0.78rem", border: "1px solid var(--cb-e2e8f0, #E2E8F0)" }}>
+                  <p style={{ margin: "0 0 6px 0", fontWeight: 800, color: "var(--ct-1e293b, #1E293B)" }}>
                     🔍 Metadatos Técnicos del Consentimiento (ID: {r.id})
                   </p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px" }}>
                     <div>
-                      <span style={{ color: "#64748B", display: "block" }}>User Agent:</span>
-                      <code style={{ fontSize: "0.72rem", color: "#334155" }}>{r.userAgent || "No disponible"}</code>
+                      <span style={{ color: "var(--ct-64748b, #64748B)", display: "block" }}>User Agent:</span>
+                      <code style={{ fontSize: "0.72rem", color: "var(--ct-334155, #334155)" }}>{r.userAgent || "No disponible"}</code>
                     </div>
                     <div>
-                      <span style={{ color: "#64748B", display: "block" }}>Hash Contenido Aceptado:</span>
-                      <code style={{ fontSize: "0.72rem", color: "#334155" }}>{r.hashContenido || "sha256:default"}</code>
+                      <span style={{ color: "var(--ct-64748b, #64748B)", display: "block" }}>Hash Contenido Aceptado:</span>
+                      <code style={{ fontSize: "0.72rem", color: "var(--ct-334155, #334155)" }}>{r.hashContenido || "sha256:default"}</code>
                     </div>
                     <div>
-                      <span style={{ color: "#64748B", display: "block" }}>Usuario ID (auth.uid):</span>
-                      <code style={{ fontSize: "0.72rem", color: "#334155" }}>{r.usuarioId}</code>
+                      <span style={{ color: "var(--ct-64748b, #64748B)", display: "block" }}>Usuario ID (auth.uid):</span>
+                      <code style={{ fontSize: "0.72rem", color: "var(--ct-334155, #334155)" }}>{r.usuarioId}</code>
                     </div>
                   </div>
                 </div>

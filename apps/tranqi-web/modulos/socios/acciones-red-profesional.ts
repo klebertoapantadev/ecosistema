@@ -1446,7 +1446,7 @@ async function notificarEventoRedAbogadoMulticanal(
     const correoOperador = parametros.operadorCorreo || "admin@tranqi24.com";
 
     let asunto = "⚖️ Actualización de tu Perfil Profesional en Tranqi";
-    let colorCabecera = "linear-gradient(135deg, #0E6648 0%, #046C58 100%)";
+    let colorCabecera = "linear-gradient(135deg, var(--ct-0e6648, #0E6648) 0%, var(--ct-046c58, #046C58) 100%)";
     let etiquetaEstado = "ACTIVO · VERIFICADO";
     let mensajePrincipalHtml = "";
     let textoBotonCta = "Ir a mi Portal de Socio Abogado →";

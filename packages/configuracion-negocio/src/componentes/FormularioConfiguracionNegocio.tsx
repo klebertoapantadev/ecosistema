@@ -79,10 +79,10 @@ export function FormularioConfiguracionNegocio({
             <Building2 size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Identidad Comercial y Contacto
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Información fiscal, marca visible y buzón administrativo de <strong>{negocio}</strong>.
             </div>
           </div>
@@ -190,7 +190,7 @@ export function FormularioConfiguracionNegocio({
       </div>
 
       <div style={estiloPieTarjeta}>
-        <span style={{ fontSize: "0.78rem", color: "#847D74" }}>
+        <span style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)" }}>
           Los cambios aplican únicamente al negocio <strong>{negocio}</strong>.
         </span>
 

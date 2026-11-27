@@ -5,6 +5,7 @@ import {
   obtenerConfiguracionMarketingPublicaAction,
 } from "@eco/comercio";
 import "./globals.css";
+import "./tema-oscuro.generado.css";
 import { GestorPwaCliente } from "./componentes/GestorPwaCliente";
 
 // Inter: tipografía del brandbook de tranqi (antes Archivo). Va en el repo
@@ -19,7 +20,7 @@ const inter = localFont({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#5000BA",
+  themeColor: "var(--ct-5000ba, #5000BA)",
   width: "device-width",
   initialScale: 1,
 };
@@ -49,9 +50,19 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+const SCRIPT_TEMA = `(function(){var t;try{t=localStorage.getItem("tranqi-tema")}catch(e){}document.documentElement.dataset.tema=t==="claro"||t==="oscuro"?t:"sistema"})()`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    // suppressHydrationWarning: el script de abajo pone data-tema en <html>
+    // antes de que React hidrate, y ese atributo no viene del servidor.
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        {/* TRQ-040: tema del panel ANTES de pintar (si no, quien eligió oscuro
+            vería un fogonazo claro en cada carga). Solo tiene efecto dentro
+            del panel: ver «Tema oscuro» en globals.css. */}
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
+      </head>
       <body className={inter.className}>
         <ProveedorMarketingMeta negocio="tranqi" />
         {children}

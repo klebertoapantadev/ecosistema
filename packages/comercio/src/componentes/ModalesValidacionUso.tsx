@@ -37,20 +37,20 @@ export function ModalBloqueoUso({
     >
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "14px",
           maxWidth: "480px",
           width: "100%",
           padding: "24px",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          border: "1.5px solid #FCA5A5",
+          border: "1.5px solid var(--cb-fca5a5, #FCA5A5)",
           animation: "fadeIn 0.15s ease",
         }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "16px" }}>
           <div
             style={{
-              background: "#FEE2E2",
+              background: "var(--cf-fee2e2, #FEE2E2)",
               padding: "10px",
               borderRadius: "50%",
               display: "flex",
@@ -62,10 +62,10 @@ export function ModalBloqueoUso({
             <AlertTriangle size={24} color="#DC2626" />
           </div>
           <div style={{ flex: 1 }}>
-            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#991B1B" }}>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-991b1b, #991B1B)" }}>
               Uso en Utilización — No se puede eliminar
             </h3>
-            <div style={{ display: "inline-block", background: "#FEF2F2", border: "1px solid #FECACA", color: "#B91C1C", fontWeight: 700, fontSize: "0.8rem", padding: "2px 8px", borderRadius: "6px" }}>
+            <div style={{ display: "inline-block", background: "var(--cf-fef2f2, #FEF2F2)", border: "1px solid var(--cb-fecaca, #FECACA)", color: "var(--ct-b91c1c, #B91C1C)", fontWeight: 700, fontSize: "0.8rem", padding: "2px 8px", borderRadius: "6px" }}>
               {usoLabel}
             </div>
           </div>
@@ -75,7 +75,7 @@ export function ModalBloqueoUso({
             style={{
               background: "transparent",
               border: "none",
-              color: "#94A3B8",
+              color: "var(--ct-94a3b8, #94A3B8)",
               cursor: "pointer",
               padding: "4px",
             }}
@@ -84,21 +84,21 @@ export function ModalBloqueoUso({
           </button>
         </div>
 
-        <p style={{ fontSize: "0.86rem", color: "#334155", lineHeight: 1.5, margin: "0 0 12px 0" }}>
+        <p style={{ fontSize: "0.86rem", color: "var(--ct-334155, #334155)", lineHeight: 1.5, margin: "0 0 12px 0" }}>
           Este uso no puede ser eliminado porque actualmente está asignado a <strong>{productos.length}</strong> producto(s) en tu catálogo:
         </p>
 
         <ul
           style={{
-            background: "#F8FAFC",
-            border: "1px solid #E2E8F0",
+            background: "var(--cf-f8fafc, #F8FAFC)",
+            border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             borderRadius: "8px",
             padding: "10px 14px 10px 30px",
             margin: "0 0 14px 0",
             maxHeight: "160px",
             overflowY: "auto",
             fontSize: "0.82rem",
-            color: "#1E293B",
+            color: "var(--ct-1e293b, #1E293B)",
             lineHeight: 1.6,
           }}
         >
@@ -111,12 +111,12 @@ export function ModalBloqueoUso({
 
         <div
           style={{
-            background: "#FFFBEB",
-            border: "1px solid #FDE68A",
+            background: "var(--cf-fffbeb, #FFFBEB)",
+            border: "1px solid var(--cb-fde68a, #FDE68A)",
             borderRadius: "8px",
             padding: "10px 12px",
             fontSize: "0.78rem",
-            color: "#92400E",
+            color: "var(--ct-92400e, #92400E)",
             lineHeight: 1.4,
             marginBottom: "18px",
           }}
@@ -184,19 +184,19 @@ export function ModalConfirmarEliminarUso({
     >
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "14px",
           maxWidth: "460px",
           width: "100%",
           padding: "24px",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
         }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
           <div
             style={{
-              background: "#FEF3C7",
+              background: "var(--cf-fef3c7, #FEF3C7)",
               padding: "10px",
               borderRadius: "50%",
               display: "flex",
@@ -208,16 +208,16 @@ export function ModalConfirmarEliminarUso({
             <Trash2 size={24} color="#D97706" />
           </div>
           <div style={{ flex: 1 }}>
-            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#1E293B" }}>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-1e293b, #1E293B)" }}>
               ¿Eliminar Uso del Catálogo?
             </h3>
-            <span style={{ fontSize: "0.82rem", color: "#64748B" }}>
-              Opción: <strong style={{ color: "#0F172A" }}>{usoLabel}</strong>
+            <span style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)" }}>
+              Opción: <strong style={{ color: "var(--ct-0f172a, #0F172A)" }}>{usoLabel}</strong>
             </span>
           </div>
         </div>
 
-        <p style={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.5, margin: "0 0 16px 0" }}>
+        <p style={{ fontSize: "0.85rem", color: "var(--ct-475569, #475569)", lineHeight: 1.5, margin: "0 0 16px 0" }}>
           Se ha verificado que <strong>ningún producto</strong> de <strong>{negocio.toUpperCase()}</strong> está utilizando este uso actualmente. Ya no aparecerá disponible al editar o crear productos.
         </p>
 
@@ -226,9 +226,9 @@ export function ModalConfirmarEliminarUso({
             type="button"
             onClick={onCancelar}
             style={{
-              background: "#F1F5F9",
-              color: "#475569",
-              border: "1px solid #CBD5E1",
+              background: "var(--cf-f1f5f9, #F1F5F9)",
+              color: "var(--ct-475569, #475569)",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
               padding: "8px 16px",
               borderRadius: "8px",
               fontSize: "0.85rem",

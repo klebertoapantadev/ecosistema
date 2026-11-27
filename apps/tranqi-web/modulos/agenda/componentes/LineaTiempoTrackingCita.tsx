@@ -226,9 +226,9 @@ export default function LineaTiempoTrackingCita({
               gap: "5px",
               padding: "6px 10px",
               borderRadius: "7px",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               border: "1px solid var(--acento-linea)",
-              color: "#5000BA",
+              color: "var(--ct-5000ba, #5000BA)",
               fontSize: "0.74rem",
               fontWeight: 800,
               textDecoration: "none",
@@ -249,7 +249,7 @@ export default function LineaTiempoTrackingCita({
               gap: "5px",
               padding: "6px 10px",
               borderRadius: "7px",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               border: "1px solid var(--acento-linea)",
               color: "var(--acento-hondo)",
               fontSize: "0.74rem",
@@ -293,7 +293,7 @@ export default function LineaTiempoTrackingCita({
             flexWrap: "wrap",
             gap: "8px",
             alignItems: "center",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             padding: "10px 12px",
             borderRadius: "10px",
             border: "1px solid var(--linea)",
@@ -311,7 +311,7 @@ export default function LineaTiempoTrackingCita({
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
             }}
           />
           <button
@@ -379,7 +379,7 @@ export default function LineaTiempoTrackingCita({
             textAlign: "center",
             color: "var(--texto-suave)",
             fontSize: "0.82rem",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "10px",
             border: "1px dashed var(--linea-fuerte)",
           }}
@@ -418,7 +418,7 @@ export default function LineaTiempoTrackingCita({
                 key={ev.id || `${ev.fecha}-${idx}`}
                 style={{
                   position: "relative",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   borderRadius: "10px",
                   border: `1px solid ${esMasReciente ? est.bordeTarjeta : "var(--linea)"}`,
                   padding: "10px 14px",
@@ -435,7 +435,7 @@ export default function LineaTiempoTrackingCita({
                     height: "12px",
                     borderRadius: "999px",
                     background: est.colorPunto,
-                    border: "2px solid #FFFFFF",
+                    border: "2px solid var(--cb-ffffff, #FFFFFF)",
                     boxShadow: `0 0 0 2px ${est.bordeTarjeta}`,
                   }}
                 />

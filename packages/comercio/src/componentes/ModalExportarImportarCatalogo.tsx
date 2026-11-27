@@ -271,9 +271,9 @@ export function ModalExportarImportarCatalogo({
           width: "100%",
           maxWidth: "960px",
           maxHeight: "92vh",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
-          border: "1px solid #E6E2DA",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           boxShadow: "0 24px 60px rgba(15, 23, 42, 0.28)",
           display: "flex",
           flexDirection: "column",
@@ -333,7 +333,7 @@ export function ModalExportarImportarCatalogo({
             aria-label="Cerrar"
             style={{
               background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.15)",
+              border: "1px solid var(--cb-ffffff-a150, rgba(255,255,255,0.15))",
               borderRadius: "8px",
               color: "#D5CFC4",
               width: "34px",
@@ -358,8 +358,8 @@ export function ModalExportarImportarCatalogo({
             flexWrap: "wrap",
             gap: "10px",
             padding: "10px 18px",
-            background: "#FAF8F5",
-            borderBottom: "1px solid #E6E2DA",
+            background: "var(--cf-faf8f5, #FAF8F5)",
+            borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
           }}
         >
           <div style={{ display: "inline-flex", gap: "6px", flexWrap: "wrap" }}>
@@ -383,9 +383,9 @@ export function ModalExportarImportarCatalogo({
                     gap: "6px",
                     padding: "7px 13px",
                     borderRadius: "9px",
-                    border: activa ? "1px solid #221E1B" : "1px solid #D5CFC4",
-                    background: activa ? "#221E1B" : "#FFFFFF",
-                    color: activa ? "#FFFFFF" : "#44403C",
+                    border: activa ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: activa ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
+                    color: activa ? "#FFFFFF" : "var(--ct-44403c, #44403C)",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -400,7 +400,7 @@ export function ModalExportarImportarCatalogo({
 
           {pestana !== "importar" && (
             <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#6E6861" }}>
+              <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-6e6861, #6E6861)" }}>
                 Alcance:
               </span>
               {(
@@ -428,9 +428,9 @@ export function ModalExportarImportarCatalogo({
                     style={{
                       padding: "4px 10px",
                       borderRadius: "999px",
-                      border: sel ? "1px solid #2F4737" : "1px solid #D5CFC4",
-                      background: sel ? "#EAF3ED" : "#FFFFFF",
-                      color: sel ? "#1F352C" : "#57524C",
+                      border: sel ? "1px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: sel ? "var(--cf-eaf3ed, #EAF3ED)" : "var(--cf-ffffff, #FFFFFF)",
+                      color: sel ? "var(--ct-1f352c, #1F352C)" : "var(--ct-57524c, #57524C)",
                       fontSize: "0.73rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -467,7 +467,7 @@ export function ModalExportarImportarCatalogo({
                   gap: "8px",
                 }}
               >
-                <div style={{ fontSize: "0.82rem", color: "#57524C" }}>
+                <div style={{ fontSize: "0.82rem", color: "var(--ct-57524c, #57524C)" }}>
                   Mostrando <strong>{productosAlcance.length}</strong> producto(s) con todas sus
                   variantes, descripciones, beneficios, precios, canales y personalización floral.
                 </div>
@@ -506,9 +506,9 @@ export function ModalExportarImportarCatalogo({
                       gap: "6px",
                       padding: "7px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#221E1B",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-221e1b, #221E1B)",
                       fontSize: "0.79rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -529,9 +529,9 @@ export function ModalExportarImportarCatalogo({
                       gap: "6px",
                       padding: "7px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #C6DEC9",
-                      background: "#EAF3ED",
-                      color: "#1F352C",
+                      border: "1px solid var(--cb-c6dec9, #C6DEC9)",
+                      background: "var(--cf-eaf3ed, #EAF3ED)",
+                      color: "var(--ct-1f352c, #1F352C)",
                       fontSize: "0.79rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -548,9 +548,9 @@ export function ModalExportarImportarCatalogo({
                   margin: 0,
                   padding: "14px",
                   borderRadius: "12px",
-                  background: "#FAF8F5",
-                  border: "1px solid #E6E2DA",
-                  color: "#221E1B",
+                  background: "var(--cf-faf8f5, #FAF8F5)",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  color: "var(--ct-221e1b, #221E1B)",
                   fontSize: "0.75rem",
                   lineHeight: 1.5,
                   fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
@@ -580,8 +580,8 @@ export function ModalExportarImportarCatalogo({
                   style={{
                     padding: "18px",
                     borderRadius: "14px",
-                    border: "1px solid #E6E2DA",
-                    background: "#FAF8F5",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                    background: "var(--cf-faf8f5, #FAF8F5)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "10px",
@@ -589,11 +589,11 @@ export function ModalExportarImportarCatalogo({
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <FileText size={20} color="#2F4737" />
-                    <strong style={{ fontSize: "0.94rem", color: "#1F1C19" }}>
+                    <strong style={{ fontSize: "0.94rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                       Formato Markdown (.md) — Ideal para IA
                     </strong>
                   </div>
-                  <p style={{ margin: 0, fontSize: "0.81rem", color: "#57524C", lineHeight: 1.5 }}>
+                  <p style={{ margin: 0, fontSize: "0.81rem", color: "var(--ct-57524c, #57524C)", lineHeight: 1.5 }}>
                     Incluye cada producto en un bloque legible con <strong>descripción completa</strong>,
                     viñetas de beneficios, personalización floral, logística y tabla de variantes.
                     Puedes subir el `.md` a ChatGPT, Claude o Gemini, pedir mejoras masivas y re-importarlo aquí.
@@ -632,9 +632,9 @@ export function ModalExportarImportarCatalogo({
                         gap: "6px",
                         padding: "9px 14px",
                         borderRadius: "9px",
-                        border: "1px solid #D5CFC4",
-                        background: "#FFFFFF",
-                        color: "#221E1B",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-221e1b, #221E1B)",
                         fontSize: "0.81rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -651,8 +651,8 @@ export function ModalExportarImportarCatalogo({
                   style={{
                     padding: "18px",
                     borderRadius: "14px",
-                    border: "1px solid #C6DEC9",
-                    background: "#F4FAF6",
+                    border: "1px solid var(--cb-c6dec9, #C6DEC9)",
+                    background: "var(--cf-f4faf6, #F4FAF6)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "10px",
@@ -660,11 +660,11 @@ export function ModalExportarImportarCatalogo({
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <FileSpreadsheet size={20} color="#166534" />
-                    <strong style={{ fontSize: "0.94rem", color: "#1F1C19" }}>
+                    <strong style={{ fontSize: "0.94rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                       Formato Excel (.xlsx) — Master + Variantes por Fila
                     </strong>
                   </div>
-                  <p style={{ margin: 0, fontSize: "0.81rem", color: "#3A5A46", lineHeight: 1.5 }}>
+                  <p style={{ margin: 0, fontSize: "0.81rem", color: "var(--ct-3a5a46, #3A5A46)", lineHeight: 1.5 }}>
                     Genera una hoja unificada <strong>Catalogo</strong> con una fila{" "}
                     <strong>MASTER</strong> por producto seguida de una fila{" "}
                     <strong>VARIANTE</strong> por cada tamaño/opción (precios, SKU, IVA, foto y
@@ -702,8 +702,8 @@ export function ModalExportarImportarCatalogo({
                 style={{
                   padding: "14px 16px",
                   borderRadius: "12px",
-                  border: "1px solid #E6E2DA",
-                  background: "#FFFFFF",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   display: "flex",
                   flexDirection: "column",
                   gap: "8px",
@@ -725,7 +725,7 @@ export function ModalExportarImportarCatalogo({
                       gap: "6px",
                       fontSize: "0.83rem",
                       fontWeight: 800,
-                      color: "#1F1C19",
+                      color: "var(--ct-1f1c19, #1F1C19)",
                     }}
                   >
                     <Sparkles size={15} color="#8F6A2E" />
@@ -742,9 +742,9 @@ export function ModalExportarImportarCatalogo({
                       gap: "5px",
                       padding: "5px 10px",
                       borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FAF8F5",
-                      color: "#221E1B",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-faf8f5, #FAF8F5)",
+                      color: "var(--ct-221e1b, #221E1B)",
                       fontSize: "0.75rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -759,10 +759,10 @@ export function ModalExportarImportarCatalogo({
                     margin: 0,
                     padding: "10px 12px",
                     borderRadius: "8px",
-                    background: "#FAF8F5",
-                    border: "1px solid #EFECE6",
+                    background: "var(--cf-faf8f5, #FAF8F5)",
+                    border: "1px solid var(--cb-efece6, #EFECE6)",
                     fontSize: "0.75rem",
-                    color: "#44403C",
+                    color: "var(--ct-44403c, #44403C)",
                     whiteSpace: "pre-wrap",
                     lineHeight: 1.45,
                     fontFamily: "inherit",
@@ -789,8 +789,8 @@ export function ModalExportarImportarCatalogo({
                   style={{
                     padding: "16px",
                     borderRadius: "12px",
-                    border: "1.5px dashed #B8B0A4",
-                    background: "#FAF8F5",
+                    border: "1.5px dashed var(--cb-b8b0a4, #B8B0A4)",
+                    background: "var(--cf-faf8f5, #FAF8F5)",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -801,10 +801,10 @@ export function ModalExportarImportarCatalogo({
                 >
                   <Upload size={26} color="#2F4737" />
                   <div>
-                    <strong style={{ fontSize: "0.86rem", color: "#1F1C19", display: "block" }}>
+                    <strong style={{ fontSize: "0.86rem", color: "var(--ct-1f1c19, #1F1C19)", display: "block" }}>
                       Subir archivo .md o Excel (.xlsx / .csv)
                     </strong>
-                    <span style={{ fontSize: "0.75rem", color: "#6E6861" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--ct-6e6861, #6E6861)" }}>
                       {nombreArchivoCargado
                         ? `Cargado: ${nombreArchivoCargado}`
                         : "Selecciona el archivo editado para ver la vista previa de cambios antes de guardar."}
@@ -851,8 +851,8 @@ export function ModalExportarImportarCatalogo({
                   style={{
                     padding: "12px",
                     borderRadius: "12px",
-                    border: "1px solid #E6E2DA",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "8px",
@@ -860,7 +860,7 @@ export function ModalExportarImportarCatalogo({
                 >
                   <label
                     htmlFor="eco-pegar-md-masivo"
-                    style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1F1C19" }}
+                    style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}
                   >
                     O pega el Markdown actualizado directo desde tu IA:
                   </label>
@@ -874,7 +874,7 @@ export function ModalExportarImportarCatalogo({
                       width: "100%",
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                       fontSize: "0.76rem",
                       fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                       resize: "vertical",
@@ -895,8 +895,8 @@ export function ModalExportarImportarCatalogo({
                         padding: "7px 13px",
                         borderRadius: "8px",
                         border: "1px solid #2F4737",
-                        background: "#EAF3ED",
-                        color: "#1F352C",
+                        background: "var(--cf-eaf3ed, #EAF3ED)",
+                        color: "var(--ct-1f352c, #1F352C)",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         cursor: textoMdPegado.trim() ? "pointer" : "not-allowed",
@@ -916,9 +916,9 @@ export function ModalExportarImportarCatalogo({
                   style={{
                     padding: "10px 12px",
                     borderRadius: "10px",
-                    background: "#FEF2F2",
-                    border: "1px solid #FECACA",
-                    color: "#B91C1C",
+                    background: "var(--cf-fef2f2, #FEF2F2)",
+                    border: "1px solid var(--cb-fecaca, #FECACA)",
+                    color: "var(--ct-b91c1c, #B91C1C)",
                     fontSize: "0.8rem",
                     fontWeight: 600,
                     display: "flex",
@@ -937,13 +937,13 @@ export function ModalExportarImportarCatalogo({
                     padding: "12px 14px",
                     borderRadius: "12px",
                     background:
-                      resultadoAplicacion.fallidos === 0 ? "#F0FDF4" : "#FFFBEB",
+                      resultadoAplicacion.fallidos === 0 ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-fffbeb, #FFFBEB)",
                     border:
                       resultadoAplicacion.fallidos === 0
-                        ? "1px solid #BBF7D0"
-                        : "1px solid #FDE68A",
+                        ? "1px solid var(--cb-bbf7d0, #BBF7D0)"
+                        : "1px solid var(--cb-fde68a, #FDE68A)",
                     color:
-                      resultadoAplicacion.fallidos === 0 ? "#166534" : "#92400E",
+                      resultadoAplicacion.fallidos === 0 ? "var(--ct-166534, #166534)" : "var(--ct-92400e, #92400E)",
                     fontSize: "0.82rem",
                     display: "flex",
                     flexDirection: "column",
@@ -963,7 +963,7 @@ export function ModalExportarImportarCatalogo({
                   {resultadoAplicacion.detalles
                     .filter((d) => !d.ok)
                     .map((d) => (
-                      <div key={d.pro_id} style={{ fontSize: "0.76rem", color: "#B91C1C" }}>
+                      <div key={d.pro_id} style={{ fontSize: "0.76rem", color: "var(--ct-b91c1c, #B91C1C)" }}>
                         • <strong>{d.nombre}:</strong> {d.error}
                       </div>
                     ))}
@@ -983,8 +983,8 @@ export function ModalExportarImportarCatalogo({
                       gap: "8px",
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      background: "#FAF8F5",
-                      border: "1px solid #E6E2DA",
+                      background: "var(--cf-faf8f5, #FAF8F5)",
+                      border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     }}
                   >
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", fontSize: "0.76rem", fontWeight: 700 }}>
@@ -992,9 +992,9 @@ export function ModalExportarImportarCatalogo({
                         style={{
                           padding: "3px 9px",
                           borderRadius: "999px",
-                          background: "#FFFFFF",
-                          border: "1px solid #D5CFC4",
-                          color: "#221E1B",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          color: "var(--ct-221e1b, #221E1B)",
                         }}
                       >
                         Leídos: {planImportacion.totalLeidos}
@@ -1003,8 +1003,8 @@ export function ModalExportarImportarCatalogo({
                         style={{
                           padding: "3px 9px",
                           borderRadius: "999px",
-                          background: "#DCFCE7",
-                          color: "#166534",
+                          background: "var(--cf-dcfce7, #DCFCE7)",
+                          color: "var(--ct-166534, #166534)",
                         }}
                       >
                         Con cambios: {planImportacion.totalConCambios}
@@ -1013,8 +1013,8 @@ export function ModalExportarImportarCatalogo({
                         style={{
                           padding: "3px 9px",
                           borderRadius: "999px",
-                          background: "#F4F2EE",
-                          color: "#57524C",
+                          background: "var(--cf-f4f2ee, #F4F2EE)",
+                          color: "var(--ct-57524c, #57524C)",
                         }}
                       >
                         Sin cambios: {planImportacion.totalSinCambios}
@@ -1025,8 +1025,8 @@ export function ModalExportarImportarCatalogo({
                           style={{
                             padding: "3px 9px",
                             borderRadius: "999px",
-                            background: "#FEF3C7",
-                            color: "#92400E",
+                            background: "var(--cf-fef3c7, #FEF3C7)",
+                            color: "var(--ct-92400e, #92400E)",
                           }}
                         >
                           Omitidos: {planImportacion.totalNoEncontrados + planImportacion.totalErrores}
@@ -1042,9 +1042,9 @@ export function ModalExportarImportarCatalogo({
                           style={{
                             padding: "4px 8px",
                             borderRadius: "6px",
-                            border: "1px solid #D5CFC4",
-                            background: "#FFFFFF",
-                            color: "#221E1B",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            color: "var(--ct-221e1b, #221E1B)",
                             fontSize: "0.72rem",
                             fontWeight: 700,
                             cursor: "pointer",
@@ -1058,9 +1058,9 @@ export function ModalExportarImportarCatalogo({
                           style={{
                             padding: "4px 8px",
                             borderRadius: "6px",
-                            border: "1px solid #D5CFC4",
-                            background: "#FFFFFF",
-                            color: "#57524C",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            color: "var(--ct-57524c, #57524C)",
                             fontSize: "0.72rem",
                             fontWeight: 700,
                             cursor: "pointer",
@@ -1078,9 +1078,9 @@ export function ModalExportarImportarCatalogo({
                       style={{
                         padding: "8px 11px",
                         borderRadius: "8px",
-                        background: "#FFFBEB",
-                        border: "1px solid #FDE68A",
-                        color: "#92400E",
+                        background: "var(--cf-fffbeb, #FFFBEB)",
+                        border: "1px solid var(--cb-fde68a, #FDE68A)",
+                        color: "var(--ct-92400e, #92400E)",
                         fontSize: "0.77rem",
                       }}
                     >
@@ -1112,10 +1112,10 @@ export function ModalExportarImportarCatalogo({
                               borderRadius: "10px",
                               border:
                                 it.estado === "CON_CAMBIOS"
-                                  ? "1px solid #C6DEC9"
-                                  : "1px solid #FDE68A",
+                                  ? "1px solid var(--cb-c6dec9, #C6DEC9)"
+                                  : "1px solid var(--cb-fde68a, #FDE68A)",
                               background:
-                                it.estado === "CON_CAMBIOS" ? "#FFFFFF" : "#FFFBEB",
+                                it.estado === "CON_CAMBIOS" ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-fffbeb, #FFFBEB)",
                               display: "flex",
                               flexDirection: "column",
                               gap: "6px",
@@ -1137,7 +1137,7 @@ export function ModalExportarImportarCatalogo({
                                   cursor: esEditable ? "pointer" : "default",
                                   fontWeight: 800,
                                   fontSize: "0.82rem",
-                                  color: "#1F1C19",
+                                  color: "var(--ct-1f1c19, #1F1C19)",
                                 }}
                               >
                                 {esEditable && (
@@ -1151,7 +1151,7 @@ export function ModalExportarImportarCatalogo({
                                         [it.pro_id!]: e.target.checked,
                                       }));
                                     }}
-                                    style={{ width: "16px", height: "16px", accentColor: "#2F4737" }}
+                                    style={{ width: "16px", height: "16px", accentColor: "var(--ct-2f4737, #2F4737)" }}
                                   />
                                 )}
                                 <span>{it.nombreActual}</span>
@@ -1163,9 +1163,9 @@ export function ModalExportarImportarCatalogo({
                                   padding: "2px 8px",
                                   borderRadius: "999px",
                                   background:
-                                    it.estado === "CON_CAMBIOS" ? "#EAF3ED" : "#FEF3C7",
+                                    it.estado === "CON_CAMBIOS" ? "var(--cf-eaf3ed, #EAF3ED)" : "var(--cf-fef3c7, #FEF3C7)",
                                   color:
-                                    it.estado === "CON_CAMBIOS" ? "#166534" : "#92400E",
+                                    it.estado === "CON_CAMBIOS" ? "var(--ct-166534, #166534)" : "var(--ct-92400e, #92400E)",
                                 }}
                               >
                                 {it.estado === "CON_CAMBIOS"
@@ -1183,16 +1183,16 @@ export function ModalExportarImportarCatalogo({
                                     key={`${it.clave}-${c.campo}`}
                                     style={{
                                       fontSize: "0.74rem",
-                                      color: "#44403C",
+                                      color: "var(--ct-44403c, #44403C)",
                                       lineHeight: 1.4,
                                     }}
                                   >
                                     <strong>{c.etiqueta}:</strong>{" "}
-                                    <span style={{ color: "#991B1B", textDecoration: "line-through" }}>
+                                    <span style={{ color: "var(--ct-991b1b, #991B1B)", textDecoration: "line-through" }}>
                                       {c.antes}
                                     </span>{" "}
                                     →{" "}
-                                    <span style={{ color: "#166534", fontWeight: 700 }}>
+                                    <span style={{ color: "var(--ct-166534, #166534)", fontWeight: 700 }}>
                                       {c.despues}
                                     </span>
                                   </div>
@@ -1205,7 +1205,7 @@ export function ModalExportarImportarCatalogo({
                                 key={`${it.clave}-adv-${idxAdv}`}
                                 style={{
                                   fontSize: "0.73rem",
-                                  color: "#92400E",
+                                  color: "var(--ct-92400e, #92400E)",
                                   paddingLeft: esEditable ? "24px" : 0,
                                 }}
                               >
@@ -1223,10 +1223,10 @@ export function ModalExportarImportarCatalogo({
                           style={{
                             padding: "16px",
                             borderRadius: "10px",
-                            background: "#F4F2EE",
+                            background: "var(--cf-f4f2ee, #F4F2EE)",
                             textAlign: "center",
                             fontSize: "0.82rem",
-                            color: "#57524C",
+                            color: "var(--ct-57524c, #57524C)",
                           }}
                         >
                           Todos los productos del archivo coinciden exactamente con el catálogo actual (0 cambios detectados).
@@ -1242,7 +1242,7 @@ export function ModalExportarImportarCatalogo({
                         justifyContent: "flex-end",
                         gap: "8px",
                         paddingTop: "6px",
-                        borderTop: "1px solid #E6E2DA",
+                        borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
                       }}
                     >
                       <button

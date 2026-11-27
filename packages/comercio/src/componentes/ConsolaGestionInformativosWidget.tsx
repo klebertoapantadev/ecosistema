@@ -462,7 +462,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
             onClick={handleRestaurarEjemplo}
             style={{
               background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
+              border: "1px solid var(--cb-ffffff-a300, rgba(255, 255, 255, 0.3))",
               color: "#FFFFFF",
               padding: "10px 16px",
               borderRadius: "8px",
@@ -502,9 +502,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
       {/* Barra de Filtros y Búsqueda */}
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "12px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
           padding: "16px 20px",
           display: "flex",
           alignItems: "center",
@@ -517,7 +517,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
           <div style={{ position: "relative", width: "100%", maxWidth: "340px" }}>
             <Search
               size={16}
-              style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }}
+              style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--ct-94a3b8, #94A3B8)" }}
             />
             <input
               type="text"
@@ -528,7 +528,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                 width: "100%",
                 padding: "8px 12px 8px 36px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                 fontSize: "0.85rem",
                 boxSizing: "border-box",
               }}
@@ -542,10 +542,10 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
             style={{
               padding: "8px 12px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
               fontSize: "0.82rem",
-              background: "#FFFFFF",
-              color: "#334155",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-334155, #334155)",
             }}
           >
             <option value="TODOS">Todos los Tipos</option>
@@ -562,10 +562,10 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
             style={{
               padding: "8px 12px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
               fontSize: "0.82rem",
-              background: "#FFFFFF",
-              color: "#334155",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-334155, #334155)",
             }}
           >
             <option value="TODOS">Todas las Audiencias</option>
@@ -575,32 +575,32 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
           </SelectConBuscador>
         </div>
 
-        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#64748B" }}>
+        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-64748b, #64748B)" }}>
           {campanasFiltradas.length} {campanasFiltradas.length === 1 ? "publicación" : "publicaciones"}
         </div>
       </div>
 
       {/* Grid de Campañas / Avisos */}
       {cargando ? (
-        <div style={{ padding: "60px 20px", textAlign: "center", color: "#64748B" }}>
-          <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 10px", color: "#4338CA" }} />
+        <div style={{ padding: "60px 20px", textAlign: "center", color: "var(--ct-64748b, #64748B)" }}>
+          <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 10px", color: "var(--ct-4338ca, #4338CA)" }} />
           <div>Cargando campañas y comunicados...</div>
         </div>
       ) : campanasFiltradas.length === 0 ? (
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px dashed #CBD5E1",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px dashed var(--cb-cbd5e1, #CBD5E1)",
             borderRadius: "14px",
             padding: "48px 24px",
             textAlign: "center",
           }}
         >
-          <Megaphone size={36} style={{ color: "#94A3B8", margin: "0 auto 12px" }} />
-          <h3 style={{ margin: "0 0 6px", fontSize: "1.1rem", fontWeight: 800, color: "#1E293B" }}>
+          <Megaphone size={36} style={{ color: "var(--ct-94a3b8, #94A3B8)", margin: "0 auto 12px" }} />
+          <h3 style={{ margin: "0 0 6px", fontSize: "1.1rem", fontWeight: 800, color: "var(--ct-1e293b, #1E293B)" }}>
             No se encontraron publicaciones
           </h3>
-          <p style={{ margin: "0 auto 16px", fontSize: "0.85rem", color: "#64748B", maxWidth: "420px" }}>
+          <p style={{ margin: "0 auto 16px", fontSize: "0.85rem", color: "var(--ct-64748b, #64748B)", maxWidth: "420px" }}>
             Crea una nueva alerta para comunicar novedades de ANT, convenios de maestrías o incentivos tributarios.
           </p>
           <button
@@ -637,8 +637,8 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               <div
                 key={c.inf_id}
                 style={{
-                  background: "#FFFFFF",
-                  border: c.inf_activo ? "1px solid #E2E8F0" : "1px dashed #CBD5E1",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: c.inf_activo ? "1px solid var(--cb-e2e8f0, #E2E8F0)" : "1px dashed var(--cb-cbd5e1, #CBD5E1)",
                   borderRadius: "14px",
                   overflow: "hidden",
                   display: "flex",
@@ -728,7 +728,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                         width: "6px",
                         height: "6px",
                         borderRadius: "50%",
-                        background: c.inf_activo ? "#FFFFFF" : "#CBD5E1",
+                        background: c.inf_activo ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-cbd5e1, #CBD5E1)",
                       }}
                     />
                     {c.inf_activo ? "Activo" : "Inactivo"}
@@ -754,7 +754,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
                 {/* Contenido */}
                 <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", flex: 1 }}>
-                  <h3 style={{ margin: "0 0 6px", fontSize: "0.98rem", fontWeight: 800, color: "#0F172A", lineHeight: 1.35 }}>
+                  <h3 style={{ margin: "0 0 6px", fontSize: "0.98rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", lineHeight: 1.35 }}>
                     {c.inf_titulo}
                   </h3>
                   {c.inf_subtitulo && (
@@ -762,7 +762,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       style={{
                         margin: "0 0 12px",
                         fontSize: "0.8rem",
-                        color: "#475569",
+                        color: "var(--ct-475569, #475569)",
                         lineHeight: 1.4,
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
@@ -780,8 +780,8 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       <span
                         key={aud}
                         style={{
-                          background: "#F1F5F9",
-                          color: "#334155",
+                          background: "var(--cf-f1f5f9, #F1F5F9)",
+                          color: "var(--ct-334155, #334155)",
                           padding: "2px 6px",
                           borderRadius: "6px",
                           fontSize: "0.68rem",
@@ -795,9 +795,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       <span
                         key={ub}
                         style={{
-                          background: "#F8FAFC",
-                          color: "#64748B",
-                          border: "1px solid #E2E8F0",
+                          background: "var(--cf-f8fafc, #F8FAFC)",
+                          color: "var(--ct-64748b, #64748B)",
+                          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                           padding: "2px 6px",
                           borderRadius: "6px",
                           fontSize: "0.65rem",
@@ -816,7 +816,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       alignItems: "center",
                       gap: "5px",
                       fontSize: "0.72rem",
-                      color: "#64748B",
+                      color: "var(--ct-64748b, #64748B)",
                       marginBottom: "14px",
                     }}
                   >
@@ -832,7 +832,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                     style={{
                       marginTop: "auto",
                       paddingTop: "12px",
-                      borderTop: "1px solid #F1F5F9",
+                      borderTop: "1px solid var(--cb-f1f5f9, #F1F5F9)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
@@ -843,9 +843,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                         type="button"
                         onClick={() => abrirModalEditar(c)}
                         style={{
-                          background: "#F1F5F9",
+                          background: "var(--cf-f1f5f9, #F1F5F9)",
                           border: "none",
-                          color: "#334155",
+                          color: "var(--ct-334155, #334155)",
                           padding: "6px 10px",
                           borderRadius: "6px",
                           fontSize: "0.75rem",
@@ -862,9 +862,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                         type="button"
                         onClick={() => handleEliminar(c.inf_id, c.inf_titulo)}
                         style={{
-                          background: "#FEF2F2",
+                          background: "var(--cf-fef2f2, #FEF2F2)",
                           border: "none",
-                          color: "#DC2626",
+                          color: "var(--ct-dc2626, #DC2626)",
                           padding: "6px 10px",
                           borderRadius: "6px",
                           fontSize: "0.75rem",
@@ -922,7 +922,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               width: "100%",
               maxWidth: "720px",
@@ -935,27 +935,27 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               gap: "18px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E2E8F0", paddingBottom: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)", paddingBottom: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <div
                   style={{
                     width: "36px",
                     height: "36px",
                     borderRadius: "10px",
-                    background: "#EEF2FF",
+                    background: "var(--cf-eef2ff, #EEF2FF)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#4338CA",
+                    color: "var(--ct-4338ca, #4338CA)",
                   }}
                 >
                   <Megaphone size={20} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900, color: "#0F172A" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900, color: "var(--ct-0f172a, #0F172A)" }}>
                     {campanaEditar ? "Editar Campaña / Comunicado" : "Nueva Campaña Informativa & Beneficio"}
                   </h3>
-                  <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748B" }}>
+                  <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)" }}>
                     Segmenta por audiencia, fechas de vigencia y añade botones de acción directa.
                   </p>
                 </div>
@@ -963,14 +963,14 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               <button
                 type="button"
                 onClick={() => setModalAbierto(false)}
-                style={{ background: "transparent", border: "none", color: "#64748B", cursor: "pointer" }}
+                style={{ background: "transparent", border: "none", color: "var(--ct-64748b, #64748B)", cursor: "pointer" }}
               >
                 <X size={20} />
               </button>
             </div>
 
             {errorForm && (
-              <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem" }}>
+              <div style={{ background: "var(--cf-fef2f2, #FEF2F2)", border: "1px solid var(--cb-fecaca, #FECACA)", color: "var(--ct-991b1b, #991B1B)", padding: "10px 14px", borderRadius: "8px", fontSize: "0.82rem" }}>
                 {errorForm}
               </div>
             )}
@@ -979,7 +979,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               {/* Tipo y Prioridad */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                     Tipo de Comunicado / Campaña *
                   </label>
                   <SelectConBuscador
@@ -989,10 +989,10 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.85rem",
-                      background: "#FFFFFF",
-                      color: "#1E293B",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1e293b, #1E293B)",
                     }}
                   >
                     <option value="BENEFICIO_CONVENIO">🎓 Convenio / Beca / Capacitación (Abogados)</option>
@@ -1003,7 +1003,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                     Prioridad Visual
                   </label>
                   <SelectConBuscador
@@ -1013,9 +1013,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.85rem",
-                      background: "#FFFFFF",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                     }}
                   >
                     <option value="ALTA">Alta (Banner Flotante / Destacado)</option>
@@ -1027,7 +1027,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
               {/* Título y Subtítulo */}
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                   Título del Comunicado *
                 </label>
                 <input
@@ -1040,7 +1040,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.88rem",
                     boxSizing: "border-box",
                   }}
@@ -1048,7 +1048,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                   Subtítulo / Resumen Corto
                 </label>
                 <input
@@ -1060,7 +1060,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.85rem",
                     boxSizing: "border-box",
                   }}
@@ -1070,7 +1070,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               {/* Institución & Descuento */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                     Institución / Entidad Emisora
                   </label>
                   <input
@@ -1082,14 +1082,14 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                     Incentivo / Beneficio
                   </label>
                   <input
@@ -1101,7 +1101,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                     }}
@@ -1111,7 +1111,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
               {/* Audiencia Objetivo */}
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "6px" }}>
                   Audiencia Objetivo (¿Quién verá este aviso?)
                 </label>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -1127,9 +1127,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                           borderRadius: "20px",
                           fontSize: "0.75rem",
                           fontWeight: 700,
-                          border: sel ? "1.5px solid #4338CA" : "1px solid #CBD5E1",
-                          background: sel ? "#EEF2FF" : "#FFFFFF",
-                          color: sel ? "#4338CA" : "#64748B",
+                          border: sel ? "1.5px solid #4338CA" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                          background: sel ? "var(--cf-eef2ff, #EEF2FF)" : "var(--cf-ffffff, #FFFFFF)",
+                          color: sel ? "var(--ct-4338ca, #4338CA)" : "var(--ct-64748b, #64748B)",
                           cursor: "pointer",
                         }}
                       >
@@ -1145,7 +1145,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
               {/* Ubicaciones de Despliegue (Exclusivo para Usuarios Registrados en el Panel) */}
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "6px" }}>
                   Ubicación de Despliegue (Usuarios Registrados)
                 </label>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -1164,9 +1164,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                           borderRadius: "8px",
                           fontSize: "0.75rem",
                           fontWeight: 700,
-                          border: sel ? "1.5px solid #10B981" : "1px solid #CBD5E1",
-                          background: sel ? "#ECFDF5" : "#FFFFFF",
-                          color: sel ? "#065F46" : "#64748B",
+                          border: sel ? "1.5px solid #10B981" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                          background: sel ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-ffffff, #FFFFFF)",
+                          color: sel ? "var(--ct-065f46, #065F46)" : "var(--ct-64748b, #64748B)",
                           cursor: "pointer",
                         }}
                       >
@@ -1181,7 +1181,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               {/* Fechas de Vigencia */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                     Fecha Inicio de Campaña *
                   </label>
                   <input
@@ -1193,14 +1193,14 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                     Fecha Fin (Opcional - Dejar vacío si es permanente)
                   </label>
                   <input
@@ -1211,7 +1211,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                     }}
@@ -1220,18 +1220,18 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               </div>
 
               {/* Multimedia: Imagen & Video */}
-              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "14px" }}>
+              <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "10px", padding: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-                  <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#1E293B" }}>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--ct-1e293b, #1E293B)" }}>
                     🖼️ Recursos Multimedia (Foto de Portada & Video)
                   </span>
                   <button
                     type="button"
                     onClick={() => setGaleriaAbierta(true)}
                     style={{
-                      background: "#FFFFFF",
-                      border: "1px solid #CBD5E1",
-                      color: "#334155",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                      color: "var(--ct-334155, #334155)",
                       padding: "4px 10px",
                       borderRadius: "6px",
                       fontSize: "0.72rem",
@@ -1248,7 +1248,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#64748B", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--ct-64748b, #64748B)", marginBottom: "2px" }}>
                       URL Imagen de Portada
                     </label>
                     <input
@@ -1260,14 +1260,14 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                         width: "100%",
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                         fontSize: "0.8rem",
                         boxSizing: "border-box",
                       }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#64748B", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--ct-64748b, #64748B)", marginBottom: "2px" }}>
                       URL Video (YouTube / MP4)
                     </label>
                     <input
@@ -1279,7 +1279,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                         width: "100%",
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                         fontSize: "0.8rem",
                         boxSizing: "border-box",
                       }}
@@ -1291,7 +1291,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               {/* Botón de Acción / CTA */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                     Texto Botón CTA
                   </label>
                   <input
@@ -1303,14 +1303,14 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-334155, #334155)", marginBottom: "4px" }}>
                     Enlace de Destino (URL Interna o WhatsApp)
                   </label>
                   <input
@@ -1322,7 +1322,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                     }}
@@ -1337,7 +1337,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                   alignItems: "center",
                   justifyContent: "flex-end",
                   gap: "10px",
-                  borderTop: "1px solid #E2E8F0",
+                  borderTop: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                   paddingTop: "14px",
                   marginTop: "8px",
                 }}
@@ -1346,9 +1346,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                   type="button"
                   onClick={() => setModalAbierto(false)}
                   style={{
-                    background: "#F1F5F9",
+                    background: "var(--cf-f1f5f9, #F1F5F9)",
                     border: "none",
-                    color: "#475569",
+                    color: "var(--ct-475569, #475569)",
                     padding: "10px 18px",
                     borderRadius: "8px",
                     fontSize: "0.82rem",

@@ -429,7 +429,7 @@ export default function FormularioAgendar({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           border: "1px solid var(--linea)",
           borderRadius: "16px",
           padding: "14px 20px",
@@ -470,7 +470,7 @@ export default function FormularioAgendar({
             <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--texto-suave)" }}>
               Paso 1
             </div>
-            <div style={{ fontSize: "0.9rem", fontWeight: 800, color: paso === 0 ? "#5000BA" : "var(--texto)" }}>
+            <div style={{ fontSize: "0.9rem", fontWeight: 800, color: paso === 0 ? "var(--ct-5000ba, #5000BA)" : "var(--texto)" }}>
               Cuéntanos tu necesidad
             </div>
           </div>
@@ -516,7 +516,7 @@ export default function FormularioAgendar({
             <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--texto-suave)" }}>
               Paso 2
             </div>
-            <div style={{ fontSize: "0.9rem", fontWeight: 800, color: paso === 1 ? "#5000BA" : "var(--texto-2)" }}>
+            <div style={{ fontSize: "0.9rem", fontWeight: 800, color: paso === 1 ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)" }}>
               Modalidad, horario y pago
             </div>
           </div>
@@ -529,7 +529,7 @@ export default function FormularioAgendar({
       {paso === 0 && (
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1px solid var(--linea)",
             borderRadius: "24px",
             padding: "28px 26px",
@@ -546,7 +546,7 @@ export default function FormularioAgendar({
                 alignItems: "center",
                 gap: "6px",
                 background: "var(--acento-diluido)",
-                color: "#5000BA",
+                color: "var(--ct-5000ba, #5000BA)",
                 padding: "5px 12px",
                 borderRadius: "999px",
                 fontSize: "0.75rem",
@@ -582,7 +582,7 @@ export default function FormularioAgendar({
                     style={{
                       background: activo ? "var(--acento-diluido)" : "var(--fondo-suave)",
                       border: activo ? "1.5px solid #5000BA" : "1px solid var(--linea)",
-                      color: activo ? "#5000BA" : "var(--texto-2)",
+                      color: activo ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)",
                       borderRadius: "999px",
                       padding: "6px 13px",
                       fontSize: "0.8rem",
@@ -694,7 +694,7 @@ export default function FormularioAgendar({
                   <Scale size={20} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: "#5000BA", marginBottom: "4px" }}>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--ct-5000ba, #5000BA)", marginBottom: "4px" }}>
                     Recomendación de Tranqi
                   </div>
                   <p style={{ fontSize: "0.94rem", color: "var(--texto)", margin: "0 0 12px", lineHeight: 1.55 }}>
@@ -708,7 +708,7 @@ export default function FormularioAgendar({
                       alignItems: "center",
                       justifyContent: "space-between",
                       gap: "10px",
-                      background: "#FFFFFF",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       border: "1px solid var(--acento-linea)",
                       borderRadius: "14px",
                       padding: "12px 16px",
@@ -718,7 +718,7 @@ export default function FormularioAgendar({
                       <div style={{ fontSize: "0.74rem", color: "var(--texto-suave)", fontWeight: 600 }}>
                         Especialista para tu agendamiento:
                       </div>
-                      <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#0E6648" }}>
+                      <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "var(--ct-0e6648, #0E6648)" }}>
                         Abogado Especialista en {materia.mat_nombre}
                       </div>
                     </div>
@@ -729,7 +729,7 @@ export default function FormularioAgendar({
                       style={{
                         background: "transparent",
                         border: "none",
-                        color: "#5000BA",
+                        color: "var(--ct-5000ba, #5000BA)",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         textDecoration: "underline",
@@ -753,7 +753,7 @@ export default function FormularioAgendar({
                           width: "100%",
                           borderRadius: "12px",
                           border: "1px solid var(--linea-fuerte)",
-                          background: "#FFFFFF",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           padding: "10px 12px",
                           fontSize: "0.88rem",
                           color: "var(--texto)",
@@ -805,7 +805,7 @@ export default function FormularioAgendar({
       {paso === 1 && (
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1px solid var(--linea)",
             borderRadius: "24px",
             padding: "28px 26px",
@@ -832,7 +832,7 @@ export default function FormularioAgendar({
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <Scale size={18} color="#5000BA" />
               <span style={{ fontSize: "0.88rem", color: "var(--texto)" }}>
-                Especialista asignado: <strong style={{ color: "#5000BA" }}>{materia?.mat_nombre ?? "Civil"}</strong>
+                Especialista asignado: <strong style={{ color: "var(--ct-5000ba, #5000BA)" }}>{materia?.mat_nombre ?? "Civil"}</strong>
               </span>
             </div>
             <button
@@ -841,7 +841,7 @@ export default function FormularioAgendar({
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#5000BA",
+                color: "var(--ct-5000ba, #5000BA)",
                 fontSize: "0.8rem",
                 fontWeight: 700,
                 textDecoration: "underline",
@@ -878,7 +878,7 @@ export default function FormularioAgendar({
                   borderRadius: "18px",
                   padding: "18px 20px",
                   border: modalidad === "virtual" ? "2px solid #5000BA" : "1.5px solid var(--linea)",
-                  background: modalidad === "virtual" ? "var(--acento-diluido)" : "#FFFFFF",
+                  background: modalidad === "virtual" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                   cursor: "pointer",
                   display: "flex",
                   flexDirection: "column",
@@ -905,7 +905,7 @@ export default function FormularioAgendar({
                     style={{
                       fontSize: "0.88rem",
                       fontWeight: 800,
-                      color: modalidad === "virtual" ? "#5000BA" : "var(--texto)",
+                      color: modalidad === "virtual" ? "var(--ct-5000ba, #5000BA)" : "var(--texto)",
                       background: modalidad === "virtual" ? "var(--acento-diluido)" : "var(--fondo-hundido)",
                       padding: "4px 10px",
                       borderRadius: "999px",
@@ -935,7 +935,7 @@ export default function FormularioAgendar({
                   borderRadius: "18px",
                   padding: "18px 20px",
                   border: modalidad === "presencial" ? "2px solid #5000BA" : "1.5px solid var(--linea)",
-                  background: modalidad === "presencial" ? "var(--acento-diluido)" : "#FFFFFF",
+                  background: modalidad === "presencial" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                   cursor: "pointer",
                   display: "flex",
                   flexDirection: "column",
@@ -962,7 +962,7 @@ export default function FormularioAgendar({
                     style={{
                       fontSize: "0.88rem",
                       fontWeight: 800,
-                      color: modalidad === "presencial" ? "#5000BA" : "var(--texto)",
+                      color: modalidad === "presencial" ? "var(--ct-5000ba, #5000BA)" : "var(--texto)",
                       background: modalidad === "presencial" ? "var(--acento-diluido)" : "var(--fondo-hundido)",
                       padding: "4px 10px",
                       borderRadius: "999px",
@@ -1020,7 +1020,7 @@ export default function FormularioAgendar({
                   type="button"
                   onClick={() => void cargarHuecos(materia?.mat_id || "", modalidad)}
                   style={{
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     border: "1px solid var(--error-linea)",
                     borderRadius: "10px",
                     padding: "8px 16px",
@@ -1161,7 +1161,7 @@ export default function FormularioAgendar({
                               borderRadius: "12px",
                               padding: "11px 10px",
                               border: activo ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
-                              background: activo ? "#5000BA" : "#FFFFFF",
+                              background: activo ? "#5000BA" : "var(--cf-ffffff, #FFFFFF)",
                               color: activo ? "#FFFFFF" : "var(--texto)",
                               fontSize: "0.88rem",
                               fontWeight: 800,

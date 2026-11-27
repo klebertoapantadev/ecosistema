@@ -4,6 +4,7 @@ import { obtenerPerfilesAsignables } from "@eco/gestion-usuarios";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { obtenerSolicitudPropia, listarMaterias, listarProvincias } from "../../../modulos/socios/consultas";
 import { PanelCuentaModular } from "./PanelCuentaModular";
+import { SelectorTema } from "../SelectorTema";
 import type { RolOpcionDef } from "../roles-sistema";
 
 export const metadata: Metadata = { title: "Mi cuenta — tranqi" };
@@ -61,6 +62,15 @@ export default async function PaginaCuenta() {
 
   return (
     <div style={{ width: "100%" }}>
+      {/* TRQ-040: en móvil el rail no enseña la zona de usuario, así que el
+          tema se elige aquí. El valor real lo toma del navegador al montar. */}
+      <div className="fila-apariencia">
+        <div>
+          <b>Apariencia</b>
+          <span>Claro, oscuro o el mismo que tu dispositivo.</span>
+        </div>
+        <SelectorTema inicial={perfil?.usu_preferencia_tema === "claro" || perfil?.usu_preferencia_tema === "oscuro" ? perfil.usu_preferencia_tema : "sistema"} variante="cuenta" />
+      </div>
       {/* Componente Modular con Galería de Accesos, Hero Card condicional y Roles Dinámicos */}
       <PanelCuentaModular
         perfil={perfil}

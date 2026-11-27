@@ -36,7 +36,7 @@ export function ModalTerminosNotificaciones({
     >
       <div
         style={{
-          background: "var(--blanco, #ffffff)",
+          background: "var(--cf-ffffff, var(--blanco, #ffffff))",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "560px",
@@ -65,15 +65,15 @@ export function ModalTerminosNotificaciones({
               style={{
                 padding: "6px",
                 borderRadius: "8px",
-                background: "var(--violeta-suave, #F3E8FF)",
-                color: "var(--violeta, #5000BA)",
+                background: "var(--cf-f3e8ff, var(--violeta-suave, #F3E8FF))",
+                color: "var(--ct-5000ba, var(--violeta, #5000BA))",
                 display: "flex",
               }}
             >
               <BellRing size={18} />
             </div>
             <div>
-              <h3 style={{ fontSize: "1rem", fontWeight: 800, margin: 0, color: "var(--negro, #111111)" }}>
+              <h3 style={{ fontSize: "1rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, var(--negro, #111111))" }}>
                 Términos y Condiciones de Notificaciones
               </h3>
               <span style={{ fontSize: "0.75rem", color: "var(--panel-gris, #737373)" }}>
@@ -100,22 +100,22 @@ export function ModalTerminosNotificaciones({
         </div>
 
         {/* Cuerpo con Scroll */}
-        <div style={{ padding: "20px", overflowY: "auto", fontSize: "0.85rem", color: "#374151", lineHeight: 1.6 }}>
-          <h4 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--negro, #111111)", marginBottom: "8px" }}>
+        <div style={{ padding: "20px", overflowY: "auto", fontSize: "0.85rem", color: "var(--ct-374151, #374151)", lineHeight: 1.6 }}>
+          <h4 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", marginBottom: "8px" }}>
             1. Consentimiento de Recepción de Notificaciones Operativas y Legales
           </h4>
           <p style={{ margin: "0 0 12px 0" }}>
             Al autorizar el envío de notificaciones (vía correo electrónico, WhatsApp o alertas in-app), el usuario acepta recibir avisos sobre el estado de sus trámites, solicitudes, actualizaciones de causas legales, recordatorios de citas y alertas de seguridad.
           </p>
 
-          <h4 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--negro, #111111)", marginBottom: "8px" }}>
+          <h4 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", marginBottom: "8px" }}>
             2. Protección de Datos Personales (LOPDP Ecuador)
           </h4>
           <p style={{ margin: "0 0 12px 0" }}>
             Sus datos de contacto (número de WhatsApp, correo institucional y correos adicionales de notificación) serán tratados de manera confidencial y encriptados en los servidores de la plataforma. Jamás serán vendidos ni transferidos a terceros con fines comerciales no autorizados.
           </p>
 
-          <h4 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--negro, #111111)", marginBottom: "8px" }}>
+          <h4 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", marginBottom: "8px" }}>
             3. Canales y Frecuencia de Despacho
           </h4>
           <p style={{ margin: "0 0 12px 0" }}>
@@ -127,10 +127,10 @@ export function ModalTerminosNotificaciones({
           <div
             style={{
               padding: "12px",
-              background: "var(--esmeralda-suave, #E6F4F1)",
+              background: "var(--cf-e6f4f1, var(--esmeralda-suave, #E6F4F1))",
               borderRadius: "8px",
               border: "1px solid var(--esmeralda, #05876E)",
-              color: "var(--esmeralda-honda, #034D3F)",
+              color: "var(--ct-034d3f, var(--esmeralda-honda, #034D3F))",
               fontWeight: 600,
               fontSize: "0.82rem",
               display: "flex",
@@ -159,9 +159,9 @@ export function ModalTerminosNotificaciones({
             onClick={onCerrar}
             className="btn-mini"
             style={{
-              background: "var(--blanco, #ffffff)",
+              background: "var(--cf-ffffff, var(--blanco, #ffffff))",
               border: "1px solid var(--panel-linea, #E4E4E4)",
-              color: "var(--negro, #111111)",
+              color: "var(--ct-111111, var(--negro, #111111))",
               padding: "8px 16px",
             }}
           >

@@ -334,8 +334,8 @@ export function SelectorUbicacionEntrega({
   return (
     <div
       style={{
-        background: "#FFFFFF",
-        border: "1px solid #E4E4E7",
+        background: "var(--cf-ffffff, #FFFFFF)",
+        border: "1px solid var(--cb-e4e4e7, #E4E4E7)",
         borderRadius: "12px",
         padding: "12px",
         display: "flex",
@@ -350,7 +350,7 @@ export function SelectorUbicacionEntrega({
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(min(135px, 100%), 1fr))",
             gap: "6px",
-            background: "#F4F4F5",
+            background: "var(--cf-f4f4f5, #F4F4F5)",
             padding: "4px",
             borderRadius: "9px",
           }}
@@ -367,9 +367,9 @@ export function SelectorUbicacionEntrega({
               gap: "6px",
               padding: "7px 10px",
               borderRadius: "7px",
-              border: !retiroLocal ? "1px solid #E4E4E7" : "1px solid transparent",
-              background: !retiroLocal ? "#FFFFFF" : "transparent",
-              color: !retiroLocal ? "#18181B" : "#52525B",
+              border: !retiroLocal ? "1px solid var(--cb-e4e4e7, #E4E4E7)" : "1px solid transparent",
+              background: !retiroLocal ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+              color: !retiroLocal ? "var(--ct-18181b, #18181B)" : "var(--ct-52525b, #52525B)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -392,9 +392,9 @@ export function SelectorUbicacionEntrega({
               gap: "6px",
               padding: "7px 10px",
               borderRadius: "7px",
-              border: retiroLocal ? "1px solid #BBF7D0" : "1px solid transparent",
-              background: retiroLocal ? "#F0FDF4" : "transparent",
-              color: retiroLocal ? "#166534" : "#52525B",
+              border: retiroLocal ? "1px solid var(--cb-bbf7d0, #BBF7D0)" : "1px solid transparent",
+              background: retiroLocal ? "var(--cf-f0fdf4, #F0FDF4)" : "transparent",
+              color: retiroLocal ? "var(--ct-166534, #166534)" : "var(--ct-52525b, #52525B)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -409,12 +409,12 @@ export function SelectorUbicacionEntrega({
       {retiroLocal ? (
         <div
           style={{
-            background: "#F0FDF4",
-            border: "1px solid #BBF7D0",
+            background: "var(--cf-f0fdf4, #F0FDF4)",
+            border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
             borderRadius: "10px",
             padding: "10px 12px",
             fontSize: "0.8rem",
-            color: "#166534",
+            color: "var(--ct-166534, #166534)",
             display: "flex",
             flexDirection: "column",
             gap: "4px",
@@ -431,7 +431,7 @@ export function SelectorUbicacionEntrega({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "4px",
-                  color: "#15803D",
+                  color: "var(--ct-15803d, #15803D)",
                   fontWeight: 700,
                   fontSize: "0.76rem",
                   textDecoration: "underline",
@@ -443,7 +443,7 @@ export function SelectorUbicacionEntrega({
             )}
           </div>
           {config.origenDireccion && (
-            <span style={{ fontSize: "0.75rem", color: "#15803D" }}>{config.origenDireccion}</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--ct-15803d, #15803D)" }}>{config.origenDireccion}</span>
           )}
         </div>
       ) : (
@@ -452,8 +452,8 @@ export function SelectorUbicacionEntrega({
           {esClienteRegistradoEfectivo || config.envioGratisSoloRegistrados === false ? (
             <div
               style={{
-                background: "#F0FDF4",
-                border: "1px solid #BBF7D0",
+                background: "var(--cf-f0fdf4, #F0FDF4)",
+                border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
                 borderRadius: "9px",
                 padding: "7px 10px",
                 display: "flex",
@@ -476,7 +476,7 @@ export function SelectorUbicacionEntrega({
                     gap: "5px",
                     fontSize: "0.78rem",
                     fontWeight: 800,
-                    color: "#166534",
+                    color: "var(--ct-166534, #166534)",
                   }}
                 >
                   <CheckCircle2 size={14} color="#16A34A" style={{ flexShrink: 0 }} />
@@ -486,8 +486,8 @@ export function SelectorUbicacionEntrega({
                   style={{
                     fontSize: "0.69rem",
                     fontWeight: 700,
-                    color: "#15803D",
-                    background: "#DCFCE7",
+                    color: "var(--ct-15803d, #15803D)",
+                    background: "var(--cf-dcfce7, #DCFCE7)",
                     padding: "1px 7px",
                     borderRadius: "999px",
                     whiteSpace: "nowrap",
@@ -496,15 +496,15 @@ export function SelectorUbicacionEntrega({
                   $0.00
                 </span>
               </div>
-              <span style={{ fontSize: "0.69rem", color: "#15803D", lineHeight: 1.3 }}>
+              <span style={{ fontSize: "0.69rem", color: "var(--ct-15803d, #15803D)", lineHeight: 1.3 }}>
                 El área en verde en el mapa es gratuita.
               </span>
             </div>
           ) : (
             <div
               style={{
-                background: "#FFFBEB",
-                border: "1px solid #FDE68A",
+                background: "var(--cf-fffbeb, #FFFBEB)",
+                border: "1px solid var(--cb-fde68a, #FDE68A)",
                 borderRadius: "9px",
                 padding: "7px 10px",
                 display: "flex",
@@ -528,7 +528,7 @@ export function SelectorUbicacionEntrega({
                     gap: "5px",
                     fontSize: "0.76rem",
                     fontWeight: 800,
-                    color: "#92400E",
+                    color: "var(--ct-92400e, #92400E)",
                   }}
                 >
                   <AlertTriangle size={13} color="#D97706" style={{ flexShrink: 0 }} />
@@ -576,9 +576,9 @@ export function SelectorUbicacionEntrega({
                       alignItems: "center",
                       padding: "3px 9px",
                       borderRadius: "999px",
-                      border: "1px solid #D6D3D1",
-                      background: "#FFFFFF",
-                      color: "#1C1917",
+                      border: "1px solid var(--cb-d6d3d1, #D6D3D1)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-1c1917, #1C1917)",
                       fontSize: "0.69rem",
                       fontWeight: 700,
                       textDecoration: "none",
@@ -588,7 +588,7 @@ export function SelectorUbicacionEntrega({
                   </a>
                 </div>
               </div>
-              <span style={{ fontSize: "0.68rem", color: "#78350F", lineHeight: 1.3 }}>
+              <span style={{ fontSize: "0.68rem", color: "var(--ct-78350f, #78350F)", lineHeight: 1.3 }}>
                 El área en verde en el mapa es gratuita ($0.00) para clientes registrados.
               </span>
             </div>
@@ -604,7 +604,7 @@ export function SelectorUbicacionEntrega({
                   left: "10px",
                   top: "50%",
                   transform: "translateY(-50%)",
-                  color: "#71717A",
+                  color: "var(--ct-71717a, #71717A)",
                   pointerEvents: "none",
                 }}
               />
@@ -658,11 +658,11 @@ export function SelectorUbicacionEntrega({
                   width: "100%",
                   padding: "8px 10px 8px 30px",
                   borderRadius: "8px",
-                  border: "1px solid #D4D4D8",
+                  border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
                   fontSize: "0.8rem",
-                  color: "#18181B",
+                  color: "var(--ct-18181b, #18181B)",
                   boxSizing: "border-box",
-                  background: "#FAFAFA",
+                  background: "var(--cf-fafafa, #FAFAFA)",
                 }}
               />
             </div>
@@ -679,7 +679,7 @@ export function SelectorUbicacionEntrega({
                 gap: "5px",
                 padding: "0 11px",
                 borderRadius: "8px",
-                border: "1px solid #18181B",
+                border: "1px solid var(--cb-18181b, #18181B)",
                 background: "#18181B",
                 color: "#FFFFFF",
                 fontSize: "0.75rem",
@@ -713,8 +713,8 @@ export function SelectorUbicacionEntrega({
                 padding: "6px 12px",
                 borderRadius: "999px",
                 border: "1px solid #16A34A",
-                background: "#F0FDF4",
-                color: "#166534",
+                background: "var(--cf-f0fdf4, #F0FDF4)",
+                color: "var(--ct-166534, #166534)",
                 fontSize: "0.74rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -735,9 +735,9 @@ export function SelectorUbicacionEntrega({
                 gap: "5px",
                 padding: "6px 12px",
                 borderRadius: "999px",
-                border: "1px solid #D4D4D8",
-                background: "#FFFFFF",
-                color: "#27272A",
+                border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-27272a, #27272A)",
                 fontSize: "0.74rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -756,7 +756,7 @@ export function SelectorUbicacionEntrega({
                 flexDirection: "column",
                 gap: "8px",
                 paddingTop: "4px",
-                borderTop: "1px solid #F4F4F5",
+                borderTop: "1px solid var(--cb-f4f4f5, #F4F4F5)",
               }}
             >
               <div style={{ display: "flex", gap: "6px" }}>
@@ -775,7 +775,7 @@ export function SelectorUbicacionEntrega({
                     flex: 1,
                     padding: "7px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D4D4D8",
+                    border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
                     fontSize: "0.78rem",
                     boxSizing: "border-box",
                   }}
@@ -792,9 +792,9 @@ export function SelectorUbicacionEntrega({
                     gap: "4px",
                     padding: "0 11px",
                     borderRadius: "8px",
-                    border: "1px solid #D4D4D8",
-                    background: "#F4F4F5",
-                    color: "#18181B",
+                    border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                    background: "var(--cf-f4f4f5, #F4F4F5)",
+                    color: "var(--ct-18181b, #18181B)",
                     fontSize: "0.75rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -813,10 +813,10 @@ export function SelectorUbicacionEntrega({
                     gap: "3px",
                     maxHeight: "145px",
                     overflowY: "auto",
-                    border: "1px solid #E4E4E7",
+                    border: "1px solid var(--cb-e4e4e7, #E4E4E7)",
                     borderRadius: "8px",
                     padding: "4px",
-                    background: "#FAFAFA",
+                    background: "var(--cf-fafafa, #FAFAFA)",
                   }}
                 >
                   {sugerencias.map((sug, i) => (
@@ -840,14 +840,14 @@ export function SelectorUbicacionEntrega({
                         padding: "6px 8px",
                         borderRadius: "6px",
                         border: "none",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         cursor: "pointer",
                         fontSize: "0.75rem",
-                        color: "#18181B",
+                        color: "var(--ct-18181b, #18181B)",
                       }}
                     >
                       <strong>{sug.nombreCorto}</strong>
-                      <div style={{ fontSize: "0.69rem", color: "#71717A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <div style={{ fontSize: "0.69rem", color: "var(--ct-71717a, #71717A)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {sug.direccionCompleta}
                       </div>
                     </button>
@@ -872,7 +872,7 @@ export function SelectorUbicacionEntrega({
                   void ejecutarCotizacionPorCoordenadas(pt);
                 }}
               />
-              <span style={{ fontSize: "0.7rem", color: "#71717A" }}>
+              <span style={{ fontSize: "0.7rem", color: "var(--ct-71717a, #71717A)" }}>
                 Toca la calle exacta en el mapa o arrastra el pin rojo de <strong>Punto de entrega</strong> (se mantiene tu nivel de zoom).
               </span>
             </div>
@@ -882,12 +882,12 @@ export function SelectorUbicacionEntrega({
           {errorMsg && (
             <div
               style={{
-                background: "#FEF2F2",
-                border: "1px solid #FECACA",
+                background: "var(--cf-fef2f2, #FEF2F2)",
+                border: "1px solid var(--cb-fecaca, #FECACA)",
                 borderRadius: "8px",
                 padding: "8px 10px",
                 fontSize: "0.75rem",
-                color: "#B91C1C",
+                color: "var(--ct-b91c1c, #B91C1C)",
               }}
             >
               {errorMsg}
@@ -899,15 +899,15 @@ export function SelectorUbicacionEntrega({
             <div
               style={{
                 background: !cotizacion.dentroCobertura
-                  ? "#FFFBEB"
+                  ? "var(--cf-fffbeb, #FFFBEB)"
                   : cotizacion.costoTotalEnvio === 0
-                  ? "#F0FDF4"
-                  : "#F8FAFC",
+                  ? "var(--cf-f0fdf4, #F0FDF4)"
+                  : "var(--cf-f8fafc, #F8FAFC)",
                 border: !cotizacion.dentroCobertura
-                  ? "1px solid #FDE68A"
+                  ? "1px solid var(--cb-fde68a, #FDE68A)"
                   : cotizacion.costoTotalEnvio === 0
-                  ? "1px solid #BBF7D0"
-                  : "1px solid #CBD5E1",
+                  ? "1px solid var(--cb-bbf7d0, #BBF7D0)"
+                  : "1px solid var(--cb-cbd5e1, #CBD5E1)",
                 borderRadius: "10px",
                 padding: "9px 11px",
                 display: "flex",
@@ -931,10 +931,10 @@ export function SelectorUbicacionEntrega({
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     color: !cotizacion.dentroCobertura
-                      ? "#92400E"
+                      ? "var(--ct-92400e, #92400E)"
                       : cotizacion.costoTotalEnvio === 0
-                      ? "#166534"
-                      : "#0F172A",
+                      ? "var(--ct-166534, #166534)"
+                      : "var(--ct-0f172a, #0F172A)",
                   }}
                 >
                   {!cotizacion.dentroCobertura ? (
@@ -959,8 +959,8 @@ export function SelectorUbicacionEntrega({
                     fontSize: "0.86rem",
                     color:
                       cotizacion.costoTotalEnvio === 0 && cotizacion.dentroCobertura
-                        ? "#15803D"
-                        : "#0F172A",
+                        ? "var(--ct-15803d, #15803D)"
+                        : "var(--ct-0f172a, #0F172A)",
                   }}
                 >
                   {cotizacion.dentroCobertura
@@ -975,7 +975,7 @@ export function SelectorUbicacionEntrega({
                 <div
                   style={{
                     fontSize: "0.72rem",
-                    color: "#475569",
+                    color: "var(--ct-475569, #475569)",
                     lineHeight: 1.4,
                     marginTop: "3px",
                     display: "flex",
@@ -986,7 +986,7 @@ export function SelectorUbicacionEntrega({
                   {cotizacion.detalleDireccion?.resumenDireccion && (
                     <div>📍 {cotizacion.detalleDireccion.resumenDireccion}</div>
                   )}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px", fontSize: "0.69rem", color: "#64748B" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px", fontSize: "0.69rem", color: "var(--ct-64748b, #64748B)" }}>
                     {cotizacion.detalleDireccion?.parroquia && (
                       <span>
                         <strong>Parroquia:</strong> {cotizacion.detalleDireccion.parroquia}
@@ -1019,15 +1019,15 @@ export function SelectorUbicacionEntrega({
                       marginTop: "5px",
                       padding: "6px 9px",
                       borderRadius: "8px",
-                      background: "#ECFDF5",
-                      border: "1px solid #A7F3D0",
+                      background: "var(--cf-ecfdf5, #ECFDF5)",
+                      border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       flexWrap: "wrap",
                       gap: "6px",
                       fontSize: "0.72rem",
-                      color: "#065F46",
+                      color: "var(--ct-065f46, #065F46)",
                     }}
                   >
                     <span>
@@ -1043,7 +1043,7 @@ export function SelectorUbicacionEntrega({
                       title="Registrarme ahora y aplicar envío de cliente registrado"
                       aria-label="Activar Envío Gratis"
                       style={{
-                        color: "#047857",
+                        color: "var(--ct-047857, #047857)",
                         fontWeight: 800,
                         textDecoration: "underline",
                         whiteSpace: "nowrap",
@@ -1061,9 +1061,9 @@ export function SelectorUbicacionEntrega({
                     marginTop: "6px",
                     padding: "7px 9px",
                     borderRadius: "8px",
-                    background: "#EFF6FF",
-                    border: "1px solid #BFDBFE",
-                    color: "#1E3A8A",
+                    background: "var(--cf-eff6ff, #EFF6FF)",
+                    border: "1px solid var(--cb-bfdbfe, #BFDBFE)",
+                    color: "var(--ct-1e3a8a, #1E3A8A)",
                     fontSize: "0.71rem",
                     lineHeight: 1.45,
                     display: "flex",
@@ -1092,7 +1092,7 @@ export function SelectorUbicacionEntrega({
                     )}
                   </div>
                   {cotizacion.formulaDetalle && (
-                    <div style={{ color: "#1E40AF", fontSize: "0.69rem" }}>
+                    <div style={{ color: "var(--ct-1e40af, #1E40AF)", fontSize: "0.69rem" }}>
                       <strong>Detalle cálculo:</strong> {cotizacion.formulaDetalle}
                     </div>
                   )}
@@ -1100,7 +1100,7 @@ export function SelectorUbicacionEntrega({
               )}
 
               {!cotizacion.dentroCobertura && (
-                <span style={{ fontSize: "0.72rem", color: "#92400E", lineHeight: 1.35 }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--ct-92400e, #92400E)", lineHeight: 1.35 }}>
                   Ubicación fuera de nuestra cobertura automática. Coordina entrega especial por chat o elige retiro en tienda.
                 </span>
               )}
@@ -1119,7 +1119,7 @@ export function SelectorUbicacionEntrega({
             position: "fixed",
             inset: 0,
             zIndex: 9999,
-            backgroundColor: "#FFFFFF",
+            backgroundColor: "var(--cf-ffffff, #FFFFFF)",
             display: "flex",
             flexDirection: "column",
             width: "100vw",
@@ -1135,8 +1135,8 @@ export function SelectorUbicacionEntrega({
               alignItems: "center",
               justifyContent: "space-between",
               padding: "10px 16px",
-              background: "#F8FAFC",
-              borderBottom: "1px solid #E2E8F0",
+              background: "var(--cf-f8fafc, #F8FAFC)",
+              borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)",
               flexShrink: 0,
               gap: "12px",
             }}
@@ -1149,7 +1149,7 @@ export function SelectorUbicacionEntrega({
                     margin: 0,
                     fontSize: "0.95rem",
                     fontWeight: 800,
-                    color: "#0F172A",
+                    color: "var(--ct-0f172a, #0F172A)",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -1161,7 +1161,7 @@ export function SelectorUbicacionEntrega({
                   style={{
                     margin: 0,
                     fontSize: "0.72rem",
-                    color: "#64748B",
+                    color: "var(--ct-64748b, #64748B)",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -1178,8 +1178,8 @@ export function SelectorUbicacionEntrega({
               title="Cerrar mapa"
               aria-label="Cerrar mapa"
               style={{
-                border: "1px solid #CBD5E1",
-                background: "#FFFFFF",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 borderRadius: "999px",
                 width: "34px",
                 height: "34px",
@@ -1187,7 +1187,7 @@ export function SelectorUbicacionEntrega({
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                color: "#334155",
+                color: "var(--ct-334155, #334155)",
                 flexShrink: 0,
               }}
             >
@@ -1199,8 +1199,8 @@ export function SelectorUbicacionEntrega({
           <div
             style={{
               padding: "8px 16px",
-              background: "#FFFFFF",
-              borderBottom: "1px solid #E2E8F0",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)",
               display: "flex",
               flexWrap: "wrap",
               gap: "8px",
@@ -1225,7 +1225,7 @@ export function SelectorUbicacionEntrega({
                   flex: 1,
                   padding: "8px 12px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontSize: "0.82rem",
                   boxSizing: "border-box",
                 }}
@@ -1242,7 +1242,7 @@ export function SelectorUbicacionEntrega({
                   gap: "5px",
                   padding: "0 14px",
                   borderRadius: "8px",
-                  border: "1px solid #18181B",
+                  border: "1px solid var(--cb-18181b, #18181B)",
                   background: "#18181B",
                   color: "#FFFFFF",
                   fontSize: "0.78rem",
@@ -1269,8 +1269,8 @@ export function SelectorUbicacionEntrega({
                 padding: "8px 14px",
                 borderRadius: "8px",
                 border: "1px solid #0284C7",
-                background: "#F0F9FF",
-                color: "#0369A1",
+                background: "var(--cf-f0f9ff, #F0F9FF)",
+                color: "var(--ct-0369a1, #0369A1)",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: calculando ? "wait" : "pointer",
@@ -1295,10 +1295,10 @@ export function SelectorUbicacionEntrega({
                   gap: "3px",
                   maxHeight: "180px",
                   overflowY: "auto",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   borderRadius: "8px",
                   padding: "4px",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   boxShadow: "0 12px 28px rgba(0,0,0,0.18)",
                 }}
               >
@@ -1323,17 +1323,17 @@ export function SelectorUbicacionEntrega({
                       padding: "7px 10px",
                       borderRadius: "6px",
                       border: "none",
-                      background: "#FFFFFF",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       cursor: "pointer",
                       fontSize: "0.78rem",
-                      color: "#0F172A",
+                      color: "var(--ct-0f172a, #0F172A)",
                     }}
                   >
                     <strong>{sug.nombreCorto}</strong>
                     <div
                       style={{
                         fontSize: "0.7rem",
-                        color: "#64748B",
+                        color: "var(--ct-64748b, #64748B)",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -1350,11 +1350,11 @@ export function SelectorUbicacionEntrega({
           {errorMsg && (
             <div
               style={{
-                background: "#FEF2F2",
-                borderBottom: "1px solid #FECACA",
+                background: "var(--cf-fef2f2, #FEF2F2)",
+                borderBottom: "1px solid var(--cb-fecaca, #FECACA)",
                 padding: "7px 16px",
                 fontSize: "0.76rem",
-                color: "#B91C1C",
+                color: "var(--ct-b91c1c, #B91C1C)",
                 flexShrink: 0,
               }}
             >
@@ -1390,8 +1390,8 @@ export function SelectorUbicacionEntrega({
           <div
             style={{
               padding: "10px 16px",
-              background: "#FFFFFF",
-              borderTop: "1px solid #E2E8F0",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              borderTop: "1px solid var(--cb-e2e8f0, #E2E8F0)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -1409,10 +1409,10 @@ export function SelectorUbicacionEntrega({
                     fontWeight: 800,
                     color:
                       cotizacion?.costoTotalEnvio === 0 && cotizacion.dentroCobertura
-                        ? "#166534"
+                        ? "var(--ct-166534, #166534)"
                         : cotizacion?.dentroCobertura
-                        ? "#0F172A"
-                        : "#92400E",
+                        ? "var(--ct-0f172a, #0F172A)"
+                        : "var(--ct-92400e, #92400E)",
                   }}
                 >
                   {calculando
@@ -1427,7 +1427,7 @@ export function SelectorUbicacionEntrega({
                 </span>
 
                 {cotizacion?.detalleDireccion?.parroquia && (
-                  <span style={{ fontSize: "0.74rem", color: "#64748B" }}>
+                  <span style={{ fontSize: "0.74rem", color: "var(--ct-64748b, #64748B)" }}>
                     · {cotizacion.detalleDireccion.parroquia}
                     {cotizacion.detalleDireccion.sectorBarrio ? `, ${cotizacion.detalleDireccion.sectorBarrio}` : ""}
                   </span>
@@ -1437,8 +1437,8 @@ export function SelectorUbicacionEntrega({
                     style={{
                       fontSize: "0.71rem",
                       fontWeight: 700,
-                      color: "#1E3A8A",
-                      background: "#DBEAFE",
+                      color: "var(--ct-1e3a8a, #1E3A8A)",
+                      background: "var(--cf-dbeafe, #DBEAFE)",
                       padding: "2px 7px",
                       borderRadius: "999px",
                     }}
@@ -1450,15 +1450,15 @@ export function SelectorUbicacionEntrega({
               </div>
 
               {cotizacion?.detalleDireccion?.callePrincipal ? (
-                <span style={{ fontSize: "0.72rem", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--ct-475569, #475569)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   📍 {cotizacion.detalleDireccion.callePrincipal}
                 </span>
               ) : cotizacion?.detalleDireccion?.resumenDireccion ? (
-                <span style={{ fontSize: "0.72rem", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--ct-475569, #475569)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   📍 {cotizacion.detalleDireccion.resumenDireccion}
                 </span>
               ) : coordenadas ? (
-                <span style={{ fontSize: "0.72rem", color: "#475569" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--ct-475569, #475569)" }}>
                   GPS: {coordenadas.lat.toFixed(6)}, {coordenadas.lng.toFixed(6)}
                 </span>
               ) : null}
@@ -1477,9 +1477,9 @@ export function SelectorUbicacionEntrega({
                     gap: "5px",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F8FAFC",
-                    color: "#0F172A",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: "var(--cf-f8fafc, #F8FAFC)",
+                    color: "var(--ct-0f172a, #0F172A)",
                     fontWeight: 700,
                     fontSize: "0.78rem",
                     cursor: "pointer",

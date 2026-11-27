@@ -102,7 +102,7 @@ export function CarruselProductosCliente({
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
-              color: "#4F46E5",
+              color: "var(--ct-4f46e5, #4F46E5)",
               fontSize: "0.7rem",
               fontWeight: 800,
               textTransform: "uppercase",
@@ -118,7 +118,7 @@ export function CarruselProductosCliente({
               margin: 0,
               fontSize: "1.15rem",
               fontWeight: 800,
-              color: "#0F172A",
+              color: "var(--ct-0f172a, #0F172A)",
               letterSpacing: "-0.01em",
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -138,9 +138,9 @@ export function CarruselProductosCliente({
               width: "32px",
               height: "32px",
               borderRadius: "8px",
-              border: "1px solid #E2E8F0",
-              background: "#FFFFFF",
-              color: "#334155",
+              border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-334155, #334155)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -157,9 +157,9 @@ export function CarruselProductosCliente({
               width: "32px",
               height: "32px",
               borderRadius: "8px",
-              border: "1px solid #E2E8F0",
-              background: "#FFFFFF",
-              color: "#334155",
+              border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-334155, #334155)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -173,7 +173,7 @@ export function CarruselProductosCliente({
             style={{
               fontSize: "0.78rem",
               fontWeight: 700,
-              color: "#4F46E5",
+              color: "var(--ct-4f46e5, #4F46E5)",
               textDecoration: "none",
               marginLeft: "4px",
               whiteSpace: "nowrap",
@@ -217,9 +217,9 @@ export function CarruselProductosCliente({
                 width: "260px",
                 maxWidth: "80vw",
                 scrollSnapAlign: "start",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 borderRadius: "16px",
-                border: esSuscripcion ? "2px solid #818CF8" : "1px solid #E2E8F0",
+                border: esSuscripcion ? "2px solid #818CF8" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
                 boxShadow: esSuscripcion
                   ? "0 4px 14px rgba(99, 102, 241, 0.15)"
                   : "0 2px 8px rgba(15, 23, 42, 0.04)",
@@ -300,7 +300,7 @@ export function CarruselProductosCliente({
                       margin: "0 0 4px",
                       fontSize: "0.95rem",
                       fontWeight: 800,
-                      color: "#0F172A",
+                      color: "var(--ct-0f172a, #0F172A)",
                       lineHeight: 1.3,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
@@ -319,7 +319,7 @@ export function CarruselProductosCliente({
                           key={bIdx}
                           style={{
                             fontSize: "0.72rem",
-                            color: "#475569",
+                            color: "var(--ct-475569, #475569)",
                             display: "flex",
                             alignItems: "flex-start",
                             gap: "5px",
@@ -339,7 +339,7 @@ export function CarruselProductosCliente({
                 {/* PRECIO Y BOTÓN DE COMPRA */}
                 <div
                   style={{
-                    borderTop: "1px solid #F1F5F9",
+                    borderTop: "1px solid var(--cb-f1f5f9, #F1F5F9)",
                     paddingTop: "10px",
                     marginTop: "6px",
                     display: "flex",
@@ -350,14 +350,14 @@ export function CarruselProductosCliente({
                 >
                   <div>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
-                      <span style={{ fontSize: "1.1rem", fontWeight: 900, color: "#0F172A" }}>
+                      <span style={{ fontSize: "1.1rem", fontWeight: 900, color: "var(--ct-0f172a, #0F172A)" }}>
                         ${varPrincipal.precio_total.toFixed(2)}
                       </span>
-                      <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#64748B" }}>
+                      <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--ct-64748b, #64748B)" }}>
                         {esSuscripcion ? "/mes" : ""}
                       </span>
                     </div>
-                    <span style={{ fontSize: "0.65rem", color: "#94A3B8", fontWeight: 600 }}>
+                    <span style={{ fontSize: "0.65rem", color: "var(--ct-94a3b8, #94A3B8)", fontWeight: 600 }}>
                       IVA 15% incl.
                     </span>
                   </div>

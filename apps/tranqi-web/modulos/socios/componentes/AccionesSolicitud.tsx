@@ -34,7 +34,7 @@ export function AccionesSolicitud({ solicitudId, estadoActual }: { solicitudId: 
   }
 
   return (
-    <div style={{ background: "#FFFFFF", padding: "20px", borderRadius: "12px", border: "1.5px solid var(--linea)", marginTop: "16px" }}>
+    <div style={{ background: "var(--cf-ffffff, #FFFFFF)", padding: "20px", borderRadius: "12px", border: "1.5px solid var(--linea)", marginTop: "16px" }}>
       <h3 style={{ margin: "0 0 10px 0", fontSize: "1.05rem", color: "var(--texto)" }}>
         Emitir Decisión de Acreditación {estadoActual && estadoActual === "rechazada" ? "(Re-evaluación)" : ""}
       </h3>

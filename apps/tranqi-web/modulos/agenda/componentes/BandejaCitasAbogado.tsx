@@ -467,7 +467,7 @@ export default function BandejaCitasAbogado({
                 padding: "12px 14px",
                 borderRadius: "12px",
                 border: activo ? "2px solid #0E6648" : "1px solid var(--linea)",
-                background: activo ? "var(--exito-diluido)" : "#FFFFFF",
+                background: activo ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
@@ -545,7 +545,7 @@ export default function BandejaCitasAbogado({
               style={{
                 background: "none",
                 border: "none",
-                color: "#0E6648",
+                color: "var(--ct-0e6648, #0E6648)",
                 fontWeight: 800,
                 textDecoration: "underline",
                 cursor: "pointer",
@@ -702,7 +702,7 @@ export default function BandejaCitasAbogado({
                           padding: "5px 10px",
                           borderRadius: "8px",
                           border: "1px solid var(--texto-tenue)",
-                          background: logAbierto ? "var(--texto-2)" : "#FFFFFF",
+                          background: logAbierto ? "var(--texto-2)" : "var(--cf-ffffff, #FFFFFF)",
                           color: logAbierto ? "#FFFFFF" : "var(--texto-2)",
                           fontWeight: 800,
                           fontSize: "0.75rem",
@@ -771,7 +771,7 @@ export default function BandejaCitasAbogado({
               <div
                 key={c.cit_id}
                 style={{
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   borderRadius: "14px",
                   border:
                     estadoAceptacion === "pendiente"
@@ -1098,7 +1098,7 @@ export default function BandejaCitasAbogado({
                         style={{
                           fontSize: "0.74rem",
                           fontWeight: 800,
-                          color: "#5000BA",
+                          color: "var(--ct-5000ba, #5000BA)",
                           background: "var(--acento-diluido)",
                           padding: "2px 8px",
                           borderRadius: "6px",
@@ -1170,7 +1170,7 @@ export default function BandejaCitasAbogado({
                               target="_blank"
                               rel="noreferrer"
                               style={{
-                                color: "#5000BA",
+                                color: "var(--ct-5000ba, #5000BA)",
                                 fontWeight: 800,
                                 textDecoration: "underline",
                                 wordBreak: "break-all",
@@ -1301,8 +1301,8 @@ export default function BandejaCitasAbogado({
                               padding: "6px 10px",
                               borderRadius: "8px",
                               border: "1px solid var(--acento-linea)",
-                              background: "#FFFFFF",
-                              color: "#5000BA",
+                              background: "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-5000ba, #5000BA)",
                               fontSize: "0.75rem",
                               fontWeight: 800,
                               cursor: "pointer",
@@ -1363,7 +1363,7 @@ export default function BandejaCitasAbogado({
                             borderRadius: "8px",
                             border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.82rem",
-                            background: "#FFFFFF",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             width: "100%",
                           }}
                         />
@@ -1383,7 +1383,7 @@ export default function BandejaCitasAbogado({
                             borderRadius: "8px",
                             border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.8rem",
-                            background: "#FFFFFF",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             width: "100%",
                           }}
                         />
@@ -1491,7 +1491,7 @@ export default function BandejaCitasAbogado({
                           borderRadius: "8px",
                           border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.83rem",
-                          background: "#FFFFFF",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                         }}
                       />
 
@@ -1629,8 +1629,8 @@ export default function BandejaCitasAbogado({
                             padding: "8px 12px",
                             borderRadius: "8px",
                             border: "1px solid var(--linea-fuerte)",
-                            background: reagendando === c.cit_id ? "var(--acento-diluido)" : "#FFFFFF",
-                            color: reagendando === c.cit_id ? "#5000BA" : "var(--texto-2)",
+                            background: reagendando === c.cit_id ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
+                            color: reagendando === c.cit_id ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)",
                             fontWeight: 800,
                             fontSize: "0.78rem",
                             cursor: "pointer",
@@ -1693,7 +1693,7 @@ export default function BandejaCitasAbogado({
                         padding: "8px 12px",
                         borderRadius: "8px",
                         border: "1px solid var(--linea-fuerte)",
-                        background: logAbierto ? "var(--texto)" : "#FFFFFF",
+                        background: logAbierto ? "var(--texto)" : "var(--cf-ffffff, #FFFFFF)",
                         color: logAbierto ? "#FFFFFF" : "var(--texto-2)",
                         fontWeight: 800,
                         fontSize: "0.78rem",
@@ -1736,8 +1736,8 @@ export default function BandejaCitasAbogado({
                               padding: "8px 11px",
                               borderRadius: "8px",
                               border: "1px solid var(--acento-linea)",
-                              background: "#FFFFFF",
-                              color: "#5000BA",
+                              background: "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-5000ba, #5000BA)",
                               fontWeight: 700,
                               fontSize: "0.76rem",
                               textDecoration: "none",
@@ -1757,7 +1757,7 @@ export default function BandejaCitasAbogado({
                               padding: "8px 11px",
                               borderRadius: "8px",
                               border: "1px solid var(--linea-fuerte)",
-                              background: "#FFFFFF",
+                              background: "var(--cf-ffffff, #FFFFFF)",
                               color: "var(--texto-2)",
                               fontWeight: 700,
                               fontSize: "0.76rem",
@@ -1821,7 +1821,7 @@ export default function BandejaCitasAbogado({
                         gap: "6px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.84rem", color: "#4C1D95" }}>
+                      <strong style={{ fontSize: "0.84rem", color: "var(--ct-4c1d95, #4C1D95)" }}>
                         🕒 Cambiar Fecha y Hora de la Reunión (se registra en el Tracking y actualiza agendas por correo)
                       </strong>
                       <span
@@ -1875,7 +1875,7 @@ export default function BandejaCitasAbogado({
                             padding: "8px 10px",
                             borderRadius: "8px",
                             border: "1px solid var(--linea-fuerte)",
-                            background: "#FFFFFF",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             fontSize: "0.83rem",
                           }}
                         />
@@ -1912,7 +1912,7 @@ export default function BandejaCitasAbogado({
                             padding: "8px 10px",
                             borderRadius: "8px",
                             border: "1px solid var(--linea-fuerte)",
-                            background: "#FFFFFF",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             fontSize: "0.83rem",
                           }}
                         />
@@ -2011,7 +2011,7 @@ export default function BandejaCitasAbogado({
                           padding: "8px 12px",
                           borderRadius: "8px",
                           border: "1px solid var(--linea-fuerte)",
-                          background: "#FFFFFF",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           color: "var(--texto-2)",
                           fontSize: "0.78rem",
                           fontWeight: 700,
@@ -2247,7 +2247,7 @@ function PanelGestionReunionYExpediente({
           background: "var(--acento-diluido)",
           border: "1px solid var(--acento-linea)",
           fontSize: "0.8rem",
-          color: "#4C1D95",
+          color: "var(--ct-4c1d95, #4C1D95)",
         }}
       >
         <strong>🏛️ Modelo de Expediente del Cliente (Estándar LegalTech):</strong> Esta{" "}
@@ -2297,7 +2297,7 @@ function PanelGestionReunionYExpediente({
             borderRadius: "8px",
             border: "1px solid var(--linea-fuerte)",
             fontSize: "0.85rem",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
           }}
         />
       </div>
@@ -2337,7 +2337,7 @@ function PanelGestionReunionYExpediente({
                   gap: "8px",
                   padding: "7px 10px",
                   borderRadius: "8px",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   border: "1px solid var(--linea)",
                   fontSize: "0.82rem",
                 }}
@@ -2395,7 +2395,7 @@ function PanelGestionReunionYExpediente({
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
             }}
           />
           <input
@@ -2408,7 +2408,7 @@ function PanelGestionReunionYExpediente({
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
             }}
           />
           <select
@@ -2421,7 +2421,7 @@ function PanelGestionReunionYExpediente({
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
             }}
           >
             <option value="ABOGADO">Abogado</option>
@@ -2438,7 +2438,7 @@ function PanelGestionReunionYExpediente({
               padding: "8px 12px",
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               fontWeight: 800,
               fontSize: "0.78rem",
               cursor: "pointer",
@@ -2485,7 +2485,7 @@ function PanelGestionReunionYExpediente({
                   gap: "8px",
                   padding: "8px 12px",
                   borderRadius: "8px",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   border: "1px solid var(--linea)",
                   fontSize: "0.82rem",
                 }}
@@ -2529,7 +2529,7 @@ function PanelGestionReunionYExpediente({
                         borderRadius: "6px",
                         background: "var(--acento-diluido)",
                         border: "1px solid var(--acento-linea)",
-                        color: "#5000BA",
+                        color: "var(--ct-5000ba, #5000BA)",
                         fontSize: "0.75rem",
                         fontWeight: 800,
                         textDecoration: "none",
@@ -2566,7 +2566,7 @@ function PanelGestionReunionYExpediente({
           style={{
             padding: "12px",
             borderRadius: "10px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1px dashed var(--texto-tenue)",
             display: "flex",
             flexDirection: "column",
@@ -2592,7 +2592,7 @@ function PanelGestionReunionYExpediente({
                 borderRadius: "8px",
                 border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
               }}
             >
               <option value="prueba">Prueba / Respaldo de consulta</option>
@@ -2614,7 +2614,7 @@ function PanelGestionReunionYExpediente({
                 borderRadius: "8px",
                 border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
               }}
             />
 
@@ -2669,7 +2669,7 @@ function PanelGestionReunionYExpediente({
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
             }}
           />
           <input
@@ -2682,7 +2682,7 @@ function PanelGestionReunionYExpediente({
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
             }}
           />
           <button
@@ -2695,7 +2695,7 @@ function PanelGestionReunionYExpediente({
               padding: "8px 12px",
               borderRadius: "8px",
               border: "1px solid var(--linea-fuerte)",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               fontWeight: 800,
               fontSize: "0.78rem",
               cursor: "pointer",
@@ -2711,7 +2711,7 @@ function PanelGestionReunionYExpediente({
         style={{
           padding: "12px",
           borderRadius: "10px",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           border: "1px solid var(--linea)",
           display: "flex",
           flexDirection: "column",
@@ -2731,8 +2731,8 @@ function PanelGestionReunionYExpediente({
               borderRadius: "8px",
               border:
                 accionCaso === "ninguna" ? "1.5px solid #5000BA" : "1px solid var(--linea-fuerte)",
-              background: accionCaso === "ninguna" ? "var(--acento-diluido)" : "#FFFFFF",
-              color: accionCaso === "ninguna" ? "#5000BA" : "var(--texto-2)",
+              background: accionCaso === "ninguna" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
+              color: accionCaso === "ninguna" ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -2753,8 +2753,8 @@ function PanelGestionReunionYExpediente({
                     ? "1.5px solid #5000BA"
                     : "1px solid var(--linea-fuerte)",
                 background:
-                  accionCaso === "vincular_existente" ? "var(--acento-diluido)" : "#FFFFFF",
-                color: accionCaso === "vincular_existente" ? "#5000BA" : "var(--texto-2)",
+                  accionCaso === "vincular_existente" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
+                color: accionCaso === "vincular_existente" ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -2774,7 +2774,7 @@ function PanelGestionReunionYExpediente({
                 accionCaso === "crear_nuevo"
                   ? "1.5px solid #0E6648"
                   : "1px solid var(--linea-fuerte)",
-              background: accionCaso === "crear_nuevo" ? "var(--exito-diluido)" : "#FFFFFF",
+              background: accionCaso === "crear_nuevo" ? "var(--exito-diluido)" : "var(--cf-ffffff, #FFFFFF)",
               color: accionCaso === "crear_nuevo" ? "var(--exito-texto)" : "var(--texto-2)",
               fontSize: "0.78rem",
               fontWeight: 700,
@@ -2907,7 +2907,7 @@ function PanelGestionReunionYExpediente({
                   borderRadius: "8px",
                   border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.8rem",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                 }}
               >
                 <option value="GESTION">⚙️ Gestión procesal</option>
@@ -2925,7 +2925,7 @@ function PanelGestionReunionYExpediente({
                   borderRadius: "8px",
                   border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.8rem",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                 }}
               />
               <input
@@ -2938,7 +2938,7 @@ function PanelGestionReunionYExpediente({
                   borderRadius: "8px",
                   border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.8rem",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                 }}
               />
             </div>
@@ -2952,7 +2952,7 @@ function PanelGestionReunionYExpediente({
                 borderRadius: "8px",
                 border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.8rem",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
               }}
             />
 
@@ -2985,7 +2985,7 @@ function PanelGestionReunionYExpediente({
                       style={{
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         borderLeft: "3px solid #5000BA",
                         fontSize: "0.78rem",
                       }}

@@ -85,10 +85,10 @@ function ContenidoInteriorTarjeta({
         position: "relative",
         width: "100%",
         height: "100%",
-        backgroundColor: esCondolencias ? "#F7F6F2" : "#E8E3D9",
+        backgroundColor: esCondolencias ? "var(--cf-f7f6f2, #F7F6F2)" : "var(--cf-e8e3d9, #E8E3D9)",
         backgroundImage: esCondolencias
-          ? `${TEXTURA_PAPEL_KRAFT_SVG}, linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(228,226,220,0.22) 100%)`
-          : `${TEXTURA_PAPEL_KRAFT_SVG}, radial-gradient(ellipse at center, rgba(255,255,255,0.34), rgba(180,170,154,0.14) 100%)`,
+          ? `${TEXTURA_PAPEL_KRAFT_SVG}, linear-gradient(180deg, rgba(255,255,255,0.45) 0%, var(--cf-e4e2dc-a220, rgba(228,226,220,0.22)) 100%)`
+          : `${TEXTURA_PAPEL_KRAFT_SVG}, radial-gradient(ellipse at center, rgba(255,255,255,0.34), var(--cf-b4aa9a-a140, rgba(180,170,154,0.14)) 100%)`,
         overflow: "hidden",
         boxSizing: "border-box",
       }}
@@ -101,7 +101,7 @@ function ContenidoInteriorTarjeta({
             style={{
               position: "absolute",
               inset: "4.6%",
-              border: "1px solid rgba(63, 63, 70, 0.24)",
+              border: "1px solid var(--cb-3f3f46-a240, rgba(63, 63, 70, 0.24))",
               pointerEvents: "none",
               zIndex: 3,
             }}
@@ -111,7 +111,7 @@ function ContenidoInteriorTarjeta({
             style={{
               position: "absolute",
               inset: "6.4%",
-              border: "1px solid rgba(63, 63, 70, 0.09)",
+              border: "1px solid var(--cb-3f3f46-a090, rgba(63, 63, 70, 0.09))",
               pointerEvents: "none",
               zIndex: 3,
             }}
@@ -275,7 +275,7 @@ function ContenidoInteriorTarjeta({
               fontStyle: blk.italica ? "italic" : "normal",
               textAlign: blk.alineacion || "center",
               lineHeight: 1.36,
-              color: blk.colorHex || "#18181B",
+              color: blk.colorHex || "var(--ct-18181b, #18181B)",
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
               zIndex: 6,
@@ -676,7 +676,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               borderRadius: "6px",
               boxShadow: "0 24px 52px -14px rgba(0, 0, 0, 0.78)",
               overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid var(--cb-ffffff-a120, rgba(255,255,255,0.12))",
             }}
           >
             <ContenidoInteriorTarjeta
@@ -792,7 +792,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     borderTopRightRadius: abierta ? "0px" : "6px",
                     boxShadow: abierta
                       ? "0 28px 55px -12px rgba(0, 0, 0, 0.65)"
-                      : "0 2px 0 #BDB6A8, 0 4px 0 #A8A092, 0 26px 52px -10px rgba(0, 0, 0, 0.72)",
+                      : "0 2px 0 var(--cb-bdb6a8, #BDB6A8), 0 4px 0 var(--cb-a8a092, #A8A092), 0 26px 52px -10px rgba(0, 0, 0, 0.72)",
                     transition: "box-shadow 1.45s ease",
                   }}
                 >
@@ -854,10 +854,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
                     pointerEvents: mostrandoReverso ? "auto" : "none",
-                    backgroundColor: "#DFD9CE",
-                    backgroundImage: `${TEXTURA_PAPEL_KRAFT_SVG}, linear-gradient(155deg, rgba(255,255,255,0.28) 0%, rgba(168,158,142,0.18) 100%)`,
+                    backgroundColor: "var(--cf-dfd9ce, #DFD9CE)",
+                    backgroundImage: `${TEXTURA_PAPEL_KRAFT_SVG}, linear-gradient(155deg, rgba(255,255,255,0.28) 0%, var(--cf-a89e8e-a180, rgba(168,158,142,0.18)) 100%)`,
                     borderRadius: "8px",
-                    border: "1px solid rgba(168, 160, 146, 0.68)",
+                    border: "1px solid var(--cb-a8a092-a680, rgba(168, 160, 146, 0.68))",
                     boxShadow: "0 24px 50px -12px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255,255,255,0.5)",
                     display: "flex",
                     flexDirection: "column",
@@ -867,7 +867,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     padding: "20px 24px",
                     boxSizing: "border-box",
                     textDecoration: "none",
-                    color: "#292524",
+                    color: "var(--ct-292524, #292524)",
                     overflow: "hidden",
                     cursor: "pointer",
                   }}
@@ -903,7 +903,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                       />
                     </div>
                   ) : (
-                    <div style={{ textAlign: "center", color: "#292524" }}>
+                    <div style={{ textAlign: "center", color: "var(--ct-292524, #292524)" }}>
                       <div
                         style={{
                           fontFamily: "'Playfair Display', Georgia, serif",
@@ -919,7 +919,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                           fontSize: "0.62rem",
                           letterSpacing: "0.26em",
                           textTransform: "uppercase",
-                          color: "#57534E",
+                          color: "var(--ct-57534e, #57534E)",
                           marginTop: "3px",
                         }}
                       >
@@ -934,7 +934,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                       fontSize: "0.82rem",
                       fontWeight: 500,
                       letterSpacing: "0.06em",
-                      color: "#44403C",
+                      color: "var(--ct-44403c, #44403C)",
                     }}
                   >
                     {esMargaritas ? "www.margaritasfloristeria.com" : "www.tinkay.net"}
@@ -1021,10 +1021,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     transform: "rotateX(180deg) translateZ(2px)",
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
-                    backgroundColor: "#DFD9CE",
-                    backgroundImage: `${TEXTURA_PAPEL_KRAFT_SVG}, linear-gradient(155deg, rgba(255,255,255,0.28) 0%, rgba(168,158,142,0.16) 100%)`,
+                    backgroundColor: "var(--cf-dfd9ce, #DFD9CE)",
+                    backgroundImage: `${TEXTURA_PAPEL_KRAFT_SVG}, linear-gradient(155deg, rgba(255,255,255,0.28) 0%, var(--cf-a89e8e-a160, rgba(168,158,142,0.16)) 100%)`,
                     borderRadius: "8px",
-                    border: "1px solid rgba(168, 160, 146, 0.65)",
+                    border: "1px solid var(--cb-a8a092-a650, rgba(168, 160, 146, 0.65))",
                     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
                     display: "flex",
                     flexDirection: "column",
@@ -1082,7 +1082,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                       />
                     </div>
                   ) : (
-                    <div style={{ textAlign: "center", color: "#292524" }}>
+                    <div style={{ textAlign: "center", color: "var(--ct-292524, #292524)" }}>
                       <div
                         style={{
                           fontFamily: "'Playfair Display', Georgia, serif",
@@ -1100,7 +1100,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                           letterSpacing: "0.28em",
                           textTransform: "uppercase",
                           marginTop: "6px",
-                          color: "#57534E",
+                          color: "var(--ct-57534e, #57534E)",
                           fontWeight: 600,
                         }}
                       >
@@ -1116,12 +1116,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                         fontFamily: "'Playfair Display', Georgia, serif",
                         fontSize: "0.94rem",
                         fontStyle: "italic",
-                        color: "#44403C",
+                        color: "var(--ct-44403c, #44403C)",
                         letterSpacing: "0.02em",
                       }}
                     >
                       Para:{" "}
-                      <strong style={{ fontStyle: "normal", color: "#1C1917" }}>
+                      <strong style={{ fontStyle: "normal", color: "var(--ct-1c1917, #1C1917)" }}>
                         {datosIniciales.destinatario}
                       </strong>
                     </div>
@@ -1134,7 +1134,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                         fontFamily: "'Playfair Display', Georgia, serif",
                         fontSize: "0.8rem",
                         fontStyle: "italic",
-                        color: "#57534E",
+                        color: "var(--ct-57534e, #57534E)",
                         letterSpacing: "0.02em",
                       }}
                     >
@@ -1150,7 +1150,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                       padding: "5px 14px",
                       borderRadius: "999px",
                       backgroundColor: "rgba(28, 25, 23, 0.08)",
-                      border: "1px solid rgba(68, 64, 60, 0.16)",
+                      border: "1px solid var(--cb-44403c-a160, rgba(68, 64, 60, 0.16))",
                       color: "#292524",
                       fontSize: "0.72rem",
                       fontWeight: 700,
@@ -1198,8 +1198,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "10px",
-                  backgroundColor: "rgba(245, 239, 230, 0.07)",
-                  border: "1px solid rgba(245, 239, 230, 0.14)",
+                  backgroundColor: "var(--cf-f5efe6-a070, rgba(245, 239, 230, 0.07))",
+                  border: "1px solid var(--cb-f5efe6-a140, rgba(245, 239, 230, 0.14))",
                   backdropFilter: "blur(8px)",
                   padding: "5px 13px 5px 6px",
                   borderRadius: "999px",
@@ -1212,8 +1212,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   aria-label={reproduciendo ? "Pausar" : "Reproducir"}
                   style={{
                     border: "none",
-                    background: "rgba(245, 239, 230, 0.9)",
-                    color: "#0F172A",
+                    background: "var(--cf-f5efe6-a900, rgba(245, 239, 230, 0.9))",
+                    color: "var(--ct-0f172a, #0F172A)",
                     width: "26px",
                     height: "26px",
                     borderRadius: "50%",
@@ -1280,7 +1280,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     width: "64px",
                     height: "1px",
                     background:
-                      "linear-gradient(to right, transparent, rgba(226, 217, 202, 0.4), transparent)",
+                      "linear-gradient(to right, transparent, var(--cf-e2d9ca-a400, rgba(226, 217, 202, 0.4)), transparent)",
                   }}
                 />
                 <div
@@ -1350,7 +1350,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 title="Cerrar y volver a doblar el díptico"
                 aria-label="Doblar tarjeta"
                 style={{
-                  border: "1px solid rgba(255,255,255,0.16)",
+                  border: "1px solid var(--cb-ffffff-a160, rgba(255,255,255,0.16))",
                   background: "rgba(255,255,255,0.06)",
                   color: "rgba(255,255,255,0.7)",
                   padding: "4px 10px",

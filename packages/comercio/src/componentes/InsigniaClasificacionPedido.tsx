@@ -144,9 +144,9 @@ export function BarraFiltroClasificacionPedido({
           gap: "6px",
           padding: compacta ? "5px 10px" : "6px 12px",
           borderRadius: "8px",
-          border: seleccionada === "TODOS" ? "1px solid #221E1B" : "1px solid #D5CFC4",
-          background: seleccionada === "TODOS" ? "#221E1B" : "#FFFFFF",
-          color: seleccionada === "TODOS" ? "#FAF8F5" : "#57524C",
+          border: seleccionada === "TODOS" ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+          background: seleccionada === "TODOS" ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
+          color: seleccionada === "TODOS" ? "#FAF8F5" : "var(--ct-57524c, #57524C)",
           fontSize: compacta ? "0.73rem" : "0.76rem",
           fontWeight: 600,
           cursor: "pointer",
@@ -158,8 +158,8 @@ export function BarraFiltroClasificacionPedido({
           style={{
             padding: "1px 6px",
             borderRadius: "999px",
-            background: seleccionada === "TODOS" ? "rgba(255,255,255,0.16)" : "#F6F4F0",
-            color: seleccionada === "TODOS" ? "#FAF8F5" : "#57524C",
+            background: seleccionada === "TODOS" ? "rgba(255,255,255,0.16)" : "var(--cf-f6f4f0, #F6F4F0)",
+            color: seleccionada === "TODOS" ? "#FAF8F5" : "var(--ct-57524c, #57524C)",
             fontSize: "0.68rem",
             fontWeight: 700,
           }}
@@ -206,7 +206,7 @@ export function BarraFiltroClasificacionPedido({
               style={{
                 padding: "1px 6px",
                 borderRadius: "999px",
-                background: activa ? "rgba(255,255,255,0.22)" : "#FFFFFF",
+                background: activa ? "rgba(255,255,255,0.22)" : "var(--cf-ffffff, #FFFFFF)",
                 color: activa ? "#FFFFFF" : cat.textoHex,
                 fontSize: "0.68rem",
                 fontWeight: 800,
@@ -268,7 +268,7 @@ export function ModalVisorEvidenciaEntrega({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
           maxWidth: "680px",
           width: "100%",
@@ -291,7 +291,7 @@ export function ModalVisorEvidenciaEntrega({
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <strong style={{ fontSize: "1rem", color: "#1F1C19" }}>{datos.codigo}</strong>
+              <strong style={{ fontSize: "1rem", color: "var(--ct-1f1c19, #1F1C19)" }}>{datos.codigo}</strong>
               <InsigniaClasificacionPedido clasificacion={datos.clasificacion} />
               <span
                 style={{
@@ -300,9 +300,9 @@ export function ModalVisorEvidenciaEntrega({
                   gap: "4px",
                   padding: "2.5px 8px",
                   borderRadius: "6px",
-                  background: "#F2F6F3",
-                  border: "1px solid #CEDDD3",
-                  color: "#2B4A36",
+                  background: "var(--cf-f2f6f3, #F2F6F3)",
+                  border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                  color: "var(--ct-2b4a36, #2B4A36)",
                   fontSize: "0.71rem",
                   fontWeight: 700,
                 }}
@@ -315,9 +315,9 @@ export function ModalVisorEvidenciaEntrega({
                   style={{
                     padding: "2.5px 8px",
                     borderRadius: "6px",
-                    background: "#F4F2EE",
-                    border: "1px solid #DDD8CE",
-                    color: "#3A3530",
+                    background: "var(--cf-f4f2ee, #F4F2EE)",
+                    border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
+                    color: "var(--ct-3a3530, #3A3530)",
                     fontSize: "0.71rem",
                     fontWeight: 700,
                   }}
@@ -326,7 +326,7 @@ export function ModalVisorEvidenciaEntrega({
                 </span>
               )}
             </div>
-            <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "#221E1B" }}>
+            <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "var(--ct-221e1b, #221E1B)" }}>
               {datos.productoResumen}
             </span>
           </div>
@@ -340,9 +340,9 @@ export function ModalVisorEvidenciaEntrega({
               width: "32px",
               height: "32px",
               borderRadius: "8px",
-              border: "1px solid #E6E2DA",
-              background: "#F8F7F4",
-              color: "#57524C",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              color: "var(--ct-57524c, #57524C)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -362,10 +362,10 @@ export function ModalVisorEvidenciaEntrega({
             gap: "10px",
             padding: "12px 14px",
             borderRadius: "12px",
-            background: "#F8F7F4",
-            border: "1px solid #E6E2DA",
+            background: "var(--cf-f8f7f4, #F8F7F4)",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             fontSize: "0.8rem",
-            color: "#57524C",
+            color: "var(--ct-57524c, #57524C)",
             lineHeight: 1.5,
           }}
         >
@@ -418,7 +418,7 @@ export function ModalVisorEvidenciaEntrega({
             style={{
               borderRadius: "12px",
               overflow: "hidden",
-              border: "1px solid #D5CFC4",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
               background: "#1F1C19",
               display: "flex",
               alignItems: "center",
@@ -442,10 +442,10 @@ export function ModalVisorEvidenciaEntrega({
             style={{
               padding: "24px",
               borderRadius: "12px",
-              border: "1px dashed #D5CFC4",
-              background: "#F8F7F4",
+              border: "1px dashed var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
               textAlign: "center",
-              color: "#847D74",
+              color: "var(--ct-847d74, #847D74)",
               fontSize: "0.82rem",
               display: "flex",
               flexDirection: "column",
@@ -481,9 +481,9 @@ export function ModalVisorEvidenciaEntrega({
                   gap: "6px",
                   padding: "8px 13px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#1F1C19",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   textDecoration: "none",
                   fontSize: "0.79rem",
                   fontWeight: 700,
@@ -531,9 +531,9 @@ export function ModalVisorEvidenciaEntrega({
             style={{
               padding: "8px 14px",
               borderRadius: "8px",
-              border: "1px solid #D5CFC4",
-              background: "#F8F7F4",
-              color: "#57524C",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
+              color: "var(--ct-57524c, #57524C)",
               fontSize: "0.79rem",
               fontWeight: 700,
               cursor: "pointer",

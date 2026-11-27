@@ -106,7 +106,7 @@ export function SeccionCoberturaCliente({
         width: "100%",
         maxWidth: "100%",
         boxSizing: "border-box",
-        border: "1px solid rgba(255, 255, 255, 0.15)",
+        border: "1px solid var(--cb-ffffff-a150, rgba(255, 255, 255, 0.15))",
         boxShadow: "0 10px 25px -5px rgba(49, 46, 129, 0.3)",
         marginBottom: "24px",
       }}
@@ -243,7 +243,7 @@ export function SeccionCoberturaCliente({
             onClick={() => setModalHistorialAbierto(true)}
             style={{
               background: "rgba(255, 255, 255, 0.15)",
-              border: "1px solid rgba(255, 255, 255, 0.25)",
+              border: "1px solid var(--cb-ffffff-a250, rgba(255, 255, 255, 0.25))",
               color: "#FFFFFF",
               borderRadius: "10px",
               padding: "8px 14px",
@@ -361,7 +361,7 @@ export function SeccionCoberturaCliente({
               key={idx}
               style={{
                 background: "rgba(15, 23, 42, 0.4)",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
+                border: "1px solid var(--cb-ffffff-a120, rgba(255, 255, 255, 0.12))",
                 borderRadius: "16px",
                 padding: "16px",
                 backdropFilter: "blur(8px)",
@@ -413,7 +413,7 @@ export function SeccionCoberturaCliente({
                 {/* Barra de progreso si tiene cupo numérico */}
                 {!esIlimitado && (
                   <div style={{ marginBottom: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#94A3B8", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--ct-94a3b8, #94A3B8)", marginBottom: "4px" }}>
                       <span>Usadas: {der.consumidos} de {der.incluidos}</span>
                       <span>{Math.round((der.restantes! / der.incluidos!) * 100)}% restante</span>
                     </div>
@@ -534,7 +534,7 @@ export function SeccionCoberturaCliente({
                     style={{
                       width: "100%",
                       background: "rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      border: "1px solid var(--cb-ffffff-a200, rgba(255, 255, 255, 0.2))",
                       color: "#FFFFFF",
                       padding: "8px 12px",
                       borderRadius: "10px",

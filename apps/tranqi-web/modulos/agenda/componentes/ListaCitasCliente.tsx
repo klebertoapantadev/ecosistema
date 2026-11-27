@@ -253,7 +253,7 @@ export default function ListaCitasCliente({
                         padding: "5px 10px",
                         borderRadius: "8px",
                         border: "1px solid var(--texto-tenue)",
-                        background: verTracking ? "var(--texto-2)" : "#FFFFFF",
+                        background: verTracking ? "var(--texto-2)" : "var(--cf-ffffff, #FFFFFF)",
                         color: verTracking ? "#FFFFFF" : "var(--texto-2)",
                         fontSize: "0.75rem",
                         fontWeight: 800,
@@ -334,7 +334,7 @@ export default function ListaCitasCliente({
                     background: "var(--acento-diluido)",
                     border: "1px solid var(--acento-linea)",
                     fontSize: "0.8rem",
-                    color: "#4C1D95",
+                    color: "var(--ct-4c1d95, #4C1D95)",
                   }}
                 >
                   <strong>📁 Expediente / Caso vinculado:</strong> {c.caso_vinculado.cas_titulo} (
@@ -393,7 +393,7 @@ export default function ListaCitasCliente({
                         target="_blank"
                         rel="noreferrer"
                         style={{
-                          color: "#5000BA",
+                          color: "var(--ct-5000ba, #5000BA)",
                           fontWeight: 800,
                           textDecoration: "underline",
                           wordBreak: "break-all",
@@ -450,7 +450,7 @@ export default function ListaCitasCliente({
                     padding: "7px 12px",
                     borderRadius: "8px",
                     border: "1px solid var(--linea-fuerte)",
-                    background: verTracking ? "var(--texto)" : "#FFFFFF",
+                    background: verTracking ? "var(--texto)" : "var(--cf-ffffff, #FFFFFF)",
                     color: verTracking ? "#FFFFFF" : "var(--texto-2)",
                     fontSize: "0.78rem",
                     fontWeight: 800,
@@ -513,8 +513,8 @@ export default function ListaCitasCliente({
                         padding: "7px 11px",
                         borderRadius: "8px",
                         border: "1px solid var(--acento-linea)",
-                        background: "#FFFFFF",
-                        color: "#5000BA",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-5000ba, #5000BA)",
                         fontSize: "0.76rem",
                         fontWeight: 700,
                         textDecoration: "none",
@@ -533,7 +533,7 @@ export default function ListaCitasCliente({
                         padding: "7px 11px",
                         borderRadius: "8px",
                         border: "1px solid var(--linea-fuerte)",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         color: "var(--texto-2)",
                         fontSize: "0.76rem",
                         fontWeight: 700,
@@ -571,7 +571,7 @@ export default function ListaCitasCliente({
                     gap: "8px",
                   }}
                 >
-                  <strong style={{ fontSize: "0.82rem", color: "#4C1D95" }}>
+                  <strong style={{ fontSize: "0.82rem", color: "var(--ct-4c1d95, #4C1D95)" }}>
                     🕒 Cambiar fecha y hora de tu consulta (habilitado hasta 1 hora antes · comentario obligatorio)
                   </strong>
                   <div
@@ -592,7 +592,7 @@ export default function ListaCitasCliente({
                         padding: "8px 10px",
                         borderRadius: "8px",
                         border: "1px solid var(--linea-fuerte)",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.82rem",
                       }}
                     />
@@ -609,7 +609,7 @@ export default function ListaCitasCliente({
                         padding: "8px 10px",
                         borderRadius: "8px",
                         border: "1px solid var(--linea-fuerte)",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         fontSize: "0.82rem",
                       }}
                     />

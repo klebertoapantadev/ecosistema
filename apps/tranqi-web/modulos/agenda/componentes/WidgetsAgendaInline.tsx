@@ -315,7 +315,7 @@ export function WidgetCitasProgramadasAbogadoInline({
                 background: "none",
                 border: "none",
                 padding: 0,
-                color: "#5000BA",
+                color: "var(--ct-5000ba, #5000BA)",
                 fontWeight: 800,
                 textDecoration: "underline",
                 cursor: "pointer",

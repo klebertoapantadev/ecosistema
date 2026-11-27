@@ -178,8 +178,8 @@ export function SimuladorChatAriaPanel({
   return (
     <div
       style={{
-        background: "#FFFFFF",
-        border: "1px solid #E6E2DA",
+        background: "var(--cf-ffffff, #FFFFFF)",
+        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
         borderRadius: "14px",
         overflow: "hidden",
         boxShadow: "0 4px 18px rgba(31, 28, 25, 0.05)",
@@ -191,8 +191,8 @@ export function SimuladorChatAriaPanel({
       <div
         style={{
           padding: compacto ? "14px 16px" : "16px 20px",
-          borderBottom: "1px solid #E6E2DA",
-          background: "#FAF8F5",
+          borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
+          background: "var(--cf-faf8f5, #FAF8F5)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -206,9 +206,9 @@ export function SimuladorChatAriaPanel({
               width: "38px",
               height: "38px",
               borderRadius: "10px",
-              background: "#F2F6F3",
-              border: "1px solid #CEDDD3",
-              color: "#2F4737",
+              background: "var(--cf-f2f6f3, #F2F6F3)",
+              border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+              color: "var(--ct-2f4737, #2F4737)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -218,10 +218,10 @@ export function SimuladorChatAriaPanel({
             <FlaskConical size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "0.98rem", fontWeight: 700, color: "#1F1C19" }}>
+            <div style={{ fontSize: "0.98rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Simulador de Chat IA ARIA (Pruebas sin clientes reales)
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--ct-847d74, #847D74)", marginTop: "2px" }}>
               Conversa varios turnos con Mía usando el catálogo real, entregas inmediatas y cotización GPS. Pulsa <strong>Reiniciar</strong> para probar desde cero.
             </div>
           </div>
@@ -232,9 +232,9 @@ export function SimuladorChatAriaPanel({
             style={{
               fontSize: "0.72rem",
               fontWeight: 700,
-              color: "#57524C",
-              background: "#F4F2EE",
-              border: "1px solid #E6E2DA",
+              color: "var(--ct-57524c, #57524C)",
+              background: "var(--cf-f4f2ee, #F4F2EE)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "999px",
               padding: "4px 10px",
               fontFamily: "monospace",
@@ -256,8 +256,8 @@ export function SimuladorChatAriaPanel({
               padding: "7px 12px",
               borderRadius: "9px",
               border: "1px solid #2F4737",
-              background: "#FFFFFF",
-              color: "#2F4737",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-2f4737, #2F4737)",
               fontSize: "0.8rem",
               fontWeight: 700,
               cursor: enviando ? "not-allowed" : "pointer",
@@ -274,8 +274,8 @@ export function SimuladorChatAriaPanel({
       <div
         style={{
           padding: "12px 16px",
-          borderBottom: "1px solid #EFECE6",
-          background: "#FFFFFF",
+          borderBottom: "1px solid var(--cb-efece6, #EFECE6)",
+          background: "var(--cf-ffffff, #FFFFFF)",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
@@ -284,7 +284,7 @@ export function SimuladorChatAriaPanel({
       >
         {/* Selector de canal */}
         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#57524C" }}>Canal:</span>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>Canal:</span>
           {CANALES_SIMULACION.map((c) => {
             const activo = canal === c.id;
             return (
@@ -301,9 +301,9 @@ export function SimuladorChatAriaPanel({
                   gap: "5px",
                   padding: "5px 10px",
                   borderRadius: "8px",
-                  border: activo ? "1px solid #1F1C19" : "1px solid #E6E2DA",
-                  background: activo ? "#1F1C19" : "#F8F7F4",
-                  color: activo ? "#FFFFFF" : "#57524C",
+                  border: activo ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  background: activo ? "#1F1C19" : "var(--cf-f8f7f4, #F8F7F4)",
+                  color: activo ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                   fontSize: "0.76rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -320,7 +320,7 @@ export function SimuladorChatAriaPanel({
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <label
             htmlFor={`sim-intencion-${negNorm}`}
-            style={{ fontSize: "0.75rem", fontWeight: 700, color: "#57524C" }}
+            style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}
           >
             Origen anuncio:
           </label>
@@ -332,10 +332,10 @@ export function SimuladorChatAriaPanel({
             style={{
               padding: "5px 9px",
               borderRadius: "8px",
-              border: "1px solid #D9D4CB",
-              background: "#FFFFFF",
+              border: "1px solid var(--cb-d9d4cb, #D9D4CB)",
+              background: "var(--cf-ffffff, #FFFFFF)",
               fontSize: "0.78rem",
-              color: "#1F1C19",
+              color: "var(--ct-1f1c19, #1F1C19)",
               fontFamily: "inherit",
             }}
           >
@@ -350,7 +350,7 @@ export function SimuladorChatAriaPanel({
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <label
             htmlFor={`sim-nombre-${negNorm}`}
-            style={{ fontSize: "0.75rem", fontWeight: 700, color: "#57524C" }}
+            style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}
           >
             Cliente:
           </label>
@@ -364,9 +364,9 @@ export function SimuladorChatAriaPanel({
               width: "125px",
               padding: "5px 8px",
               borderRadius: "8px",
-              border: "1px solid #D9D4CB",
+              border: "1px solid var(--cb-d9d4cb, #D9D4CB)",
               fontSize: "0.78rem",
-              color: "#1F1C19",
+              color: "var(--ct-1f1c19, #1F1C19)",
               fontFamily: "inherit",
             }}
           />
@@ -378,7 +378,7 @@ export function SimuladorChatAriaPanel({
             alignItems: "center",
             gap: "6px",
             fontSize: "0.75rem",
-            color: "#57524C",
+            color: "var(--ct-57524c, #57524C)",
             cursor: "pointer",
             marginLeft: "auto",
           }}
@@ -397,15 +397,15 @@ export function SimuladorChatAriaPanel({
       <div
         style={{
           padding: "9px 16px",
-          borderBottom: "1px solid #EFECE6",
-          background: "#FCFBF9",
+          borderBottom: "1px solid var(--cb-efece6, #EFECE6)",
+          background: "var(--cf-fcfbf9, #FCFBF9)",
           display: "flex",
           alignItems: "center",
           gap: "7px",
           flexWrap: "wrap",
         }}
       >
-        <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#847D74" }}>
+        <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "var(--ct-847d74, #847D74)" }}>
           Pruebas rápidas:
         </span>
         {PRUEBAS_RAPIDAS.map((p) => (
@@ -419,9 +419,9 @@ export function SimuladorChatAriaPanel({
             style={{
               padding: "4px 10px",
               borderRadius: "999px",
-              border: "1px solid #E2DDD3",
-              background: "#FFFFFF",
-              color: "#3A3530",
+              border: "1px solid var(--cb-e2ddd3, #E2DDD3)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-3a3530, #3A3530)",
               fontSize: "0.74rem",
               fontWeight: 600,
               cursor: enviando ? "not-allowed" : "pointer",
@@ -439,7 +439,7 @@ export function SimuladorChatAriaPanel({
           height: compacto ? "340px" : "440px",
           overflowY: "auto",
           padding: "16px",
-          background: "#F5F3EE",
+          background: "var(--cf-f5f3ee, #F5F3EE)",
           display: "flex",
           flexDirection: "column",
           gap: "12px",
@@ -451,18 +451,18 @@ export function SimuladorChatAriaPanel({
               margin: "auto",
               maxWidth: "460px",
               textAlign: "center",
-              background: "#FFFFFF",
-              border: "1px dashed #D6D0C4",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px dashed var(--cb-d6d0c4, #D6D0C4)",
               borderRadius: "12px",
               padding: "20px 18px",
-              color: "#57524C",
+              color: "var(--ct-57524c, #57524C)",
             }}
           >
-            <Sparkles size={22} style={{ color: "#2F4737", marginBottom: "8px" }} />
-            <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
+            <Sparkles size={22} style={{ color: "var(--ct-2f4737, #2F4737)", marginBottom: "8px" }} />
+            <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Sandbox listo para probar a Mía (ARIA)
             </div>
-            <div style={{ fontSize: "0.79rem", color: "#847D74", marginTop: "6px", lineHeight: 1.5 }}>
+            <div style={{ fontSize: "0.79rem", color: "var(--ct-847d74, #847D74)", marginTop: "6px", lineHeight: 1.5 }}>
               Escribe cualquier pregunta abajo o elige una prueba rápida. La memoria de conversación se mantiene turno a turno hasta que pulses <strong>Reiniciar Chat</strong>.
             </div>
           </div>
@@ -487,13 +487,13 @@ export function SimuladorChatAriaPanel({
                   maxWidth: "82%",
                   padding: "11px 14px",
                   borderRadius: esCliente ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                  background: esError ? "#FEF2F2" : esCliente ? "#1F1C19" : "#FFFFFF",
-                  color: esError ? "#991B1B" : esCliente ? "#FFFFFF" : "#1F1C19",
+                  background: esError ? "var(--cf-fef2f2, #FEF2F2)" : esCliente ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                  color: esError ? "var(--ct-991b1b, #991B1B)" : esCliente ? "#FFFFFF" : "var(--ct-1f1c19, #1F1C19)",
                   border: esError
-                    ? "1px solid #FECACA"
+                    ? "1px solid var(--cb-fecaca, #FECACA)"
                     : esCliente
                       ? "none"
-                      : "1px solid #E6E2DA",
+                      : "1px solid var(--cb-e6e2da, #E6E2DA)",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                   display: "flex",
                   flexDirection: "column",
@@ -509,7 +509,7 @@ export function SimuladorChatAriaPanel({
                     fontSize: "0.71rem",
                     fontWeight: 700,
                     opacity: esCliente ? 0.85 : 1,
-                    color: esError ? "#991B1B" : esCliente ? "#E6E2DA" : "#2F4737",
+                    color: esError ? "var(--ct-991b1b, #991B1B)" : esCliente ? "#E6E2DA" : "var(--ct-2f4737, #2F4737)",
                   }}
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
@@ -532,7 +532,7 @@ export function SimuladorChatAriaPanel({
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "3px",
-                        color: "#847D74",
+                        color: "var(--ct-847d74, #847D74)",
                         fontWeight: 600,
                       }}
                     >
@@ -572,7 +572,7 @@ export function SimuladorChatAriaPanel({
                                 maxHeight: "240px",
                                 objectFit: "cover",
                                 borderRadius: "10px",
-                                border: "1px solid #E6E2DA",
+                                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                 display: "block",
                               }}
                             />
@@ -587,7 +587,7 @@ export function SimuladorChatAriaPanel({
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
-                              color: "#1B6B46",
+                              color: "var(--ct-1b6b46, #1B6B46)",
                               textDecoration: "underline",
                               fontWeight: 600,
                             }}
@@ -601,7 +601,7 @@ export function SimuladorChatAriaPanel({
                           <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                             <audio controls src={seg.url} style={{ maxWidth: "240px" }} />
                             {seg.transcripcion && (
-                              <span style={{ fontSize: "0.78rem", color: "#57524C" }}>{seg.transcripcion}</span>
+                              <span style={{ fontSize: "0.78rem", color: "var(--ct-57524c, #57524C)" }}>{seg.transcripcion}</span>
                             )}
                           </div>
                         );
@@ -627,9 +627,9 @@ export function SimuladorChatAriaPanel({
                     style={{
                       fontSize: "0.72rem",
                       fontWeight: 700,
-                      color: "#8A2E2E",
-                      background: "#FAF2F2",
-                      border: "1px solid #E5CACA",
+                      color: "var(--ct-8a2e2e, #8A2E2E)",
+                      background: "var(--cf-faf2f2, #FAF2F2)",
+                      border: "1px solid var(--cb-e5caca, #E5CACA)",
                       borderRadius: "7px",
                       padding: "4px 8px",
                     }}
@@ -647,9 +647,9 @@ export function SimuladorChatAriaPanel({
                           fontSize: "0.68rem",
                           padding: "2px 7px",
                           borderRadius: "999px",
-                          background: "#F4F2EE",
-                          border: "1px solid #E6E2DA",
-                          color: "#57524C",
+                          background: "var(--cf-f4f2ee, #F4F2EE)",
+                          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                          color: "var(--ct-57524c, #57524C)",
                         }}
                       >
                         {ctx}
@@ -668,9 +668,9 @@ export function SimuladorChatAriaPanel({
               style={{
                 padding: "10px 14px",
                 borderRadius: "14px",
-                background: "#FFFFFF",
-                border: "1px solid #E6E2DA",
-                color: "#57524C",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                color: "var(--ct-57524c, #57524C)",
                 fontSize: "0.82rem",
                 display: "inline-flex",
                 alignItems: "center",
@@ -692,8 +692,8 @@ export function SimuladorChatAriaPanel({
         }}
         style={{
           padding: "12px 16px",
-          borderTop: "1px solid #E6E2DA",
-          background: "#FFFFFF",
+          borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
+          background: "var(--cf-ffffff, #FFFFFF)",
           display: "flex",
           gap: "10px",
           alignItems: "flex-end",
@@ -716,9 +716,9 @@ export function SimuladorChatAriaPanel({
             flex: 1,
             padding: "9px 12px",
             borderRadius: "10px",
-            border: "1px solid #D9D4CB",
+            border: "1px solid var(--cb-d9d4cb, #D9D4CB)",
             fontSize: "0.86rem",
-            color: "#1F1C19",
+            color: "var(--ct-1f1c19, #1F1C19)",
             fontFamily: "inherit",
             resize: "none",
           }}

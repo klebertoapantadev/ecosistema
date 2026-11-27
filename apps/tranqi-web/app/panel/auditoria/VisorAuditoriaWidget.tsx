@@ -39,7 +39,7 @@ export function VisorAuditoriaWidget({ negocio = "tranqi", esquemaNegocio = "tra
   }, [cargarDatos]);
 
   return (
-    <div style={{ width: "100%", background: "#ffffff", borderRadius: "16px", border: "1px solid var(--linea)", padding: "20px" }}>
+    <div style={{ width: "100%", background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1px solid var(--linea)", padding: "20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid var(--fondo-hundido)", paddingBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
         <div>
           <h2 style={{ fontSize: "1.2rem", fontWeight: 900, margin: 0, color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px" }}>

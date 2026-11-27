@@ -1394,7 +1394,7 @@ export function PantallaTvTaller({
               : "linear-gradient(135deg, #0D9488, #0369A1)",
             color: "#FFFFFF",
             boxShadow: "0 16px 40px rgba(0,0,0,0.6)",
-            border: "2px solid rgba(255,255,255,0.45)",
+            border: "2px solid var(--cb-ffffff-a450, rgba(255,255,255,0.45))",
             display: "flex",
             alignItems: "center",
             gap: "12px",
@@ -1419,7 +1419,7 @@ export function PantallaTvTaller({
           height: "48px",
           padding: "0 18px",
           background: "#1B1714",
-          borderBottom: "1px solid rgba(214, 195, 165, 0.14)",
+          borderBottom: "1px solid var(--cb-d6c3a5-a140, rgba(214, 195, 165, 0.14))",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -1438,7 +1438,7 @@ export function PantallaTvTaller({
               fontSize: "0.75rem",
               fontWeight: 800,
               letterSpacing: "0.06em",
-              border: "1px solid rgba(214, 195, 165, 0.22)",
+              border: "1px solid var(--cb-d6c3a5-a220, rgba(214, 195, 165, 0.22))",
             }}
           >
             {nombreNegocio.toUpperCase()}
@@ -1457,7 +1457,7 @@ export function PantallaTvTaller({
               gap: "5px",
               fontSize: "0.72rem",
               fontWeight: 700,
-              color: conectado ? "#8AB597" : "#D98A7E",
+              color: conectado ? "var(--ct-8ab597, #8AB597)" : "var(--ct-d98a7e, #D98A7E)",
             }}
           >
             {conectado ? <Wifi size={13} /> : <WifiOff size={13} />}
@@ -1673,13 +1673,13 @@ export function PantallaTvTaller({
             style={{
               marginLeft: "8px",
               paddingLeft: "10px",
-              borderLeft: "1px solid rgba(214, 195, 165, 0.2)",
+              borderLeft: "1px solid var(--cb-d6c3a5-a200, rgba(214, 195, 165, 0.2))",
               display: "flex",
               alignItems: "baseline",
               gap: "6px",
             }}
           >
-            <span style={{ fontSize: "0.74rem", color: "#A89D8F", textTransform: "capitalize" }}>
+            <span style={{ fontSize: "0.74rem", color: "var(--ct-a89d8f, #A89D8F)", textTransform: "capitalize" }}>
               {formatearFechaEcuadorLarga(reloj)}
             </span>
             <span style={{ fontSize: "1.02rem", fontWeight: 800, color: "#F6F1E8" }}>
@@ -1713,7 +1713,7 @@ export function PantallaTvTaller({
                   height: "46px",
                   padding: "0 16px",
                   background: "#1B1714",
-                  borderBottom: "1px solid rgba(214, 195, 165, 0.14)",
+                  borderBottom: "1px solid var(--cb-d6c3a5-a140, rgba(214, 195, 165, 0.14))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -1739,10 +1739,10 @@ export function PantallaTvTaller({
             esSoloAudio ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "12px", fontSize: "0.82rem", color: "#E8E0D5" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-                  <strong style={{ color: "#C8A25A" }}>Indicadores Hoy:</strong>
+                  <strong style={{ color: "var(--ct-c8a25a, #C8A25A)" }}>Indicadores Hoy:</strong>
                   <span>Chats: <strong>{tablero.indicadoresTv?.chatsHoy ?? 0}</strong></span>
                   <span>Pend. seguimiento: <strong style={{ color: "#E5988B" }}>{tablero.indicadoresTv?.chatsPendientesSeguimiento ?? 0}</strong></span>
-                  <span>Ventas hoy: <strong style={{ color: "#8AB597" }}>${Number(tablero.indicadoresTv?.totalVentasHoyUsd ?? 0).toFixed(2)}</strong></span>
+                  <span>Ventas hoy: <strong style={{ color: "var(--ct-8ab597, #8AB597)" }}>${Number(tablero.indicadoresTv?.totalVentasHoyUsd ?? 0).toFixed(2)}</strong></span>
                   <span>Pedidos hoy/sem: <strong>{tablero.indicadoresTv?.pedidosHoy ?? 0} / {tablero.indicadoresTv?.pedidosSemana ?? 0}</strong></span>
                 </div>
               </div>
@@ -1766,7 +1766,7 @@ export function PantallaTvTaller({
                   {/* Cabecera editorial */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "14px" }}>
                     <div>
-                      <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#C8A25A" }}>
+                      <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ct-c8a25a, #C8A25A)" }}>
                         TABLERO EJECUTIVO · OPERADORES Y ADMINISTRADORES
                       </div>
                       <h2 style={{ margin: "4px 0 0 0", fontFamily: "var(--font-fraunces), Georgia, serif", fontSize: "2rem", fontWeight: 600, color: "#F6F1E8" }}>
@@ -1777,7 +1777,7 @@ export function PantallaTvTaller({
                       <div style={{ fontSize: "2.35rem", fontWeight: 800, lineHeight: 1, color: "#F6F1E8", fontVariantNumeric: "tabular-nums" }}>
                         {formatearHoraEcuador(reloj)}
                       </div>
-                      <div style={{ fontSize: "0.84rem", color: "#A89D8F", textTransform: "capitalize", marginTop: "3px" }}>
+                      <div style={{ fontSize: "0.84rem", color: "var(--ct-a89d8f, #A89D8F)", textTransform: "capitalize", marginTop: "3px" }}>
                         {formatearFechaEcuadorLarga(reloj)}
                       </div>
                     </div>
@@ -1837,7 +1837,7 @@ export function PantallaTvTaller({
                       </div>
                       <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                         <span style={kpiNumTvStyle("#E8C97E")}>{ind?.pedidosHoy ?? 0}</span>
-                        <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "#A89D8F" }}>
+                        <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--ct-a89d8f, #A89D8F)" }}>
                           / {ind?.pedidosSemana ?? 0} sem
                         </span>
                       </div>
@@ -1855,7 +1855,7 @@ export function PantallaTvTaller({
                         padding: "18px 20px",
                         borderRadius: "16px",
                         background: "#1E1916",
-                        border: "1px solid rgba(214, 195, 165, 0.14)",
+                        border: "1px solid var(--cb-d6c3a5-a140, rgba(214, 195, 165, 0.14))",
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "space-between",
@@ -1866,7 +1866,7 @@ export function PantallaTvTaller({
                         <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#E8E0D5", letterSpacing: "0.04em", textTransform: "uppercase" }}>
                           Pedidos de la Semana (Lun – Dom)
                         </span>
-                        <span style={{ fontSize: "0.78rem", color: "#A89D8F" }}>
+                        <span style={{ fontSize: "0.78rem", color: "var(--ct-a89d8f, #A89D8F)" }}>
                           Total: {ind?.pedidosSemana ?? 0} pedidos
                         </span>
                       </div>
@@ -1899,10 +1899,10 @@ export function PantallaTvTaller({
                                   background: d.esHoy
                                     ? "linear-gradient(180deg, #D5B16A 0%, #9E7B39 100%)"
                                     : "rgba(214, 195, 165, 0.22)",
-                                  border: d.esHoy ? "1px solid #E8C97E" : "1px solid rgba(214, 195, 165, 0.14)",
+                                  border: d.esHoy ? "1px solid var(--cb-e8c97e, #E8C97E)" : "1px solid var(--cb-d6c3a5-a140, rgba(214, 195, 165, 0.14))",
                                 }}
                               />
-                              <span style={{ fontSize: "0.76rem", fontWeight: d.esHoy ? 800 : 600, color: d.esHoy ? "#E8C97E" : "#A89D8F" }}>
+                              <span style={{ fontSize: "0.76rem", fontWeight: d.esHoy ? 800 : 600, color: d.esHoy ? "#E8C97E" : "var(--ct-a89d8f, #A89D8F)" }}>
                                 {d.diaCorto}
                               </span>
                             </div>
@@ -1917,7 +1917,7 @@ export function PantallaTvTaller({
                         padding: "18px 20px",
                         borderRadius: "16px",
                         background: "#1E1916",
-                        border: "1px solid rgba(214, 195, 165, 0.14)",
+                        border: "1px solid var(--cb-d6c3a5-a140, rgba(214, 195, 165, 0.14))",
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "space-between",
@@ -1946,7 +1946,7 @@ export function PantallaTvTaller({
                                 padding: "8px 12px",
                                 borderRadius: "10px",
                                 background: "rgba(255,255,255,0.03)",
-                                border: "1px solid rgba(214, 195, 165, 0.1)",
+                                border: "1px solid var(--cb-d6c3a5-a100, rgba(214, 195, 165, 0.1))",
                               }}
                             >
                               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1959,7 +1959,7 @@ export function PantallaTvTaller({
                         })}
                       </div>
 
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem", color: "#A89D8F", paddingTop: "6px", borderTop: "1px solid rgba(214,195,165,0.12)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem", color: "var(--ct-a89d8f, #A89D8F)", paddingTop: "6px", borderTop: "1px solid var(--cb-d6c3a5-a120, rgba(214,195,165,0.12))" }}>
                         <span>En taller: {pendientes.length}</span>
                         <span>Listos: {tablero.ordenes.filter((o) => o.estadoTaller === "LISTO_ENTREGA").length}</span>
                         <span>Entregados: {totalEntregadosHoy}</span>
@@ -2016,7 +2016,7 @@ export function PantallaTvTaller({
                     <div style={{ fontSize: "3.8rem", fontWeight: 900, lineHeight: 1, letterSpacing: "-0.03em", color: "#F8FAFC" }}>
                       {formatearHoraEcuador(reloj)}
                     </div>
-                    <div style={{ fontSize: "1.05rem", color: "#94A3B8", marginTop: "6px", textTransform: "capitalize", fontWeight: 600 }}>
+                    <div style={{ fontSize: "1.05rem", color: "var(--ct-94a3b8, #94A3B8)", marginTop: "6px", textTransform: "capitalize", fontWeight: 600 }}>
                       {formatearFechaEcuadorLarga(reloj)} · {nombreNegocio}
                     </div>
                   </div>
@@ -2044,7 +2044,7 @@ export function PantallaTvTaller({
                     padding: "24px 26px",
                     borderRadius: "20px",
                     background: "rgba(15, 23, 42, 0.84)",
-                    border: radioReproduciendo ? "2px solid #10B981" : "1.5px solid rgba(148,163,184,0.28)",
+                    border: radioReproduciendo ? "2px solid #10B981" : "1.5px solid var(--cb-94a3b8-a280, rgba(148,163,184,0.28))",
                     boxShadow: "0 18px 46px rgba(0,0,0,0.45)",
                     display: "flex",
                     flexDirection: "column",
@@ -2077,13 +2077,13 @@ export function PantallaTvTaller({
                         )}
                       </div>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: "0.75rem", fontWeight: 800, color: radioReproduciendo ? "#34D399" : "#94A3B8", letterSpacing: "0.08em" }}>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 800, color: radioReproduciendo ? "#34D399" : "var(--ct-94a3b8, #94A3B8)", letterSpacing: "0.08em" }}>
                           {radioReproduciendo ? "● SONANDO EN VIVO · SIN BLOQUEOS" : "📻 RADIO EN VIVO DEL TALLER"}
                         </div>
                         <div style={{ fontSize: "1.45rem", fontWeight: 900, color: "#FFFFFF", marginTop: "2px" }}>
                           {emisoraActual?.nombre || "Elige un género o emisora de Ecuador"}
                         </div>
-                        <div style={{ fontSize: "0.84rem", color: "#94A3B8", marginTop: "2px" }}>
+                        <div style={{ fontSize: "0.84rem", color: "var(--ct-94a3b8, #94A3B8)", marginTop: "2px" }}>
                           {emisoraActual
                             ? [emisoraActual.pais, emisoraActual.etiquetas].filter(Boolean).join(" · ")
                             : "Cero bloqueos de LatinAutor · Cero anuncios de YouTube · 24/7"}
@@ -2167,7 +2167,7 @@ export function PantallaTvTaller({
                   )}
 
                   {/* Géneros y Ecuador de 1 clic directo en pantalla */}
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "8px", borderTop: "1px solid rgba(148,163,184,0.16)" }}>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "8px", borderTop: "1px solid var(--cb-94a3b8-a160, rgba(148,163,184,0.16))" }}>
                     {(
                       [
                         { label: "🇪🇨 Radios Ecuador", filtro: { pais: "EC" } },
@@ -2188,7 +2188,7 @@ export function PantallaTvTaller({
                         style={{
                           padding: "8px 14px",
                           borderRadius: "999px",
-                          border: "1px solid rgba(148,163,184,0.3)",
+                          border: "1px solid var(--cb-94a3b8-a300, rgba(148,163,184,0.3))",
                           background: "rgba(30, 41, 59, 0.9)",
                           color: "#F8FAFC",
                           fontSize: "0.82rem",
@@ -2352,7 +2352,7 @@ export function PantallaTvTaller({
                   style={{
                     padding: "7px 12px",
                     borderRadius: "8px",
-                    border: "1px solid rgba(200,162,90,0.45)",
+                    border: "1px solid var(--cb-c8a25a-a450, rgba(200,162,90,0.45))",
                     background: "#B8923F",
                     color: "#14110F",
                     fontSize: "0.8rem",
@@ -2385,11 +2385,11 @@ export function PantallaTvTaller({
               background: "#181411",
               borderLeft:
                 !esSoloAudio && !modoBarraLateral && posicionLateral === "derecha"
-                  ? "1px solid rgba(214, 195, 165, 0.16)"
+                  ? "1px solid var(--cb-d6c3a5-a160, rgba(214, 195, 165, 0.16))"
                   : undefined,
               borderRight:
                 !esSoloAudio && !modoBarraLateral && posicionLateral === "izquierda"
-                  ? "1px solid rgba(214, 195, 165, 0.16)"
+                  ? "1px solid var(--cb-d6c3a5-a160, rgba(214, 195, 165, 0.16))"
                   : undefined,
               display: "flex",
               flexDirection: "column",
@@ -2429,7 +2429,7 @@ export function PantallaTvTaller({
                   </span>
                 )}
                 {tablero.puedeInteractuar && (
-                  <span style={{ fontSize: "0.7rem", color: "#A89D8F" }}>
+                  <span style={{ fontSize: "0.7rem", color: "var(--ct-a89d8f, #A89D8F)" }}>
                     Control TV: ▲▼ + OK
                   </span>
                 )}
@@ -2446,8 +2446,8 @@ export function PantallaTvTaller({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "10px",
-                  color: "#64748B",
-                  border: "1px dashed rgba(148,163,184,0.2)",
+                  color: "var(--ct-64748b, #64748B)",
+                  border: "1px dashed var(--cb-94a3b8-a200, rgba(148,163,184,0.2))",
                   borderRadius: "14px",
                 }}
               >
@@ -2502,12 +2502,12 @@ export function PantallaTvTaller({
                             ? "linear-gradient(145deg, #27211B, #1D1814)"
                             : "linear-gradient(145deg, #231D19, #1A1613)",
                         border: enfocado
-                          ? "2px solid #C8A25A"
+                          ? "2px solid var(--cb-c8a25a, #C8A25A)"
                           : esExequiales
-                            ? "1.5px solid rgba(158, 137, 173, 0.45)"
+                            ? "1.5px solid var(--cb-9e89ad-a450, rgba(158, 137, 173, 0.45))"
                             : enPrep
-                              ? "1.5px solid rgba(200, 162, 90, 0.45)"
-                              : "1px solid rgba(214, 195, 165, 0.18)",
+                              ? "1.5px solid var(--cb-c8a25a-a450, rgba(200, 162, 90, 0.45))"
+                              : "1px solid var(--cb-d6c3a5-a180, rgba(214, 195, 165, 0.18))",
                         boxShadow: enfocado
                           ? "0 0 18px rgba(200, 162, 90, 0.25)"
                           : "0 6px 16px rgba(0, 0, 0, 0.3)",
@@ -2622,7 +2622,7 @@ export function PantallaTvTaller({
                                   height: "10px",
                                   borderRadius: "50%",
                                   background: chip.hex,
-                                  border: "1px solid rgba(255,255,255,0.6)",
+                                  border: "1px solid var(--cb-ffffff-a600, rgba(255,255,255,0.6))",
                                   display: "inline-block",
                                 }}
                               />
@@ -2675,7 +2675,7 @@ export function PantallaTvTaller({
                           justifyContent: "space-between",
                           marginTop: "2px",
                           paddingTop: "6px",
-                          borderTop: "1px solid rgba(148,163,184,0.16)",
+                          borderTop: "1px solid var(--cb-94a3b8-a160, rgba(148,163,184,0.16))",
                         }}
                       >
                         <span
@@ -2736,7 +2736,7 @@ export function PantallaTvTaller({
                 justifyContent: "space-between",
                 gap: "10px",
                 background: "rgba(15, 23, 42, 0.88)",
-                borderBottom: "1px solid rgba(148,163,184,0.16)",
+                borderBottom: "1px solid var(--cb-94a3b8-a160, rgba(148,163,184,0.16))",
                 flexWrap: "wrap",
                 zIndex: 10,
               }}
@@ -2868,14 +2868,14 @@ export function PantallaTvTaller({
                     borderRadius: "16px",
                     background: "rgba(15, 23, 42, 0.84)",
                     backdropFilter: "blur(10px)",
-                    border: "1px solid rgba(255,255,255,0.16)",
+                    border: "1px solid var(--cb-ffffff-a160, rgba(255,255,255,0.16))",
                   }}
                 >
                   <div
                     style={{
                       fontSize: "0.78rem",
                       fontWeight: 800,
-                      color: "#F472B6",
+                      color: "var(--ct-f472b6, #F472B6)",
                       letterSpacing: "0.06em",
                       textTransform: "uppercase",
                     }}
@@ -2928,8 +2928,8 @@ export function PantallaTvTaller({
                       zIndex: 5,
                       padding: "12px",
                       borderRadius: "16px",
-                      background: "#FFFFFF",
-                      color: "#0F172A",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-0f172a, #0F172A)",
                       boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
                       display: "flex",
                       flexDirection: "column",
@@ -2968,7 +2968,7 @@ export function PantallaTvTaller({
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#94A3B8",
+                  color: "var(--ct-94a3b8, #94A3B8)",
                   gap: "10px",
                 }}
               >
@@ -2993,7 +2993,7 @@ export function PantallaTvTaller({
             height: densidadEfectiva === "SOLO_AUDIO" ? "64px" : "92px",
             padding: "8px 18px",
             background: "#1B1714",
-            borderTop: "1px solid rgba(214, 195, 165, 0.16)",
+            borderTop: "1px solid var(--cb-d6c3a5-a160, rgba(214, 195, 165, 0.16))",
             display: "flex",
             alignItems: "center",
             gap: "12px",
@@ -3008,7 +3008,7 @@ export function PantallaTvTaller({
               flexDirection: "column",
               gap: "2px",
               flexShrink: 0,
-              borderRight: "1px solid rgba(214, 195, 165, 0.16)",
+              borderRight: "1px solid var(--cb-d6c3a5-a160, rgba(214, 195, 165, 0.16))",
               paddingRight: "12px",
             }}
           >
@@ -3016,7 +3016,7 @@ export function PantallaTvTaller({
               style={{
                 fontSize: "0.8rem",
                 fontWeight: 800,
-                color: "#8AB597",
+                color: "var(--ct-8ab597, #8AB597)",
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
@@ -3026,13 +3026,13 @@ export function PantallaTvTaller({
               <CheckCircle2 size={15} /> LISTOS HOY (
               {tablero.ordenes.filter((o) => o.estadoTaller === "LISTO_ENTREGA").length})
             </span>
-            <span style={{ fontSize: "0.73rem", color: "#A89D8F", fontWeight: 600 }}>
+            <span style={{ fontSize: "0.73rem", color: "var(--ct-a89d8f, #A89D8F)", fontWeight: 600 }}>
               ✓✓ {totalEntregadosHoy} entregados hoy
             </span>
           </div>
 
           {listosVisibles.length === 0 ? (
-            <span style={{ fontSize: "0.84rem", color: "#64748B" }}>
+            <span style={{ fontSize: "0.84rem", color: "var(--ct-64748b, #64748B)" }}>
               Los arreglos marcados como Listos aparecerán aquí y se actualizarán al entregarse.
             </span>
           ) : (
@@ -3056,7 +3056,7 @@ export function PantallaTvTaller({
                         ? "rgba(30, 41, 59, 0.7)"
                         : "linear-gradient(135deg, rgba(6, 95, 70, 0.88), rgba(15, 118, 110, 0.88))",
                       border: entregado
-                        ? "1px solid rgba(148, 163, 184, 0.25)"
+                        ? "1px solid var(--cb-94a3b8-a250, rgba(148, 163, 184, 0.25))"
                         : "1.5px solid #34D399",
                       opacity: entregado ? 0.72 : 1,
                       flexShrink: 0,
@@ -3130,7 +3130,7 @@ export function PantallaTvTaller({
               maxHeight: "88vh",
               borderRadius: "18px",
               background: "#0F172A",
-              border: "1.5px solid rgba(148, 163, 184, 0.3)",
+              border: "1.5px solid var(--cb-94a3b8-a300, rgba(148, 163, 184, 0.3))",
               boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
               display: "flex",
               flexDirection: "column",
@@ -3140,7 +3140,7 @@ export function PantallaTvTaller({
             <div
               style={{
                 padding: "16px 20px",
-                borderBottom: "1px solid rgba(148,163,184,0.2)",
+                borderBottom: "1px solid var(--cb-94a3b8-a200, rgba(148,163,184,0.2))",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -3153,7 +3153,7 @@ export function PantallaTvTaller({
                   <div style={{ fontSize: "1.02rem", fontWeight: 800 }}>
                     Buscar en YouTube o Pegar URL / Playlist
                   </div>
-                  <div style={{ fontSize: "0.76rem", color: "#94A3B8" }}>
+                  <div style={{ fontSize: "0.76rem", color: "var(--ct-94a3b8, #94A3B8)" }}>
                     Escribe un artista, género o pega directamente cualquier enlace de YouTube.
                   </div>
                 </div>
@@ -3179,7 +3179,7 @@ export function PantallaTvTaller({
             <div
               style={{
                 padding: "0 20px",
-                borderBottom: "1px solid rgba(148,163,184,0.2)",
+                borderBottom: "1px solid var(--cb-94a3b8-a200, rgba(148,163,184,0.2))",
                 display: "flex",
                 gap: "8px",
                 background: "#0B1120",
@@ -3202,7 +3202,7 @@ export function PantallaTvTaller({
                     border: "none",
                     borderBottom: tabModalYt === t.id ? "2.5px solid #F87171" : "2.5px solid transparent",
                     background: "transparent",
-                    color: tabModalYt === t.id ? "#FFFFFF" : "#94A3B8",
+                    color: tabModalYt === t.id ? "#FFFFFF" : "var(--ct-94a3b8, #94A3B8)",
                     fontSize: "0.83rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -3287,7 +3287,7 @@ export function PantallaTvTaller({
                   )}
 
                   {cargandoRadios ? (
-                    <div style={{ padding: "24px", textAlign: "center", color: "#94A3B8" }}>
+                    <div style={{ padding: "24px", textAlign: "center", color: "var(--ct-94a3b8, #94A3B8)" }}>
                       <Loader2 size={20} /> Cargando emisoras en vivo...
                     </div>
                   ) : (
@@ -3320,7 +3320,7 @@ export function PantallaTvTaller({
                                 <div style={{ fontWeight: 700, fontSize: "0.84rem", color: "#F8FAFC", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                   {em.nombre}
                                 </div>
-                                <div style={{ fontSize: "0.72rem", color: "#94A3B8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                <div style={{ fontSize: "0.72rem", color: "var(--ct-94a3b8, #94A3B8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                   {[em.pais, em.etiquetas].filter(Boolean).join(" · ") || "Radio Online"}
                                 </div>
                               </div>
@@ -3392,7 +3392,7 @@ export function PantallaTvTaller({
                   </div>
 
                   {favoritosLocales.length === 0 ? (
-                    <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", border: "1px dashed #334155", borderRadius: "12px" }}>
+                    <div style={{ padding: "28px", textAlign: "center", color: "var(--ct-94a3b8, #94A3B8)", border: "1px dashed #334155", borderRadius: "12px" }}>
                       Aún no tienes favoritos guardados. Busca música y toca la estrella ⭐ para guardar tus favoritos.
                     </div>
                   ) : (
@@ -3415,7 +3415,7 @@ export function PantallaTvTaller({
                             <div style={{ fontWeight: 700, fontSize: "0.86rem", color: "#F8FAFC" }}>
                               {fav.titulo}
                             </div>
-                            <div style={{ fontSize: "0.74rem", color: "#94A3B8" }}>
+                            <div style={{ fontSize: "0.74rem", color: "var(--ct-94a3b8, #94A3B8)" }}>
                               {fav.canal || fav.url}
                             </div>
                           </div>
@@ -3461,7 +3461,7 @@ export function PantallaTvTaller({
                     Si una canción es bloqueada por la disquera, la TV salta automáticamente a la siguiente de esta cola.
                   </div>
                   {colaYt.length === 0 ? (
-                    <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", border: "1px dashed #334155", borderRadius: "12px" }}>
+                    <div style={{ padding: "28px", textAlign: "center", color: "var(--ct-94a3b8, #94A3B8)", border: "1px dashed #334155", borderRadius: "12px" }}>
                       Busca un género o artista en la pestaña &quot;Buscar / URL&quot; para cargar una cola continua de sugerencias.
                     </div>
                   ) : (
@@ -3480,12 +3480,12 @@ export function PantallaTvTaller({
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
-                          <span style={{ fontWeight: 800, color: idx === indiceColaYt ? "#38BDF8" : "#94A3B8", minWidth: "24px" }}>
+                          <span style={{ fontWeight: 800, color: idx === indiceColaYt ? "#38BDF8" : "var(--ct-94a3b8, #94A3B8)", minWidth: "24px" }}>
                             {idx === indiceColaYt ? "▶" : `#${idx + 1}`}
                           </span>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontWeight: 700, fontSize: "0.84rem", color: "#F8FAFC" }}>{vid.titulo}</div>
-                            <div style={{ fontSize: "0.73rem", color: "#94A3B8" }}>{vid.canal} {vid.duracion ? `· ${vid.duracion}` : ""}</div>
+                            <div style={{ fontSize: "0.73rem", color: "var(--ct-94a3b8, #94A3B8)" }}>{vid.canal} {vid.duracion ? `· ${vid.duracion}` : ""}</div>
                           </div>
                         </div>
                         <button
@@ -3571,7 +3571,7 @@ export function PantallaTvTaller({
                     style={{
                       padding: "6px 12px",
                       borderRadius: "999px",
-                      border: "1px solid rgba(148,163,184,0.28)",
+                      border: "1px solid var(--cb-94a3b8-a280, rgba(148,163,184,0.28))",
                       background: "#1E293B",
                       color: "#E2E8F0",
                       fontSize: "0.78rem",
@@ -3600,7 +3600,7 @@ export function PantallaTvTaller({
               )}
 
               {buscandoYt ? (
-                <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8" }}>
+                <div style={{ padding: "28px", textAlign: "center", color: "var(--ct-94a3b8, #94A3B8)" }}>
                   <Loader2 size={22} /> Buscando videos en YouTube...
                 </div>
               ) : resultadosYt.length > 0 ? (
@@ -3619,7 +3619,7 @@ export function PantallaTvTaller({
                       style={{
                         padding: "8px",
                         borderRadius: "12px",
-                        border: "1px solid rgba(148,163,184,0.25)",
+                        border: "1px solid var(--cb-94a3b8-a250, rgba(148,163,184,0.25))",
                         background: "#1E293B",
                         color: "#F8FAFC",
                         display: "flex",
@@ -3679,9 +3679,9 @@ export function PantallaTvTaller({
                       >
                         {vid.titulo}
                       </div>
-                      <div style={{ fontSize: "0.72rem", color: "#94A3B8" }}>{vid.canal}</div>
+                      <div style={{ fontSize: "0.72rem", color: "var(--ct-94a3b8, #94A3B8)" }}>{vid.canal}</div>
                       </button>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", paddingTop: "4px", borderTop: "1px solid rgba(148,163,184,0.16)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", paddingTop: "4px", borderTop: "1px solid var(--cb-94a3b8-a160, rgba(148,163,184,0.16))" }}>
                         <button
                           type="button"
                           onClick={() => reproducirDesdeListaYt(resultadosYt, idx, true)}
@@ -3766,7 +3766,7 @@ export function PantallaTvTaller({
                 style={{
                   padding: "18px 22px",
                   background: "#1E293B",
-                  borderBottom: "1px solid rgba(148,163,184,0.22)",
+                  borderBottom: "1px solid var(--cb-94a3b8-a220, rgba(148,163,184,0.22))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -3871,10 +3871,10 @@ export function PantallaTvTaller({
                     padding: "14px 16px",
                     borderRadius: "13px",
                     background: "rgba(30, 41, 59, 0.75)",
-                    border: "1px solid rgba(148,163,184,0.2)",
+                    border: "1px solid var(--cb-94a3b8-a200, rgba(148,163,184,0.2))",
                   }}
                 >
-                  <div style={{ fontSize: "0.74rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  <div style={{ fontSize: "0.74rem", fontWeight: 800, color: "var(--ct-94a3b8, #94A3B8)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                     🌸 Producto / Arreglo
                   </div>
                   <div style={{ fontSize: "1.22rem", fontWeight: 900, color: "#FFFFFF", marginTop: "4px" }}>
@@ -3896,22 +3896,22 @@ export function PantallaTvTaller({
 
                 {/* Grid 2 columnas: Fecha/Hora + Valor/Pago */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)" }}>
-                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid var(--cb-94a3b8-a180, rgba(148,163,184,0.18))" }}>
+                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "var(--ct-94a3b8, #94A3B8)", textTransform: "uppercase" }}>
                       📅 Fecha y Hora de Entrega
                     </div>
                     <div style={{ fontSize: "1rem", fontWeight: 800, color: "#FDE68A", marginTop: "4px" }}>
                       {o.fechaEntrega} · {horario}
                     </div>
                     {o.fechaElaboracion && o.fechaElaboracion !== o.fechaEntrega && (
-                      <div style={{ fontSize: "0.78rem", color: "#94A3B8", marginTop: "3px" }}>
+                      <div style={{ fontSize: "0.78rem", color: "var(--ct-94a3b8, #94A3B8)", marginTop: "3px" }}>
                         Elaboración programada: {o.fechaElaboracion}
                       </div>
                     )}
                   </div>
 
-                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)" }}>
-                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid var(--cb-94a3b8-a180, rgba(148,163,184,0.18))" }}>
+                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "var(--ct-94a3b8, #94A3B8)", textTransform: "uppercase" }}>
                       💵 Valor y Pago
                     </div>
                     <div style={{ fontSize: "1rem", fontWeight: 800, color: "#34D399", marginTop: "4px" }}>
@@ -3925,8 +3925,8 @@ export function PantallaTvTaller({
 
                 {/* Colores y Extras */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)" }}>
-                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid var(--cb-94a3b8-a180, rgba(148,163,184,0.18))" }}>
+                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "var(--ct-94a3b8, #94A3B8)", textTransform: "uppercase" }}>
                       🎨 Colores a Utilizar
                     </div>
                     {chipsColor.length > 0 ? (
@@ -3953,25 +3953,25 @@ export function PantallaTvTaller({
                         ))}
                       </div>
                     ) : (
-                      <div style={{ fontSize: "0.86rem", color: "#64748B", marginTop: "5px" }}>
+                      <div style={{ fontSize: "0.86rem", color: "var(--ct-64748b, #64748B)", marginTop: "5px" }}>
                         Sin colores específicos (estándar del arreglo)
                       </div>
                     )}
                   </div>
 
-                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)" }}>
-                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid var(--cb-94a3b8-a180, rgba(148,163,184,0.18))" }}>
+                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "var(--ct-94a3b8, #94A3B8)", textTransform: "uppercase" }}>
                       🎁 Extras Incluidos
                     </div>
-                    <div style={{ fontSize: "0.94rem", fontWeight: 700, color: o.extras ? "#FBCFE8" : "#64748B", marginTop: "5px" }}>
+                    <div style={{ fontSize: "0.94rem", fontWeight: 700, color: o.extras ? "#FBCFE8" : "var(--ct-64748b, #64748B)", marginTop: "5px" }}>
                       {o.extras || "Sin extras adicionales"}
                     </div>
                   </div>
                 </div>
 
                 {/* Cliente / Destinatario / Entrega */}
-                <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)", display: "flex", flexDirection: "column", gap: "5px" }}>
-                  <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid var(--cb-94a3b8-a180, rgba(148,163,184,0.18))", display: "flex", flexDirection: "column", gap: "5px" }}>
+                  <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "var(--ct-94a3b8, #94A3B8)", textTransform: "uppercase" }}>
                     👤 Entrega y Destinatario
                   </div>
                   <div style={{ fontSize: "0.88rem", color: "#E2E8F0", display: "flex", gap: "16px", flexWrap: "wrap" }}>
@@ -4008,7 +4008,7 @@ export function PantallaTvTaller({
                 style={{
                   padding: "14px 22px",
                   background: "#1E293B",
-                  borderTop: "1px solid rgba(148,163,184,0.22)",
+                  borderTop: "1px solid var(--cb-94a3b8-a220, rgba(148,163,184,0.22))",
                   display: "flex",
                   justifyContent: "flex-end",
                   gap: "10px",
@@ -4021,7 +4021,7 @@ export function PantallaTvTaller({
                   style={{
                     padding: "10px 18px",
                     borderRadius: "10px",
-                    border: botonConfirmFoco === "NO" ? "2.5px solid #FFFFFF" : "1px solid #475569",
+                    border: botonConfirmFoco === "NO" ? "2.5px solid var(--cb-ffffff, #FFFFFF)" : "1px solid #475569",
                     background: "#0F172A",
                     color: "#E2E8F0",
                     fontSize: "0.9rem",
@@ -4040,7 +4040,7 @@ export function PantallaTvTaller({
                     style={{
                       padding: "10px 20px",
                       borderRadius: "10px",
-                      border: botonConfirmFoco === "SI" ? "2.5px solid #FFFFFF" : "1px solid #38BDF8",
+                      border: botonConfirmFoco === "SI" ? "2.5px solid var(--cb-ffffff, #FFFFFF)" : "1px solid #38BDF8",
                       background: "#0284C7",
                       color: "#FFFFFF",
                       fontSize: "0.92rem",
@@ -4066,7 +4066,7 @@ export function PantallaTvTaller({
                         borderRadius: "10px",
                         border:
                           botonConfirmFoco === "SI" && o.estadoTaller === "EN_PREPARACION"
-                            ? "2.5px solid #FFFFFF"
+                            ? "2.5px solid var(--cb-ffffff, #FFFFFF)"
                             : "1px solid #10B981",
                         background: "#059669",
                         color: "#FFFFFF",
@@ -4106,7 +4106,7 @@ export function PantallaTvTaller({
               style={{
                 padding: "10px 12px",
                 background: "#1C1714",
-                borderBottom: "1px solid rgba(214,195,165,0.18)",
+                borderBottom: "1px solid var(--cb-d6c3a5-a180, rgba(214,195,165,0.18))",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -4117,7 +4117,7 @@ export function PantallaTvTaller({
                 <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#E8C97E" }}>
                   {nombreNegocio.toUpperCase()} · TALLER ({pendientes.length})
                 </div>
-                <div style={{ fontSize: "0.7rem", color: "#A89D8F" }}>
+                <div style={{ fontSize: "0.7rem", color: "var(--ct-a89d8f, #A89D8F)" }}>
                   {conectado ? "● En vivo" : "○ Reconectando"} · {formatearHoraEcuador(reloj)}
                 </div>
               </div>
@@ -4145,7 +4145,7 @@ export function PantallaTvTaller({
             {/* Lista en vivo de pedidos pendientes */}
             <div style={{ flex: 1, overflowY: "auto", padding: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
               {pendientes.length === 0 ? (
-                <div style={{ padding: "32px 12px", textAlign: "center", color: "#A89D8F", fontSize: "0.84rem" }}>
+                <div style={{ padding: "32px 12px", textAlign: "center", color: "var(--ct-a89d8f, #A89D8F)", fontSize: "0.84rem" }}>
                   ✓ Todo al día en taller. Los pedidos nuevos aparecerán aquí al instante.
                 </div>
               ) : (
@@ -4160,7 +4160,7 @@ export function PantallaTvTaller({
                         padding: "10px 11px",
                         borderRadius: "11px",
                         background: "#211B17",
-                        border: enPrep ? "1.5px solid #C8A25A" : "1px solid rgba(214,195,165,0.2)",
+                        border: enPrep ? "1.5px solid var(--cb-c8a25a, #C8A25A)" : "1px solid var(--cb-d6c3a5-a200, rgba(214,195,165,0.2))",
                         display: "flex",
                         flexDirection: "column",
                         gap: "5px",
@@ -4264,7 +4264,7 @@ export function PantallaTvTaller({
               style={{
                 padding: "8px 12px",
                 background: "#1C1714",
-                borderTop: "1px solid rgba(214,195,165,0.18)",
+                borderTop: "1px solid var(--cb-d6c3a5-a180, rgba(214,195,165,0.18))",
                 fontSize: "0.74rem",
                 color: "#8AB597",
                 display: "flex",
@@ -4272,7 +4272,7 @@ export function PantallaTvTaller({
               }}
             >
               <span>✓ Listos: {tablero.ordenes.filter((o) => o.estadoTaller === "LISTO_ENTREGA").length}</span>
-              <span style={{ color: "#A89D8F" }}>✓✓ Entregados hoy: {totalEntregadosHoy}</span>
+              <span style={{ color: "var(--ct-a89d8f, #A89D8F)" }}>✓✓ Entregados hoy: {totalEntregadosHoy}</span>
             </div>
           </div>,
           pipContainer
@@ -4288,7 +4288,7 @@ function hudBtnStyle(bg: string): React.CSSProperties {
     gap: "5px",
     padding: "5px 10px",
     borderRadius: "8px",
-    border: "1px solid rgba(214, 195, 165, 0.22)",
+    border: "1px solid var(--cb-d6c3a5-a220, rgba(214, 195, 165, 0.22))",
     background: bg,
     color: "#F6F1E8",
     fontSize: "0.74rem",
@@ -4315,7 +4315,7 @@ const kpiLabelTvStyle: React.CSSProperties = {
   fontWeight: 700,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
-  color: "#A89D8F",
+  color: "var(--ct-a89d8f, #A89D8F)",
 };
 
 function kpiNumTvStyle(color: string): React.CSSProperties {
@@ -4330,7 +4330,7 @@ function kpiNumTvStyle(color: string): React.CSSProperties {
 
 const kpiSubTvStyle: React.CSSProperties = {
   fontSize: "0.76rem",
-  color: "#A89D8F",
+  color: "var(--ct-a89d8f, #A89D8F)",
   fontWeight: 500,
 };
 
@@ -4338,7 +4338,7 @@ function pillShowroomStyle(activo: boolean): React.CSSProperties {
   return {
     padding: "6px 13px",
     borderRadius: "999px",
-    border: activo ? "1.5px solid #C8A25A" : "1px solid rgba(214,195,165,0.22)",
+    border: activo ? "1.5px solid var(--cb-c8a25a, #C8A25A)" : "1px solid var(--cb-d6c3a5-a220, rgba(214,195,165,0.22))",
     background: activo ? "rgba(184, 146, 63, 0.24)" : "rgba(38, 32, 28, 0.85)",
     color: activo ? "#F6F1E8" : "#C9BEB0",
     fontSize: "0.8rem",

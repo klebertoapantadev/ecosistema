@@ -65,7 +65,7 @@ export default async function PaginaImprimirContrato({ searchParams }: Props) {
   const htmlContrato = markdownToHtml(textoInterpolado);
 
   return (
-    <div style={{ background: "#FFF", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ background: "var(--cf-ffffff, #FFF)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Botones de impresión y ayuda (ocultos en papel) */}
       <BotonImpresionAutomatica />
 
@@ -79,10 +79,10 @@ export default async function PaginaImprimirContrato({ searchParams }: Props) {
       }}>
         {/* Encabezado legal */}
         <div style={{ textAlign: "center", marginBottom: "30px" }}>
-          <h2 style={{ fontSize: "1.4rem", fontWeight: 800, textTransform: "uppercase", margin: "0 0 4px 0", color: "#000" }}>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: 800, textTransform: "uppercase", margin: "0 0 4px 0", color: "var(--ct-000000, #000)" }}>
             {tituloContrato}
           </h2>
-          <hr style={{ border: "none", borderTop: "2px solid #000", margin: "12px 0 24px" }} />
+          <hr style={{ border: "none", borderTop: "2px solid var(--cb-000000, #000)", margin: "12px 0 24px" }} />
         </div>
 
         {/* Cuerpo del Contrato */}
@@ -98,13 +98,13 @@ export default async function PaginaImprimirContrato({ searchParams }: Props) {
             movil no significa nada porque el destino es la impresora. */}
         <div style={{ marginTop: "80px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", pageBreakInside: "avoid" }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ borderTop: "1px solid #000", width: "80%", margin: "0 auto 8px" }}></div>
+            <div style={{ borderTop: "1px solid var(--cb-000000, #000)", width: "80%", margin: "0 auto 8px" }}></div>
             <strong style={{ display: "block", fontSize: "0.9rem" }}>tranqi</strong>
             <span style={{ fontSize: "0.85rem", color: "var(--texto-suave)" }}>Por la plataforma</span>
           </div>
 
           <div style={{ textAlign: "center" }}>
-            <div style={{ borderTop: "1px solid #000", width: "80%", margin: "0 auto 8px" }}></div>
+            <div style={{ borderTop: "1px solid var(--cb-000000, #000)", width: "80%", margin: "0 auto 8px" }}></div>
             <strong style={{ display: "block", fontSize: "0.9rem" }}>{nombreCompleto}</strong>
             <span style={{ fontSize: "0.85rem", color: "var(--texto-suave)" }}>Socio Abogado Postulante</span>
           </div>

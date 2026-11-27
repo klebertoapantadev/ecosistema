@@ -134,7 +134,7 @@ export default function PaginaDocumentoCompartidoTTL() {
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
-            background: "#ffffff",
+            background: "var(--cf-ffffff, #ffffff)",
             padding: "8px 16px",
             borderRadius: "20px",
             boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
@@ -151,7 +151,7 @@ export default function PaginaDocumentoCompartidoTTL() {
       {/* TARJETA PRINCIPAL */}
       <div
         style={{
-          background: "#ffffff",
+          background: "var(--cf-ffffff, #ffffff)",
           borderRadius: "24px",
           width: "100%",
           maxWidth: "760px",
@@ -162,7 +162,7 @@ export default function PaginaDocumentoCompartidoTTL() {
       >
         {cargando ? (
           <div style={{ textAlign: "center", padding: "40px" }}>
-            <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#5000BA", marginBottom: "8px" }}>
+            <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)", marginBottom: "8px" }}>
               Verificando Enlace Seguro...
             </div>
             <p style={{ fontSize: "0.85rem", color: "var(--texto-suave)", margin: 0 }}>
@@ -204,7 +204,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                   DOCUMENTO COMPARTIDO • {infoEnlace.categoria}
                 </span>
                 {infoEnlace.archivos_conteo > 1 && (
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, background: "var(--acento-diluido)", color: "#6B21A8", padding: "4px 10px", borderRadius: "14px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, background: "var(--acento-diluido)", color: "var(--ct-6b21a8, #6B21A8)", padding: "4px 10px", borderRadius: "14px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                     <Layers size={12} /> {infoEnlace.archivos_conteo} partes / archivos
                   </span>
                 )}
@@ -388,7 +388,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                               borderRadius: "10px",
                               border: esActivo ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
                               background: esActivo ? "var(--acento-diluido)" : "var(--fondo-suave)",
-                              color: esActivo ? "#5000BA" : "var(--texto-2)",
+                              color: esActivo ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)",
                               fontWeight: 800,
                               fontSize: "0.82rem",
                               display: "flex",
@@ -499,7 +499,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "6px",
-                              background: "#ffffff",
+                              background: "var(--cf-ffffff, #ffffff)",
                               border: "1px solid var(--linea-fuerte)",
                               color: "var(--texto-2)",
                               padding: "6px 12px",

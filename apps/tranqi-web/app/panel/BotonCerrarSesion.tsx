@@ -63,7 +63,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
             gap: "6px",
             padding: "6px 12px",
             borderRadius: "8px",
-            border: "1px solid rgba(255, 255, 255, 0.25)",
+            border: "1px solid var(--cb-ffffff-a250, rgba(255, 255, 255, 0.25))",
             background: "color-mix(in srgb, var(--error) 18%, transparent)",
             color: "#ffffff",
             fontSize: "0.76rem",
@@ -97,14 +97,14 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
           desplegable que se oculta al elegir, y el modal se ocultaba con él. */}
       {mostrarModal && createPortal(
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "16px" }}>
-          <div role="dialog" aria-modal="true" aria-labelledby="titulo-cerrar-sesion" style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "420px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="titulo-cerrar-sesion" style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "18px", padding: "24px", maxWidth: "420px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{ background: "color-mix(in srgb, var(--error) 12%, transparent)", color: "var(--error)", borderRadius: "50%", width: "42px", height: "42px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <LogOut size={22} />
                 </div>
                 <div>
-                  <h3 id="titulo-cerrar-sesion" style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "#111111" }}>Cerrar Sesión</h3>
+                  <h3 id="titulo-cerrar-sesion" style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, #111111)" }}>Cerrar Sesión</h3>
                   <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>Confirmación de salida</span>
                 </div>
               </div>
@@ -113,7 +113,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
               </button>
             </div>
 
-            <p style={{ fontSize: "0.86rem", color: "#555555", margin: "0 0 20px 0", lineHeight: 1.5 }}>
+            <p style={{ fontSize: "0.86rem", color: "var(--ct-555555, #555555)", margin: "0 0 20px 0", lineHeight: 1.5 }}>
               ¿Estás seguro de que deseas cerrar tu sesión activa? Tendrás que volver a ingresar tus credenciales para acceder nuevamente al sistema.
             </p>
 
@@ -124,7 +124,7 @@ export function BotonCerrarSesion({ variante = "nav", className = "" }: BotonCer
                 disabled={cargando}
                 // El foco entra en la opción segura: Enter por inercia no cierra la sesión.
                 autoFocus
-                style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid var(--linea)", background: "#ffffff", color: "#111111", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}
+                style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid var(--linea)", background: "var(--cf-ffffff, #ffffff)", color: "var(--ct-111111, #111111)", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}
               >
                 Cancelar
               </button>

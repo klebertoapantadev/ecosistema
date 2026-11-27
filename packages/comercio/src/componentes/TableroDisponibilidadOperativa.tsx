@@ -300,9 +300,9 @@ export function TableroDisponibilidadOperativa({
   return (
     <div
       style={{
-        background: "#FFFFFF",
+        background: "var(--cf-ffffff, #FFFFFF)",
         borderRadius: "16px",
-        border: "1px solid #E2E8F0",
+        border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
         padding: "24px",
         boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.05)",
         maxWidth: enModal ? "820px" : "100%",
@@ -319,7 +319,7 @@ export function TableroDisponibilidadOperativa({
           marginBottom: "20px",
           flexWrap: "wrap",
           gap: "14px",
-          borderBottom: "1px solid #F1F5F9",
+          borderBottom: "1px solid var(--cb-f1f5f9, #F1F5F9)",
           paddingBottom: "18px",
         }}
       >
@@ -329,8 +329,8 @@ export function TableroDisponibilidadOperativa({
               width: "46px",
               height: "46px",
               borderRadius: "12px",
-              background: esFloristeria ? "#FFF1F2" : esLegal ? "#F5F3FF" : "#F0F9FF",
-              color: esFloristeria ? "#E11D48" : esLegal ? "#5000BA" : "#0284C7",
+              background: esFloristeria ? "var(--cf-fff1f2, #FFF1F2)" : esLegal ? "var(--cf-f5f3ff, #F5F3FF)" : "var(--cf-f0f9ff, #F0F9FF)",
+              color: esFloristeria ? "var(--ct-e11d48, #E11D48)" : esLegal ? "var(--ct-5000ba, #5000BA)" : "var(--ct-0284c7, #0284C7)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -352,7 +352,7 @@ export function TableroDisponibilidadOperativa({
                   margin: 0,
                   fontSize: "1.25rem",
                   fontWeight: 800,
-                  color: "#0F172A",
+                  color: "var(--ct-0f172a, #0F172A)",
                   letterSpacing: "-0.01em",
                 }}
               >
@@ -364,8 +364,8 @@ export function TableroDisponibilidadOperativa({
               </h2>
               <span
                 style={{
-                  background: "#ECFDF5",
-                  color: "#059669",
+                  background: "var(--cf-ecfdf5, #ECFDF5)",
+                  color: "var(--ct-059669, #059669)",
                   padding: "3px 9px",
                   borderRadius: "14px",
                   fontSize: "0.72rem",
@@ -373,7 +373,7 @@ export function TableroDisponibilidadOperativa({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "4px",
-                  border: "1px solid #A7F3D0",
+                  border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
                 }}
               >
                 <Bot size={12} />
@@ -384,7 +384,7 @@ export function TableroDisponibilidadOperativa({
               style={{
                 margin: "4px 0 0",
                 fontSize: "0.84rem",
-                color: "#64748B",
+                color: "var(--ct-64748b, #64748B)",
               }}
             >
               {esLegal
@@ -402,10 +402,10 @@ export function TableroDisponibilidadOperativa({
           <div
             style={{
               display: "flex",
-              background: "#F1F5F9",
+              background: "var(--cf-f1f5f9, #F1F5F9)",
               padding: "3px",
               borderRadius: "10px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
             }}
           >
             <button
@@ -415,8 +415,8 @@ export function TableroDisponibilidadOperativa({
                 padding: "5px 12px",
                 borderRadius: "8px",
                 border: "none",
-                background: modoVista === "operador" ? "#FFFFFF" : "transparent",
-                color: modoVista === "operador" ? "#0F172A" : "#64748B",
+                background: modoVista === "operador" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                color: modoVista === "operador" ? "var(--ct-0f172a, #0F172A)" : "var(--ct-64748b, #64748B)",
                 fontWeight: modoVista === "operador" ? 700 : 500,
                 fontSize: "0.75rem",
                 cursor: "pointer",
@@ -451,8 +451,8 @@ export function TableroDisponibilidadOperativa({
                 padding: "5px 12px",
                 borderRadius: "8px",
                 border: "none",
-                background: modoVista === "abogado" ? "#FFFFFF" : "transparent",
-                color: modoVista === "abogado" ? "#5000BA" : "#64748B",
+                background: modoVista === "abogado" ? "var(--cf-ffffff, #FFFFFF)" : "transparent",
+                color: modoVista === "abogado" ? "var(--ct-5000ba, #5000BA)" : "var(--ct-64748b, #64748B)",
                 fontWeight: modoVista === "abogado" ? 700 : 500,
                 fontSize: "0.75rem",
                 cursor: "pointer",
@@ -472,9 +472,9 @@ export function TableroDisponibilidadOperativa({
             onClick={cargarDatos}
             disabled={cargando}
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #CBD5E1",
-              color: "#475569",
+              background: "var(--cf-f8fafc, #F8FAFC)",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+              color: "var(--ct-475569, #475569)",
               padding: "7px 12px",
               borderRadius: "8px",
               fontSize: "0.8rem",
@@ -520,9 +520,9 @@ export function TableroDisponibilidadOperativa({
       {mensajeExito && (
         <div
           style={{
-            background: "#F0FDF4",
+            background: "var(--cf-f0fdf4, #F0FDF4)",
             border: "1px solid #86EFAC",
-            color: "#166534",
+            color: "var(--ct-166534, #166534)",
             padding: "12px 16px",
             borderRadius: "10px",
             marginBottom: "16px",
@@ -541,9 +541,9 @@ export function TableroDisponibilidadOperativa({
       {error && (
         <div
           style={{
-            background: "#FEF2F2",
-            border: "1px solid #FCA5A5",
-            color: "#991B1B",
+            background: "var(--cf-fef2f2, #FEF2F2)",
+            border: "1px solid var(--cb-fca5a5, #FCA5A5)",
+            color: "var(--ct-991b1b, #991B1B)",
             padding: "12px 16px",
             borderRadius: "10px",
             marginBottom: "16px",
@@ -562,8 +562,8 @@ export function TableroDisponibilidadOperativa({
       {modoVista === "abogado" && (
         <div
           style={{
-            background: "#F5F3FF",
-            border: "1.5px solid #DDD6FE",
+            background: "var(--cf-f5f3ff, #F5F3FF)",
+            border: "1.5px solid var(--cb-ddd6fe, #DDD6FE)",
             borderRadius: "14px",
             padding: "18px 20px",
             marginBottom: "20px",
@@ -571,11 +571,11 @@ export function TableroDisponibilidadOperativa({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
             <Briefcase size={18} color="#5000BA" />
-            <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#4C1D95" }}>
+            <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-4c1d95, #4C1D95)" }}>
               Panel de Postulación / Declaración de Disponibilidad Preliminar
             </h3>
           </div>
-          <p style={{ margin: "0 0 14px", fontSize: "0.82rem", color: "#5B21B6", lineHeight: 1.5 }}>
+          <p style={{ margin: "0 0 14px", fontSize: "0.82rem", color: "var(--ct-5b21b6, #5B21B6)", lineHeight: 1.5 }}>
             Como abogado socio o especialista, ingresa las horas semanales o mensuales que dispondrás para consultas 1-a-1.
             Tu propuesta quedará registrada en estado <strong>Preliminar</strong> hasta que el <strong>Operador</strong> la revise y apruebe.
           </p>
@@ -586,14 +586,14 @@ export function TableroDisponibilidadOperativa({
               gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: "12px",
               alignItems: "flex-end",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               padding: "14px",
               borderRadius: "10px",
-              border: "1px solid #E9D5FF",
+              border: "1px solid var(--cb-e9d5ff, #E9D5FF)",
             }}
           >
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "5px" }}>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "5px" }}>
                 Selecciona tu Especialidad / Turno:
               </label>
               <SelectConBuscador
@@ -603,10 +603,10 @@ export function TableroDisponibilidadOperativa({
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                   fontSize: "0.82rem",
-                  color: "#0F172A",
-                  background: "#fff",
+                  color: "var(--ct-0f172a, #0F172A)",
+                  background: "var(--cf-ffffff, #fff)",
                   outline: "none",
                 }}
               >
@@ -619,7 +619,7 @@ export function TableroDisponibilidadOperativa({
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "5px" }}>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-475569, #475569)", marginBottom: "5px" }}>
                 Horas Disponibles Propuestas:
               </label>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -633,13 +633,13 @@ export function TableroDisponibilidadOperativa({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.85rem",
                     fontWeight: 700,
-                    color: "#0F172A",
+                    color: "var(--ct-0f172a, #0F172A)",
                   }}
                 />
-                <span style={{ fontSize: "0.8rem", color: "#64748B", fontWeight: 600 }}>horas</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>horas</span>
               </div>
             </div>
 
@@ -677,8 +677,8 @@ export function TableroDisponibilidadOperativa({
       {modoVista === "operador" && propuestasPendientes.length > 0 && (
         <div
           style={{
-            background: "#FFFBEB",
-            border: "1.5px solid #FDE68A",
+            background: "var(--cf-fffbeb, #FFFBEB)",
+            border: "1.5px solid var(--cb-fde68a, #FDE68A)",
             borderRadius: "14px",
             padding: "16px 20px",
             marginBottom: "20px",
@@ -687,7 +687,7 @@ export function TableroDisponibilidadOperativa({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <AlertCircle size={18} color="#D97706" />
-              <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#92400E" }}>
+              <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-92400e, #92400E)" }}>
                 {propuestasPendientes.length} Propuesta(s) de Disponibilidad Preliminar Pendiente(s) de Aprobación
               </h3>
             </div>
@@ -721,7 +721,7 @@ export function TableroDisponibilidadOperativa({
               <div
                 key={p.id}
                 style={{
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   borderRadius: "10px",
                   padding: "10px 14px",
                   border: "1px solid #FCD34D",
@@ -733,13 +733,13 @@ export function TableroDisponibilidadOperativa({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B" }}>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--ct-1e293b, #1E293B)" }}>
                     {p.nombre}
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748B", display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
                     <span>Horas actuales: <strong>{p.cantidad_disponible}</strong></span>
                     <span>•</span>
-                    <span style={{ color: "#D97706", fontWeight: 700 }}>
+                    <span style={{ color: "var(--ct-d97706, #D97706)", fontWeight: 700 }}>
                       Propuesta recibida: {p.propuesta_preliminar_horas} horas
                     </span>
                     {p.propuesta_por_nombre && (
@@ -779,9 +779,9 @@ export function TableroDisponibilidadOperativa({
                     onClick={() => handleRechazarPropuesta(p.id)}
                     disabled={procesandoId === p.id}
                     style={{
-                      background: "#F1F5F9",
-                      color: "#64748B",
-                      border: "1px solid #CBD5E1",
+                      background: "var(--cf-f1f5f9, #F1F5F9)",
+                      color: "var(--ct-64748b, #64748B)",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       padding: "6px 10px",
                       borderRadius: "6px",
                       fontSize: "0.75rem",
@@ -811,30 +811,30 @@ export function TableroDisponibilidadOperativa({
           marginBottom: "18px",
         }}
       >
-        <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px 14px" }}>
-          <div style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 700, textTransform: "uppercase" }}>
+        <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "10px", padding: "12px 14px" }}>
+          <div style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 700, textTransform: "uppercase" }}>
             {esLegal ? "Total Horas Disponibles" : "Stock Total Operativo"}
           </div>
-          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", marginTop: "4px" }}>
-            {totalHorasDisponibles} <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#64748B" }}>{esLegal ? "hrs" : "unidades"}</span>
+          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", marginTop: "4px" }}>
+            {totalHorasDisponibles} <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--ct-64748b, #64748B)" }}>{esLegal ? "hrs" : "unidades"}</span>
           </div>
         </div>
 
-        <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px 14px" }}>
-          <div style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 700, textTransform: "uppercase" }}>
+        <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "10px", padding: "12px 14px" }}>
+          <div style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 700, textTransform: "uppercase" }}>
             {esLegal ? "Especialistas en Catálogo" : "Líneas de Insumos"}
           </div>
-          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0F172A", marginTop: "4px" }}>
-            {items.length} <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#64748B" }}>perfiles</span>
+          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", marginTop: "4px" }}>
+            {items.length} <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--ct-64748b, #64748B)" }}>perfiles</span>
           </div>
         </div>
 
-        <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px 14px" }}>
-          <div style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 700, textTransform: "uppercase" }}>
+        <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "10px", padding: "12px 14px" }}>
+          <div style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 700, textTransform: "uppercase" }}>
             Propuestas Preliminares
           </div>
-          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: propuestasPendientes.length > 0 ? "#D97706" : "#059669", marginTop: "4px" }}>
-            {propuestasPendientes.length} <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#64748B" }}>pendientes</span>
+          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: propuestasPendientes.length > 0 ? "var(--ct-d97706, #D97706)" : "var(--ct-059669, #059669)", marginTop: "4px" }}>
+            {propuestasPendientes.length} <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--ct-64748b, #64748B)" }}>pendientes</span>
           </div>
         </div>
       </div>
@@ -860,7 +860,7 @@ export function TableroDisponibilidadOperativa({
           >
             <Search
               size={14}
-              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }}
+              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--ct-94a3b8, #94A3B8)" }}
             />
             <input
               type="text"
@@ -871,9 +871,9 @@ export function TableroDisponibilidadOperativa({
                 width: "100%",
                 padding: "7px 10px 7px 32px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                 fontSize: "0.8rem",
-                color: "#1E293B",
+                color: "var(--ct-1e293b, #1E293B)",
               }}
             />
           </div>
@@ -885,9 +885,9 @@ export function TableroDisponibilidadOperativa({
               style={{
                 padding: "5px 10px",
                 borderRadius: "16px",
-                border: filtroEstadoAprobacion === "TODOS" ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
-                background: filtroEstadoAprobacion === "TODOS" ? "#F1F5F9" : "#fff",
-                color: filtroEstadoAprobacion === "TODOS" ? "#0F172A" : "#64748B",
+                border: filtroEstadoAprobacion === "TODOS" ? "1.5px solid #0F172A" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                background: filtroEstadoAprobacion === "TODOS" ? "var(--cf-f1f5f9, #F1F5F9)" : "var(--cf-ffffff, #fff)",
+                color: filtroEstadoAprobacion === "TODOS" ? "var(--ct-0f172a, #0F172A)" : "var(--ct-64748b, #64748B)",
                 fontSize: "0.74rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -902,9 +902,9 @@ export function TableroDisponibilidadOperativa({
               style={{
                 padding: "5px 10px",
                 borderRadius: "16px",
-                border: filtroEstadoAprobacion === "PRELIMINAR" ? "1.5px solid #D97706" : "1px solid #CBD5E1",
-                background: filtroEstadoAprobacion === "PRELIMINAR" ? "#FEF3C7" : "#fff",
-                color: filtroEstadoAprobacion === "PRELIMINAR" ? "#B45309" : "#64748B",
+                border: filtroEstadoAprobacion === "PRELIMINAR" ? "1.5px solid #D97706" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                background: filtroEstadoAprobacion === "PRELIMINAR" ? "var(--cf-fef3c7, #FEF3C7)" : "var(--cf-ffffff, #fff)",
+                color: filtroEstadoAprobacion === "PRELIMINAR" ? "var(--ct-b45309, #B45309)" : "var(--ct-64748b, #64748B)",
                 fontSize: "0.74rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -933,14 +933,14 @@ export function TableroDisponibilidadOperativa({
             <div
               key={it.id}
               style={{
-                background: esAgotado ? "#F8FAFC" : "#FFFFFF",
+                background: esAgotado ? "var(--cf-f8fafc, #F8FAFC)" : "var(--cf-ffffff, #FFFFFF)",
                 border: esPreliminar
                   ? "2px solid #F59E0B"
                   : esAgotado
-                  ? "1px solid #E2E8F0"
+                  ? "1px solid var(--cb-e2e8f0, #E2E8F0)"
                   : esBajo
                   ? "1.5px solid #FCD34D"
-                  : "1.5px solid #E2E8F0",
+                  : "1.5px solid var(--cb-e2e8f0, #E2E8F0)",
                 borderRadius: "14px",
                 padding: "16px",
                 display: "flex",
@@ -985,7 +985,7 @@ export function TableroDisponibilidadOperativa({
                       height: "30px",
                       borderRadius: "50%",
                       backgroundColor: it.color_hex,
-                      border: "2px solid #CBD5E1",
+                      border: "2px solid var(--cb-cbd5e1, #CBD5E1)",
                       flexShrink: 0,
                       boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     }}
@@ -996,8 +996,8 @@ export function TableroDisponibilidadOperativa({
                       width: "32px",
                       height: "32px",
                       borderRadius: "8px",
-                      background: "#F1F5F9",
-                      color: "#475569",
+                      background: "var(--cf-f1f5f9, #F1F5F9)",
+                      color: "var(--ct-475569, #475569)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1012,14 +1012,14 @@ export function TableroDisponibilidadOperativa({
                     style={{
                       fontSize: "0.88rem",
                       fontWeight: 700,
-                      color: esAgotado ? "#64748B" : "#0F172A",
+                      color: esAgotado ? "var(--ct-64748b, #64748B)" : "var(--ct-0f172a, #0F172A)",
                       lineHeight: 1.3,
                     }}
                   >
                     {it.nombre}
                   </div>
                   {it.detalle?.especialidad && (
-                    <div style={{ fontSize: "0.74rem", color: "#64748B", marginTop: "2px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--ct-64748b, #64748B)", marginTop: "2px" }}>
                       Especialidad: <strong>{it.detalle.especialidad}</strong>
                       {it.detalle.tarifa_hora && ` • $${it.detalle.tarifa_hora}/hr`}
                     </div>
@@ -1033,17 +1033,17 @@ export function TableroDisponibilidadOperativa({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  background: "#F8FAFC",
+                  background: "var(--cf-f8fafc, #F8FAFC)",
                   padding: "8px 12px",
                   borderRadius: "10px",
-                  border: "1px solid #F1F5F9",
+                  border: "1px solid var(--cb-f1f5f9, #F1F5F9)",
                 }}
               >
                 <span
                   style={{
                     fontSize: "0.76rem",
                     fontWeight: 600,
-                    color: "#475569",
+                    color: "var(--ct-475569, #475569)",
                   }}
                 >
                   {it.unidad === "HORA"
@@ -1063,9 +1063,9 @@ export function TableroDisponibilidadOperativa({
                         width: "26px",
                         height: "26px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        background: "#FFFFFF",
-                        color: "#334155",
+                        border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-334155, #334155)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1080,7 +1080,7 @@ export function TableroDisponibilidadOperativa({
                     style={{
                       fontSize: "1.1rem",
                       fontWeight: 800,
-                      color: esAgotado ? "#94A3B8" : "#0F172A",
+                      color: esAgotado ? "var(--ct-94a3b8, #94A3B8)" : "var(--ct-0f172a, #0F172A)",
                       minWidth: "28px",
                       textAlign: "center",
                     }}
@@ -1096,9 +1096,9 @@ export function TableroDisponibilidadOperativa({
                         width: "26px",
                         height: "26px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        background: "#FFFFFF",
-                        color: "#334155",
+                        border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-334155, #334155)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1124,9 +1124,9 @@ export function TableroDisponibilidadOperativa({
                       border:
                         it.estado === "DISPONIBLE"
                           ? "1.5px solid #16A34A"
-                          : "1px solid #E2E8F0",
-                      background: it.estado === "DISPONIBLE" ? "#DCFCE7" : "#FFFFFF",
-                      color: it.estado === "DISPONIBLE" ? "#15803D" : "#64748B",
+                          : "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                      background: it.estado === "DISPONIBLE" ? "var(--cf-dcfce7, #DCFCE7)" : "var(--cf-ffffff, #FFFFFF)",
+                      color: it.estado === "DISPONIBLE" ? "var(--ct-15803d, #15803D)" : "var(--ct-64748b, #64748B)",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1145,9 +1145,9 @@ export function TableroDisponibilidadOperativa({
                       border:
                         it.estado === "BAJO"
                           ? "1.5px solid #D97706"
-                          : "1px solid #E2E8F0",
-                      background: it.estado === "BAJO" ? "#FEF3C7" : "#FFFFFF",
-                      color: it.estado === "BAJO" ? "#B45309" : "#64748B",
+                          : "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                      background: it.estado === "BAJO" ? "var(--cf-fef3c7, #FEF3C7)" : "var(--cf-ffffff, #FFFFFF)",
+                      color: it.estado === "BAJO" ? "var(--ct-b45309, #B45309)" : "var(--ct-64748b, #64748B)",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1166,9 +1166,9 @@ export function TableroDisponibilidadOperativa({
                       border:
                         it.estado === "AGOTADO"
                           ? "1.5px solid #DC2626"
-                          : "1px solid #E2E8F0",
-                      background: it.estado === "AGOTADO" ? "#FEE2E2" : "#FFFFFF",
-                      color: it.estado === "AGOTADO" ? "#B91C1C" : "#64748B",
+                          : "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                      background: it.estado === "AGOTADO" ? "var(--cf-fee2e2, #FEE2E2)" : "var(--cf-ffffff, #FFFFFF)",
+                      color: it.estado === "AGOTADO" ? "var(--ct-b91c1c, #B91C1C)" : "var(--ct-64748b, #64748B)",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1184,7 +1184,7 @@ export function TableroDisponibilidadOperativa({
                     style={{
                       fontSize: "0.72rem",
                       fontWeight: 700,
-                      color: esPreliminar ? "#D97706" : "#059669",
+                      color: esPreliminar ? "var(--ct-d97706, #D97706)" : "var(--ct-059669, #059669)",
                       display: "flex",
                       alignItems: "center",
                       gap: "4px",
@@ -1200,9 +1200,9 @@ export function TableroDisponibilidadOperativa({
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
                     style={{
-                      background: "#F5F3FF",
-                      color: "#5000BA",
-                      border: "1px solid #DDD6FE",
+                      background: "var(--cf-f5f3ff, #F5F3FF)",
+                      color: "var(--ct-5000ba, #5000BA)",
+                      border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
                       padding: "5px 10px",
                       borderRadius: "6px",
                       fontSize: "0.72rem",

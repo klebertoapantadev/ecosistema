@@ -47,9 +47,9 @@ export function ModalNotificacionPush({
 
   const configuracionTipo = {
     exito: {
-      colorIcono: "#10B981",
-      colorFondoIcono: "#ECFDF5",
-      colorBoton: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+      colorIcono: "var(--ct-10b981, #10B981)",
+      colorFondoIcono: "var(--cf-ecfdf5, #ECFDF5)",
+      colorBoton: "linear-gradient(135deg, var(--ct-059669, #059669) 0%, var(--ct-047857, #047857) 100%)",
       sombraBoton: "0 4px 14px rgba(5, 150, 105, 0.3)",
       etiqueta: "NOTIFICACIÓN PUSH RECIBIDA",
       Icono: CheckCircle2,
@@ -64,24 +64,24 @@ export function ModalNotificacionPush({
     },
     advertencia: {
       colorIcono: "#F59E0B",
-      colorFondoIcono: "#FFFBEB",
-      colorBoton: "linear-gradient(135deg, #D97706 0%, #B45309 100%)",
+      colorFondoIcono: "var(--cf-fffbeb, #FFFBEB)",
+      colorBoton: "linear-gradient(135deg, var(--ct-d97706, #D97706) 0%, var(--ct-b45309, #B45309) 100%)",
       sombraBoton: "0 4px 14px rgba(217, 119, 6, 0.3)",
       etiqueta: "ALERTA DE SEGURIDAD PUSH",
       Icono: AlertTriangle,
     },
     error: {
-      colorIcono: "#EF4444",
-      colorFondoIcono: "#FEF2F2",
-      colorBoton: "linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)",
+      colorIcono: "var(--ct-ef4444, #EF4444)",
+      colorFondoIcono: "var(--cf-fef2f2, #FEF2F2)",
+      colorBoton: "linear-gradient(135deg, var(--ct-dc2626, #DC2626) 0%, var(--ct-b91c1c, #B91C1C) 100%)",
       sombraBoton: "0 4px 14px rgba(220, 38, 38, 0.3)",
       etiqueta: "ERROR DEL SISTEMA",
       Icono: AlertCircle,
     },
     info: {
-      colorIcono: "#5000BA",
-      colorFondoIcono: "#F3E8FF",
-      colorBoton: "linear-gradient(135deg, #5000BA 0%, #3B0088 100%)",
+      colorIcono: "var(--ct-5000ba, #5000BA)",
+      colorFondoIcono: "var(--cf-f3e8ff, #F3E8FF)",
+      colorBoton: "linear-gradient(135deg, var(--ct-5000ba, #5000BA) 0%, var(--ct-3b0088, #3B0088) 100%)",
       sombraBoton: "0 4px 14px rgba(80, 0, 186, 0.3)",
       etiqueta: "NOTIFICACIÓN IN-APP",
       Icono: Bell,
@@ -109,14 +109,14 @@ export function ModalNotificacionPush({
     >
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--cf-ffffff, #ffffff)",
           borderRadius: "20px",
           maxWidth: "480px",
           width: "100%",
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)",
-          border: "1px solid #E5E7EB",
+          border: "1px solid var(--cb-e5e7eb, #E5E7EB)",
           overflow: "hidden",
           animation: "aparecerModal 0.2s ease-out",
         }}
@@ -187,7 +187,7 @@ export function ModalNotificacionPush({
             padding: "24px",
             fontSize: "0.92rem",
             lineHeight: 1.6,
-            color: "#334155",
+            color: "var(--ct-334155, #334155)",
             whiteSpace: "pre-line",
           }}
         >
@@ -198,12 +198,12 @@ export function ModalNotificacionPush({
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid #F1F5F9",
+            borderTop: "1px solid var(--cb-f1f5f9, #F1F5F9)",
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-end",
             gap: "12px",
-            background: "#F8FAFC",
+            background: "var(--cf-f8fafc, #F8FAFC)",
           }}
         >
           {mostrarConfirmacion && (
@@ -213,9 +213,9 @@ export function ModalNotificacionPush({
               style={{
                 padding: "10px 18px",
                 borderRadius: "10px",
-                border: "1px solid #CBD5E1",
-                background: "#ffffff",
-                color: "#475569",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                background: "var(--cf-ffffff, #ffffff)",
+                color: "var(--ct-475569, #475569)",
                 fontWeight: 700,
                 fontSize: "0.88rem",
                 cursor: "pointer",

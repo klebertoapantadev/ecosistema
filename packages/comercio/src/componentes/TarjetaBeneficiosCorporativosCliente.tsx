@@ -42,7 +42,7 @@ export function TarjetaBeneficiosCorporativosCliente({
 
   if (cargando) {
     return (
-      <div style={{ padding: "16px", borderRadius: "14px", background: "#F8FAFC", border: "1px dashed #CBD5E1", display: "flex", alignItems: "center", gap: "10px", color: "#64748B", fontSize: "0.85rem" }}>
+      <div style={{ padding: "16px", borderRadius: "14px", background: "var(--cf-f8fafc, #F8FAFC)", border: "1px dashed var(--cb-cbd5e1, #CBD5E1)", display: "flex", alignItems: "center", gap: "10px", color: "var(--ct-64748b, #64748B)", fontSize: "0.85rem" }}>
         <RefreshCw size={16} />
         <span>Verificando membresía corporativa y beneficios B2B...</span>
       </div>
@@ -53,9 +53,9 @@ export function TarjetaBeneficiosCorporativosCliente({
     return (
       <div
         style={{
-          background: "#FFFBEB",
+          background: "var(--cf-fffbeb, #FFFBEB)",
           borderRadius: "14px",
-          border: "1.5px solid #FDE68A",
+          border: "1.5px solid var(--cb-fde68a, #FDE68A)",
           padding: "16px 20px",
           display: "flex",
           justifyContent: "space-between",
@@ -65,16 +65,16 @@ export function TarjetaBeneficiosCorporativosCliente({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center", color: "#D97706" }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "var(--cf-fef3c7, #FEF3C7)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ct-d97706, #D97706)" }}>
             <Building2 size={20} />
           </div>
           <div>
-            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#92400E" }}>
+            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-92400e, #92400E)" }}>
               {beneficios.cupoAgotado
                 ? `Cupo de Colaboradores Completo · ${beneficios.empresaNombre || "Empresa"}`
                 : `Membresía Corporativa Pausada · ${beneficios.empresaNombre || "Empresa"}`}
             </h4>
-            <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "#B45309" }}>
+            <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "var(--ct-b45309, #B45309)" }}>
               {beneficios.mensajeEstado ||
                 `El convenio corporativo ha alcanzado el límite de ${beneficios.cupoColaboradores || 50} colaboradores habilitados. Solicita a Talento Humano (RRHH) ampliar el cupo.`}
             </p>
@@ -89,9 +89,9 @@ export function TarjetaBeneficiosCorporativosCliente({
     return (
       <div
         style={{
-          background: "linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)",
+          background: "linear-gradient(135deg, var(--cf-f8fafc, #F8FAFC) 0%, var(--cf-eff6ff, #EFF6FF) 100%)",
           borderRadius: "14px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
           padding: "16px 20px",
           display: "flex",
           justifyContent: "space-between",
@@ -101,14 +101,14 @@ export function TarjetaBeneficiosCorporativosCliente({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#E0F2FE", display: "flex", alignItems: "center", justifyContent: "center", color: "#0284C7" }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "var(--cf-e0f2fe, #E0F2FE)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ct-0284c7, #0284C7)" }}>
             <Building2 size={20} />
           </div>
           <div>
-            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#1E293B" }}>
+            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--ct-1e293b, #1E293B)" }}>
               ¿Perteneces a una empresa aliada?
             </h4>
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B" }}>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--ct-64748b, #64748B)" }}>
               Regístrate o actualiza tu correo con el dominio de tu empresa para desbloquear consultas $0.00 y descuentos automáticos.
             </p>
           </div>
@@ -170,8 +170,8 @@ export function TarjetaBeneficiosCorporativosCliente({
             else if (typeof window !== "undefined") window.location.href = "/panel/agenda";
           }}
           style={{
-            background: "#FFFFFF",
-            color: "#05876E",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            color: "var(--ct-05876e, #05876E)",
             border: "none",
             padding: "6px 14px",
             borderRadius: "8px",
@@ -194,8 +194,8 @@ export function TarjetaBeneficiosCorporativosCliente({
   return (
     <div
       style={{
-        background: "linear-gradient(135deg, #FFFFFF 0%, #F0FDF4 100%)",
-        border: "1.5px solid #A7F3D0",
+        background: "linear-gradient(135deg, var(--cf-ffffff, #FFFFFF) 0%, var(--cf-f0fdf4, #F0FDF4) 100%)",
+        border: "1.5px solid var(--cb-a7f3d0, #A7F3D0)",
         borderRadius: "16px",
         padding: "20px 24px",
         boxShadow: "0 4px 16px rgba(16, 185, 129, 0.08)",
@@ -246,8 +246,8 @@ export function TarjetaBeneficiosCorporativosCliente({
 
             <span
               style={{
-                background: "#DCFCE7",
-                color: "#15803D",
+                background: "var(--cf-dcfce7, #DCFCE7)",
+                color: "var(--ct-15803d, #15803D)",
                 padding: "3px 9px",
                 borderRadius: "12px",
                 fontSize: "0.72rem",
@@ -262,10 +262,10 @@ export function TarjetaBeneficiosCorporativosCliente({
             </span>
           </div>
 
-          <h3 style={{ margin: "4px 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#0F172A" }}>
+          <h3 style={{ margin: "4px 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
             ¡Tu membresía corporativa con {beneficios.empresaNombre} está activa!
           </h3>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "#475569", maxWidth: "650px" }}>
+          <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ct-475569, #475569)", maxWidth: "650px" }}>
             Como colaborador acreditado de {beneficios.empresaNombre}, disfrutas de beneficios exclusivos y subsidio en asesoría jurídica.
           </p>
         </div>
@@ -311,23 +311,23 @@ export function TarjetaBeneficiosCorporativosCliente({
       >
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "12px",
             padding: "14px",
-            border: "1px solid #D1FAE5",
+            border: "1px solid var(--cb-d1fae5, #D1FAE5)",
             display: "flex",
             alignItems: "center",
             gap: "12px",
           }}
         >
-          <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#ECFDF5", color: "#05876E", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "var(--cf-ecfdf5, #ECFDF5)", color: "var(--ct-05876e, #05876E)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Video size={22} />
           </div>
           <div>
-            <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#05876E" }}>
+            <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--ct-05876e, #05876E)" }}>
               {beneficios.consultasDisponibles} de {beneficios.consultasGratisTotal} Citas
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#64748B", fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>
               Consultas Telemáticas al 100% ($0.00)
             </div>
           </div>
@@ -335,23 +335,23 @@ export function TarjetaBeneficiosCorporativosCliente({
 
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "12px",
             padding: "14px",
-            border: "1px solid #E0E7FF",
+            border: "1px solid var(--cb-e0e7ff, #E0E7FF)",
             display: "flex",
             alignItems: "center",
             gap: "12px",
           }}
         >
-          <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#EEF2FF", color: "#4F46E5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "var(--cf-eef2ff, #EEF2FF)", color: "var(--ct-4f46e5, #4F46E5)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Percent size={22} />
           </div>
           <div>
-            <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#4F46E5" }}>
+            <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--ct-4f46e5, #4F46E5)" }}>
               {beneficios.descuentoGeneralPct}% Descuento
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#64748B", fontWeight: 600 }}>
+            <div style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>
               En todos los servicios legales
             </div>
           </div>
@@ -360,23 +360,23 @@ export function TarjetaBeneficiosCorporativosCliente({
         {beneficios.excepcionesPorProducto && beneficios.excepcionesPorProducto.length > 0 && (
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "12px",
               padding: "14px",
-              border: "1px solid #FEF3C7",
+              border: "1px solid var(--cb-fef3c7, #FEF3C7)",
               display: "flex",
               alignItems: "center",
               gap: "12px",
             }}
           >
-            <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#FFFBEB", color: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "var(--cf-fffbeb, #FFFBEB)", color: "var(--ct-d97706, #D97706)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <ShieldCheck size={22} />
             </div>
             <div>
-              <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#D97706" }}>
+              <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-d97706, #D97706)" }}>
                 {beneficios.excepcionesPorProducto[0]?.descuento_pct}% Descuento
               </div>
-              <div style={{ fontSize: "0.78rem", color: "#64748B", fontWeight: 600 }}>
+              <div style={{ fontSize: "0.78rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>
                 {beneficios.excepcionesPorProducto[0]?.producto_nombre}
               </div>
             </div>

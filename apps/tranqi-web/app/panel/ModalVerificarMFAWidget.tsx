@@ -60,7 +60,7 @@ export function ModalVerificarMFAWidget({
     >
       <div
         style={{
-          background: "var(--blanco, #ffffff)",
+          background: "var(--cf-ffffff, var(--blanco, #ffffff))",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "460px",
@@ -94,7 +94,7 @@ export function ModalVerificarMFAWidget({
               <Lock size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: "0.98rem", fontWeight: 800, margin: 0, color: "var(--negro, #111111)" }}>
+              <h3 style={{ fontSize: "0.98rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, var(--negro, #111111))" }}>
                 Autenticación MFA Requerida
               </h3>
               <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, var(--texto-suave))" }}>
@@ -128,7 +128,7 @@ export function ModalVerificarMFAWidget({
               borderRadius: "8px",
               background: "var(--violeta-suave, var(--acento-diluido))",
               border: "1px solid var(--panel-linea, var(--linea))",
-              color: "var(--violeta, #5000BA)",
+              color: "var(--ct-5000ba, var(--violeta, #5000BA))",
               fontSize: "0.83rem",
               lineHeight: 1.4,
             }}
@@ -168,7 +168,7 @@ export function ModalVerificarMFAWidget({
                 display: "block",
                 fontSize: "0.82rem",
                 fontWeight: 700,
-                color: "var(--negro, #111111)",
+                color: "var(--ct-111111, var(--negro, #111111))",
                 marginBottom: "6px",
               }}
             >
@@ -207,7 +207,7 @@ export function ModalVerificarMFAWidget({
               style={{
                 background: "var(--panel-papel, var(--fondo-suave))",
                 border: "1px solid var(--panel-linea, var(--linea))",
-                color: "var(--negro, #111111)",
+                color: "var(--ct-111111, var(--negro, #111111))",
                 padding: "8px 16px",
               }}
             >

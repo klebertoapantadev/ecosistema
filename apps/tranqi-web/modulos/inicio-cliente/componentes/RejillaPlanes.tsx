@@ -628,7 +628,7 @@ function Catalogo({
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.04em",
-                      color: "#6D28D9",
+                      color: "var(--ct-6d28d9, #6D28D9)",
                     }}
                   >
                     {p.pro_nombre}

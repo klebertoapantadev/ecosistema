@@ -70,33 +70,33 @@ const ESTILO_CLASIFICACION: Record<
 > = {
   PERSONAL: {
     etiqueta: "🔒 Personal",
-    fondo: "#F3E8FF",
-    texto: "#6B21A8",
-    borde: "#DDD6FE",
+    fondo: "var(--cf-f3e8ff, #F3E8FF)",
+    texto: "var(--ct-6b21a8, #6B21A8)",
+    borde: "var(--cb-ddd6fe, #DDD6FE)",
   },
   CLIENTE: {
     etiqueta: "💼 Cliente",
-    fondo: "#DCFCE7",
-    texto: "#166534",
-    borde: "#BBF7D0",
+    fondo: "var(--cf-dcfce7, #DCFCE7)",
+    texto: "var(--ct-166534, #166534)",
+    borde: "var(--cb-bbf7d0, #BBF7D0)",
   },
   PROVEEDOR: {
     etiqueta: "🚚 Proveedor",
-    fondo: "#FEF3C7",
-    texto: "#92400E",
-    borde: "#FDE68A",
+    fondo: "var(--cf-fef3c7, #FEF3C7)",
+    texto: "var(--ct-92400e, #92400E)",
+    borde: "var(--cb-fde68a, #FDE68A)",
   },
   EQUIPO_INTERNO: {
     etiqueta: "👥 Equipo",
-    fondo: "#DBEAFE",
-    texto: "#1E40AF",
-    borde: "#BFDBFE",
+    fondo: "var(--cf-dbeafe, #DBEAFE)",
+    texto: "var(--ct-1e40af, #1E40AF)",
+    borde: "var(--cb-bfdbfe, #BFDBFE)",
   },
   BLOQUEADO_SPAM: {
     etiqueta: "🚫 Bloqueado",
-    fondo: "#FEE2E2",
-    texto: "#991B1B",
-    borde: "#FECACA",
+    fondo: "var(--cf-fee2e2, #FEE2E2)",
+    texto: "var(--ct-991b1b, #991B1B)",
+    borde: "var(--cb-fecaca, #FECACA)",
   },
 };
 
@@ -769,8 +769,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         valor: (r) => r.nombreConsolidado,
         render: (r) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ color: "#1F1C19", fontSize: "0.84rem" }}>{r.nombreConsolidado}</strong>
-            {r.correo && <span style={{ fontSize: "0.73rem", color: "#7B746B" }}>{r.correo}</span>}
+            <strong style={{ color: "var(--ct-1f1c19, #1F1C19)", fontSize: "0.84rem" }}>{r.nombreConsolidado}</strong>
+            {r.correo && <span style={{ fontSize: "0.73rem", color: "var(--ct-7b746b, #7B746B)" }}>{r.correo}</span>}
           </div>
         ),
       },
@@ -779,7 +779,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         encabezado: "Teléfono (E.164)",
         valor: (r) => r.telefonoE164,
         render: (r) => (
-          <span style={{ fontFamily: "monospace", fontSize: "0.81rem", color: "#2E2A26" }}>
+          <span style={{ fontFamily: "monospace", fontSize: "0.81rem", color: "var(--ct-2e2a26, #2E2A26)" }}>
             {r.telefonoE164}
           </span>
         ),
@@ -814,7 +814,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         encabezado: "Respuesta IA",
         valor: (r) => ETIQUETA_POLITICA_IA[r.politicaIa] || r.politicaIa,
         render: (r) => (
-          <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "#3A3530" }}>
+          <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
             {ETIQUETA_POLITICA_IA[r.politicaIa] || r.politicaIa}
           </span>
         ),
@@ -824,7 +824,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         encabezado: "Privacidad / Consola",
         valor: (r) => ETIQUETA_VISIBILIDAD[r.visibilidad] || r.visibilidad,
         render: (r) => (
-          <span style={{ fontSize: "0.75rem", color: "#57524C" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--ct-57524c, #57524C)" }}>
             {ETIQUETA_VISIBILIDAD[r.visibilidad] || r.visibilidad}
           </span>
         ),
@@ -837,7 +837,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
             .map((f) => f.lineaNombre || f.propietarioNombre || f.origen)
             .join(", ") || r.titularNombre || "Manual",
         render: (r) => (
-          <span style={{ fontSize: "0.75rem", color: "#57524C" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--ct-57524c, #57524C)" }}>
             {r.fuentes?.length
               ? `${r.fuentes.length} fuente(s): ${r.fuentes
                   .slice(0, 2)
@@ -868,8 +868,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
       {/* Barra superior con KPIs y pestañas */}
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           borderRadius: "14px",
           padding: "16px 18px",
           display: "flex",
@@ -892,9 +892,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 width: "40px",
                 height: "40px",
                 borderRadius: "10px",
-                background: "#F3E8FF",
-                border: "1px solid #DDD6FE",
-                color: "#6B21A8",
+                background: "var(--cf-f3e8ff, #F3E8FF)",
+                border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                color: "var(--ct-6b21a8, #6B21A8)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -903,10 +903,10 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
               <Contact size={20} />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.06rem", fontWeight: 700, color: "#1F1C19" }}>
+              <h2 style={{ margin: 0, fontSize: "1.06rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                 Extracción, Consolidación (Join/Merge) y Listas WhatsApp
               </h2>
-              <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "#7B746B" }}>
+              <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "var(--ct-7b746b, #7B746B)" }}>
                 Depura agendas de múltiples celulares, bloquea respuestas automáticas en contactos personales (Ignorar Total) y gestiona líneas WhatsApp.
               </p>
             </div>
@@ -921,9 +921,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 gap: "6px",
                 padding: "7px 12px",
                 borderRadius: "9px",
-                border: "1px solid #D5CFC4",
-                background: "#FFFFFF",
-                color: "#2E2A26",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-2e2a26, #2E2A26)",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 textDecoration: "none",
@@ -945,9 +945,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 gap: "6px",
                 padding: "7px 11px",
                 borderRadius: "9px",
-                border: "1px solid #D5CFC4",
-                background: "#F8F7F4",
-                color: "#3A3530",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                color: "var(--ct-3a3530, #3A3530)",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -980,10 +980,10 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 padding: "10px 12px",
                 borderRadius: "10px",
                 background: k.bg,
-                border: "1px solid #EAE6DE",
+                border: "1px solid var(--cb-eae6de, #EAE6DE)",
               }}
             >
-              <div style={{ fontSize: "0.72rem", fontWeight: 600, color: "#6E6861" }}>{k.label}</div>
+              <div style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--ct-6e6861, #6E6861)" }}>{k.label}</div>
               <div style={{ fontSize: "1.2rem", fontWeight: 800, color: k.color, marginTop: "2px" }}>
                 {k.val}
               </div>
@@ -992,7 +992,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         </div>
 
         {/* Pestañas */}
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", borderTop: "1px solid #F1EFEA", paddingTop: "12px" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", borderTop: "1px solid var(--cb-f1efea, #F1EFEA)", paddingTop: "12px" }}>
           {[
             { id: "importar" as const, label: "Extraer & Join/Merge", icono: Upload },
             { id: "directorio" as const, label: `Directorio (${kpisDirectorio.total})`, icono: Users },
@@ -1011,9 +1011,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   gap: "6px",
                   padding: "8px 14px",
                   borderRadius: "9px",
-                  border: activo ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-                  background: activo ? "#1F1C19" : "#FFFFFF",
-                  color: activo ? "#FFFFFF" : "#3A3530",
+                  border: activo ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: activo ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                  color: activo ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
                   fontSize: "0.82rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -1032,9 +1032,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
           style={{
             padding: "11px 14px",
             borderRadius: "10px",
-            border: mensaje.tipo === "ok" ? "1px solid #BBF7D0" : "1px solid #FECACA",
-            background: mensaje.tipo === "ok" ? "#F0FDF4" : "#FEF2F2",
-            color: mensaje.tipo === "ok" ? "#166534" : "#991B1B",
+            border: mensaje.tipo === "ok" ? "1px solid var(--cb-bbf7d0, #BBF7D0)" : "1px solid var(--cb-fecaca, #FECACA)",
+            background: mensaje.tipo === "ok" ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-fef2f2, #FEF2F2)",
+            color: mensaje.tipo === "ok" ? "var(--ct-166534, #166534)" : "var(--ct-991b1b, #991B1B)",
             fontSize: "0.83rem",
             fontWeight: 600,
           }}
@@ -1051,8 +1051,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
           {/* Paso 1: Configurar origen/teléfono y cargar fuentes */}
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "14px",
               padding: "16px 18px",
               display: "flex",
@@ -1060,7 +1060,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
               gap: "14px",
             }}
           >
-            <div style={{ fontSize: "0.94rem", fontWeight: 700, color: "#1F1C19" }}>
+            <div style={{ fontSize: "0.94rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
               1. Extraer contactos y elegir a qué teléfono pertenecen
             </div>
 
@@ -1071,7 +1071,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 gap: "12px",
               }}
             >
-              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "#3A3530" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
                 Teléfono / Propietario que aporta esta lista
                 <select
                   value={lineaSeleccionadaId}
@@ -1087,8 +1087,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.84rem",
                   }}
                 >
@@ -1101,7 +1101,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 </select>
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "#3A3530" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "5px", fontSize: "0.78rem", fontWeight: 600, color: "var(--ct-3a3530, #3A3530)" }}>
                 Política por defecto para contactos PERSONALES
                 <select
                   value={politicaPersonalDefecto}
@@ -1111,8 +1111,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     fontSize: "0.84rem",
                   }}
                 >
@@ -1129,8 +1129,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   gap: "9px",
                   padding: "10px 12px",
                   borderRadius: "10px",
-                  border: esAgendaPersonalImport ? "1px solid #DDD6FE" : "1px solid #BBF7D0",
-                  background: esAgendaPersonalImport ? "#FAF5FF" : "#F0FDF4",
+                  border: esAgendaPersonalImport ? "1px solid var(--cb-ddd6fe, #DDD6FE)" : "1px solid var(--cb-bbf7d0, #BBF7D0)",
+                  background: esAgendaPersonalImport ? "var(--cf-faf5ff, #FAF5FF)" : "var(--cf-f0fdf4, #F0FDF4)",
                   cursor: "pointer",
                 }}
               >
@@ -1139,7 +1139,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   checked={esAgendaPersonalImport}
                   onChange={(e) => setEsAgendaPersonalImport(e.target.checked)}
                 />
-                <div style={{ fontSize: "0.78rem", color: "#2E2A26" }}>
+                <div style={{ fontSize: "0.78rem", color: "var(--ct-2e2a26, #2E2A26)" }}>
                   <strong>Modo seguro (Agenda Personal):</strong> todo contacto que NO diga «cliente» ni tenga compras se clasifica como <strong>PERSONAL</strong>.
                 </div>
               </label>
@@ -1158,18 +1158,18 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 style={{
                   padding: "14px",
                   borderRadius: "11px",
-                  border: "1px dashed #94A3B8",
-                  background: "#F8FAFC",
+                  border: "1px dashed var(--cb-94a3b8, #94A3B8)",
+                  background: "var(--cf-f8fafc, #F8FAFC)",
                   display: "flex",
                   flexDirection: "column",
                   gap: "8px",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "7px", fontWeight: 700, fontSize: "0.84rem", color: "#1F1C19" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "7px", fontWeight: 700, fontSize: "0.84rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                   <FileSpreadsheet size={16} color="#1D4ED8" />
                   <span>Subir .vcf / .csv / .xlsx</span>
                 </div>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748B", lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--ct-64748b, #64748B)", lineHeight: 1.45 }}>
                   Exporta desde iPhone/Android (<code>.vcf</code>) o Google Contacts (<code>.csv</code>/Excel). Puedes seleccionar varios archivos a la vez para hacer Join/Merge.
                 </p>
                 <input
@@ -1208,18 +1208,18 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 style={{
                   padding: "14px",
                   borderRadius: "11px",
-                  border: "1px solid #E6E2DA",
-                  background: "#FCFBF9",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  background: "var(--cf-fcfbf9, #FCFBF9)",
                   display: "flex",
                   flexDirection: "column",
                   gap: "8px",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "7px", fontWeight: 700, fontSize: "0.84rem", color: "#1F1C19" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "7px", fontWeight: 700, fontSize: "0.84rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                   <Smartphone size={16} color="#16A34A" />
                   <span>Extraer del Celular</span>
                 </div>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#6E6861", lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--ct-6e6861, #6E6861)", lineHeight: 1.45 }}>
                   {soportaContactPicker
                     ? "Ideal para 1 a 20 contactos puntuales (Android no incluye «Seleccionar todos» aquí). Para toda tu agenda usa .vcf desde Contactos → Organizar → Exportar a un archivo."
                     : "Disponible en Android Chrome para selección puntual. Para toda tu agenda exporta .vcf desde Contactos/iCloud o Google Contacts."}
@@ -1235,8 +1235,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     padding: "8px 12px",
                     borderRadius: "8px",
                     border: "1px solid #16A34A",
-                    background: soportaContactPicker ? "#16A34A" : "#FFFFFF",
-                    color: soportaContactPicker ? "#FFFFFF" : "#166534",
+                    background: soportaContactPicker ? "#16A34A" : "var(--cf-ffffff, #FFFFFF)",
+                    color: soportaContactPicker ? "#FFFFFF" : "var(--ct-166534, #166534)",
                     fontSize: "0.79rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1252,18 +1252,18 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 style={{
                   padding: "14px",
                   borderRadius: "11px",
-                  border: "1px solid #E6E2DA",
-                  background: "#FCFBF9",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  background: "var(--cf-fcfbf9, #FCFBF9)",
                   display: "flex",
                   flexDirection: "column",
                   gap: "8px",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "7px", fontWeight: 700, fontSize: "0.84rem", color: "#1F1C19" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "7px", fontWeight: 700, fontSize: "0.84rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                   <Database size={16} color="#7C3AED" />
                   <span>Cruzar con CRM Actual</span>
                 </div>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#6E6861", lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--ct-6e6861, #6E6861)", lineHeight: 1.45 }}>
                   Detectados <strong>{crmSemilla.length}</strong> teléfonos en compras, usuarios web y chats. Únelos al Join/Merge para identificar clientes antiguos.
                 </p>
                 <button
@@ -1277,8 +1277,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     padding: "8px 12px",
                     borderRadius: "8px",
                     border: "1px solid #7C3AED",
-                    background: "#FAF5FF",
-                    color: "#6B21A8",
+                    background: "var(--cf-faf5ff, #FAF5FF)",
+                    color: "var(--ct-6b21a8, #6B21A8)",
                     fontSize: "0.79rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1295,14 +1295,14 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
               style={{
                 padding: "12px 14px",
                 borderRadius: "10px",
-                background: "#F8F7F4",
-                border: "1px solid #EAE6DE",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                border: "1px solid var(--cb-eae6de, #EAE6DE)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "8px",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 700, color: "#3A3530" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 700, color: "var(--ct-3a3530, #3A3530)" }}>
                 <ClipboardPaste size={14} />
                 <span>Pegado rápido (1 contacto por línea: «Nombre, 099...» o solo el número)</span>
               </div>
@@ -1315,8 +1315,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   fontSize: "0.81rem",
                   fontFamily: "monospace",
                   resize: "vertical",
@@ -1352,9 +1352,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     gap: "5px",
                     padding: "6px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#2E2A26",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-2e2a26, #2E2A26)",
                     fontSize: "0.77rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1369,13 +1369,13 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
             {/* Reglas de auto-clasificación editables */}
             <details
               style={{
-                border: "1px solid #E6E2DA",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 borderRadius: "10px",
                 padding: "10px 12px",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
               }}
             >
-              <summary style={{ cursor: "pointer", fontSize: "0.8rem", fontWeight: 700, color: "#3A3530" }}>
+              <summary style={{ cursor: "pointer", fontSize: "0.8rem", fontWeight: 700, color: "var(--ct-3a3530, #3A3530)" }}>
                 ⚙️ Reglas de auto-clasificación (palabras clave de «Cliente» vs «Proveedor»)
               </summary>
               <div
@@ -1386,20 +1386,20 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   gap: "10px",
                 }}
               >
-                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "#57524C" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                   Patrones que detectan CLIENTE (separados por coma)
                   <input
                     value={patronesClienteTxt}
                     onChange={(e) => setPatronesClienteTxt(e.target.value)}
-                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid #D5CFC4", fontSize: "0.8rem" }}
+                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.8rem" }}
                   />
                 </label>
-                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "#57524C" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                   Patrones de PROVEEDOR (IA siempre deshabilitada)
                   <input
                     value={patronesProveedorTxt}
                     onChange={(e) => setPatronesProveedorTxt(e.target.value)}
-                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid #D5CFC4", fontSize: "0.8rem" }}
+                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.8rem" }}
                   />
                 </label>
               </div>
@@ -1411,7 +1411,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     marginTop: "10px",
                     padding: "6px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #1F1C19",
+                    border: "1px solid var(--cb-1f1c19, #1F1C19)",
                     background: "#1F1C19",
                     color: "#FFFFFF",
                     fontSize: "0.76rem",
@@ -1427,7 +1427,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
             {/* Fuentes cargadas en sesión */}
             {fuentesCargadasResumen.length > 0 && (
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#57524C" }}>
+                <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
                   Fuentes en Join/Merge:
                 </span>
                 {fuentesCargadasResumen.map((f, idx) => (
@@ -1436,8 +1436,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     style={{
                       padding: "3px 9px",
                       borderRadius: "999px",
-                      background: "#EEF4FF",
-                      color: "#1D4ED8",
+                      background: "var(--cf-eef4ff, #EEF4FF)",
+                      color: "var(--ct-1d4ed8, #1D4ED8)",
                       fontSize: "0.73rem",
                       fontWeight: 600,
                     }}
@@ -1451,9 +1451,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   style={{
                     padding: "3px 8px",
                     borderRadius: "7px",
-                    border: "1px solid #FECACA",
-                    background: "#FEF2F2",
-                    color: "#B91C1C",
+                    border: "1px solid var(--cb-fecaca, #FECACA)",
+                    background: "var(--cf-fef2f2, #FEF2F2)",
+                    color: "var(--ct-b91c1c, #B91C1C)",
                     fontSize: "0.73rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1469,8 +1469,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
           {resumenMerge && previewItems.length > 0 && (
             <div
               style={{
-                background: "#FFFFFF",
-                border: "1px solid #E6E2DA",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                 borderRadius: "14px",
                 padding: "16px 18px",
                 display: "flex",
@@ -1488,10 +1488,10 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 }}
               >
                 <div>
-                  <div style={{ fontSize: "0.94rem", fontWeight: 700, color: "#1F1C19" }}>
+                  <div style={{ fontSize: "0.94rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                     2. Vista Previa Consolidada (Join/Merge) — Revisa y Guarda
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "#6E6861", marginTop: "2px" }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--ct-6e6861, #6E6861)", marginTop: "2px" }}>
                     <strong>{resumenMerge.totalRegistrosBrutos}</strong> registros leídos →{" "}
                     <strong>{resumenMerge.totalConsolidados}</strong> contactos únicos (
                     <strong>{resumenMerge.duplicadosFusionados}</strong> duplicados fusionados ·{" "}
@@ -1510,9 +1510,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                       gap: "5px",
                       padding: "7px 11px",
                       borderRadius: "8px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
-                      color: "#2E2A26",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-2e2a26, #2E2A26)",
                       fontSize: "0.78rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -1560,7 +1560,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     flex: "1 1 200px",
                     padding: "7px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                     fontSize: "0.8rem",
                   }}
                 />
@@ -1581,9 +1581,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     style={{
                       padding: "5px 10px",
                       borderRadius: "999px",
-                      border: filtroPreview === f.id ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-                      background: filtroPreview === f.id ? "#1F1C19" : "#FFFFFF",
-                      color: filtroPreview === f.id ? "#FFFFFF" : "#3A3530",
+                      border: filtroPreview === f.id ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: filtroPreview === f.id ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                      color: filtroPreview === f.id ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
                       fontSize: "0.74rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -1602,38 +1602,38 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   alignItems: "center",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  background: "#F8F7F4",
-                  border: "1px solid #EAE6DE",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
+                  border: "1px solid var(--cb-eae6de, #EAE6DE)",
                 }}
               >
-                <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#57524C" }}>
+                <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-57524c, #57524C)" }}>
                   Aplicar a los {previewFiltrado.length} del filtro actual:
                 </span>
                 <button
                   type="button"
                   onClick={() => aplicarAccionMasivaPreview("PERSONAL_IGNORAR")}
-                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid #DDD6FE", background: "#FAF5FF", color: "#6B21A8", fontSize: "0.73rem", fontWeight: 700, cursor: "pointer" }}
+                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid var(--cb-ddd6fe, #DDD6FE)", background: "var(--cf-faf5ff, #FAF5FF)", color: "var(--ct-6b21a8, #6B21A8)", fontSize: "0.73rem", fontWeight: 700, cursor: "pointer" }}
                 >
                   🔒 Personal (Ignorar Total)
                 </button>
                 <button
                   type="button"
                   onClick={() => aplicarAccionMasivaPreview("PERSONAL_ADMIN")}
-                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid #DDD6FE", background: "#FFFFFF", color: "#6B21A8", fontSize: "0.73rem", fontWeight: 600, cursor: "pointer" }}
+                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid var(--cb-ddd6fe, #DDD6FE)", background: "var(--cf-ffffff, #FFFFFF)", color: "var(--ct-6b21a8, #6B21A8)", fontSize: "0.73rem", fontWeight: 600, cursor: "pointer" }}
                 >
                   🛡️ Personal (Solo Admin)
                 </button>
                 <button
                   type="button"
                   onClick={() => aplicarAccionMasivaPreview("CLIENTE_LINEA")}
-                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid #BBF7D0", background: "#F0FDF4", color: "#166534", fontSize: "0.73rem", fontWeight: 700, cursor: "pointer" }}
+                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid var(--cb-bbf7d0, #BBF7D0)", background: "var(--cf-f0fdf4, #F0FDF4)", color: "var(--ct-166534, #166534)", fontSize: "0.73rem", fontWeight: 700, cursor: "pointer" }}
                 >
                   💼 Cliente (Según Línea)
                 </button>
                 <button
                   type="button"
                   onClick={() => aplicarAccionMasivaPreview("CLIENTE_AUTO")}
-                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid #BBF7D0", background: "#FFFFFF", color: "#166534", fontSize: "0.73rem", fontWeight: 600, cursor: "pointer" }}
+                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid var(--cb-bbf7d0, #BBF7D0)", background: "var(--cf-ffffff, #FFFFFF)", color: "var(--ct-166534, #166534)", fontSize: "0.73rem", fontWeight: 600, cursor: "pointer" }}
                 >
                   ⚡ Cliente + IA Auto
                 </button>
@@ -1641,27 +1641,27 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   type="button"
                   onClick={() => recalcularConsolidacion(brutosAcumulados)}
                   title="Restablecer auto-clasificación automática según reglas y CRM"
-                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid #F59E0B", background: "#FFFBEB", color: "#92400E", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}
+                  style={{ padding: "4px 9px", borderRadius: "7px", border: "1px solid #F59E0B", background: "var(--cf-fffbeb, #FFFBEB)", color: "var(--ct-92400e, #92400E)", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}
                 >
                   ↺ Re-clasificar auto
                 </button>
                 <button
                   type="button"
                   onClick={() => aplicarAccionMasivaPreview("SELECCIONAR_TODOS")}
-                  style={{ padding: "4px 8px", borderRadius: "7px", border: "1px solid #D5CFC4", background: "#FFFFFF", color: "#3A3530", fontSize: "0.72rem", cursor: "pointer" }}
+                  style={{ padding: "4px 8px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", background: "var(--cf-ffffff, #FFFFFF)", color: "var(--ct-3a3530, #3A3530)", fontSize: "0.72rem", cursor: "pointer" }}
                 >
                   Marcar todos
                 </button>
                 <button
                   type="button"
                   onClick={() => aplicarAccionMasivaPreview("DESELECCIONAR_TODOS")}
-                  style={{ padding: "4px 8px", borderRadius: "7px", border: "1px solid #D5CFC4", background: "#FFFFFF", color: "#3A3530", fontSize: "0.72rem", cursor: "pointer" }}
+                  style={{ padding: "4px 8px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", background: "var(--cf-ffffff, #FFFFFF)", color: "var(--ct-3a3530, #3A3530)", fontSize: "0.72rem", cursor: "pointer" }}
                 >
                   Desmarcar
                 </button>
               </div>
 
-              <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.78rem", color: "#3A3530", cursor: "pointer" }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "0.78rem", color: "var(--ct-3a3530, #3A3530)", cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={ocultarExistentes}
@@ -1679,7 +1679,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   gap: "8px",
                   flexWrap: "wrap",
                   fontSize: "0.76rem",
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                 }}
               >
                 <span>
@@ -1705,8 +1705,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     style={{
                       padding: "4px 7px",
                       borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      background: "#FFFFFF",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       fontSize: "0.74rem",
                     }}
                   >
@@ -1724,9 +1724,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                         style={{
                           padding: "4px 9px",
                           borderRadius: "7px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
-                          color: "#2E2A26",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-2e2a26, #2E2A26)",
                           fontSize: "0.74rem",
                           fontWeight: 600,
                           cursor: paginaSeguraPreview <= 1 ? "not-allowed" : "pointer",
@@ -1735,7 +1735,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                       >
                         ← Anterior
                       </button>
-                      <span style={{ fontWeight: 700, color: "#1F1C19" }}>
+                      <span style={{ fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
                         {paginaSeguraPreview} / {totalPaginasPreview}
                       </span>
                       <button
@@ -1747,9 +1747,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                         style={{
                           padding: "4px 9px",
                           borderRadius: "7px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
-                          color: "#2E2A26",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-2e2a26, #2E2A26)",
                           fontSize: "0.74rem",
                           fontWeight: 600,
                           cursor:
@@ -1769,7 +1769,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 style={{
                   maxHeight: "560px",
                   overflowY: "auto",
-                  border: "1px solid #E6E2DA",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   borderRadius: "10px",
                   display: "flex",
                   flexDirection: "column",
@@ -1785,8 +1785,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                         flexDirection: "column",
                         gap: "8px",
                         padding: "10px 12px",
-                        borderBottom: "1px solid #F1EFEA",
-                        background: it.seleccionado ? "#FFFFFF" : "#F8F7F4",
+                        borderBottom: "1px solid var(--cb-f1efea, #F1EFEA)",
+                        background: it.seleccionado ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-f8f7f4, #F8F7F4)",
                         opacity: it.seleccionado ? 1 : 0.6,
                         fontSize: "0.78rem",
                       }}
@@ -1827,7 +1827,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                                   padding: "3px 6px",
                                   borderRadius: "6px",
                                   border: "1px solid #F59E0B",
-                                  background: "#FFFBEB",
+                                  background: "var(--cf-fffbeb, #FFFBEB)",
                                   fontSize: "0.77rem",
                                   fontWeight: 700,
                                 }}
@@ -1840,12 +1840,12 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                               </select>
                             </div>
                           ) : (
-                            <strong style={{ color: "#1F1C19", wordBreak: "break-word" }}>
+                            <strong style={{ color: "var(--ct-1f1c19, #1F1C19)", wordBreak: "break-word" }}>
                               {it.nombreConsolidado}
                             </strong>
                           )}
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                            <span style={{ fontFamily: "monospace", fontSize: "0.76rem", color: "#2E2A26", fontWeight: 600 }}>
+                            <span style={{ fontFamily: "monospace", fontSize: "0.76rem", color: "var(--ct-2e2a26, #2E2A26)", fontWeight: 600 }}>
                               {it.telefonoE164}
                             </span>
                             <span
@@ -1868,8 +1868,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                                 style={{
                                   padding: "1px 7px",
                                   borderRadius: "999px",
-                                  background: "#DCFCE7",
-                                  color: "#166534",
+                                  background: "var(--cf-dcfce7, #DCFCE7)",
+                                  color: "var(--ct-166534, #166534)",
                                   fontSize: "0.69rem",
                                   fontWeight: 700,
                                 }}
@@ -1878,7 +1878,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                               </span>
                             )}
                           </div>
-                          <span style={{ fontSize: "0.7rem", color: "#7B746B" }}>
+                          <span style={{ fontSize: "0.7rem", color: "var(--ct-7b746b, #7B746B)" }}>
                             {it.motivoClasificacion}
                             {it.duplicadosFusionados > 0
                               ? ` · ${it.duplicadosFusionados + 1} registros fusionados`
@@ -1935,8 +1935,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                             flex: "1 1 125px",
                             padding: "5px 7px",
                             borderRadius: "7px",
-                            border: "1px solid #D5CFC4",
-                            background: it.clasificacion !== "CLIENTE" ? "#F3F4F6" : "#FFFFFF",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: it.clasificacion !== "CLIENTE" ? "var(--cf-f3f4f6, #F3F4F6)" : "var(--cf-ffffff, #FFFFFF)",
                             fontSize: "0.74rem",
                           }}
                         >
@@ -1957,8 +1957,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                             flex: "1 1 130px",
                             padding: "5px 7px",
                             borderRadius: "7px",
-                            border: "1px solid #D5CFC4",
-                            background: "#FFFFFF",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             fontSize: "0.73rem",
                           }}
                         >
@@ -1972,7 +1972,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   );
                 })}
                 {previewPaginado.length === 0 && (
-                  <div style={{ padding: "18px 12px", textAlign: "center", fontSize: "0.8rem", color: "#6E6861" }}>
+                  <div style={{ padding: "18px 12px", textAlign: "center", fontSize: "0.8rem", color: "var(--ct-6e6861, #6E6861)" }}>
                     No hay contactos que coincidan con este filtro o búsqueda.
                   </div>
                 )}
@@ -1988,7 +1988,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     gap: "8px",
                     flexWrap: "wrap",
                     fontSize: "0.76rem",
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                   }}
                 >
                   <span>
@@ -2002,9 +2002,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                       style={{
                         padding: "5px 10px",
                         borderRadius: "7px",
-                        border: "1px solid #D5CFC4",
-                        background: "#FFFFFF",
-                        color: "#2E2A26",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-2e2a26, #2E2A26)",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         cursor: paginaSeguraPreview <= 1 ? "not-allowed" : "pointer",
@@ -2022,9 +2022,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                       style={{
                         padding: "5px 10px",
                         borderRadius: "7px",
-                        border: "1px solid #D5CFC4",
-                        background: "#FFFFFF",
-                        color: "#2E2A26",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-2e2a26, #2E2A26)",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         cursor:
@@ -2048,8 +2048,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
       {pestana === "directorio" && (
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #E6E2DA",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "14px",
             padding: "16px 18px",
             display: "flex",
@@ -2082,9 +2082,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     padding: "5px 10px",
                     borderRadius: "999px",
                     border:
-                      filtroClasifDirectorio === f.id ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-                    background: filtroClasifDirectorio === f.id ? "#1F1C19" : "#FFFFFF",
-                    color: filtroClasifDirectorio === f.id ? "#FFFFFF" : "#3A3530",
+                      filtroClasifDirectorio === f.id ? "1px solid var(--cb-1f1c19, #1F1C19)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: filtroClasifDirectorio === f.id ? "#1F1C19" : "var(--cf-ffffff, #FFFFFF)",
+                    color: filtroClasifDirectorio === f.id ? "#FFFFFF" : "var(--ct-3a3530, #3A3530)",
                     fontSize: "0.76rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -2094,7 +2094,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 </button>
               ))}
             </div>
-            <span style={{ fontSize: "0.75rem", color: "#7B746B" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--ct-7b746b, #7B746B)" }}>
               {esAdmin
                 ? "Vista Administrador: ves clientes y listas personales de todos los teléfonos."
                 : "Vista protegida: ves clientes comerciales y únicamente tus propios contactos personales."}
@@ -2110,16 +2110,16 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
               <div
                 style={{
                   padding: "12px 14px",
-                  background: "#FCFBF9",
+                  background: "var(--cf-fcfbf9, #FCFBF9)",
                   borderRadius: "10px",
-                  border: "1px solid #E6E2DA",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   display: "flex",
                   flexDirection: "column",
                   gap: "10px",
                 }}
               >
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#3A3530" }}>
+                  <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--ct-3a3530, #3A3530)" }}>
                     Acciones rápidas:
                   </span>
                   <button
@@ -2138,9 +2138,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                       gap: "5px",
                       padding: "5px 10px",
                       borderRadius: "7px",
-                      border: "1px solid #DDD6FE",
-                      background: "#FAF5FF",
-                      color: "#6B21A8",
+                      border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                      background: "var(--cf-faf5ff, #FAF5FF)",
+                      color: "var(--ct-6b21a8, #6B21A8)",
                       fontSize: "0.75rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2165,9 +2165,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                       gap: "5px",
                       padding: "5px 10px",
                       borderRadius: "7px",
-                      border: "1px solid #BBF7D0",
-                      background: "#F0FDF4",
-                      color: "#166534",
+                      border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
+                      background: "var(--cf-f0fdf4, #F0FDF4)",
+                      color: "var(--ct-166534, #166534)",
                       fontSize: "0.75rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -2219,9 +2219,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                       gap: "5px",
                       padding: "5px 10px",
                       borderRadius: "7px",
-                      border: "1px solid #C7DAFE",
-                      background: "#EEF4FF",
-                      color: "#1D4ED8",
+                      border: "1px solid var(--cb-c7dafe, #C7DAFE)",
+                      background: "var(--cf-eef4ff, #EEF4FF)",
+                      color: "var(--ct-1d4ed8, #1D4ED8)",
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -2240,9 +2240,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                       gap: "5px",
                       padding: "5px 10px",
                       borderRadius: "7px",
-                      border: "1px solid #FECACA",
-                      background: "#FEF2F2",
-                      color: "#B91C1C",
+                      border: "1px solid var(--cb-fecaca, #FECACA)",
+                      background: "var(--cf-fef2f2, #FEF2F2)",
+                      color: "var(--ct-b91c1c, #B91C1C)",
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -2254,7 +2254,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 </div>
 
                 {/* Historial de fuentes aportadas (Join/Merge provenance) */}
-                <div style={{ fontSize: "0.76rem", color: "#57524C" }}>
+                <div style={{ fontSize: "0.76rem", color: "var(--ct-57524c, #57524C)" }}>
                   <strong>Trazabilidad de fuentes ({r.fuentes?.length || 0}):</strong>
                   {r.fuentes && r.fuentes.length > 0 ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "5px" }}>
@@ -2264,8 +2264,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                           style={{
                             padding: "5px 9px",
                             borderRadius: "7px",
-                            background: "#FFFFFF",
-                            border: "1px solid #EAE6DE",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            border: "1px solid var(--cb-eae6de, #EAE6DE)",
                             display: "flex",
                             justifyContent: "space-between",
                             gap: "8px",
@@ -2277,7 +2277,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                             {f.lineaNombre ? ` · 📱 ${f.lineaNombre}` : ""}
                             {f.propietarioNombre ? ` · Aportado por ${f.propietarioNombre}` : ""}
                           </span>
-                          <span style={{ fontWeight: 600, color: "#6B21A8" }}>
+                          <span style={{ fontWeight: 600, color: "var(--ct-6b21a8, #6B21A8)" }}>
                             {f.clasificacionOrigen} ({f.politicaPersonal})
                           </span>
                         </div>

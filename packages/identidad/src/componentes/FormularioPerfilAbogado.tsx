@@ -131,7 +131,7 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800 }}>Perfil Profesional de Abogado</h3>
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#666" }}>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--ct-666666, #666)" }}>
               {mfaVerificado ? "Acceso MFA Seguro Activado (Nivel AAL2)" : "Acceso Protegido por Autenticación Multi-Factor (MFA)"}
             </p>
           </div>
@@ -143,8 +143,8 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
             fontWeight: 800,
             padding: "5px 12px",
             borderRadius: "999px",
-            background: mfaVerificado ? "var(--esmeralda, #05876e)" : "#E4E4E4",
-            color: mfaVerificado ? "#FFF" : "#444"
+            background: mfaVerificado ? "var(--esmeralda, #05876e)" : "var(--cf-e4e4e4, #E4E4E4)",
+            color: mfaVerificado ? "#FFF" : "var(--ct-444444, #444)"
           }}
         >
           {mfaVerificado ? "MFA VERIFICADO " : "MFA REQUERIDO "}
@@ -169,21 +169,21 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
 
       {/* GATE MFA: Si no ha verificado el código TOTP, exige ingreso de MFA */}
       {!mfaVerificado ? (
-        <form onSubmit={verificarCodigoTotp} className="form-panel" style={{ background: "#FDFDFD", padding: "20px", borderRadius: "12px", border: "1px solid #E2E2E2" }}>
+        <form onSubmit={verificarCodigoTotp} className="form-panel" style={{ background: "var(--cf-fdfdfd, #FDFDFD)", padding: "20px", borderRadius: "12px", border: "1px solid var(--cb-e2e2e2, #E2E2E2)" }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
             <ShieldAlert size={24} color="var(--violeta, #5000BA)" style={{ flexShrink: 0, marginTop: "2px" }} />
             <div>
-              <p style={{ margin: "0 0 6px 0", fontWeight: 700, fontSize: "0.92rem", color: "var(--violeta, #5000BA)" }}>
+              <p style={{ margin: "0 0 6px 0", fontWeight: 700, fontSize: "0.92rem", color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
                 Verificación MFA de Seguridad Obligatoria (PLT-002)
               </p>
-              <p style={{ margin: 0, fontSize: "0.84rem", color: "#555", lineHeight: "1.45" }}>
+              <p style={{ margin: 0, fontSize: "0.84rem", color: "var(--ct-555555, #555)", lineHeight: "1.45" }}>
                 Para consultar o actualizar tu información de registro profesional, cédula, matrícula del Foro de Abogados y acreditación SENESCYT, debes confirmar tu código autenticador (TOTP) de 6 dígitos.
               </p>
             </div>
           </div>
 
           {errorTotp && (
-            <div style={{ color: "#B00020", fontSize: "0.82rem", fontWeight: 700, marginBottom: "10px" }}>
+            <div style={{ color: "var(--ct-b00020, #B00020)", fontSize: "0.82rem", fontWeight: 700, marginBottom: "10px" }}>
               {errorTotp}
             </div>
           )}
@@ -211,13 +211,13 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
             </button>
           </div>
 
-          <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px dashed #E0E0E0", display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px dashed var(--cb-e0e0e0, #E0E0E0)", display: "flex", flexDirection: "column", gap: "10px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-              <span style={{ fontSize: "0.78rem", color: "#777" }}>¿No posees tu app autenticadora o perdiste el acceso?</span>
+              <span style={{ fontSize: "0.78rem", color: "var(--ct-777777, #777)" }}>¿No posees tu app autenticadora o perdiste el acceso?</span>
               <button
                 type="button"
                 onClick={() => setMostrarWidgetMfa(!mostrarWidgetMfa)}
-                style={{ background: "none", border: "none", color: "var(--violeta, #5000BA)", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer", textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                style={{ background: "none", border: "none", color: "var(--ct-5000ba, var(--violeta, #5000BA))", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer", textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: "4px" }}
               >
                 <QrCode size={14} /> {mostrarWidgetMfa ? "Ocultar Asistente MFA" : "Configurar / Resetear MFA vía Correo"}
               </button>
@@ -243,8 +243,8 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
         /* FORMULARIO DE PERFIL ABOGADO (DESBLOQUEADO TRAS MFA) */
         <form onSubmit={handleSubmit} className="form-panel" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
           {/* Bloque 1: Datos Personales & Contacto */}
-          <div style={{ background: "#FAFAFA", padding: "18px", borderRadius: "10px", border: "1px solid #E8E8E8" }}>
-            <h4 style={{ margin: "0 0 14px 0", fontSize: "0.92rem", fontWeight: 800, color: "#333", display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ background: "var(--cf-fafafa, #FAFAFA)", padding: "18px", borderRadius: "10px", border: "1px solid var(--cb-e8e8e8, #E8E8E8)" }}>
+            <h4 style={{ margin: "0 0 14px 0", fontSize: "0.92rem", fontWeight: 800, color: "var(--ct-333333, #333)", display: "flex", alignItems: "center", gap: "8px" }}>
               <UserCheck size={16} color="var(--esmeralda, #05876e)" /> Identidad & Contacto de Registro
             </h4>
             
@@ -280,7 +280,7 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
                     type="email"
                     value={inicial.correo}
                     disabled
-                    style={{ background: "#F0F0F0", cursor: "not-allowed", color: "#666", paddingRight: "36px" }}
+                    style={{ background: "var(--cf-f0f0f0, #F0F0F0)", cursor: "not-allowed", color: "var(--ct-666666, #666)", paddingRight: "36px" }}
                   />
                   <Check size={16} color="var(--esmeralda, #05876e)" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }} />
                 </div>
@@ -308,8 +308,8 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
           </div>
 
           {/* Bloque 2: Acreditación Profesional & Registro Legal */}
-          <div style={{ background: "#FAFAFA", padding: "18px", borderRadius: "10px", border: "1px solid #E8E8E8" }}>
-            <h4 style={{ margin: "0 0 14px 0", fontSize: "0.92rem", fontWeight: 800, color: "#333", display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ background: "var(--cf-fafafa, #FAFAFA)", padding: "18px", borderRadius: "10px", border: "1px solid var(--cb-e8e8e8, #E8E8E8)" }}>
+            <h4 style={{ margin: "0 0 14px 0", fontSize: "0.92rem", fontWeight: 800, color: "var(--ct-333333, #333)", display: "flex", alignItems: "center", gap: "8px" }}>
               <Award size={16} color="var(--esmeralda, #05876e)" /> Acreditación SENESCYT & Foro de Abogados
             </h4>
 
@@ -355,7 +355,7 @@ export function FormularioPerfilAbogado({ inicial, onGuardarExito, children }: P
                 value={detalles}
                 onChange={(e) => setDetalles(e.target.value)}
                 placeholder="Describe brevemente tus especialidades (Derecho Civil, Laboral, Penal), tribunal habitual o experiencia..."
-                style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #DDD", fontSize: "0.88rem", fontFamily: "inherit" }}
+                style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid var(--cb-dddddd, #DDD)", fontSize: "0.88rem", fontFamily: "inherit" }}
               />
             </label>
           </div>

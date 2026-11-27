@@ -35,7 +35,7 @@ export default async function PaginaPerfilAbogado() {
         </div>
       </section>
 
-      <div style={{ background: "#FFF", borderRadius: "14px", padding: "24px", border: "1px solid var(--linea)" }}>
+      <div style={{ background: "var(--cf-ffffff, #FFF)", borderRadius: "14px", padding: "24px", border: "1px solid var(--linea)" }}>
         <FormularioPerfilAbogado
           inicial={{
             nombres: perfil.usu_nombres || "",

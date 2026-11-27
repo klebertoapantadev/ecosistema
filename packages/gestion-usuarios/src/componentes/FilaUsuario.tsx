@@ -153,9 +153,9 @@ export function FilaUsuario({
         </div>
         {mensaje && <p className="error-auth mensaje-fila">{mensaje}</p>}
       </td>
-      <td style={{ position: "sticky", right: 0, background: "#ffffff", zIndex: 1, boxShadow: "-2px 0 6px rgba(0,0,0,0.04)", textAlign: "center" }}>
+      <td style={{ position: "sticky", right: 0, background: "var(--cf-ffffff, #ffffff)", zIndex: 1, boxShadow: "-2px 0 6px rgba(0,0,0,0.04)", textAlign: "center" }}>
         {!puedeEliminar ? (
-          <span style={{ fontSize: "0.74rem", color: "#847D74", fontWeight: 600 }}>Solo Lectura</span>
+          <span style={{ fontSize: "0.74rem", color: "var(--ct-847d74, #847D74)", fontWeight: 600 }}>Solo Lectura</span>
         ) : (
           usuario.usu_correo !== "familiammtg@gmail.com" &&
           usuario.usu_correo !== "tinkay.uio@gmail.com" &&
@@ -171,9 +171,9 @@ export function FilaUsuario({
             title={`Eliminar usuario ${usuario.usu_correo}`}
             aria-label={`Eliminar usuario ${usuario.usu_correo}`}
             style={{
-              background: "#FAF2F2",
-              border: "1px solid #DEBABA",
-              color: "#8A2E2E",
+              background: "var(--cf-faf2f2, #FAF2F2)",
+              border: "1px solid var(--cb-debaba, #DEBABA)",
+              color: "var(--ct-8a2e2e, #8A2E2E)",
               borderRadius: "8px",
               padding: "6px 10px",
               fontSize: "0.75rem",
@@ -188,7 +188,7 @@ export function FilaUsuario({
             <span className="btn-texto-responsive">{eliminando ? "..." : "Eliminar"}</span>
           </button>
         ) : (
-          <span style={{ fontSize: "0.72rem", color: "#9B948B", fontWeight: 700 }}>Protegido</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--ct-9b948b, #9B948B)", fontWeight: 700 }}>Protegido</span>
         )}
         <ModalNotificacionPush
           abierto={modalPush.abierto}

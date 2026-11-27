@@ -87,7 +87,7 @@ function renderTextoConMencionesYEnlaces(
             rel="noreferrer"
             title={info.href}
             style={{
-              color: "#221E1B",
+              color: "var(--ct-221e1b, #221E1B)",
               textDecoration: "underline",
               wordBreak: "break-word",
               fontWeight: 600,
@@ -121,9 +121,9 @@ function renderTextoConMencionesYEnlaces(
             borderRadius: "5px",
             fontWeight: 700,
             fontSize: "0.79rem",
-            background: meMenciona ? "#E7E5E4" : "#F4F2EE",
-            border: meMenciona ? "1px solid #A8A29E" : "1px solid #E6E2DA",
-            color: "#221E1B",
+            background: meMenciona ? "var(--cf-e7e5e4, #E7E5E4)" : "var(--cf-f4f2ee, #F4F2EE)",
+            border: meMenciona ? "1px solid var(--cb-a8a29e, #A8A29E)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+            color: "var(--ct-221e1b, #221E1B)",
           }}
         >
           {parte}
@@ -165,8 +165,8 @@ function ImagenConRespaldoChatEquipo({
           cursor: "zoom-in",
           borderRadius: "10px",
           overflow: "hidden",
-          border: "1px solid #E6E2DA",
-          background: "#FFFFFF",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+          background: "var(--cf-ffffff, #FFFFFF)",
         }}
       >
         <img
@@ -199,9 +199,9 @@ function ImagenConRespaldoChatEquipo({
             gap: "4px",
             padding: "4px 8px",
             borderRadius: "6px",
-            border: "1px solid #D5CFC4",
-            background: "#FFFFFF",
-            color: "#3A3530",
+            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            color: "var(--ct-3a3530, #3A3530)",
             fontSize: "0.71rem",
             fontWeight: 600,
             cursor: "pointer",
@@ -223,9 +223,9 @@ function ImagenConRespaldoChatEquipo({
             gap: "4px",
             padding: "4px 8px",
             borderRadius: "6px",
-            border: "1px solid #D5CFC4",
-            background: "#FFFFFF",
-            color: "#3A3530",
+            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            color: "var(--ct-3a3530, #3A3530)",
             fontSize: "0.71rem",
             fontWeight: 600,
             cursor: "pointer",
@@ -247,9 +247,9 @@ function ImagenConRespaldoChatEquipo({
             gap: "4px",
             padding: "4px 8px",
             borderRadius: "6px",
-            border: "1px solid #D5CFC4",
-            background: "#FFFFFF",
-            color: "#3A3530",
+            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            color: "var(--ct-3a3530, #3A3530)",
             fontSize: "0.71rem",
             fontWeight: 600,
             cursor: "pointer",
@@ -629,8 +629,8 @@ export function ChatEquipoInterno({
       {/* Cabecera del Chat Grupal de Trabajo */}
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           borderRadius: "14px",
           padding: "12px 16px",
           display: "flex",
@@ -654,9 +654,9 @@ export function ChatEquipoInterno({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: "#F4F2EE",
-                border: "1px solid #E6E2DA",
-                color: "#3A3530",
+                background: "var(--cf-f4f2ee, #F4F2EE)",
+                border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                color: "var(--ct-3a3530, #3A3530)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -666,16 +666,16 @@ export function ChatEquipoInterno({
             </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.95rem", color: "#221E1B" }}>
+                <strong style={{ fontSize: "0.95rem", color: "var(--ct-221e1b, #221E1B)" }}>
                   {sala?.nombreSala || "Chat Grupal del Equipo"}
                 </strong>
                 {!enVivo && (
-                  <span style={{ fontSize: "0.71rem", color: "#847D74" }}>
+                  <span style={{ fontSize: "0.71rem", color: "var(--ct-847d74, #847D74)" }}>
                     Sincronizando…
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: "0.75rem", color: "#847D74" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--ct-847d74, #847D74)" }}>
                 Escribe <strong>@nombre</strong> (ej. <code>@kleber</code>) o{" "}
                 <code>@taller</code> / <code>@ventas</code> / <code>@delivery</code> para etiquetar.
               </div>
@@ -704,9 +704,9 @@ export function ChatEquipoInterno({
                   style={{
                     padding: "5px 10px",
                     borderRadius: "8px",
-                    border: act ? "1px solid #221E1B" : "1px solid #E6E2DA",
-                    background: act ? "#221E1B" : "#F8F7F4",
-                    color: act ? "#FFFFFF" : "#57524C",
+                    border: act ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                    background: act ? "#221E1B" : "var(--cf-f8f7f4, #F8F7F4)",
+                    color: act ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                     fontSize: "0.75rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -729,9 +729,9 @@ export function ChatEquipoInterno({
                 gap: "5px",
                 padding: "6px 10px",
                 borderRadius: "8px",
-                border: "1px solid #D5CFC4",
-                background: "#FFFFFF",
-                color: "#221E1B",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-221e1b, #221E1B)",
                 fontSize: "0.75rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -754,7 +754,7 @@ export function ChatEquipoInterno({
               paddingBottom: "2px",
             }}
           >
-            <span style={{ fontSize: "0.71rem", fontWeight: 700, color: "#847D74", flexShrink: 0 }}>
+            <span style={{ fontSize: "0.71rem", fontWeight: 700, color: "var(--ct-847d74, #847D74)", flexShrink: 0 }}>
               Equipo ({sala.miembros.length}):
             </span>
             {sala.miembros.map((mb) => {
@@ -772,24 +772,24 @@ export function ChatEquipoInterno({
                     gap: "5px",
                     padding: "3px 9px",
                     borderRadius: "999px",
-                    border: "1px solid #E6E2DA",
-                    background: "#F8F7F4",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
                     fontSize: "0.72rem",
-                    color: "#3A3530",
+                    color: "var(--ct-3a3530, #3A3530)",
                     cursor: "pointer",
                     flexShrink: 0,
                   }}
                 >
-                  <strong style={{ color: "#221E1B" }}>@{mb.handle}</strong>
-                  <span style={{ color: "#6E6861" }}>{mb.nombre.split(" ")[0]}</span>
+                  <strong style={{ color: "var(--ct-221e1b, #221E1B)" }}>@{mb.handle}</strong>
+                  <span style={{ color: "var(--ct-6e6861, #6E6861)" }}>{mb.nombre.split(" ")[0]}</span>
                   <span
                     style={{
                       padding: "1px 6px",
                       borderRadius: "999px",
                       fontSize: "0.64rem",
                       fontWeight: 600,
-                      background: "#ECECEE",
-                      color: "#6E6861",
+                      background: "var(--cf-ececee, #ECECEE)",
+                      color: "var(--ct-6e6861, #6E6861)",
                     }}
                   >
                     {badge.etiqueta}
@@ -806,9 +806,9 @@ export function ChatEquipoInterno({
           style={{
             padding: "8px 12px",
             borderRadius: "10px",
-            background: "#F2F6F3",
-            border: "1px solid #CEDDD3",
-            color: "#2B4A36",
+            background: "var(--cf-f2f6f3, #F2F6F3)",
+            border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+            color: "var(--ct-2b4a36, #2B4A36)",
             fontSize: "0.8rem",
             display: "flex",
             justifyContent: "space-between",
@@ -833,9 +833,9 @@ export function ChatEquipoInterno({
           style={{
             padding: "9px 12px",
             borderRadius: "10px",
-            background: "#FAF2F2",
-            border: "1px solid #E5CACA",
-            color: "#8A2E2E",
+            background: "var(--cf-faf2f2, #FAF2F2)",
+            border: "1px solid var(--cb-e5caca, #E5CACA)",
+            color: "var(--ct-8a2e2e, #8A2E2E)",
             fontSize: "0.8rem",
           }}
         >
@@ -848,8 +848,8 @@ export function ChatEquipoInterno({
         style={{
           flex: 1,
           minHeight: 0,
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           borderRadius: "14px",
           display: "flex",
           flexDirection: "column",
@@ -863,14 +863,14 @@ export function ChatEquipoInterno({
             flex: 1,
             overflowY: "auto",
             padding: "16px",
-            background: "#F8F7F4",
+            background: "var(--cf-f8f7f4, #F8F7F4)",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
           }}
         >
           {cargando && !sala ? (
-            <div style={{ textAlign: "center", padding: "32px", color: "#847D74", fontSize: "0.84rem" }}>
+            <div style={{ textAlign: "center", padding: "32px", color: "var(--ct-847d74, #847D74)", fontSize: "0.84rem" }}>
               Cargando sala de trabajo del equipo…
             </div>
           ) : mensajesVisibles.length === 0 ? (
@@ -878,7 +878,7 @@ export function ChatEquipoInterno({
               style={{
                 textAlign: "center",
                 padding: "38px 20px",
-                color: "#847D74",
+                color: "var(--ct-847d74, #847D74)",
                 fontSize: "0.84rem",
                 lineHeight: 1.6,
               }}
@@ -919,7 +919,7 @@ export function ChatEquipoInterno({
                       justifyContent: esMio ? "flex-end" : "flex-start",
                       gap: "6px",
                       fontSize: "0.71rem",
-                      color: "#847D74",
+                      color: "var(--ct-847d74, #847D74)",
                       flexWrap: "wrap",
                     }}
                   >
@@ -931,9 +931,9 @@ export function ChatEquipoInterno({
                           gap: "3px",
                           padding: "1px 6px",
                           borderRadius: "999px",
-                          background: "#F4F2EE",
-                          border: "1px solid #D5CFC4",
-                          color: "#221E1B",
+                          background: "var(--cf-f4f2ee, #F4F2EE)",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          color: "var(--ct-221e1b, #221E1B)",
                           fontWeight: 700,
                         }}
                       >
@@ -941,7 +941,7 @@ export function ChatEquipoInterno({
                         Mención
                       </span>
                     )}
-                    <strong style={{ color: "#3A3530" }}>
+                    <strong style={{ color: "var(--ct-3a3530, #3A3530)" }}>
                       {esMio ? `Tú (${m.autorNombre.split(" ")[0]})` : m.autorNombre}
                     </strong>
                     <span
@@ -970,16 +970,16 @@ export function ChatEquipoInterno({
                       padding: "10px 13px",
                       borderRadius: "12px",
                       background: esMio
-                        ? "#ECEAE4"
+                        ? "var(--cf-eceae4, #ECEAE4)"
                         : meMenciona
-                          ? "#FAFAF9"
-                          : "#FFFFFF",
-                      color: "#221E1B",
+                          ? "var(--cf-fafaf9, #FAFAF9)"
+                          : "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-221e1b, #221E1B)",
                       border: esMio
-                        ? "1px solid #DCD8D0"
+                        ? "1px solid var(--cb-dcd8d0, #DCD8D0)"
                         : meMenciona
-                          ? "1.5px solid #78716C"
-                          : "1px solid #E6E2DA",
+                          ? "1.5px solid var(--cb-78716c, #78716C)"
+                          : "1px solid var(--cb-e6e2da, #E6E2DA)",
                       boxShadow: "0 1px 2px rgba(24, 24, 27, 0.04)",
                       display: "flex",
                       flexDirection: "column",
@@ -994,16 +994,16 @@ export function ChatEquipoInterno({
                         style={{
                           padding: "6px 9px",
                           borderRadius: "8px",
-                          borderLeft: "3px solid #6E6861",
-                          background: esMio ? "rgba(255,255,255,0.65)" : "#F4F2EE",
-                          color: "#3A3530",
+                          borderLeft: "3px solid var(--cb-6e6861, #6E6861)",
+                          background: esMio ? "var(--cf-ffffff-a650, rgba(255,255,255,0.65))" : "var(--cf-f4f2ee, #F4F2EE)",
+                          color: "var(--ct-3a3530, #3A3530)",
                           fontSize: "0.75rem",
                         }}
                       >
                         <div style={{ fontWeight: 700 }}>
                           ↩ En respuesta a {cita.autorNombre}
                         </div>
-                        <div style={{ color: "#6E6861" }}>{cita.extracto}</div>
+                        <div style={{ color: "var(--ct-6e6861, #6E6861)" }}>{cita.extracto}</div>
                       </div>
                     )}
 
@@ -1018,9 +1018,9 @@ export function ChatEquipoInterno({
                           style={{
                             padding: "7px 10px",
                             borderRadius: "8px",
-                            borderLeft: "3px solid #57524C",
-                            background: esMio ? "rgba(255,255,255,0.7)" : "#F8F7F4",
-                            color: "#3A3530",
+                            borderLeft: "3px solid var(--cb-57524c, #57524C)",
+                            background: esMio ? "var(--cf-ffffff-a700, rgba(255,255,255,0.7))" : "var(--cf-f8f7f4, #F8F7F4)",
+                            color: "var(--ct-3a3530, #3A3530)",
                             fontSize: "0.75rem",
                             display: "flex",
                             flexDirection: "column",
@@ -1071,7 +1071,7 @@ export function ChatEquipoInterno({
                           </div>
 
                           {reenvio.textoOriginal && (
-                            <span style={{ color: "#6E6861" }}>“{reenvio.textoOriginal}”</span>
+                            <span style={{ color: "var(--ct-6e6861, #6E6861)" }}>“{reenvio.textoOriginal}”</span>
                           )}
                         </div>
                       );
@@ -1148,9 +1148,9 @@ export function ChatEquipoInterno({
                             gap: "4px",
                             padding: "2px 7px",
                             borderRadius: "6px",
-                            border: "1px solid #D5CFC4",
-                            background: "#FFFFFF",
-                            color: "#3A3530",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            color: "var(--ct-3a3530, #3A3530)",
                             fontSize: "0.7rem",
                             fontWeight: 600,
                             textDecoration: "none",
@@ -1182,9 +1182,9 @@ export function ChatEquipoInterno({
                           gap: "4px",
                           padding: "2px 7px",
                           borderRadius: "6px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
-                          color: "#57524C",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-57524c, #57524C)",
                           fontSize: "0.7rem",
                           fontWeight: 600,
                           cursor: "pointer",
@@ -1216,9 +1216,9 @@ export function ChatEquipoInterno({
                           gap: "4px",
                           padding: "2px 7px",
                           borderRadius: "6px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
-                          color: "#57524C",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-57524c, #57524C)",
                           fontSize: "0.7rem",
                           fontWeight: 600,
                           cursor: "pointer",
@@ -1240,8 +1240,8 @@ export function ChatEquipoInterno({
           onSubmit={handleEnviar}
           style={{
             position: "relative",
-            borderTop: "1px solid #E6E2DA",
-            background: "#FFFFFF",
+            borderTop: "1px solid var(--cb-e6e2da, #E6E2DA)",
+            background: "var(--cf-ffffff, #FFFFFF)",
             padding: "10px 12px calc(10px + env(safe-area-inset-bottom, 0px))",
             display: "flex",
             flexDirection: "column",
@@ -1258,8 +1258,8 @@ export function ChatEquipoInterno({
                 right: "14px",
                 maxWidth: "360px",
                 marginBottom: "6px",
-                background: "#FFFFFF",
-                border: "1px solid #D5CFC4",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                 borderRadius: "12px",
                 boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
                 overflow: "hidden",
@@ -1269,11 +1269,11 @@ export function ChatEquipoInterno({
               <div
                 style={{
                   padding: "6px 10px",
-                  background: "#F8F7F4",
-                  borderBottom: "1px solid #E6E2DA",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
+                  borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   fontSize: "0.71rem",
                   fontWeight: 700,
-                  color: "#847D74",
+                  color: "var(--ct-847d74, #847D74)",
                 }}
               >
                 Mencionar compañero o área
@@ -1287,8 +1287,8 @@ export function ChatEquipoInterno({
                     width: "100%",
                     padding: "8px 12px",
                     border: "none",
-                    borderBottom: "1px solid #F4F2EE",
-                    background: "#FFFFFF",
+                    borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
@@ -1298,9 +1298,9 @@ export function ChatEquipoInterno({
                   }}
                 >
                   <span>
-                    <strong style={{ color: "#221E1B" }}>@{op.handle}</strong> · {op.nombre}
+                    <strong style={{ color: "var(--ct-221e1b, #221E1B)" }}>@{op.handle}</strong> · {op.nombre}
                   </span>
-                  <span style={{ fontSize: "0.69rem", color: "#847D74", fontWeight: 700 }}>
+                  <span style={{ fontSize: "0.69rem", color: "var(--ct-847d74, #847D74)", fontWeight: 700 }}>
                     {op.rol}
                   </span>
                 </button>
@@ -1318,10 +1318,10 @@ export function ChatEquipoInterno({
                 gap: "8px",
                 padding: "6px 10px",
                 borderRadius: "8px",
-                background: "#F4F2EE",
-                borderLeft: "3px solid #57524C",
+                background: "var(--cf-f4f2ee, #F4F2EE)",
+                borderLeft: "3px solid var(--cb-57524c, #57524C)",
                 fontSize: "0.76rem",
-                color: "#3A3530",
+                color: "var(--ct-3a3530, #3A3530)",
               }}
             >
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1348,8 +1348,8 @@ export function ChatEquipoInterno({
                 gap: "10px",
                 padding: "6px 10px",
                 borderRadius: "9px",
-                background: "#F8F7F4",
-                border: "1px solid #D5CFC4",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
               }}
             >
               <img
@@ -1362,7 +1362,7 @@ export function ChatEquipoInterno({
                   borderRadius: "7px",
                 }}
               />
-              <span style={{ fontSize: "0.77rem", color: "#57524C", flex: 1 }}>
+              <span style={{ fontSize: "0.77rem", color: "var(--ct-57524c, #57524C)", flex: 1 }}>
                 📷 Fotografía adjunta lista para enviar al equipo
               </span>
               <button
@@ -1386,9 +1386,9 @@ export function ChatEquipoInterno({
                 gap: "10px",
                 padding: "8px 12px",
                 borderRadius: "10px",
-                background: "#ECFDF5",
-                border: "1px solid #A7F3D0",
-                color: "#065F46",
+                background: "var(--cf-ecfdf5, #ECFDF5)",
+                border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
+                color: "var(--ct-065f46, #065F46)",
                 fontSize: "0.78rem",
                 flexWrap: "wrap",
               }}
@@ -1402,7 +1402,7 @@ export function ChatEquipoInterno({
                 <a
                   href={`/panel/pedidos?pedido=${encodeURIComponent(ultimoPedidoCreado.codigo)}`}
                   style={{
-                    color: "#047857",
+                    color: "var(--ct-047857, #047857)",
                     fontWeight: 800,
                     textDecoration: "underline",
                   }}
@@ -1414,7 +1414,7 @@ export function ChatEquipoInterno({
                 type="button"
                 onClick={() => setUltimoPedidoCreado(null)}
                 aria-label="Cerrar aviso"
-                style={{ border: "none", background: "transparent", cursor: "pointer", color: "#065F46" }}
+                style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--ct-065f46, #065F46)" }}
               >
                 <X size={14} />
               </button>
@@ -1447,9 +1447,9 @@ export function ChatEquipoInterno({
                 gap: "5px",
                 padding: "9px 11px",
                 borderRadius: "10px",
-                border: "1px solid #D5CFC4",
-                background: "#F8F7F4",
-                color: "#57524C",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                color: "var(--ct-57524c, #57524C)",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: subiendoFoto ? "wait" : "pointer",
@@ -1474,9 +1474,9 @@ export function ChatEquipoInterno({
                 gap: "4px",
                 padding: "9px 11px",
                 borderRadius: "10px",
-                border: "1px solid #D5CFC4",
-                background: "#F8F7F4",
-                color: "#3A3530",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                background: "var(--cf-f8f7f4, #F8F7F4)",
+                color: "var(--ct-3a3530, #3A3530)",
                 fontSize: "0.78rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -1503,9 +1503,9 @@ export function ChatEquipoInterno({
                 gap: "4px",
                 padding: "9px 11px",
                 borderRadius: "10px",
-                border: "1px solid #C7D2FE",
-                background: "#EEF2FF",
-                color: "#312E81",
+                border: "1px solid var(--cb-c7d2fe, #C7D2FE)",
+                background: "var(--cf-eef2ff, #EEF2FF)",
+                color: "var(--ct-312e81, #312E81)",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -1538,7 +1538,7 @@ export function ChatEquipoInterno({
                 padding: "9px 12px",
                 lineHeight: 1.35,
                 borderRadius: "10px",
-                border: "1px solid #D5CFC4",
+                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                 fontSize: "16px",
                 fontFamily: "inherit",
                 resize: "none",

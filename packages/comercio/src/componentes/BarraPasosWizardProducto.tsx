@@ -172,8 +172,8 @@ export function BarraPasosWizardProducto({
   return (
     <div
       style={{
-        background: "#F8F7F4",
-        borderBottom: "1px solid #E6E2DA",
+        background: "var(--cf-f8f7f4, #F8F7F4)",
+        borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
         padding: "10px 14px 8px",
         display: "flex",
         flexDirection: "column",
@@ -248,13 +248,13 @@ export function BarraPasosWizardProducto({
                     ? `2px solid ${colorPrimario}`
                     : listo
                       ? "1px solid #86EFAC"
-                      : "1px solid #D5CFC4",
+                      : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   background: esActivo
-                    ? "#FFFFFF"
+                    ? "var(--cf-ffffff, #FFFFFF)"
                     : listo
-                      ? "#F0FDF4"
-                      : "#FFFFFF",
-                  color: esActivo ? "#1F1C19" : "#3F3B36",
+                      ? "var(--cf-f0fdf4, #F0FDF4)"
+                      : "var(--cf-ffffff, #FFFFFF)",
+                  color: esActivo ? "var(--ct-1f1c19, #1F1C19)" : "var(--ct-3f3b36, #3F3B36)",
                   cursor: "pointer",
                   textAlign: "left",
                   boxShadow: esActivo ? `0 2px 8px ${colorPrimario}22` : "none",
@@ -270,8 +270,8 @@ export function BarraPasosWizardProducto({
                       ? colorPrimario
                       : listo
                         ? "#10B981"
-                        : "#E6E2DA",
-                    color: esActivo || listo ? "#FFFFFF" : "#57524C",
+                        : "var(--cf-e6e2da, #E6E2DA)",
+                    color: esActivo || listo ? "#FFFFFF" : "var(--ct-57524c, #57524C)",
                     fontSize: "0.72rem",
                     fontWeight: 800,
                     display: "inline-flex",
@@ -291,7 +291,7 @@ export function BarraPasosWizardProducto({
                       gap: "4px",
                       fontSize: "0.75rem",
                       fontWeight: esActivo ? 800 : 700,
-                      color: esActivo ? colorPrimario : "#1F1C19",
+                      color: esActivo ? colorPrimario : "var(--ct-1f1c19, #1F1C19)",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -302,7 +302,7 @@ export function BarraPasosWizardProducto({
                     className="subtitulo-paso-wizard"
                     style={{
                       fontSize: "0.65rem",
-                      color: "#6B655E",
+                      color: "var(--ct-6b655e, #6B655E)",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -328,9 +328,9 @@ export function BarraPasosWizardProducto({
               padding: "8px 10px",
               minHeight: "40px",
               borderRadius: "8px",
-              border: verTodo ? `1.5px solid ${colorPrimario}` : "1px solid #D5CFC4",
-              background: verTodo ? `${colorPrimario}14` : "#FFFFFF",
-              color: verTodo ? colorPrimario : "#57524C",
+              border: verTodo ? `1.5px solid ${colorPrimario}` : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: verTodo ? `${colorPrimario}14` : "var(--cf-ffffff, #FFFFFF)",
+              color: verTodo ? colorPrimario : "var(--ct-57524c, #57524C)",
               fontSize: "0.72rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -351,7 +351,7 @@ export function BarraPasosWizardProducto({
           height: "3px",
           width: "100%",
           borderRadius: "999px",
-          background: "#E6E2DA",
+          background: "var(--cf-e6e2da, #E6E2DA)",
           overflow: "hidden",
         }}
       >
@@ -428,13 +428,13 @@ export function SelectorEncuadreFoto({
             gap: "8px",
             padding: "6px 10px",
             borderRadius: "8px",
-            border: "1px dashed #D5CFC4",
-            background: "#F8F7F4",
+            border: "1px dashed var(--cb-d5cfc4, #D5CFC4)",
+            background: "var(--cf-f8f7f4, #F8F7F4)",
           }}
         >
           <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
             <Settings2 size={13} color="#57524C" />
-            <span style={{ fontSize: "0.73rem", fontWeight: 600, color: "#57524C" }}>
+            <span style={{ fontSize: "0.73rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
               Encuadre de portada (1:1)
             </span>
             {tieneAjusteCustom && (
@@ -444,9 +444,9 @@ export function SelectorEncuadreFoto({
                   fontWeight: 700,
                   padding: "1px 6px",
                   borderRadius: "999px",
-                  background: "#FAF6EE",
-                  border: "1px solid #E5D7BC",
-                  color: "#745622",
+                  background: "var(--cf-faf6ee, #FAF6EE)",
+                  border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                  color: "var(--ct-745622, #745622)",
                 }}
               >
                 Personalizado
@@ -465,9 +465,9 @@ export function SelectorEncuadreFoto({
               gap: "4px",
               padding: "4px 9px",
               borderRadius: "6px",
-              border: "1px solid #D5CFC4",
-              background: "#FFFFFF",
-              color: "#221E1B",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-221e1b, #221E1B)",
               fontSize: "0.72rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -481,8 +481,8 @@ export function SelectorEncuadreFoto({
       ) : (
     <div
       style={{
-        background: "#F8F7F4",
-        border: "1.5px dashed #D5CFC4",
+        background: "var(--cf-f8f7f4, #F8F7F4)",
+        border: "1.5px dashed var(--cb-d5cfc4, #D5CFC4)",
         borderRadius: "10px",
         padding: "12px",
       }}
@@ -498,7 +498,7 @@ export function SelectorEncuadreFoto({
       >
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Sparkles size={14} color={colorTema} />
-          <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "#1F1C19" }}>
+          <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "var(--ct-1f1c19, #1F1C19)" }}>
             {titulo}
           </span>
         </div>
@@ -514,9 +514,9 @@ export function SelectorEncuadreFoto({
             gap: "4px",
             padding: "3px 8px",
             borderRadius: "6px",
-            border: "1px solid #D5CFC4",
-            background: "#FFFFFF",
-            color: "#57524C",
+            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            color: "var(--ct-57524c, #57524C)",
             fontSize: "0.7rem",
             fontWeight: 700,
             cursor: "pointer",
@@ -607,7 +607,7 @@ export function SelectorEncuadreFoto({
               style={{
                 fontSize: "0.7rem",
                 fontWeight: 700,
-                color: "#475569",
+                color: "var(--ct-475569, #475569)",
                 marginBottom: "4px",
               }}
             >
@@ -626,9 +626,9 @@ export function SelectorEncuadreFoto({
                       borderRadius: "6px",
                       fontSize: "0.68rem",
                       fontWeight: activo ? 800 : 600,
-                      border: activo ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
-                      background: activo ? "#FFFFFF" : "#F1F5F9",
-                      color: activo ? colorTema : "#475569",
+                      border: activo ? `1.5px solid ${colorTema}` : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                      background: activo ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-f1f5f9, #F1F5F9)",
+                      color: activo ? colorTema : "var(--ct-475569, #475569)",
                       cursor: "pointer",
                     }}
                   >
@@ -645,7 +645,7 @@ export function SelectorEncuadreFoto({
                 style={{
                   fontSize: "0.7rem",
                   fontWeight: 700,
-                  color: "#475569",
+                  color: "var(--ct-475569, #475569)",
                   marginBottom: "4px",
                 }}
               >
@@ -661,9 +661,9 @@ export function SelectorEncuadreFoto({
                     fontSize: "0.68rem",
                     fontWeight: ajuste === "cover" ? 800 : 600,
                     border:
-                      ajuste === "cover" ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
-                    background: ajuste === "cover" ? "#FFFFFF" : "#F1F5F9",
-                    color: ajuste === "cover" ? colorTema : "#475569",
+                      ajuste === "cover" ? `1.5px solid ${colorTema}` : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: ajuste === "cover" ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-f1f5f9, #F1F5F9)",
+                    color: ajuste === "cover" ? colorTema : "var(--ct-475569, #475569)",
                     cursor: "pointer",
                   }}
                 >
@@ -680,9 +680,9 @@ export function SelectorEncuadreFoto({
                     border:
                       ajuste === "contain"
                         ? `1.5px solid ${colorTema}`
-                        : "1px solid #CBD5E1",
-                    background: ajuste === "contain" ? "#FFFFFF" : "#F1F5F9",
-                    color: ajuste === "contain" ? colorTema : "#475569",
+                        : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: ajuste === "contain" ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-f1f5f9, #F1F5F9)",
+                    color: ajuste === "contain" ? colorTema : "var(--ct-475569, #475569)",
                     cursor: "pointer",
                   }}
                 >
@@ -697,7 +697,7 @@ export function SelectorEncuadreFoto({
                   style={{
                     fontSize: "0.7rem",
                     fontWeight: 700,
-                    color: "#475569",
+                    color: "var(--ct-475569, #475569)",
                     marginBottom: "4px",
                   }}
                 >
@@ -715,9 +715,9 @@ export function SelectorEncuadreFoto({
                         fontSize: "0.65rem",
                         fontWeight: zoom === z ? 800 : 600,
                         border:
-                          zoom === z ? `1.5px solid ${colorTema}` : "1px solid #CBD5E1",
-                        background: zoom === z ? "#FFFFFF" : "#F1F5F9",
-                        color: zoom === z ? colorTema : "#475569",
+                          zoom === z ? `1.5px solid ${colorTema}` : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                        background: zoom === z ? "var(--cf-ffffff, #FFFFFF)" : "var(--cf-f1f5f9, #F1F5F9)",
+                        color: zoom === z ? colorTema : "var(--ct-475569, #475569)",
                         cursor: "pointer",
                       }}
                     >

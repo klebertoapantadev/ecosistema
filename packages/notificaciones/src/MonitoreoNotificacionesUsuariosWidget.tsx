@@ -169,16 +169,16 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                 fontSize: "0.66rem",
                 fontWeight: 800,
                 textTransform: "uppercase",
-                background: item.emisor_tipo === "POSTULANTE" ? "#f3e8ff" : item.emisor_tipo === "ADMINISTRADOR" ? "#e0f2fe" : "#f1f5f9",
-                color: item.emisor_tipo === "POSTULANTE" ? "#6b21a8" : item.emisor_tipo === "ADMINISTRADOR" ? "#0369a1" : "#475569",
-                border: item.emisor_tipo === "POSTULANTE" ? "1px solid #d8b4fe" : item.emisor_tipo === "ADMINISTRADOR" ? "1px solid #bae6fd" : "1px solid #cbd5e1"
+                background: item.emisor_tipo === "POSTULANTE" ? "var(--cf-f3e8ff, #f3e8ff)" : item.emisor_tipo === "ADMINISTRADOR" ? "var(--cf-e0f2fe, #e0f2fe)" : "var(--cf-f1f5f9, #f1f5f9)",
+                color: item.emisor_tipo === "POSTULANTE" ? "var(--ct-6b21a8, #6b21a8)" : item.emisor_tipo === "ADMINISTRADOR" ? "var(--ct-0369a1, #0369a1)" : "var(--ct-475569, #475569)",
+                border: item.emisor_tipo === "POSTULANTE" ? "1px solid var(--cb-d8b4fe, #d8b4fe)" : item.emisor_tipo === "ADMINISTRADOR" ? "1px solid var(--cb-bae6fd, #bae6fd)" : "1px solid var(--cb-cbd5e1, #cbd5e1)"
               }}
             >
               {item.emisor_tipo || "SISTEMA"}
             </span>
           </div>
-          <strong style={{ display: "block", color: "#0f172a" }}>{item.emisor_nombre || "Sistema"}</strong>
-          <span style={{ fontSize: "0.74rem", color: "#64748b" }}>{item.emisor_correo || "—"}</span>
+          <strong style={{ display: "block", color: "var(--ct-0f172a, #0f172a)" }}>{item.emisor_nombre || "Sistema"}</strong>
+          <span style={{ fontSize: "0.74rem", color: "var(--ct-64748b, #64748b)" }}>{item.emisor_correo || "—"}</span>
         </div>
       )
     },
@@ -188,8 +188,8 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
       valor: (item) => `${item.usuario_nombre} ${item.usuario_correo}`.trim(),
       render: (item) => (
         <div>
-          <strong style={{ display: "block", color: "#0f172a" }}>{item.usuario_nombre}</strong>
-          <span style={{ fontSize: "0.74rem", color: "#64748b" }}>{item.usuario_correo}</span>
+          <strong style={{ display: "block", color: "var(--ct-0f172a, #0f172a)" }}>{item.usuario_nombre}</strong>
+          <span style={{ fontSize: "0.74rem", color: "var(--ct-64748b, #64748b)" }}>{item.usuario_correo}</span>
         </div>
       )
     },
@@ -199,10 +199,10 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
       valor: (item) => `${item.not_id} ${item.not_titulo}`,
       render: (item) => (
         <div style={{ maxWidth: "240px" }}>
-          <strong style={{ display: "block", color: "#1e293b" }}>
+          <strong style={{ display: "block", color: "var(--ct-1e293b, #1e293b)" }}>
             {item.not_titulo}
           </strong>
-          <span style={{ fontSize: "0.66rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b" }}>
+          <span style={{ fontSize: "0.66rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "var(--ct-64748b, #64748b)" }}>
             ID: {item.not_id}
           </span>
         </div>
@@ -219,8 +219,8 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             borderRadius: "4px",
             fontSize: "0.7rem",
             fontWeight: 800,
-            background: item.not_canal === "IN_APP" ? "#dbeafe" : item.not_canal === "PUSH" ? "#e0f2fe" : "#fef3c7",
-            color: item.not_canal === "IN_APP" ? "#1e40af" : item.not_canal === "PUSH" ? "#0369a1" : "#92400e"
+            background: item.not_canal === "IN_APP" ? "var(--cf-dbeafe, #dbeafe)" : item.not_canal === "PUSH" ? "var(--cf-e0f2fe, #e0f2fe)" : "var(--cf-fef3c7, #fef3c7)",
+            color: item.not_canal === "IN_APP" ? "var(--ct-1e40af, #1e40af)" : item.not_canal === "PUSH" ? "var(--ct-0369a1, #0369a1)" : "var(--ct-92400e, #92400e)"
           }}
         >
           {item.not_canal}
@@ -233,15 +233,15 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
       valor: (item) => item.not_leido_en ? `Confirmada ${new Date(item.not_leido_en).toLocaleString("es-EC")}` : "Pendiente",
       render: (item) => item.not_leido_en ? (
         <div>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#15803d", fontWeight: 700, fontSize: "0.76rem" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "var(--ct-15803d, #15803d)", fontWeight: 700, fontSize: "0.76rem" }}>
             <CheckCircle2 size={13} /> Confirmada
           </span>
-          <span style={{ display: "block", fontSize: "0.7rem", color: "#64748b" }}>
+          <span style={{ display: "block", fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)" }}>
             {new Date(item.not_leido_en).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
           </span>
         </div>
       ) : (
-        <span style={{ color: "#2563eb", fontWeight: 700, fontSize: "0.74rem" }}>
+        <span style={{ color: "var(--ct-2563eb, #2563eb)", fontWeight: 700, fontSize: "0.74rem" }}>
           Pendiente
         </span>
       )
@@ -254,18 +254,18 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
         const pospuestoHasta = item.not_pospuesta_hasta ? new Date(item.not_pospuesta_hasta).getTime() : 0;
         const esPospuestaActiva = pospuestoHasta > ahora;
         return esPospuestaActiva ? (
-          <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "6px", padding: "3px 6px" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#b45309", fontWeight: 800, fontSize: "0.72rem" }}>
+          <div style={{ background: "var(--cf-fffbeb, #fffbeb)", border: "1px solid var(--cb-fde68a, #fde68a)", borderRadius: "6px", padding: "3px 6px" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "var(--ct-b45309, #b45309)", fontWeight: 800, fontSize: "0.72rem" }}>
               <Clock size={12} /> {item.not_pospuesta_horas ? `${item.not_pospuesta_horas}h` : "Pospuesta"}
             </span>
-            <span style={{ display: "block", fontSize: "0.68rem", color: "#92400e" }}>
+            <span style={{ display: "block", fontSize: "0.68rem", color: "var(--ct-92400e, #92400e)" }}>
               Hasta: {new Date(item.not_pospuesta_hasta!).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
             </span>
           </div>
         ) : item.not_pospuesta_hasta ? (
-          <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>Expiró pospuesto</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--ct-94a3b8, #94a3b8)" }}>Expiró pospuesto</span>
         ) : (
-          <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>—</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--ct-94a3b8, #94a3b8)" }}>—</span>
         );
       }
     },
@@ -274,16 +274,16 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
       encabezado: "Estado Eliminación",
       valor: (item) => item.not_eliminada ? "Eliminada" : "Activa",
       render: (item) => item.not_eliminada ? (
-        <div style={{ background: "#fef2f2", border: "1px solid #fee2e2", borderRadius: "6px", padding: "3px 6px" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "#b91c1c", fontWeight: 800, fontSize: "0.72rem" }}>
+        <div style={{ background: "var(--cf-fef2f2, #fef2f2)", border: "1px solid var(--cb-fee2e2, #fee2e2)", borderRadius: "6px", padding: "3px 6px" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: "var(--ct-b91c1c, #b91c1c)", fontWeight: 800, fontSize: "0.72rem" }}>
             <Trash2 size={12} /> Eliminada
           </span>
-          <span style={{ display: "block", fontSize: "0.68rem", color: "#991b1b" }}>
+          <span style={{ display: "block", fontSize: "0.68rem", color: "var(--ct-991b1b, #991b1b)" }}>
             {item.not_eliminada_en ? new Date(item.not_eliminada_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" }) : "Lógica"}
           </span>
         </div>
       ) : (
-        <span style={{ color: "#16a34a", fontWeight: 700, fontSize: "0.74rem" }}>
+        <span style={{ color: "var(--ct-16a34a, #16a34a)", fontWeight: 700, fontSize: "0.74rem" }}>
           Activa
         </span>
       )
@@ -293,7 +293,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
       encabezado: "Fecha Emisión",
       valor: (item) => new Date(item.not_creado_en).getTime(),
       render: (item) => (
-        <span style={{ fontSize: "0.74rem", color: "#64748b" }}>
+        <span style={{ fontSize: "0.74rem", color: "var(--ct-64748b, #64748b)" }}>
           {new Date(item.not_creado_en).toLocaleString("es-EC", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
         </span>
       )
@@ -309,9 +309,9 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             type="button"
             onClick={() => setNotifSeleccionada(item)}
             style={{
-              background: "#eff6ff",
-              border: "1px solid #bfdbfe",
-              color: "#1d4ed8",
+              background: "var(--cf-eff6ff, #eff6ff)",
+              border: "1px solid var(--cb-bfdbfe, #bfdbfe)",
+              color: "var(--ct-1d4ed8, #1d4ed8)",
               padding: "4px 8px",
               borderRadius: "6px",
               fontWeight: 700,
@@ -332,9 +332,9 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
               disabled={procesandoAccion === item.not_id}
               onClick={() => handleRestaurar(item.not_id)}
               style={{
-                background: "#f0fdf4",
-                border: "1px solid #bbf7d0",
-                color: "#15803d",
+                background: "var(--cf-f0fdf4, #f0fdf4)",
+                border: "1px solid var(--cb-bbf7d0, #bbf7d0)",
+                color: "var(--ct-15803d, #15803d)",
                 padding: "4px 8px",
                 borderRadius: "6px",
                 fontWeight: 700,
@@ -368,14 +368,14 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
   }).length;
 
   return (
-    <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", padding: "24px", width: "100%" }}>
+    <div style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)", padding: "24px", width: "100%" }}>
       {/* CABECERA */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "20px", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "20px", borderBottom: "1px solid var(--cb-f1f5f9, #f1f5f9)", paddingBottom: "16px" }}>
         <div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 900, margin: 0, color: "#0f172a", display: "flex", alignItems: "center", gap: "10px" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 900, margin: 0, color: "var(--ct-0f172a, #0f172a)", display: "flex", alignItems: "center", gap: "10px" }}>
             <Bell size={24} color="#1f6feb" /> Monitoreo de Notificaciones por Usuario ({negocio})
           </h2>
-          <p style={{ fontSize: "0.84rem", color: "#64748b", margin: "4px 0 0 0" }}>
+          <p style={{ fontSize: "0.84rem", color: "var(--ct-64748b, #64748b)", margin: "4px 0 0 0" }}>
             Auditoría en tiempo real para Operadores y Administradores. Consulta el estado de confirmación, tiempo de pospuesto y eliminaciones lógicas de cualquier usuario.
           </p>
         </div>
@@ -384,9 +384,9 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
           type="button"
           onClick={cargarDatos}
           style={{
-            background: "#f1f5f9",
-            border: "1px solid #cbd5e1",
-            color: "#334155",
+            background: "var(--cf-f1f5f9, #f1f5f9)",
+            border: "1px solid var(--cb-cbd5e1, #cbd5e1)",
+            color: "var(--ct-334155, #334155)",
             padding: "8px 16px",
             borderRadius: "8px",
             fontSize: "0.82rem",
@@ -406,71 +406,71 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
         <div
           onClick={() => setFiltroEstado("TODOS")}
           style={{
-            background: filtroEstado === "TODOS" ? "#f0f9ff" : "#f8fafc",
-            border: filtroEstado === "TODOS" ? "1.5px solid #0284c7" : "1px solid #e2e8f0",
+            background: filtroEstado === "TODOS" ? "var(--cf-f0f9ff, #f0f9ff)" : "var(--cf-f8fafc, #f8fafc)",
+            border: filtroEstado === "TODOS" ? "1.5px solid #0284c7" : "1px solid var(--cb-e2e8f0, #e2e8f0)",
             borderRadius: "12px",
             padding: "12px 14px",
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Total Registros</span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#0f172a", marginTop: "2px" }}>{totalNotifs}</div>
+          <span style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748b)", fontWeight: 800, textTransform: "uppercase" }}>Total Registros</span>
+          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "var(--ct-0f172a, #0f172a)", marginTop: "2px" }}>{totalNotifs}</div>
         </div>
 
         <div
           onClick={() => setFiltroEstado("PENDIENTE")}
           style={{
-            background: filtroEstado === "PENDIENTE" ? "#eff6ff" : "#f8fafc",
-            border: filtroEstado === "PENDIENTE" ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
+            background: filtroEstado === "PENDIENTE" ? "var(--cf-eff6ff, #eff6ff)" : "var(--cf-f8fafc, #f8fafc)",
+            border: filtroEstado === "PENDIENTE" ? "1.5px solid #2563eb" : "1px solid var(--cb-e2e8f0, #e2e8f0)",
             borderRadius: "12px",
             padding: "12px 14px",
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#2563eb", fontWeight: 800, textTransform: "uppercase" }}>Pendientes</span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#1d4ed8", marginTop: "2px" }}>{countPendientes}</div>
+          <span style={{ fontSize: "0.72rem", color: "var(--ct-2563eb, #2563eb)", fontWeight: 800, textTransform: "uppercase" }}>Pendientes</span>
+          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "var(--ct-1d4ed8, #1d4ed8)", marginTop: "2px" }}>{countPendientes}</div>
         </div>
 
         <div
           onClick={() => setFiltroEstado("LEIDA")}
           style={{
-            background: filtroEstado === "LEIDA" ? "#f0fdf4" : "#f8fafc",
-            border: filtroEstado === "LEIDA" ? "1.5px solid #16a34a" : "1px solid #e2e8f0",
+            background: filtroEstado === "LEIDA" ? "var(--cf-f0fdf4, #f0fdf4)" : "var(--cf-f8fafc, #f8fafc)",
+            border: filtroEstado === "LEIDA" ? "1.5px solid #16a34a" : "1px solid var(--cb-e2e8f0, #e2e8f0)",
             borderRadius: "12px",
             padding: "12px 14px",
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#15803d", fontWeight: 800, textTransform: "uppercase" }}>Confirmadas / Leídas</span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#15803d", marginTop: "2px" }}>{countLeidas}</div>
+          <span style={{ fontSize: "0.72rem", color: "var(--ct-15803d, #15803d)", fontWeight: 800, textTransform: "uppercase" }}>Confirmadas / Leídas</span>
+          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "var(--ct-15803d, #15803d)", marginTop: "2px" }}>{countLeidas}</div>
         </div>
 
         <div
           onClick={() => setFiltroEstado("POSPUESTA")}
           style={{
-            background: filtroEstado === "POSPUESTA" ? "#fffbeb" : "#f8fafc",
-            border: filtroEstado === "POSPUESTA" ? "1.5px solid #d97706" : "1px solid #e2e8f0",
+            background: filtroEstado === "POSPUESTA" ? "var(--cf-fffbeb, #fffbeb)" : "var(--cf-f8fafc, #f8fafc)",
+            border: filtroEstado === "POSPUESTA" ? "1.5px solid #d97706" : "1px solid var(--cb-e2e8f0, #e2e8f0)",
             borderRadius: "12px",
             padding: "12px 14px",
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#b45309", fontWeight: 800, textTransform: "uppercase" }}>Pospuestas</span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#b45309", marginTop: "2px" }}>{countPospuestas}</div>
+          <span style={{ fontSize: "0.72rem", color: "var(--ct-b45309, #b45309)", fontWeight: 800, textTransform: "uppercase" }}>Pospuestas</span>
+          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "var(--ct-b45309, #b45309)", marginTop: "2px" }}>{countPospuestas}</div>
         </div>
 
         <div
           onClick={() => setFiltroEstado("ELIMINADA")}
           style={{
-            background: filtroEstado === "ELIMINADA" ? "#fef2f2" : "#f8fafc",
-            border: filtroEstado === "ELIMINADA" ? "1.5px solid #dc2626" : "1px solid #e2e8f0",
+            background: filtroEstado === "ELIMINADA" ? "var(--cf-fef2f2, #fef2f2)" : "var(--cf-f8fafc, #f8fafc)",
+            border: filtroEstado === "ELIMINADA" ? "1.5px solid #dc2626" : "1px solid var(--cb-e2e8f0, #e2e8f0)",
             borderRadius: "12px",
             padding: "12px 14px",
             cursor: "pointer"
           }}
         >
-          <span style={{ fontSize: "0.72rem", color: "#b91c1c", fontWeight: 800, textTransform: "uppercase" }}>Eliminadas (Lógicas)</span>
-          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#b91c1c", marginTop: "2px" }}>{countEliminadas}</div>
+          <span style={{ fontSize: "0.72rem", color: "var(--ct-b91c1c, #b91c1c)", fontWeight: 800, textTransform: "uppercase" }}>Eliminadas (Lógicas)</span>
+          <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "var(--ct-b91c1c, #b91c1c)", marginTop: "2px" }}>{countEliminadas}</div>
         </div>
       </div>
 
@@ -482,7 +482,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
           <SelectConBuscador
             value={filtroUsuario}
             onChange={e => setFiltroUsuario(e.target.value)}
-            style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.84rem", fontWeight: 600, background: "#ffffff", color: "#334155", maxWidth: "220px" }}
+            style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)", fontSize: "0.84rem", fontWeight: 600, background: "var(--cf-ffffff, #ffffff)", color: "var(--ct-334155, #334155)", maxWidth: "220px" }}
           >
             <option value="TODOS">Todos los Usuarios ({usuariosDisponibles.length})</option>
             {usuariosDisponibles.map(u => (
@@ -499,7 +499,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
           <SelectConBuscador
             value={filtroEstado}
             onChange={e => setFiltroEstado(e.target.value as "TODOS" | "PENDIENTE" | "LEIDA" | "POSPUESTA" | "ELIMINADA")}
-            style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.84rem", fontWeight: 600, background: "#ffffff", color: "#334155" }}
+            style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)", fontSize: "0.84rem", fontWeight: 600, background: "var(--cf-ffffff, #ffffff)", color: "var(--ct-334155, #334155)" }}
           >
             <option value="TODOS">Todos los Estados</option>
             <option value="PENDIENTE">Pendientes</option>
@@ -513,7 +513,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
         <SelectConBuscador
           value={filtroCanal}
           onChange={e => setFiltroCanal(e.target.value)}
-          style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.84rem", fontWeight: 600, background: "#ffffff", color: "#334155" }}
+          style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)", fontSize: "0.84rem", fontWeight: 600, background: "var(--cf-ffffff, #ffffff)", color: "var(--ct-334155, #334155)" }}
         >
           <option value="TODOS">Todos los Canales</option>
           <option value="IN_APP">In-App</option>
@@ -525,7 +525,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
 
       {/* TABLA DATAGRID */}
       {cargando ? (
-        <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+        <div style={{ padding: "40px", textAlign: "center", color: "var(--ct-64748b, #64748b)" }}>
           Cargando notificaciones auditadas...
         </div>
       ) : (
@@ -535,21 +535,21 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
           idFila={(item) => item.not_id}
           nombreExportacion={`monitoreo-notificaciones-${negocio.toLowerCase()}`}
           contenidoExpandible={(item) => (
-            <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.82rem" }}>
-              <div style={{ fontWeight: 800, color: "#0f172a", marginBottom: "6px" }}>Cuerpo de la Notificación Despachada:</div>
-              <div style={{ background: "#ffffff", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: item.not_contenido_html }} />
+            <div style={{ padding: "14px", background: "var(--cf-f8fafc, #f8fafc)", borderRadius: "8px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)", fontSize: "0.82rem" }}>
+              <div style={{ fontWeight: 800, color: "var(--ct-0f172a, #0f172a)", marginBottom: "6px" }}>Cuerpo de la Notificación Despachada:</div>
+              <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "10px", borderRadius: "6px", border: "1px solid var(--cb-cbd5e1, #cbd5e1)", lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: item.not_contenido_html }} />
               {item.confirmada_por && (
-                <div style={{ marginTop: "6px", fontSize: "0.76rem", color: "#15803d" }}>
+                <div style={{ marginTop: "6px", fontSize: "0.76rem", color: "var(--ct-15803d, #15803d)" }}>
                   Confirmada por: <strong>{item.confirmada_por.usuario_nombre}</strong> ({item.confirmada_por.usuario_correo || item.confirmada_por.usuario_id}) el {new Date(item.confirmada_por.fecha).toLocaleString("es-EC")}
                 </div>
               )}
               {item.pospuesta_por && (
-                <div style={{ marginTop: "4px", fontSize: "0.76rem", color: "#b45309" }}>
+                <div style={{ marginTop: "4px", fontSize: "0.76rem", color: "var(--ct-b45309, #b45309)" }}>
                   Pospuesta por: <strong>{item.pospuesta_por.usuario_nombre}</strong> (+{item.pospuesta_por.horas || 3}h) hasta {new Date(item.not_pospuesta_hasta!).toLocaleString("es-EC")}
                 </div>
               )}
               {item.eliminada_por && (
-                <div style={{ marginTop: "4px", fontSize: "0.76rem", color: "#b91c1c" }}>
+                <div style={{ marginTop: "4px", fontSize: "0.76rem", color: "var(--ct-b91c1c, #b91c1c)" }}>
                   Eliminada por: <strong>{item.eliminada_por.usuario_nombre}</strong> el {new Date(item.eliminada_por.fecha).toLocaleString("es-EC")}
                 </div>
               )}
@@ -578,7 +578,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--cf-ffffff, #ffffff)",
               borderRadius: "16px",
               maxWidth: "560px",
               width: "100%",
@@ -608,43 +608,43 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             <div style={{ padding: "20px", overflowY: "auto", flex: 1, fontSize: "0.85rem" }}>
               {/* Info Remitente y Destinatario */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px", marginBottom: "14px" }}>
-                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                <div style={{ background: "var(--cf-f8fafc, #f8fafc)", padding: "12px 14px", borderRadius: "10px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                    <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Remitente (Quién Envía)</span>
-                    <span style={{ fontSize: "0.64rem", padding: "1px 5px", borderRadius: "4px", fontWeight: 800, background: "#e2e8f0", color: "#334155" }}>
+                    <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 800, textTransform: "uppercase" }}>Remitente (Quién Envía)</span>
+                    <span style={{ fontSize: "0.64rem", padding: "1px 5px", borderRadius: "4px", fontWeight: 800, background: "var(--cf-e2e8f0, #e2e8f0)", color: "var(--ct-334155, #334155)" }}>
                       {notifSeleccionada.emisor_tipo || "SISTEMA"}
                     </span>
                   </div>
-                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0f172a" }}>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-0f172a, #0f172a)" }}>
                     {notifSeleccionada.emisor_nombre || "Sistema"}
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "#475569" }}>{notifSeleccionada.emisor_correo || "—"}</div>
+                  <div style={{ fontSize: "0.78rem", color: "var(--ct-475569, #475569)" }}>{notifSeleccionada.emisor_correo || "—"}</div>
                   {notifSeleccionada.emisor_id && (
-                    <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>ID: {notifSeleccionada.emisor_id}</div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--ct-94a3b8, #94a3b8)", marginTop: "2px" }}>ID: {notifSeleccionada.emisor_id}</div>
                   )}
                 </div>
 
-                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Destinatario (Quién Recibe)</span>
-                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0f172a", marginTop: "4px" }}>
+                <div style={{ background: "var(--cf-f8fafc, #f8fafc)", padding: "12px 14px", borderRadius: "10px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
+                  <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 800, textTransform: "uppercase" }}>Destinatario (Quién Recibe)</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-0f172a, #0f172a)", marginTop: "4px" }}>
                     {notifSeleccionada.usuario_nombre}
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "#475569" }}>{notifSeleccionada.usuario_correo}</div>
-                  <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "2px" }}>ID: {notifSeleccionada.usuario_id}</div>
+                  <div style={{ fontSize: "0.78rem", color: "var(--ct-475569, #475569)" }}>{notifSeleccionada.usuario_correo}</div>
+                  <div style={{ fontSize: "0.7rem", color: "var(--ct-94a3b8, #94a3b8)", marginTop: "2px" }}>ID: {notifSeleccionada.usuario_id}</div>
                 </div>
               </div>
 
               {/* Título & Contenido */}
               <div style={{ marginBottom: "14px" }}>
-                <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Título / Asunto</span>
-                <h4 style={{ margin: "4px 0 4px 0", color: "#0f172a", fontSize: "1rem" }}>{notifSeleccionada.not_titulo}</h4>
-                <div style={{ fontSize: "0.72rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b", marginBottom: "8px" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 800, textTransform: "uppercase" }}>Título / Asunto</span>
+                <h4 style={{ margin: "4px 0 4px 0", color: "var(--ct-0f172a, #0f172a)", fontSize: "1rem" }}>{notifSeleccionada.not_titulo}</h4>
+                <div style={{ fontSize: "0.72rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "var(--ct-64748b, #64748b)", marginBottom: "8px" }}>
                   ID de Notificación: {notifSeleccionada.not_id}
                 </div>
 
-                <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Cuerpo HTML Despachado</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 800, textTransform: "uppercase" }}>Cuerpo HTML Despachado</span>
                 <div
-                  style={{ marginTop: "4px", padding: "14px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", lineHeight: 1.5 }}
+                  style={{ marginTop: "4px", padding: "14px", background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--cb-e2e8f0, #e2e8f0)", borderRadius: "8px", lineHeight: 1.5 }}
                   dangerouslySetInnerHTML={{ __html: notifSeleccionada.not_contenido_html }}
                 />
               </div>
@@ -652,61 +652,61 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
               {/* Matriz de Estados y Auditoría de Acciones */}
               <div className="rejilla-auto" style={{ "--min": "200px", "--hueco": "10px", background: "var(--panel-linea-suave, #F1F1F1)", padding: "12px", borderRadius: "10px" } as React.CSSProperties}>
                 <div>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Canal:</span>
-                  <strong style={{ display: "block", color: "#1e293b", fontSize: "0.82rem" }}>{notifSeleccionada.not_canal}</strong>
+                  <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 700 }}>Canal:</span>
+                  <strong style={{ display: "block", color: "var(--ct-1e293b, #1e293b)", fontSize: "0.82rem" }}>{notifSeleccionada.not_canal}</strong>
                 </div>
                 <div>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Fecha Emisión:</span>
-                  <strong style={{ display: "block", color: "#1e293b", fontSize: "0.82rem" }}>
+                  <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 700 }}>Fecha Emisión:</span>
+                  <strong style={{ display: "block", color: "var(--ct-1e293b, #1e293b)", fontSize: "0.82rem" }}>
                     {new Date(notifSeleccionada.not_creado_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}
                   </strong>
                 </div>
 
                 {/* Confirmación / Aceptación */}
-                <div style={{ gridColumn: "1 / -1", background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Confirmación (Leída / Aceptada):</span>
-                  <strong style={{ display: "block", color: notifSeleccionada.not_leido_en ? "#15803d" : "#2563eb", fontSize: "0.82rem", marginTop: "2px" }}>
+                <div style={{ gridColumn: "1 / -1", background: "var(--cf-ffffff, #ffffff)", padding: "10px", borderRadius: "8px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
+                  <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 700 }}>Confirmación (Leída / Aceptada):</span>
+                  <strong style={{ display: "block", color: notifSeleccionada.not_leido_en ? "var(--ct-15803d, #15803d)" : "var(--ct-2563eb, #2563eb)", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_leido_en
                       ? `Confirmada el ${new Date(notifSeleccionada.not_leido_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
                       : "No confirmada / Pendiente"}
                   </strong>
                   {notifSeleccionada.confirmada_por && (
-                    <div style={{ fontSize: "0.74rem", color: "#15803d", marginTop: "4px", background: "#f0fdf4", padding: "4px 8px", borderRadius: "6px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--ct-15803d, #15803d)", marginTop: "4px", background: "var(--cf-f0fdf4, #f0fdf4)", padding: "4px 8px", borderRadius: "6px" }}>
                       Acción realizada por: <strong>{notifSeleccionada.confirmada_por.usuario_nombre}</strong> ({notifSeleccionada.confirmada_por.usuario_correo || notifSeleccionada.confirmada_por.usuario_id})
                     </div>
                   )}
                 </div>
 
                 {/* Pospuesta */}
-                <div style={{ gridColumn: "1 / -1", background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Tiempo Pospuesto:</span>
-                  <strong style={{ display: "block", color: notifSeleccionada.not_pospuesta_hasta ? "#b45309" : "#64748b", fontSize: "0.82rem", marginTop: "2px" }}>
+                <div style={{ gridColumn: "1 / -1", background: "var(--cf-ffffff, #ffffff)", padding: "10px", borderRadius: "8px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
+                  <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 700 }}>Tiempo Pospuesto:</span>
+                  <strong style={{ display: "block", color: notifSeleccionada.not_pospuesta_hasta ? "var(--ct-b45309, #b45309)" : "var(--ct-64748b, #64748b)", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_pospuesta_hasta
                       ? `Pospuesta hasta: ${new Date(notifSeleccionada.not_pospuesta_hasta).toLocaleString("es-EC", { timeZone: "America/Guayaquil" })}`
                       : "Sin posponer"}
                   </strong>
                   {notifSeleccionada.pospuesta_por && (
-                    <div style={{ fontSize: "0.74rem", color: "#b45309", marginTop: "4px", background: "#fffbeb", padding: "4px 8px", borderRadius: "6px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--ct-b45309, #b45309)", marginTop: "4px", background: "var(--cf-fffbeb, #fffbeb)", padding: "4px 8px", borderRadius: "6px" }}>
                       Pospuesta por: <strong>{notifSeleccionada.pospuesta_por.usuario_nombre}</strong> ({notifSeleccionada.pospuesta_por.usuario_correo || notifSeleccionada.pospuesta_por.usuario_id}) • +{notifSeleccionada.pospuesta_por.horas || notifSeleccionada.not_pospuesta_horas || 3} horas
                     </div>
                   )}
                 </div>
 
                 {/* Eliminación Lógica & Restauración */}
-                <div style={{ gridColumn: "1 / -1", background: "#ffffff", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700 }}>Estado de Eliminación:</span>
-                  <strong style={{ display: "block", color: notifSeleccionada.not_eliminada ? "#b91c1c" : "#16a34a", fontSize: "0.82rem", marginTop: "2px" }}>
+                <div style={{ gridColumn: "1 / -1", background: "var(--cf-ffffff, #ffffff)", padding: "10px", borderRadius: "8px", border: "1px solid var(--cb-e2e8f0, #e2e8f0)" }}>
+                  <span style={{ fontSize: "0.7rem", color: "var(--ct-64748b, #64748b)", fontWeight: 700 }}>Estado de Eliminación:</span>
+                  <strong style={{ display: "block", color: notifSeleccionada.not_eliminada ? "var(--ct-b91c1c, #b91c1c)" : "var(--ct-16a34a, #16a34a)", fontSize: "0.82rem", marginTop: "2px" }}>
                     {notifSeleccionada.not_eliminada
                       ? `Eliminada (${notifSeleccionada.not_eliminada_en ? new Date(notifSeleccionada.not_eliminada_en).toLocaleString("es-EC", { timeZone: "America/Guayaquil" }) : "Lógica"})`
                       : "Activa en bandeja"}
                   </strong>
                   {notifSeleccionada.eliminada_por && notifSeleccionada.not_eliminada && (
-                    <div style={{ fontSize: "0.74rem", color: "#b91c1c", marginTop: "4px", background: "#fef2f2", padding: "4px 8px", borderRadius: "6px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--ct-b91c1c, #b91c1c)", marginTop: "4px", background: "var(--cf-fef2f2, #fef2f2)", padding: "4px 8px", borderRadius: "6px" }}>
                       Eliminada por: <strong>{notifSeleccionada.eliminada_por.usuario_nombre}</strong> ({notifSeleccionada.eliminada_por.usuario_correo || notifSeleccionada.eliminada_por.usuario_id})
                     </div>
                   )}
                   {notifSeleccionada.restaurada_por && !notifSeleccionada.not_eliminada && (
-                    <div style={{ fontSize: "0.74rem", color: "#15803d", marginTop: "4px", background: "#f0fdf4", padding: "4px 8px", borderRadius: "6px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--ct-15803d, #15803d)", marginTop: "4px", background: "var(--cf-f0fdf4, #f0fdf4)", padding: "4px 8px", borderRadius: "6px" }}>
                       Restaurada por: <strong>{notifSeleccionada.restaurada_por.usuario_nombre}</strong> ({notifSeleccionada.restaurada_por.usuario_correo || notifSeleccionada.restaurada_por.usuario_id})
                     </div>
                   )}
@@ -715,13 +715,13 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             </div>
 
             {/* Footer Modal */}
-            <div style={{ padding: "14px 20px", borderTop: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ padding: "14px 20px", borderTop: "1px solid var(--cb-f1f5f9, #f1f5f9)", background: "var(--cf-f8fafc, #f8fafc)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 {notifSeleccionada.not_eliminada ? (
                   <button
                     type="button"
                     onClick={() => handleRestaurar(notifSeleccionada.not_id)}
-                    style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#15803d", padding: "6px 12px", borderRadius: "6px", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                    style={{ background: "var(--cf-f0fdf4, #f0fdf4)", border: "1px solid var(--cb-bbf7d0, #bbf7d0)", color: "var(--ct-15803d, #15803d)", padding: "6px 12px", borderRadius: "6px", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
                   >
                     <RotateCcw size={13} /> Restaurar para Usuario
                   </button>
@@ -729,7 +729,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                   <button
                     type="button"
                     onClick={() => handleMarcarLeida(notifSeleccionada.not_id)}
-                    style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8", padding: "6px 12px", borderRadius: "6px", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                    style={{ background: "var(--cf-eff6ff, #eff6ff)", border: "1px solid var(--cb-bfdbfe, #bfdbfe)", color: "var(--ct-1d4ed8, #1d4ed8)", padding: "6px 12px", borderRadius: "6px", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
                   >
                     <Check size={13} /> Marcar como Leída
                   </button>

@@ -8,6 +8,7 @@ import { CampanaPanel } from "./CampanaPanel";
 import { NavegacionSidebar } from "./NavegacionSidebar";
 import { CapaPerfilRail, COOKIE_RAIL_PLEGADO } from "./CapaPerfilRail";
 import { BotonPlegarRail } from "./BotonPlegarRail";
+import { SelectorTema, type Tema } from "./SelectorTema";
 import { ProveedorAvisos } from "./AvisosPanel";
 import { BarraAsistente } from "./asistente/BarraAsistente";
 import { rolConAsistente } from "../../modulos/asistente/rol";
@@ -183,6 +184,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
                 {ETIQUETAS_ROL[modoActivo.toLowerCase()] || modoActivo.toUpperCase()}
               </span>
             ) : null}
+            <SelectorTema inicial={temaDelPerfil(perfil.usu_preferencia_tema)} variante="rail" />
           </div>
 
           <NavegacionSidebar modoActivo={modoActivo} negocio={NEGOCIO} />
@@ -211,6 +213,12 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
       </CapaPerfilRail>
     </Suspense>
   );
+}
+
+/** TRQ-040. Hasta que se aplique la migración la columna no existe y llega
+ *  undefined: se sigue al sistema, que es el valor por defecto de la columna. */
+function temaDelPerfil(valor: unknown): Tema {
+  return valor === "claro" || valor === "oscuro" ? valor : "sistema";
 }
 
 /** Primer mensaje de la barra. Dice lo que el asistente SABE hacer, para que

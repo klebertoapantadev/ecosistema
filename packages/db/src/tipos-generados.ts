@@ -2954,6 +2954,7 @@ export type Database = {
           usu_id: string
           usu_nombres: string | null
           usu_onboarding_completo: boolean
+          usu_preferencia_tema: string
           usu_provincia_id: string | null
           usu_secuencial: number
           usu_superadmin_plataforma: boolean
@@ -2975,6 +2976,7 @@ export type Database = {
           usu_id: string
           usu_nombres?: string | null
           usu_onboarding_completo?: boolean
+          usu_preferencia_tema?: string
           usu_provincia_id?: string | null
           usu_secuencial?: never
           usu_superadmin_plataforma?: boolean
@@ -2996,6 +2998,7 @@ export type Database = {
           usu_id?: string
           usu_nombres?: string | null
           usu_onboarding_completo?: boolean
+          usu_preferencia_tema?: string
           usu_provincia_id?: string | null
           usu_secuencial?: never
           usu_superadmin_plataforma?: boolean

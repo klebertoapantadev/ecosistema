@@ -145,7 +145,7 @@ export function ModalAdminEstadosPedido({
           maxWidth: "700px",
           maxHeight: "90vh",
           overflowY: "auto",
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
           padding: "20px",
           display: "flex",
@@ -156,10 +156,10 @@ export function ModalAdminEstadosPedido({
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: "1.02rem", color: "#0F172A" }}>
+            <h3 style={{ margin: 0, fontSize: "1.02rem", color: "var(--ct-0f172a, #0F172A)" }}>
               Administrar Estados de Pedidos
             </h3>
-            <p style={{ margin: "3px 0 0", fontSize: "0.76rem", color: "#64748B" }}>
+            <p style={{ margin: "3px 0 0", fontSize: "0.76rem", color: "var(--ct-64748b, #64748B)" }}>
               Edita, agrega o elimina estados y define cuáles son visibles en la Consola de Taller.
             </p>
           </div>
@@ -168,7 +168,7 @@ export function ModalAdminEstadosPedido({
             onClick={onCerrar}
             aria-label="Cerrar"
             title="Cerrar"
-            style={{ border: "none", background: "transparent", cursor: "pointer", color: "#64748B" }}
+            style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--ct-64748b, #64748B)" }}
           >
             <X size={18} />
           </button>
@@ -179,9 +179,9 @@ export function ModalAdminEstadosPedido({
             style={{
               padding: "8px 11px",
               borderRadius: "8px",
-              background: "#FEF2F2",
-              border: "1px solid #FECACA",
-              color: "#991B1B",
+              background: "var(--cf-fef2f2, #FEF2F2)",
+              border: "1px solid var(--cb-fecaca, #FECACA)",
+              color: "var(--ct-991b1b, #991B1B)",
               fontSize: "0.79rem",
             }}
           >
@@ -201,8 +201,8 @@ export function ModalAdminEstadosPedido({
                   gap: "7px",
                   padding: "8px 10px",
                   borderRadius: "10px",
-                  border: "1px solid #E2E8F0",
-                  background: "#F8FAFC",
+                  border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                  background: "var(--cf-f8fafc, #F8FAFC)",
                   flexWrap: "wrap",
                 }}
               >
@@ -219,7 +219,7 @@ export function ModalAdminEstadosPedido({
                     flex: "1 1 170px",
                     padding: "6px 9px",
                     borderRadius: "7px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     background: est.colorFondo,
@@ -251,9 +251,9 @@ export function ModalAdminEstadosPedido({
                     gap: "5px",
                     padding: "5px 10px",
                     borderRadius: "999px",
-                    border: visibleTaller ? "1px solid #86EFAC" : "1px solid #CBD5E1",
-                    background: visibleTaller ? "#DCFCE7" : "#F1F5F9",
-                    color: visibleTaller ? "#166534" : "#64748B",
+                    border: visibleTaller ? "1px solid #86EFAC" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: visibleTaller ? "var(--cf-dcfce7, #DCFCE7)" : "var(--cf-f1f5f9, #F1F5F9)",
+                    color: visibleTaller ? "var(--ct-166534, #166534)" : "var(--ct-64748b, #64748B)",
                     fontSize: "0.72rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -297,8 +297,8 @@ export function ModalAdminEstadosPedido({
                   style={{
                     padding: "5px",
                     borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     cursor: idx === 0 ? "not-allowed" : "pointer",
                     opacity: idx === 0 ? 0.45 : 1,
                   }}
@@ -314,8 +314,8 @@ export function ModalAdminEstadosPedido({
                   style={{
                     padding: "5px",
                     borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    background: "#FFFFFF",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     cursor: idx === lista.length - 1 ? "not-allowed" : "pointer",
                     opacity: idx === lista.length - 1 ? 0.45 : 1,
                   }}
@@ -331,9 +331,9 @@ export function ModalAdminEstadosPedido({
                   style={{
                     padding: "5px 7px",
                     borderRadius: "6px",
-                    border: "1px solid #FECACA",
-                    background: "#FEF2F2",
-                    color: "#B91C1C",
+                    border: "1px solid var(--cb-fecaca, #FECACA)",
+                    background: "var(--cf-fef2f2, #FEF2F2)",
+                    color: "var(--ct-b91c1c, #B91C1C)",
                     cursor: lista.length <= 1 ? "not-allowed" : "pointer",
                     opacity: lista.length <= 1 ? 0.4 : 1,
                   }}
@@ -354,7 +354,7 @@ export function ModalAdminEstadosPedido({
             flexWrap: "wrap",
             padding: "10px",
             borderRadius: "10px",
-            background: "#F1F5F9",
+            background: "var(--cf-f1f5f9, #F1F5F9)",
           }}
         >
           <input
@@ -372,9 +372,9 @@ export function ModalAdminEstadosPedido({
               flex: "1 1 180px",
               padding: "7px 10px",
               borderRadius: "7px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
               fontSize: "0.8rem",
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
             }}
           />
           <button
@@ -388,9 +388,9 @@ export function ModalAdminEstadosPedido({
               gap: "5px",
               padding: "6px 10px",
               borderRadius: "999px",
-              border: nuevoVisibleTaller ? "1px solid #86EFAC" : "1px solid #CBD5E1",
-              background: nuevoVisibleTaller ? "#DCFCE7" : "#FFFFFF",
-              color: nuevoVisibleTaller ? "#166534" : "#64748B",
+              border: nuevoVisibleTaller ? "1px solid #86EFAC" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+              background: nuevoVisibleTaller ? "var(--cf-dcfce7, #DCFCE7)" : "var(--cf-ffffff, #FFFFFF)",
+              color: nuevoVisibleTaller ? "var(--ct-166534, #166534)" : "var(--ct-64748b, #64748B)",
               fontSize: "0.73rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -444,9 +444,9 @@ export function ModalAdminEstadosPedido({
             style={{
               padding: "8px 13px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
-              background: "#FFFFFF",
-              color: "#475569",
+              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              color: "var(--ct-475569, #475569)",
               fontSize: "0.8rem",
               fontWeight: 600,
               cursor: "pointer",

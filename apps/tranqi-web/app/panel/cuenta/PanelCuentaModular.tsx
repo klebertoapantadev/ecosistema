@@ -67,7 +67,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Perfil & Datos de Contacto",
     subtitulo: "Nombres, apellidos, correo verificado, correos adicionales y WhatsApp",
     icono: User,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Datos Personales"
   },
   {
@@ -75,7 +75,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Datos de Facturación & Comprobantes",
     subtitulo: "Razón social, RUC/Cédula, dirección fiscal y correo electrónico de facturación",
     icono: Receipt,
-    colorIcono: "var(--esmeralda, #0E6648)",
+    colorIcono: "var(--ct-0e6648, var(--esmeralda, #0E6648))",
     categoria: "Facturación & Cobros"
   },
   {
@@ -83,7 +83,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Historial de Pagos & Facturas Electrónicas",
     subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de factura electrónica SRI",
     icono: CreditCard,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Facturación & Cobros"
   },
   {
@@ -91,7 +91,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Perfil Profesional de Abogado (MFA)",
     subtitulo: "Visualiza y edita tus datos de registro, SENESCYT, matrícula del Foro y especialidades (Protegido por MFA)",
     icono: Briefcase,
-    colorIcono: "var(--esmeralda, #0E6648)",
+    colorIcono: "var(--ct-0e6648, var(--esmeralda, #0E6648))",
     categoria: "Socio Abogado"
   },
   {
@@ -99,7 +99,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Historial de Accesos",
     subtitulo: "Seguridad de inicio de sesión, IP y dispositivos",
     icono: History,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Auditoría"
   },
   {
@@ -107,7 +107,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Seguridad MFA & Autenticador",
     subtitulo: "Configura tu app autenticadora (TOTP) o resetea el acceso por pérdida de dispositivo vía correo",
     icono: QrCode,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Seguridad"
   },
   {
@@ -115,7 +115,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Sesión & Claves de Seguridad",
     subtitulo: "Gestión de sesión activa y cierre de sesión",
     icono: KeyRound,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Seguridad"
   },
   {
@@ -123,7 +123,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Ver Como",
     subtitulo: "Alternar la vista previa del portal entre Cliente, Socio Abogado y Administrador",
     icono: ShieldCheck,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Gobernanza"
   },
   {
@@ -131,7 +131,7 @@ const WIDGETS_BASE: WidgetDef[] = [
     titulo: "Baja de Cuenta",
     subtitulo: "Eliminación permanente conforme a Ley LOPDP",
     icono: ShieldAlert,
-    colorIcono: "#B00020",
+    colorIcono: "var(--ct-b00020, #B00020)",
     categoria: "Zona de Peligro",
     esPeligro: true
   }
@@ -415,7 +415,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
       <div style={{ width: "100%", animation: "fadeIn 0.2s ease" }}>
         <section
           style={{
-            background: "var(--blanco, #ffffff)",
+            background: "var(--cf-ffffff, var(--blanco, #ffffff))",
             border: "1px solid var(--panel-linea, var(--linea))",
             borderRadius: "16px",
             padding: "24px",
@@ -451,7 +451,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                  <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
+                  <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", margin: 0 }}>
                     {widgetInfoActual.titulo}
                   </h2>
                   {favoritos.includes(widgetActivo) && (
@@ -552,7 +552,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
                   <CheckCircle2 size={24} color="var(--esmeralda, #0E6648)" />
                   <div>
-                    <strong style={{ display: "block", color: "var(--negro, #111111)" }}>Sesión Activa Segura</strong>
+                    <strong style={{ display: "block", color: "var(--ct-111111, var(--negro, #111111))" }}>Sesión Activa Segura</strong>
                     <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))" }}>
                       Tu cuenta está conectada de forma cifrada mediante autenticación unificada.
                     </span>
@@ -672,7 +672,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                         });
                       }}
                       style={{
-                        background: "rgba(255,255,255,0.9)",
+                        background: "var(--cf-ffffff-a900, rgba(255,255,255,0.9))",
                         border: "1px solid var(--panel-linea, var(--linea))",
                         borderRadius: "6px",
                         cursor: "pointer",
@@ -718,7 +718,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                         style={{
                           fontSize: "0.58rem",
                           fontWeight: 800,
-                          color: "var(--violeta, #5000BA)",
+                          color: "var(--ct-5000ba, var(--violeta, #5000BA))",
                           background: "var(--violeta-suave, var(--acento-diluido))",
                           padding: "1px 6px",
                           borderRadius: "999px",
@@ -732,7 +732,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                     )}
                   </div>
 
-                  <strong style={{ display: "block", color: w.esPeligro ? "#B00020" : undefined, lineHeight: 1.25 }}>
+                  <strong style={{ display: "block", color: w.esPeligro ? "var(--ct-b00020, #B00020)" : undefined, lineHeight: 1.25 }}>
                     {infoCustom.titulo}
                   </strong>
                 </div>
@@ -746,7 +746,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                     justifyContent: "flex-end",
                     marginTop: "auto",
                     paddingTop: "10px",
-                    color: w.esPeligro ? "#B00020" : "var(--violeta, #5000BA)"
+                    color: w.esPeligro ? "var(--ct-b00020, #B00020)" : "var(--ct-5000ba, var(--violeta, #5000BA))"
                   }}
                 >
                   <ChevronRight size={16} />

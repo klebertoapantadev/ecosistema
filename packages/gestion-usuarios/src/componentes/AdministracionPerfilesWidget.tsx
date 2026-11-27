@@ -1182,14 +1182,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
   switch (clave) {
     case "financiamiento":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#5000BA", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, #5000BA)", marginBottom: "10px" }}>
             <Sparkles size={18} /> Financiamiento & Cuotas para tu Caso
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Estamos trabajando en ello. Próximamente estará disponible esta funcionalidad para financiar y diferir trámites legales en cuotas.
           </p>
-          <div style={{ padding: "12px", background: "#FFFBEB", borderRadius: "8px", border: "1px dashed #FDE68A", textAlign: "center", fontSize: "0.82rem", color: "#B45309", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-fffbeb, #FFFBEB)", borderRadius: "8px", border: "1px dashed var(--cb-fde68a, #FDE68A)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-b45309, #B45309)", fontWeight: 700 }}>
             Próximamente Disponible · Cuotas Flexibles · Simulador en Línea
           </div>
         </div>
@@ -1197,14 +1197,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "catalogo_productos":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#0284C7", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-0284c7, #0284C7)", marginBottom: "10px" }}>
             <Briefcase size={18} /> Catálogo Comercial & Honorarios
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Servicios jurídicos, tarifario de honorarios, suscripciones y cálculo automático de IVA 15%.
           </p>
-          <div style={{ padding: "12px", background: "#F0F9FF", borderRadius: "8px", border: "1px dashed #BAE6FD", textAlign: "center", fontSize: "0.82rem", color: "#0369A1", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f0f9ff, #F0F9FF)", borderRadius: "8px", border: "1px dashed var(--cb-bae6fd, #BAE6FD)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-0369a1, #0369A1)", fontWeight: 700 }}>
             Servicios Disponibles · Planes de Suscripción · Tarifario Oficial
           </div>
         </div>
@@ -1213,14 +1213,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
     case "disponibilidad_abogados":
     case "disponibilidad_operativa":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#5000BA", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, #5000BA)", marginBottom: "10px" }}>
             <Scale size={18} /> Disponibilidad de Abogados & Turnos
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Gestión de turnos y cupos. Postulación preliminar por abogados y aprobación por operadores con sincronización Tranqi.
           </p>
-          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f5f3ff, #F5F3FF)", borderRadius: "8px", border: "1px dashed var(--cb-ddd6fe, #DDD6FE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-5b21b6, #5B21B6)", fontWeight: 700 }}>
             Postulación Preliminar · Aprobación Operador · Sincronización Tranqi MCP
           </div>
         </div>
@@ -1228,14 +1228,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "gestion_red_abogados":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#05876E", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-05876e, #05876E)", marginBottom: "10px" }}>
             <Scale size={18} /> Red Profesional & Registro de Abogados
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Búsqueda de usuarios registrados para convertirlos en socios abogados, alta manual con datos mínimos, gestión de especialidades, cobertura y disponibilidad.
           </p>
-          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#047857", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-ecfdf5, #ECFDF5)", borderRadius: "8px", border: "1px dashed var(--cb-a7f3d0, #A7F3D0)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-047857, #047857)", fontWeight: 700 }}>
             Convertir Usuario · Alta Manual · Especialidades & Provincias · Disponibilidad Citas
           </div>
         </div>
@@ -1243,14 +1243,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "mi_perfil_abogado":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#05876E", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-05876e, #05876E)", marginBottom: "10px" }}>
             <Scale size={18} /> Mis Especialidades, Cobertura y Disponibilidad
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Autogestión del socio abogado: materias legales atendidas, provincias de cobertura y configuración de horarios presenciales y teleconsulta.
           </p>
-          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#047857", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-ecfdf5, #ECFDF5)", borderRadius: "8px", border: "1px dashed var(--cb-a7f3d0, #A7F3D0)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-047857, #047857)", fontWeight: 700 }}>
             Especialidades Legales · Provincias de Cobertura · Citas Presenciales / Teleconsulta
           </div>
         </div>
@@ -1258,14 +1258,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "configuracion_aria":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #059669", boxShadow: "0 4px 12px rgba(5,150,105,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#059669", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #059669", boxShadow: "0 4px 12px rgba(5,150,105,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-059669, #059669)", marginBottom: "10px" }}>
             <Bot size={18} /> Agente Conversacional ARIA
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Parámetros de conexión ARIA (ARIA_BASE, ARIA_AGENT_ID y API Key cifrada en Supabase Vault) aislados por negocio.
           </p>
-          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-ecfdf5, #ECFDF5)", borderRadius: "8px", border: "1px dashed var(--cb-a7f3d0, #A7F3D0)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-065f46, #065F46)", fontWeight: 700 }}>
             ARIA_BASE · ARIA_AGENT_ID · Vault (ARIA_AGENT_KEY) · Prueba en Vivo
           </div>
         </div>
@@ -1273,14 +1273,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "configuracion_marketing_meta":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #2563EB", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#1D4ED8", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #2563EB", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-1d4ed8, #1D4ED8)", marginBottom: "10px" }}>
             <Megaphone size={18} /> Marketing & Meta (Pixel / Catálogo)
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Meta Pixel, Conversions API (CAPI) en Vault, feed XML para Facebook/WhatsApp Business y atribución de campañas para ARIA.
           </p>
-          <div style={{ padding: "12px", background: "#EFF6FF", borderRadius: "8px", border: "1px dashed #BFDBFE", textAlign: "center", fontSize: "0.82rem", color: "#1E40AF", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-eff6ff, #EFF6FF)", borderRadius: "8px", border: "1px dashed var(--cb-bfdbfe, #BFDBFE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-1e40af, #1E40AF)", fontWeight: 700 }}>
             Pixel ID · Vault CAPI · Feed Catálogo XML · Intención ARIA
           </div>
         </div>
@@ -1288,14 +1288,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "configuracion_logistica":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #16A34A", boxShadow: "0 4px 12px rgba(22,163,74,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#15803D", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #16A34A", boxShadow: "0 4px 12px rgba(22,163,74,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-15803d, #15803D)", marginBottom: "10px" }}>
             <MapPin size={18} /> Envíos, Zonas y Cobertura GPS
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Configuración de polígonos de cobertura en Pichincha, zona de envío gratis por defecto, recargo por km vial y simulador de mapas.
           </p>
-          <div style={{ padding: "12px", background: "#F0FDF4", borderRadius: "8px", border: "1px dashed #86EFAC", textAlign: "center", fontSize: "0.82rem", color: "#166534", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f0fdf4, #F0FDF4)", borderRadius: "8px", border: "1px dashed #86EFAC", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-166534, #166534)", fontWeight: 700 }}>
             Zona Gratis · Polígonos Pichincha · Cálculo por Km OSRM · MCP WhatsApp
           </div>
         </div>
@@ -1303,14 +1303,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "consola_chat":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #DB2777", boxShadow: "0 4px 12px rgba(219,39,119,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#BE185D", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #DB2777", boxShadow: "0 4px 12px rgba(219,39,119,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-be185d, #BE185D)", marginBottom: "10px" }}>
             <MessageSquare size={18} /> Ventas Omnicanal & Conversaciones (HITL)
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Bandeja en vivo estilo ManyChat: monitoreo multi-vendedor, intervención humana vs IA ARIA, etiquetas de clientes, atajos (/comando), compras web y conectores YCloud / Meta / TikTok.
           </p>
-          <div style={{ padding: "12px", background: "#FDF2F8", borderRadius: "8px", border: "1px dashed #F9A8D4", textAlign: "center", fontSize: "0.82rem", color: "#9D174D", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-fdf2f8, #FDF2F8)", borderRadius: "8px", border: "1px dashed var(--cb-f9a8d4, #F9A8D4)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-9d174d, #9D174D)", fontWeight: 700 }}>
             Inbox en Vivo · IA ARIA vs Humano · Etiquetas · /Atajos · Compras & Usuarios 360°
           </div>
         </div>
@@ -1318,14 +1318,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "directorio_contactos":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #7C3AED", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#6D28D9", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #7C3AED", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-6d28d9, #6D28D9)", marginBottom: "10px" }}>
             <Users size={18} /> Contactos y Listas WhatsApp (Join/Merge)
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Extracción .vcf / .csv / .xlsx / libreta celular, consolidación Join/Merge, lista personal a ignorar (Ignorar Total) y gestión de múltiples teléfonos WhatsApp.
           </p>
-          <div style={{ padding: "12px", background: "#FAF5FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#6B21A8", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-faf5ff, #FAF5FF)", borderRadius: "8px", border: "1px dashed var(--cb-ddd6fe, #DDD6FE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-6b21a8, #6B21A8)", fontWeight: 700 }}>
             Extracción Multi-Fuente · Join/Merge E.164 · Ignorar Total · Multi-Línea WA
           </div>
         </div>
@@ -1338,11 +1338,11 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
     case "taller_floral":
     case "confirmacion_entregas":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #059669", boxShadow: "0 4px 12px rgba(5,150,105,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#047857", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #059669", boxShadow: "0 4px 12px rgba(5,150,105,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-047857, #047857)", marginBottom: "10px" }}>
             <ClipboardList size={18} /> Operaciones de Taller & Entregas GPS ({clave})
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "0" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "0" }}>
             Inventario fotográfico de rosas con ARIA, galería de entrega inmediata (1–2h) y confirmación de entregas offline con informes quincenales PDF.
           </p>
         </div>
@@ -1350,14 +1350,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "pedidos_tienda":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#0369A1", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-0369a1, #0369A1)", marginBottom: "10px" }}>
             <ClipboardList size={18} /> Pedidos de Tienda y Despachos
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Bandeja de órdenes e-commerce con enlace GPS directo, dedicatorias y desglose interno de cálculo logístico.
           </p>
-          <div style={{ padding: "12px", background: "#F0F9FF", borderRadius: "8px", border: "1px dashed #7DD3FC", textAlign: "center", fontSize: "0.82rem", color: "#0369A1", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f0f9ff, #F0F9FF)", borderRadius: "8px", border: "1px dashed var(--cb-7dd3fc, #7DD3FC)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-0369a1, #0369A1)", fontWeight: 700 }}>
             Órdenes · Ruta GPS · Fórmula Logística Interna · Estados de Despacho
           </div>
         </div>
@@ -1365,14 +1365,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "tokens_mcp":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#5000BA", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, #5000BA)", marginBottom: "10px" }}>
             <KeyRound size={18} /> Tokens & APIs MCP
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Gestión y emisión de tokens de acceso (API Keys) para integrar herramientas MCP con agentes externos y bots.
           </p>
-          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f5f3ff, #F5F3FF)", borderRadius: "8px", border: "1px dashed var(--cb-ddd6fe, #DDD6FE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-5b21b6, #5B21B6)", fontWeight: 700 }}>
             Tokens de Negocio · Validación SHA-256 · Endpoint POST /api/mcp/catalogo
           </div>
         </div>
@@ -1381,14 +1381,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
     case "pasarela_payphone":
     case "configuracion_pasarela":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#D97706", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-d97706, #D97706)", marginBottom: "10px" }}>
             <KeyRound size={18} /> Pasarela Payphone (Botón de Pago)
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Configuración de credenciales de cobro Payphone, Token Bearer y simulador de cobro con tarjeta de crédito/débito.
           </p>
-          <div style={{ padding: "12px", background: "#FFFBEB", borderRadius: "8px", border: "1px dashed #FDE68A", textAlign: "center", fontSize: "0.82rem", color: "#92400E", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-fffbeb, #FFFBEB)", borderRadius: "8px", border: "1px dashed var(--cb-fde68a, #FDE68A)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-92400e, #92400E)", fontWeight: 700 }}>
             Credenciales API · Modo Producción / Sandbox · Simulador en Vivo
           </div>
         </div>
@@ -1396,14 +1396,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "configuracion_facturacion_sri":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #059669", boxShadow: "0 4px 12px rgba(5,150,105,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#059669", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #059669", boxShadow: "0 4px 12px rgba(5,150,105,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-059669, #059669)", marginBottom: "10px" }}>
             <FileText size={18} /> Parámetros de Facturación Electrónica SRI
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             RUC, razón social, régimen RIMPE/General, serie 001-001, secuenciales y certificado .p12 custodiado en Supabase Vault.
           </p>
-          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-ecfdf5, #ECFDF5)", borderRadius: "8px", border: "1px dashed var(--cb-a7f3d0, #A7F3D0)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-065f46, #065F46)", fontWeight: 700 }}>
             Emisor SRI · Firma Electrónica .p12 (Vault) · Ambiente Pruebas / Producción
           </div>
         </div>
@@ -1411,14 +1411,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "testimonios_clientes":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#D97706", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-d97706, #D97706)", marginBottom: "10px" }}>
             <MessageSquareHeart size={18} /> Testimonios y Reseñas de Clientes
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Gestión de capturas de WhatsApp, fotos de entregas reales y sincronización con el carrusel público y álbum de Google Photos.
           </p>
-          <div style={{ padding: "12px", background: "#FFFBEB", borderRadius: "8px", border: "1px dashed #FDE68A", textAlign: "center", fontSize: "0.82rem", color: "#92400E", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-fffbeb, #FFFBEB)", borderRadius: "8px", border: "1px dashed var(--cb-fde68a, #FDE68A)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-92400e, #92400E)", fontWeight: 700 }}>
             Capturas de Pantalla · Calificaciones 5★ · Lightbox · Google Photos
           </div>
         </div>
@@ -1426,14 +1426,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "historial_pagos":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#05876E", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E", boxShadow: "0 4px 12px rgba(5,135,110,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-05876e, #05876E)", marginBottom: "10px" }}>
             <FileText size={18} /> Historial de Transacciones & Pagos
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Registro inmutable de cobros autorizados por Payphone, estados de conciliación bancaria y auditoría contable.
           </p>
-          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-ecfdf5, #ECFDF5)", borderRadius: "8px", border: "1px dashed var(--cb-a7f3d0, #A7F3D0)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-065f46, #065F46)", fontWeight: 700 }}>
             Transacciones Aprobadas · Comprobantes Digitales · Conciliación Bancaria
           </div>
         </div>
@@ -1441,14 +1441,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "crm_clientes":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, var(--violeta, #5000BA))", marginBottom: "10px" }}>
             <Users size={18} /> CRM Jurídico & Gestión de Clientes
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Directorio 360° de clientes, verificación de conflictos en vivo (conflict check) y seguimiento de expedientes.
           </p>
-          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#4C1D95", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f5f3ff, #F5F3FF)", borderRadius: "8px", border: "1px dashed var(--cb-ddd6fe, #DDD6FE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-4c1d95, #4C1D95)", fontWeight: 700 }}>
             Bandeja 360° · Detección de Conflictos · Historial de Causas
           </div>
         </div>
@@ -1456,14 +1456,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "monitoreo_notificaciones_usuarios":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #1F6FEB", boxShadow: "0 4px 12px rgba(31,111,235,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#1F6FEB", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #1F6FEB", boxShadow: "0 4px 12px rgba(31,111,235,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-1f6feb, #1F6FEB)", marginBottom: "10px" }}>
             <Bell size={18} /> Monitoreo de Notificaciones por Usuario
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Auditoría en tiempo real de apertura, lectura, confirmación, posposición y descarte de notificaciones.
           </p>
-          <div style={{ padding: "12px", background: "#EFF6FF", borderRadius: "8px", border: "1px dashed #BFDBFE", textAlign: "center", fontSize: "0.82rem", color: "#1E40AF", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-eff6ff, #EFF6FF)", borderRadius: "8px", border: "1px dashed var(--cb-bfdbfe, #BFDBFE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-1e40af, #1E40AF)", fontWeight: 700 }}>
             Telemetría In-App · Estados de Lectura · Tiempos de Respuesta
           </div>
         </div>
@@ -1471,14 +1471,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "agentes_ia":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, var(--violeta, #5000BA))", marginBottom: "10px" }}>
             <Sparkles size={18} /> Agentes de Inteligencia Artificial (Tranqi)
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Gestión de prompts maestros, temperatura, herramientas conectadas y memoria contextual de Tranqi para {negocio.toUpperCase()}.
           </p>
-          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#4C1D95", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f5f3ff, #F5F3FF)", borderRadius: "8px", border: "1px dashed var(--cb-ddd6fe, #DDD6FE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-4c1d95, #4C1D95)", fontWeight: 700 }}>
             Agente Tranqi · Integración WhatsApp YCloud · Memoria Conversacional
           </div>
         </div>
@@ -1486,14 +1486,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "billetera_documentos":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, var(--violeta, #5000BA))", marginBottom: "10px" }}>
             <Folder size={18} /> Billetera Digital de Documentos Seguros (OCR / TTL)
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Bóveda cifrada para almacenamiento y gestión inteligente de cédulas, matrículas, licencias, contratos y certificados con extracción OCR y enlaces efímeros protegidos.
           </p>
-          <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f8fafc, #F8FAFC)", borderRadius: "8px", border: "1px dashed var(--cb-cbd5e1, #CBD5E1)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-334155, #334155)", fontWeight: 700 }}>
             Categorías Inteligentes · Extracción OCR · Enlaces TTL Efímeros
           </div>
         </div>
@@ -1501,14 +1501,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "firma_documentos_pdf":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, var(--violeta, #5000BA))", marginBottom: "10px" }}>
             <FileText size={18} /> Firma Electrónica de Documentos PDF (.p12 / QR)
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Herramienta criptográfica PAdES con procesamiento Zero-Custody en memoria local para firmado de contratos, actas e informes en PDF.
           </p>
-          <div style={{ padding: "12px", background: "#F8FAFC", borderRadius: "8px", border: "1px dashed #CBD5E1", textAlign: "center", fontSize: "0.82rem", color: "#334155", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f8fafc, #F8FAFC)", borderRadius: "8px", border: "1px dashed var(--cb-cbd5e1, #CBD5E1)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-334155, #334155)", fontWeight: 700 }}>
             Subir Archivo PDF · Cargar Firma .p12 · Ubicar QR · Descargar PDF Firmado
           </div>
         </div>
@@ -1516,14 +1516,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "ver_como":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, var(--violeta, #5000BA))", marginBottom: "10px" }}>
             <Users size={18} /> Selector "Ver Como" (Conmutador de Rol Activo)
           </div>
           <p style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginBottom: "12px" }}>
             Selecciona el rol con el que deseas navegar la plataforma para simular permisos y vistas:
           </p>
-          <SelectConBuscador style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "2px solid var(--violeta, #5000BA)", fontSize: "0.88rem", fontWeight: 800, background: "#F5F3FF", color: "#4C1D95", cursor: "pointer" }}>
+          <SelectConBuscador style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "2px solid var(--violeta, #5000BA)", fontSize: "0.88rem", fontWeight: 800, background: "var(--cf-f5f3ff, #F5F3FF)", color: "var(--ct-4c1d95, #4C1D95)", cursor: "pointer" }}>
             <option>Cliente (Jerarquía Base) - Nivel 1</option>
             <option>Operador / Auxiliar - Nivel 30</option>
             <option>Socio Abogado / Profesional - Nivel 50</option>
@@ -1535,19 +1535,19 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "notificaciones":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
-          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#0369A1", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-0369a1, #0369A1)", marginBottom: "10px" }}>
             Preferencias de Alertas & Notificaciones Multicanal
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.84rem" }}>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, cursor: "pointer" }}>
-              <input type="checkbox" defaultChecked style={{ accentColor: "#0284C7" }} /> Correo Electrónico Saliente (Email Transaccional)
+              <input type="checkbox" defaultChecked style={{ accentColor: "var(--ct-0284c7, #0284C7)" }} /> Correo Electrónico Saliente (Email Transaccional)
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, cursor: "pointer" }}>
-              <input type="checkbox" defaultChecked style={{ accentColor: "#0284C7" }} /> WhatsApp Directo al Celular (+593)
+              <input type="checkbox" defaultChecked style={{ accentColor: "var(--ct-0284c7, #0284C7)" }} /> WhatsApp Directo al Celular (+593)
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, cursor: "pointer" }}>
-              <input type="checkbox" defaultChecked style={{ accentColor: "#0284C7" }} /> Notificaciones Push In-App
+              <input type="checkbox" defaultChecked style={{ accentColor: "var(--ct-0284c7, #0284C7)" }} /> Notificaciones Push In-App
             </label>
           </div>
         </div>
@@ -1555,18 +1555,18 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "configuracion_negocio":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706" }}>
-          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#92400E", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-92400e, #92400E)", marginBottom: "10px" }}>
             Datos del Negocio ({negocio.toUpperCase()})
           </div>
           <div style={{ display: "grid", gap: "10px" }}>
             <div>
-              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#737373", display: "block" }}>Razón Social / Nombre Comercial:</label>
-              <input type="text" defaultValue="TRANQUI LEGAL ECUADOR S.A.S." style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem", fontWeight: 700 }} />
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-737373, #737373)", display: "block" }}>Razón Social / Nombre Comercial:</label>
+              <input type="text" defaultValue="TRANQUI LEGAL ECUADOR S.A.S." style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", fontSize: "0.84rem", fontWeight: 700 }} />
             </div>
             <div>
-              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#737373", display: "block" }}>WhatsApp de Soporte:</label>
-              <input type="text" defaultValue="+593 99 999 9999" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem" }} />
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-737373, #737373)", display: "block" }}>WhatsApp de Soporte:</label>
+              <input type="text" defaultValue="+593 99 999 9999" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", fontSize: "0.84rem" }} />
             </div>
           </div>
         </div>
@@ -1574,18 +1574,18 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "configuracion_correo":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #374151" }}>
-          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#111827", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--cb-374151, #374151)" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-111827, #111827)", marginBottom: "10px" }}>
             Servidor SMTP de Correo Transaccional (Credenciales Vault)
           </div>
           <div style={{ display: "grid", gap: "10px" }}>
             <div>
-              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#737373", display: "block" }}>Servidor Host SMTP:</label>
-              <input type="text" defaultValue="smtp.resend.com:587" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem", fontWeight: 700 }} />
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-737373, #737373)", display: "block" }}>Servidor Host SMTP:</label>
+              <input type="text" defaultValue="smtp.resend.com:587" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", fontSize: "0.84rem", fontWeight: 700 }} />
             </div>
             <div>
-              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#737373", display: "block" }}>Remitente Oficial:</label>
-              <input type="text" defaultValue="notificaciones@tranqi24.com" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", fontSize: "0.84rem" }} />
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-737373, #737373)", display: "block" }}>Remitente Oficial:</label>
+              <input type="text" defaultValue="notificaciones@tranqi24.com" style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", fontSize: "0.84rem" }} />
             </div>
           </div>
         </div>
@@ -1593,14 +1593,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "gestion_usuarios":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E" }}>
-          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#065F46", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #05876E" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-065f46, #065F46)", marginBottom: "10px" }}>
             Administración de Usuarios & Membresías
           </div>
           <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", minWidth: "320px", fontSize: "0.78rem", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ background: "#ECFDF5", borderBottom: "1px solid #A7F3D0" }}>
+              <tr style={{ background: "var(--cf-ecfdf5, #ECFDF5)", borderBottom: "1px solid var(--cb-a7f3d0, #A7F3D0)" }}>
                 <th style={{ textAlign: "left", padding: "6px 10px" }}>Usuario</th>
                 <th style={{ textAlign: "left", padding: "6px 10px" }}>Perfil Activo</th>
                 <th style={{ textAlign: "center", padding: "6px 10px" }}>Estado</th>
@@ -1610,7 +1610,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
               <tr>
                 <td style={{ padding: "6px 10px", fontWeight: 700 }}>Kleber Toapanta</td>
                 <td style={{ padding: "6px 10px" }}>SuperAdmin (Nivel 100)</td>
-                <td style={{ padding: "6px 10px", textAlign: "center", color: "#05876e", fontWeight: 800 }}>Activo</td>
+                <td style={{ padding: "6px 10px", textAlign: "center", color: "var(--ct-05876e, #05876e)", fontWeight: 800 }}>Activo</td>
               </tr>
             </tbody>
           </table>
@@ -1620,14 +1620,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "gestion_informativos":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#B45309", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-b45309, #B45309)", marginBottom: "10px" }}>
             <Bell size={18} /> Gestión de Informativos, Alertas & Beneficios
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Consola administrativa para crear avisos institucionales (ANT, SRI, Municipios), novedades tributarias y convenios de capacitación para abogados o clientes.
           </p>
-          <div style={{ padding: "12px", background: "#FEF3C7", borderRadius: "8px", border: "1px dashed #FDE68A", textAlign: "center", fontSize: "0.82rem", color: "#92400E", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-fef3c7, #FEF3C7)", borderRadius: "8px", border: "1px dashed var(--cb-fde68a, #FDE68A)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-92400e, #92400E)", fontWeight: 700 }}>
             Segmentación por Audiencia · Control de Fechas & Vigencia · Ticker de Alertas
           </div>
         </div>
@@ -1635,14 +1635,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "paquete_beneficios_abogados":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#5000BA", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, #5000BA)", marginBottom: "10px" }}>
             <Sparkles size={18} /> Paquete de Beneficios & Convenios para Abogados
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Muro exclusivo con descuentos en posgrados, maestrías, herramientas jurídicas, firma digital y convenios gremiales para socios.
           </p>
-          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f5f3ff, #F5F3FF)", borderRadius: "8px", border: "1px dashed var(--cb-ddd6fe, #DDD6FE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-5b21b6, #5B21B6)", fontWeight: 700 }}>
             Capacitación Continua · Descuentos Académicos · Enlaces a Beneficios
           </div>
         </div>
@@ -1650,14 +1650,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "horarios_atencion_agenda":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#5000BA", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #5000BA", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, #5000BA)", marginBottom: "10px" }}>
             <Sliders size={18} /> Horarios de Atención (Telemático y Presencial)
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Configuración de franjas por defecto para consultas telemáticas y presenciales, especialidad por defecto para Tranqi y agendamiento sin abogado disponible.
           </p>
-          <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f5f3ff, #F5F3FF)", borderRadius: "8px", border: "1px dashed var(--cb-ddd6fe, #DDD6FE)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-5b21b6, #5B21B6)", fontWeight: 700 }}>
             Horario Telemático · Horario Presencial · Especialidad por Defecto Tranqi
           </div>
         </div>
@@ -1665,14 +1665,14 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     case "muro_informativo_comunidad":
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#0284C7", marginBottom: "10px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-0284c7, #0284C7)", marginBottom: "10px" }}>
             <Bell size={18} /> Avisos & Alertas de la Comunidad
           </div>
-          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", marginBottom: "12px" }}>
             Cartelera informativa con alertas ciudadanas, suspensiones de trámites públicos y beneficios tributarios vigentes.
           </p>
-          <div style={{ padding: "12px", background: "#F0F9FF", borderRadius: "8px", border: "1px dashed #BAE6FD", textAlign: "center", fontSize: "0.82rem", color: "#0369A1", fontWeight: 700 }}>
+          <div style={{ padding: "12px", background: "var(--cf-f0f9ff, #F0F9FF)", borderRadius: "8px", border: "1px dashed var(--cb-bae6fd, #BAE6FD)", textAlign: "center", fontSize: "0.82rem", color: "var(--ct-0369a1, #0369A1)", fontWeight: 700 }}>
             Alertas ANT · Descuentos Patentes · Calendario de Trámites
           </div>
         </div>
@@ -1680,8 +1680,8 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
 
     default:
       return (
-        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)" }}>
-          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "8px" }}>
+        <div style={{ background: "var(--cf-ffffff, #ffffff)", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)" }}>
+          <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--ct-5000ba, var(--violeta, #5000BA))", marginBottom: "8px" }}>
             Componente Real: {clave.toUpperCase()}
           </div>
           <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", margin: 0 }}>
@@ -3259,7 +3259,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   });
 
   return (
-    <div style={{ width: "100%", color: "var(--negro, #111111)" }}>
+    <div style={{ width: "100%", color: "var(--ct-111111, var(--negro, #111111))" }}>
       {/* Notificación de Éxito Flotante */}
       {mensajeExito && (
         <div
@@ -3298,15 +3298,15 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           </h3>
         </div>
         <div style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
-          <span style={{ padding: "3px 10px", borderRadius: "6px", background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700, color: "#111" }}>
+          <span style={{ padding: "3px 10px", borderRadius: "6px", background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700, color: "var(--ct-111111, #111)" }}>
             1. Perfil / Rol
           </span>
           <ArrowRight size={14} />
-          <span style={{ padding: "3px 10px", borderRadius: "6px", background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700, color: "var(--violeta, #5000BA)" }}>
+          <span style={{ padding: "3px 10px", borderRadius: "6px", background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700, color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
             2. Paneles Asignados al Sidebar
           </span>
           <ArrowRight size={14} />
-          <span style={{ padding: "3px 10px", borderRadius: "6px", background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700, color: "#05876e" }}>
+          <span style={{ padding: "3px 10px", borderRadius: "6px", background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--panel-linea, #E4E4E4)", fontWeight: 700, color: "var(--ct-05876e, #05876e)" }}>
             3. Widgets Contenidos por Panel
           </span>
         </div>
@@ -3330,7 +3330,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             border: "none",
             borderBottom: tabActiva === "matriz_widgets" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
             background: "transparent",
-            color: tabActiva === "matriz_widgets" ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+            color: tabActiva === "matriz_widgets" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--panel-gris, #737373)",
             fontWeight: tabActiva === "matriz_widgets" ? 800 : 600,
             fontSize: "0.88rem",
             cursor: "pointer",
@@ -3350,7 +3350,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             border: "none",
             borderBottom: tabActiva === "matriz_paneles" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
             background: "transparent",
-            color: tabActiva === "matriz_paneles" ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+            color: tabActiva === "matriz_paneles" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--panel-gris, #737373)",
             fontWeight: tabActiva === "matriz_paneles" ? 800 : 600,
             fontSize: "0.88rem",
             cursor: "pointer",
@@ -3370,7 +3370,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             border: "none",
             borderBottom: tabActiva === "inventario_widgets" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
             background: "transparent",
-            color: tabActiva === "inventario_widgets" ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+            color: tabActiva === "inventario_widgets" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--panel-gris, #737373)",
             fontWeight: tabActiva === "inventario_widgets" ? 800 : 600,
             fontSize: "0.88rem",
             cursor: "pointer",
@@ -3390,7 +3390,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             border: "none",
             borderBottom: tabActiva === "perfiles" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
             background: "transparent",
-            color: tabActiva === "perfiles" ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+            color: tabActiva === "perfiles" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--panel-gris, #737373)",
             fontWeight: tabActiva === "perfiles" ? 800 : 600,
             fontSize: "0.88rem",
             cursor: "pointer",
@@ -3413,7 +3413,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             border: "none",
             borderBottom: tabActiva === "reporte_gobernanza" ? "3px solid var(--violeta, #5000BA)" : "3px solid transparent",
             background: "transparent",
-            color: tabActiva === "reporte_gobernanza" ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+            color: tabActiva === "reporte_gobernanza" ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--panel-gris, #737373)",
             fontWeight: tabActiva === "reporte_gobernanza" ? 800 : 600,
             fontSize: "0.88rem",
             cursor: "pointer",
@@ -3463,7 +3463,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   border: `2px solid ${temaPerfilActivo.colorBorde}`,
                   fontWeight: 800,
                   fontSize: "0.92rem",
-                  background: "#ffffff",
+                  background: "var(--cf-ffffff, #ffffff)",
                   color: temaPerfilActivo.colorTexto,
                   cursor: "pointer",
                   boxShadow: "0 2px 5px rgba(0,0,0,0.05)"
@@ -3494,7 +3494,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   style={{
                     fontSize: "0.74rem",
                     fontWeight: 800,
-                    background: "#ffffff",
+                    background: "var(--cf-ffffff, #ffffff)",
                     color: temaPerfilActivo.colorTexto,
                     border: `1.5px solid ${temaPerfilActivo.colorBorde}`,
                     borderRadius: "6px",
@@ -3531,9 +3531,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 onClick={sincronizarCatalogoMaestro}
                 title="Sincroniza todos los widgets y perfiles registrados en el código con el inventario del navegador"
                 style={{
-                  background: "#F5F3FF",
-                  color: "var(--violeta, #5000BA)",
-                  border: "1px solid #DDD6FE",
+                  background: "var(--cf-f5f3ff, #F5F3FF)",
+                  color: "var(--ct-5000ba, var(--violeta, #5000BA))",
+                  border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
                   borderRadius: "8px",
                   padding: "9px 14px",
                   fontSize: "0.82rem",
@@ -3599,7 +3599,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           {/* BARRA DE HERRAMIENTAS DE VISUALIZACIÓN: BUSCADOR EN VIVO, SELECTOR DE VISTA (TARJETAS / LISTA / BOTONES) Y COLAPSAR/EXPANDIR */}
           <div
             style={{
-              background: "#ffffff",
+              background: "var(--cf-ffffff, #ffffff)",
               border: "1px solid var(--panel-linea, #E4E4E4)",
               borderRadius: "12px",
               padding: "10px 14px",
@@ -3628,14 +3628,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     border: "1.5px solid var(--panel-linea, #E4E4E4)",
                     fontSize: "0.8rem",
                     outline: "none",
-                    background: "#FAFAFA"
+                    background: "var(--cf-fafafa, #FAFAFA)"
                   }}
                 />
                 {filtroBusquedaWidgets && (
                   <button
                     type="button"
                     onClick={() => setFiltroBusquedaWidgets("")}
-                    style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#737373" }}
+                    style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--ct-737373, #737373)" }}
                   >
                     <X size={14} />
                   </button>
@@ -3652,8 +3652,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={() => cambiarModoVista("rejilla")}
                   title="Vista Tarjetas (Rejilla)"
                   style={{
-                    background: modoVistaWidgets === "rejilla" ? "#ffffff" : "transparent",
-                    color: modoVistaWidgets === "rejilla" ? "var(--negro, #111111)" : "var(--panel-gris, #737373)",
+                    background: modoVistaWidgets === "rejilla" ? "var(--cf-ffffff, #ffffff)" : "transparent",
+                    color: modoVistaWidgets === "rejilla" ? "var(--ct-111111, var(--negro, #111111))" : "var(--panel-gris, #737373)",
                     border: "none",
                     borderRadius: "6px",
                     padding: "5px 10px",
@@ -3674,8 +3674,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={() => cambiarModoVista("lista")}
                   title="Vista Lista Detallada (Rutas físicas completas y máxima legibilidad)"
                   style={{
-                    background: modoVistaWidgets === "lista" ? "#ffffff" : "transparent",
-                    color: modoVistaWidgets === "lista" ? "var(--negro, #111111)" : "var(--panel-gris, #737373)",
+                    background: modoVistaWidgets === "lista" ? "var(--cf-ffffff, #ffffff)" : "transparent",
+                    color: modoVistaWidgets === "lista" ? "var(--ct-111111, var(--negro, #111111))" : "var(--panel-gris, #737373)",
                     border: "none",
                     borderRadius: "6px",
                     padding: "5px 10px",
@@ -3696,8 +3696,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={() => cambiarModoVista("botones")}
                   title="Vista Botones / Compacta (Botones de acceso ágil)"
                   style={{
-                    background: modoVistaWidgets === "botones" ? "#ffffff" : "transparent",
-                    color: modoVistaWidgets === "botones" ? "var(--negro, #111111)" : "var(--panel-gris, #737373)",
+                    background: modoVistaWidgets === "botones" ? "var(--cf-ffffff, #ffffff)" : "transparent",
+                    color: modoVistaWidgets === "botones" ? "var(--ct-111111, var(--negro, #111111))" : "var(--panel-gris, #737373)",
                     border: "none",
                     borderRadius: "6px",
                     padding: "5px 10px",
@@ -3721,7 +3721,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={colapsarTodosPaneles}
                   title="Colapsar todos los paneles para ver resumen compacto"
                   style={{
-                    background: "#ffffff",
+                    background: "var(--cf-ffffff, #ffffff)",
                     border: "1px solid var(--panel-linea, #E4E4E4)",
                     color: "var(--panel-gris, #737373)",
                     borderRadius: "6px",
@@ -3742,7 +3742,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={expandirTodosPaneles}
                   title="Expandir todos los paneles"
                   style={{
-                    background: "#ffffff",
+                    background: "var(--cf-ffffff, #ffffff)",
                     border: "1px solid var(--panel-linea, #E4E4E4)",
                     color: "var(--panel-gris, #737373)",
                     borderRadius: "6px",
@@ -3766,9 +3766,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={() => descargarExcelWidgets(true)}
                   title={`Descargar archivo Excel (CSV) con los widgets configurados para ${perfilActualObj?.nombre}`}
                   style={{
-                    background: "#ECFDF5",
-                    border: "1px solid #A7F3D0",
-                    color: "#047857",
+                    background: "var(--cf-ecfdf5, #ECFDF5)",
+                    border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
+                    color: "var(--ct-047857, #047857)",
                     borderRadius: "6px",
                     padding: "5px 9px",
                     fontSize: "0.74rem",
@@ -3788,9 +3788,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={() => descargarExcelWidgets(false)}
                   title="Descargar archivo Excel (CSV) con la matriz completa de todos los perfiles"
                   style={{
-                    background: "#ECFDF5",
-                    border: "1px solid #A7F3D0",
-                    color: "#047857",
+                    background: "var(--cf-ecfdf5, #ECFDF5)",
+                    border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
+                    color: "var(--ct-047857, #047857)",
                     borderRadius: "6px",
                     padding: "5px 9px",
                     fontSize: "0.74rem",
@@ -3810,9 +3810,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={() => copiarTextoWidgets(true)}
                   title={`Copiar al portapapeles en formato tabla los widgets configurados para ${perfilActualObj?.nombre}`}
                   style={{
-                    background: "#EFF6FF",
-                    border: "1px solid #BFDBFE",
-                    color: "#1D4ED8",
+                    background: "var(--cf-eff6ff, #EFF6FF)",
+                    border: "1px solid var(--cb-bfdbfe, #BFDBFE)",
+                    color: "var(--ct-1d4ed8, #1D4ED8)",
                     borderRadius: "6px",
                     padding: "5px 9px",
                     fontSize: "0.74rem",
@@ -3900,7 +3900,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       : `1.5px solid ${temaPerfilActivo.colorBorde}44`,
                     borderRadius: "14px",
                     padding: estaColapsado ? "12px 16px" : "16px",
-                    background: esDestinoDropOver ? "#F5F3FF" : "#ffffff",
+                    background: esDestinoDropOver ? "var(--cf-f5f3ff, #F5F3FF)" : "var(--cf-ffffff, #ffffff)",
                     transition: "all 0.2s ease",
                     position: "relative",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
@@ -3932,7 +3932,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           alignItems: "center",
                           justifyContent: "center",
                           cursor: "pointer",
-                          color: "var(--negro, #111111)"
+                          color: "var(--ct-111111, var(--negro, #111111))"
                         }}
                       >
                         {estaColapsado ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
@@ -3958,13 +3958,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <strong
                             onClick={() => toggleColapsarPanel(panel.id)}
-                            style={{ fontSize: "0.95rem", color: "#111111", cursor: "pointer" }}
+                            style={{ fontSize: "0.95rem", color: "var(--ct-111111, #111111)", cursor: "pointer" }}
                           >
                             {panel.nombre}
                           </strong>
                           <span style={{
                             background: widgetsOrdenados.length > 0 ? "rgba(80,0,186,0.08)" : "var(--panel-linea-suave, #FAFAF9)",
-                            color: widgetsOrdenados.length > 0 ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
+                            color: widgetsOrdenados.length > 0 ? "var(--ct-5000ba, var(--violeta, #5000BA))" : "var(--panel-gris, #737373)",
                             fontSize: "0.72rem",
                             fontWeight: 800,
                             padding: "2px 8px",
@@ -3984,9 +3984,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           setPanelEditarModal(panel);
                         }}
                         style={{
-                          background: "#ffffff",
+                          background: "var(--cf-ffffff, #ffffff)",
                           border: "1px solid var(--violeta, #5000BA)",
-                          color: "var(--violeta, #5000BA)",
+                          color: "var(--ct-5000ba, var(--violeta, #5000BA))",
                           borderRadius: "6px",
                           padding: "3px 8px",
                           fontSize: "0.72rem",
@@ -4030,7 +4030,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         title={panel.requiereMfa ? "MFA (TOTP) Requerido. Haz clic para cambiar a opcional" : "MFA (TOTP) Opcional. Haz clic para requerir MFA"}
                         style={{
                           background: panel.requiereMfa ? "rgba(220, 38, 38, 0.12)" : "var(--panel-linea-suave, #FAFAF9)",
-                          color: panel.requiereMfa ? "#DC2626" : "var(--panel-gris, #737373)",
+                          color: panel.requiereMfa ? "var(--ct-dc2626, #DC2626)" : "var(--panel-gris, #737373)",
                           border: panel.requiereMfa ? "1.5px solid rgba(239, 68, 68, 0.4)" : "1px solid var(--panel-linea, #E4E4E4)",
                           borderRadius: "999px",
                           padding: "4px 10px",
@@ -4098,7 +4098,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                       setPanelOverId(null);
                                     }}
                                     style={{
-                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
+                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "var(--cf-ffffff, #ffffff)",
                                       padding: "10px 14px",
                                       borderRadius: "10px",
                                       border: esArrastrando
@@ -4145,7 +4145,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                                   {nombreVisual}
                                                 </strong>
                                                 {esNombreCustom && (
-                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "1px 6px", borderRadius: "4px", border: "1px solid #FDE68A" }}>
+                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "var(--cf-fef3c7, #FEF3C7)", color: "var(--ct-92400e, #92400E)", padding: "1px 6px", borderRadius: "4px", border: "1px solid var(--cb-fde68a, #FDE68A)" }}>
                                                     ✏️ Personalizado
                                                   </span>
                                                 )}
@@ -4153,12 +4153,12 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                                   {w.clave}
                                                 </code>
                                                 {w.categoria && (
-                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#EEF2FF", color: "#4F46E5", padding: "1px 6px", borderRadius: "4px" }}>
+                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "var(--cf-eef2ff, #EEF2FF)", color: "var(--ct-4f46e5, #4F46E5)", padding: "1px 6px", borderRadius: "4px" }}>
                                                     {w.categoria}
                                                   </span>
                                                 )}
                                                 {w.creadoEn && (
-                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "1px 7px", borderRadius: "4px", border: "1px solid #FDE68A", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, background: "var(--cf-fef3c7, #FEF3C7)", color: "var(--ct-92400e, #92400E)", padding: "1px 7px", borderRadius: "4px", border: "1px solid var(--cb-fde68a, #FDE68A)", display: "inline-flex", alignItems: "center", gap: "3px" }}>
                                                     📅 {w.creadoEn}
                                                   </span>
                                                 )}
@@ -4166,7 +4166,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                                               <div style={{ marginTop: "4px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                                                 <span style={{ fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>Ruta Física:</span>
-                                                <code style={{ fontSize: "0.72rem", color: "#047857", background: "#ECFDF5", padding: "1px 6px", borderRadius: "4px", border: "1px solid #A7F3D0" }}>
+                                                <code style={{ fontSize: "0.72rem", color: "var(--ct-047857, #047857)", background: "var(--cf-ecfdf5, #ECFDF5)", padding: "1px 6px", borderRadius: "4px", border: "1px solid var(--cb-a7f3d0, #A7F3D0)" }}>
                                                   {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
                                                 </code>
                                                 <button
@@ -4194,9 +4194,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         aria-label={`Abrir ${w.nombre} en ${panel.nombre}`}
                                         className="btn-responsive-accion"
                                         style={{
-                                          background: "#EFF6FF",
-                                          border: "1px solid #BFDBFE",
-                                          color: "#1D4ED8",
+                                          background: "var(--cf-eff6ff, #EFF6FF)",
+                                          border: "1px solid var(--cb-bfdbfe, #BFDBFE)",
+                                          color: "var(--ct-1d4ed8, #1D4ED8)",
                                           borderRadius: "6px",
                                           padding: "5px 8px",
                                           textDecoration: "none",
@@ -4220,9 +4220,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         onClick={() => abrirModalEditarNombre(panel.id, panel.nombre, w)}
                                         className="btn-responsive-accion"
                                         style={{
-                                          background: "#F5F3FF",
-                                          border: "1px solid #DDD6FE",
-                                          color: "#5000BA",
+                                          background: "var(--cf-f5f3ff, #F5F3FF)",
+                                          border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                                          color: "var(--ct-5000ba, #5000BA)",
                                           borderRadius: "6px",
                                           padding: "5px 8px",
                                           cursor: "pointer",
@@ -4243,7 +4243,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         disabled={idx === 0}
                                         onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "izquierda")}
                                         style={{
-                                          background: "#ffffff",
+                                          background: "var(--cf-ffffff, #ffffff)",
                                           border: "1px solid var(--panel-linea, #E4E4E4)",
                                           borderRadius: "6px",
                                           padding: "5px 8px",
@@ -4262,7 +4262,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         disabled={idx === widgetsFiltrados.length - 1}
                                         onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "derecha")}
                                         style={{
-                                          background: "#ffffff",
+                                          background: "var(--cf-ffffff, #ffffff)",
                                           border: "1px solid var(--panel-linea, #E4E4E4)",
                                           borderRadius: "6px",
                                           padding: "5px 8px",
@@ -4285,9 +4285,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                           setAccionTransferir("mover");
                                         }}
                                         style={{
-                                          background: "#F3E8FF",
-                                          border: "1px solid #DDD6FE",
-                                          color: "#5000BA",
+                                          background: "var(--cf-f3e8ff, #F3E8FF)",
+                                          border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                                          color: "var(--ct-5000ba, #5000BA)",
                                           borderRadius: "6px",
                                           padding: "5px 8px",
                                           cursor: "pointer",
@@ -4308,9 +4308,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
                                         className="btn-responsive-accion"
                                         style={{
-                                          background: "#FEF2F2",
-                                          border: "1px solid #FCA5A5",
-                                          color: "#DC2626",
+                                          background: "var(--cf-fef2f2, #FEF2F2)",
+                                          border: "1px solid var(--cb-fca5a5, #FCA5A5)",
+                                          color: "var(--ct-dc2626, #DC2626)",
                                           borderRadius: "6px",
                                           padding: "5px 8px",
                                           cursor: "pointer",
@@ -4353,7 +4353,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                       setPanelOverId(null);
                                     }}
                                     style={{
-                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
+                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "var(--cf-ffffff, #ffffff)",
                                       border: esArrastrando
                                         ? "2px dashed var(--violeta, #5000BA)"
                                         : esFavoritos
@@ -4376,7 +4376,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                       {nombreVisual}
                                     </strong>
                                     {esNombreCustom && (
-                                      <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#B45309" }} title="Nombre personalizado para este panel">
+                                      <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--ct-b45309, #B45309)" }} title="Nombre personalizado para este panel">
                                         ✏️
                                       </span>
                                     )}
@@ -4385,7 +4385,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         type="button"
                                         title={`Editar nombre en ${panel.nombre}`}
                                         onClick={() => abrirModalEditarNombre(panel.id, panel.nombre, w)}
-                                        style={{ background: "none", border: "none", cursor: "pointer", color: "#5000BA", padding: "1px" }}
+                                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ct-5000ba, #5000BA)", padding: "1px" }}
                                       >
                                         <Pencil size={11} />
                                       </button>
@@ -4416,7 +4416,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                           setPanelDestinoId(primerDestino);
                                           setAccionTransferir("mover");
                                         }}
-                                        style={{ background: "none", border: "none", cursor: "pointer", color: "#5000BA", padding: "1px" }}
+                                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ct-5000ba, #5000BA)", padding: "1px" }}
                                       >
                                         <Move size={11} />
                                       </button>
@@ -4424,7 +4424,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         type="button"
                                         title={`Retirar de ${panel.nombre}`}
                                         onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
-                                        style={{ background: "none", border: "none", cursor: "pointer", color: "#DC2626", padding: "1px" }}
+                                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ct-dc2626, #DC2626)", padding: "1px" }}
                                       >
                                         <Trash2 size={11} />
                                       </button>
@@ -4457,7 +4457,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                       setPanelOverId(null);
                                     }}
                                     style={{
-                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "#ffffff",
+                                      background: esFavoritos ? `${temaPerfilActivo.colorFondoSuave}` : "var(--cf-ffffff, #ffffff)",
                                       padding: "12px 14px",
                                       borderRadius: "10px",
                                       border: esArrastrando
@@ -4484,7 +4484,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                           {esFavoritos && <Star size={14} fill={temaPerfilActivo.colorPrimario} color={temaPerfilActivo.colorPrimario} style={{ flexShrink: 0 }} />}
                                           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nombreVisual}</span>
                                           {esNombreCustom && (
-                                            <span style={{ fontSize: "0.64rem", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "1px 5px", borderRadius: "4px" }} title="Nombre personalizado para este panel">
+                                            <span style={{ fontSize: "0.64rem", fontWeight: 700, background: "var(--cf-fef3c7, #FEF3C7)", color: "var(--ct-92400e, #92400E)", padding: "1px 5px", borderRadius: "4px" }} title="Nombre personalizado para este panel">
                                               ✏️
                                             </span>
                                           )}
@@ -4508,9 +4508,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         title={`Editar nombre de ${nombreVisual} en ${panel.nombre}`}
                                         onClick={() => abrirModalEditarNombre(panel.id, panel.nombre, w)}
                                         style={{
-                                          background: "#F5F3FF",
-                                          border: "1px solid #DDD6FE",
-                                          color: "#5000BA",
+                                          background: "var(--cf-f5f3ff, #F5F3FF)",
+                                          border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                                          color: "var(--ct-5000ba, #5000BA)",
                                           borderRadius: "6px",
                                           padding: "5px 7px",
                                           cursor: "pointer",
@@ -4527,13 +4527,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         disabled={idx === 0}
                                         onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "izquierda")}
                                         style={{
-                                          background: "#ffffff",
+                                          background: "var(--cf-ffffff, #ffffff)",
                                           border: "1px solid var(--panel-linea, #E4E4E4)",
                                           borderRadius: "6px",
                                           padding: "5px 7px",
                                           cursor: idx === 0 ? "not-allowed" : "pointer",
                                           opacity: idx === 0 ? 0.3 : 1,
-                                          color: "var(--negro, #111111)",
+                                          color: "var(--ct-111111, var(--negro, #111111))",
                                           display: "flex",
                                           alignItems: "center"
                                         }}
@@ -4547,13 +4547,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         disabled={idx === widgetsFiltrados.length - 1}
                                         onClick={() => reordenarWidgetEnPanel(perfilSeleccionado, panel.id, w.clave, "derecha")}
                                         style={{
-                                          background: "#ffffff",
+                                          background: "var(--cf-ffffff, #ffffff)",
                                           border: "1px solid var(--panel-linea, #E4E4E4)",
                                           borderRadius: "6px",
                                           padding: "5px 7px",
                                           cursor: idx === widgetsFiltrados.length - 1 ? "not-allowed" : "pointer",
                                           opacity: idx === widgetsFiltrados.length - 1 ? 0.3 : 1,
-                                          color: "var(--negro, #111111)",
+                                          color: "var(--ct-111111, var(--negro, #111111))",
                                           display: "flex",
                                           alignItems: "center"
                                         }}
@@ -4571,9 +4571,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                           setAccionTransferir("mover");
                                         }}
                                         style={{
-                                          background: "#F3E8FF",
-                                          border: "1px solid #DDD6FE",
-                                          color: "#5000BA",
+                                          background: "var(--cf-f3e8ff, #F3E8FF)",
+                                          border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                                          color: "var(--ct-5000ba, #5000BA)",
                                           borderRadius: "6px",
                                           padding: "5px 7px",
                                           cursor: "pointer",
@@ -4591,9 +4591,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                         onClick={() => retirarWidgetDePanel(perfilSeleccionado, w.clave, panel.id)}
                                         className="btn-responsive-accion"
                                         style={{
-                                          background: "#FEF2F2",
-                                          border: "1px solid #FCA5A5",
-                                          color: "#DC2626",
+                                          background: "var(--cf-fef2f2, #FEF2F2)",
+                                          border: "1px solid var(--cb-fca5a5, #FCA5A5)",
+                                          color: "var(--ct-dc2626, #DC2626)",
                                           borderRadius: "6px",
                                           padding: "5px 8px",
                                           cursor: "pointer",
@@ -4681,25 +4681,25 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <div
                 style={{
                   marginTop: "24px",
-                  background: "#F7F6FA",
+                  background: "var(--cf-f7f6fa, #F7F6FA)",
                   borderRadius: "14px",
-                  border: "1.5px dashed #E4E4E4",
+                  border: "1.5px dashed var(--cb-e4e4e4, #E4E4E4)",
                   padding: "18px",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                   <div>
-                    <h4 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 2px 0", color: "#111111", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <h4 style={{ fontSize: "0.95rem", fontWeight: 800, margin: "0 0 2px 0", color: "var(--ct-111111, #111111)", display: "flex", alignItems: "center", gap: "8px" }}>
                       <Package size={18} color="#5000BA" /> Widgets Disponibles Sin Asignar
                     </h4>
-                    <p style={{ fontSize: "0.78rem", color: "#737373", margin: 0 }}>
+                    <p style={{ fontSize: "0.78rem", color: "var(--ct-737373, #737373)", margin: 0 }}>
                       Widgets del inventario que no están vinculados a ningún panel para el perfil <strong>{perfilActualObj?.nombre}</strong>.
                     </p>
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#737373", fontWeight: 600 }}>Ordenar por:</span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--ct-737373, #737373)", fontWeight: 600 }}>Ordenar por:</span>
                       <SelectConBuscador
                         value={criterioOrden}
                         onChange={(e) => setCriterioOrden(e.target.value as any)}
@@ -4707,11 +4707,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                           fontSize: "0.75rem",
                           padding: "4px 8px",
                           borderRadius: "6px",
-                          border: "1px solid #D1D5DB",
-                          background: "#FFF",
+                          border: "1px solid var(--cb-d1d5db, #D1D5DB)",
+                          background: "var(--cf-ffffff, #FFF)",
                           outline: "none",
                           fontWeight: 600,
-                          color: "#374151",
+                          color: "var(--ct-374151, #374151)",
                           cursor: "pointer"
                         }}
                       >
@@ -4727,9 +4727,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       style={{
                         fontSize: "0.74rem",
                         fontWeight: 700,
-                        background: "#ffffff",
-                        color: "#5000BA",
-                        border: "1px solid #DDD6FE",
+                        background: "var(--cf-ffffff, #ffffff)",
+                        color: "var(--ct-5000ba, #5000BA)",
+                        border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
                         borderRadius: "6px",
                         padding: "4px 8px",
                         cursor: "pointer",
@@ -4749,9 +4749,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       style={{
                         fontSize: "0.74rem",
                         fontWeight: 700,
-                        background: "#ffffff",
-                        color: "#05876E",
-                        border: "1px solid #A7F3D0",
+                        background: "var(--cf-ffffff, #ffffff)",
+                        color: "var(--ct-05876e, #05876E)",
+                        border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
                         borderRadius: "6px",
                         padding: "4px 8px",
                         cursor: isAsignando ? "not-allowed" : "pointer",
@@ -4793,7 +4793,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       </button>
                     )}
 
-                    <span style={{ fontSize: "0.78rem", fontWeight: 800, background: "#F3E8FF", color: "#5000BA", padding: "4px 12px", borderRadius: "999px" }}>
+                    <span style={{ fontSize: "0.78rem", fontWeight: 800, background: "var(--cf-f3e8ff, #F3E8FF)", color: "var(--ct-5000ba, #5000BA)", padding: "4px 12px", borderRadius: "999px" }}>
                       {widgetsDisponiblesSinAsignar.length} Disponibles
                     </span>
                   </div>
@@ -4818,9 +4818,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             setPanelOverId(null);
                           }}
                           style={{
-                            background: "#FFFFFF",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             borderRadius: "10px",
-                            border: esArrastrando ? "2px dashed #5000BA" : "1px solid #E4E4E4",
+                            border: esArrastrando ? "2px dashed #5000BA" : "1px solid var(--cb-e4e4e4, #E4E4E4)",
                             padding: "12px 14px",
                             display: "flex",
                             flexDirection: "column",
@@ -4839,7 +4839,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                <strong style={{ fontSize: "0.85rem", color: "#111111" }}>{w.nombre}</strong>
+                                <strong style={{ fontSize: "0.85rem", color: "var(--ct-111111, #111111)" }}>{w.nombre}</strong>
                                 {nuevo && (
                                   <span
                                     style={{
@@ -4857,20 +4857,20 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                   </span>
                                 )}
                               </div>
-                              <p style={{ fontSize: "0.75rem", color: "#737373", margin: "2px 0 6px 0", lineHeight: 1.3 }}>{w.descripcion}</p>
+                              <p style={{ fontSize: "0.75rem", color: "var(--ct-737373, #737373)", margin: "2px 0 6px 0", lineHeight: 1.3 }}>{w.descripcion}</p>
                               
                               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "0.68rem", marginTop: "6px" }}>
                                 <code>{w.clave}</code>
-                                <span style={{ color: "#737373" }}>• Cat: <strong>{w.categoria}</strong></span>
+                                <span style={{ color: "var(--ct-737373, #737373)" }}>• Cat: <strong>{w.categoria}</strong></span>
                                 {w.creadoEn && (
-                                  <span style={{ color: "#737373" }}>
+                                  <span style={{ color: "var(--ct-737373, #737373)" }}>
                                     • Reg: <strong>{new Date(w.creadoEn).toLocaleDateString("es-EC", { timeZone: "UTC" })}</strong>
                                   </span>
                                 )}
                               </div>
 
                               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", fontSize: "0.68rem", marginTop: "4px" }}>
-                                <span style={{ color: "#737373" }}>Dir:</span>
+                                <span style={{ color: "var(--ct-737373, #737373)" }}>Dir:</span>
                                 <code style={{ background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: "4px", color: "#4B5563", wordBreak: "break-all" }}>
                                   {w.rutaFisica || `/plataforma/${w.clave}.tsx`}
                                 </code>
@@ -4878,7 +4878,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             </div>
                           </div>
 
-                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #E4E4E4", flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "auto", paddingTop: "8px", borderTop: "1px solid var(--cb-e4e4e4, #E4E4E4)", flexWrap: "wrap" }}>
                             {(() => {
                               const panelSugerido = panelesSidebar.find(p => p.id === w.panelId) || panelesSidebar[0];
                               const etiquetaPanel = panelSugerido?.nombre?.split(" ")[0] || "Panel";
@@ -4890,9 +4890,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                   style={{
                                     padding: "6px 10px",
                                     borderRadius: "6px",
-                                    border: "1px solid #DDD6FE",
-                                    background: "#F5F3FF",
-                                    color: "#5000BA",
+                                    border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
+                                    background: "var(--cf-f5f3ff, #F5F3FF)",
+                                    color: "var(--ct-5000ba, #5000BA)",
                                     fontSize: "0.73rem",
                                     fontWeight: 800,
                                     cursor: "pointer",
@@ -4920,11 +4920,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                 minWidth: "130px",
                                 padding: "6px 8px",
                                 borderRadius: "6px",
-                                border: "1px solid #E4E4E4",
+                                border: "1px solid var(--cb-e4e4e4, #E4E4E4)",
                                 fontSize: "0.75rem",
                                 fontWeight: 700,
                                 cursor: "pointer",
-                                background: "#FFFFFF"
+                                background: "var(--cf-ffffff, #FFFFFF)"
                               }}
                             >
                               <option value="" disabled>+ Asignar a Panel...</option>
@@ -4940,7 +4940,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     })}
                   </div>
                 ) : (
-                  <div style={{ textAlign: "center", padding: "14px", fontSize: "0.8rem", color: "#05876E", fontWeight: 700 }}>
+                  <div style={{ textAlign: "center", padding: "14px", fontSize: "0.8rem", color: "var(--ct-05876e, #05876E)", fontWeight: 700 }}>
                     ¡Excelente! Todos los widgets del inventario están asignados a algún panel de navegación para este perfil.
                   </div>
                 )}
@@ -4953,7 +4953,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {/* MODAL DE SELECCIÓN CORREGIDO 100%: EVALÚA ASIGNACIÓN ESPECÍFICA POR PANEL */}
       {panelAgregarWidget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: "20px" }}>
-          <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "650px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+          <div style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "18px", padding: "24px", maxWidth: "650px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid var(--panel-linea, #E4E4E4)", paddingBottom: "12px" }}>
               <div>
                 <h3 style={{ fontSize: "1.08rem", fontWeight: 800, margin: 0, color: temaPerfilActivo.colorPrimario, display: "flex", alignItems: "center", gap: "8px" }}>
@@ -4966,7 +4966,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <button
                 type="button"
                 onClick={() => setPanelAgregarWidget(null)}
-                style={{ background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <X size={16} />
               </button>
@@ -5005,8 +5005,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       style={{
                         padding: "12px 16px",
                         borderRadius: "10px",
-                        border: yaAsignadoEnEstePanel ? "1px solid #A7F3D0" : "1px solid var(--panel-linea, #E4E4E4)",
-                        background: yaAsignadoEnEstePanel ? "#ECFDF5" : "#ffffff",
+                        border: yaAsignadoEnEstePanel ? "1px solid var(--cb-a7f3d0, #A7F3D0)" : "1px solid var(--panel-linea, #E4E4E4)",
+                        background: yaAsignadoEnEstePanel ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-ffffff, #ffffff)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
@@ -5014,7 +5014,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: "0.88rem", color: yaAsignadoEnEstePanel ? "#065F46" : "#111111" }}>
+                        <div style={{ fontWeight: 800, fontSize: "0.88rem", color: yaAsignadoEnEstePanel ? "var(--ct-065f46, #065F46)" : "var(--ct-111111, #111111)" }}>
                           {w.nombre}
                         </div>
                         <div style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
@@ -5023,7 +5023,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       </div>
 
                       {yaAsignadoEnEstePanel ? (
-                        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#05876E", display: "flex", alignItems: "center", gap: "4px", background: "#ffffff", padding: "4px 10px", borderRadius: "6px", border: "1px solid #A7F3D0" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--ct-05876e, #05876E)", display: "flex", alignItems: "center", gap: "4px", background: "var(--cf-ffffff, #ffffff)", padding: "4px 10px", borderRadius: "6px", border: "1px solid var(--cb-a7f3d0, #A7F3D0)" }}>
                           <Check size={14} /> Ya Asignado
                         </span>
                       ) : (
@@ -5059,7 +5059,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <button
                 type="button"
                 onClick={() => setPanelAgregarWidget(null)}
-                style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.82rem" }}
+                style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "var(--cf-ffffff, #fff)", fontWeight: 700, cursor: "pointer", fontSize: "0.82rem" }}
               >
                 Cerrar
               </button>
@@ -5072,7 +5072,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {tabActiva === "matriz_paneles" && (
         <div>
           <div style={{ background: "var(--panel-linea-suave, #FAFAF9)", padding: "14px 18px", borderRadius: "10px", border: "1px solid var(--panel-linea, #E4E4E4)", marginBottom: "20px", fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>
-            <span style={{ fontWeight: 800, color: "var(--negro, #111111)" }}>Paso 1: Configurar Opciones del Menú Lateral (Sidebar) por Perfil</span>
+            <span style={{ fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))" }}>Paso 1: Configurar Opciones del Menú Lateral (Sidebar) por Perfil</span>
             <br />
             Marca qué <strong>Paneles / Opciones</strong> aparecerán visibles en el Sidebar izquierdo para cada perfil de usuario.
           </div>
@@ -5085,7 +5085,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   {panelesSidebar.map(p => (
                     <th key={p.id} style={{ textAlign: "center", padding: "12px 8px", fontWeight: 800, minWidth: "120px" }} title={`${p.nombre} (${p.ruta})`}>
                       <div style={{ fontSize: "0.78rem" }}>{p.nombre.split(" ")[0]}</div>
-                      <a href={p.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.65rem", color: "var(--violeta, #5000BA)", textDecoration: "none", fontWeight: 700 }}>
+                      <a href={p.ruta} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.65rem", color: "var(--ct-5000ba, var(--violeta, #5000BA))", textDecoration: "none", fontWeight: 700 }}>
                         {p.ruta} ↗
                       </a>
                     </th>
@@ -5156,7 +5156,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(275px, 100%), 1fr))", gap: "16px" }}>
             {inventarioWidgets.map(w => (
-              <div key={w.clave} style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "12px", padding: "16px", background: "#ffffff", display: "flex", flexDirection: "column" }}>
+              <div key={w.clave} style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "12px", padding: "16px", background: "var(--cf-ffffff, #ffffff)", display: "flex", flexDirection: "column" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                   <div>
                     <span style={{ fontWeight: 800, fontSize: "0.95rem", display: "block" }}>{w.nombre}</span>
@@ -5167,7 +5167,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       {w.categoria}
                     </span>
                     {w.creadoEn && (
-                      <span style={{ fontSize: "0.66rem", fontWeight: 800, color: "#047857", background: "#ECFDF5", padding: "2px 7px", borderRadius: "6px", border: "1px solid #A7F3D0", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      <span style={{ fontSize: "0.66rem", fontWeight: 800, color: "var(--ct-047857, #047857)", background: "var(--cf-ecfdf5, #ECFDF5)", padding: "2px 7px", borderRadius: "6px", border: "1px solid var(--cb-a7f3d0, #A7F3D0)", display: "inline-flex", alignItems: "center", gap: "3px" }}>
                         📅 Reg: {w.creadoEn}
                       </span>
                     )}
@@ -5224,7 +5224,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   borderRadius: "8px",
                   border: "1px solid var(--panel-linea, #E4E4E4)",
                   fontSize: "0.85rem",
-                  background: "#ffffff"
+                  background: "var(--cf-ffffff, #ffffff)"
                 }}
               />
             </div>
@@ -5261,7 +5261,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   style={{
                     border: `1px solid ${t.colorBorde}44`,
                     borderRadius: "12px",
-                    background: "#ffffff",
+                    background: "var(--cf-ffffff, #ffffff)",
                     overflow: "hidden"
                   }}
                 >
@@ -5273,7 +5273,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       alignItems: "center",
                       justifyContent: "space-between",
                       cursor: "pointer",
-                      background: desplegado ? t.colorFondoSuave : "#ffffff",
+                      background: desplegado ? t.colorFondoSuave : "var(--cf-ffffff, #ffffff)",
                       gap: "12px",
                       flexWrap: "wrap"
                     }}
@@ -5314,7 +5314,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   </div>
 
                   {desplegado && (
-                    <div style={{ padding: "16px 20px", borderTop: "1px solid var(--panel-linea, #E4E4E4)", background: "#ffffff" }}>
+                    <div style={{ padding: "16px 20px", borderTop: "1px solid var(--panel-linea, #E4E4E4)", background: "var(--cf-ffffff, #ffffff)" }}>
                       <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", marginBottom: "8px" }}>
                         Paneles y Widgets Configurados:
                       </div>
@@ -5327,8 +5327,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       </div>
 
                       {/* Pie con Estado del Perfil y Botón Eliminar para Perfiles Personalizados */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #F3F4F6", paddingTop: "12px", flexWrap: "wrap", gap: "8px" }}>
-                        <span style={{ fontSize: "0.74rem", color: "#6B7280", fontWeight: 600 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--cb-f3f4f6, #F3F4F6)", paddingTop: "12px", flexWrap: "wrap", gap: "8px" }}>
+                        <span style={{ fontSize: "0.74rem", color: "var(--ct-6b7280, #6B7280)", fontWeight: 600 }}>
                           {["CLIENTE", "OPERADOR", "ABOGADO", "ADMINISTRADOR", "SUPERADMIN"].includes(p.clave.toUpperCase())
                             ? "Perfil base nativo del sistema (Protegido)."
                             : "Perfil personalizado configurable."}
@@ -5343,9 +5343,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             }}
                             className="btn-responsive-accion"
                             style={{
-                              background: "#FEF2F2",
-                              border: "1px solid #FCA5A5",
-                              color: "#DC2626",
+                              background: "var(--cf-fef2f2, #FEF2F2)",
+                              border: "1px solid var(--cb-fca5a5, #FCA5A5)",
+                              color: "var(--ct-dc2626, #DC2626)",
                               borderRadius: "8px",
                               padding: "6px 12px",
                               fontSize: "0.75rem",
@@ -5408,7 +5408,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     alignItems: "center",
                     gap: "8px",
                     background: "rgba(255,255,255,0.12)",
-                    border: "1px solid rgba(255,255,255,0.25)",
+                    border: "1px solid var(--cb-ffffff-a250, rgba(255,255,255,0.25))",
                     color: "#ffffff",
                     padding: "9px 16px",
                     borderRadius: "10px",
@@ -5471,7 +5471,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             {/* FILTROS Y BÚSQUEDA DEL REPORTE */}
             <div style={{ display: "flex", gap: "12px", marginTop: "20px", flexWrap: "wrap", alignItems: "center" }}>
               <div style={{ flex: 1, minWidth: "240px", position: "relative" }}>
-                <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--ct-94a3b8, #94a3b8)" }} />
                 <input
                   type="text"
                   placeholder="Buscar en el reporte por perfil, panel, widget o usuario..."
@@ -5481,7 +5481,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     width: "100%",
                     padding: "9px 12px 9px 36px",
                     borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.2)",
+                    border: "1px solid var(--cb-ffffff-a200, rgba(255,255,255,0.2))",
                     background: "rgba(255,255,255,0.08)",
                     color: "#ffffff",
                     fontSize: "0.85rem",
@@ -5498,7 +5498,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     width: "100%",
                     padding: "9px 14px",
                     borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.2)",
+                    border: "1px solid var(--cb-ffffff-a200, rgba(255,255,255,0.2))",
                     background: "#312e81",
                     color: "#ffffff",
                     fontSize: "0.85rem",
@@ -5520,7 +5520,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 onClick={cargarUsuariosParaReporte}
                 style={{
                   background: "rgba(255,255,255,0.1)",
-                  border: "1px solid rgba(255,255,255,0.2)",
+                  border: "1px solid var(--cb-ffffff-a200, rgba(255,255,255,0.2))",
                   color: "#ffffff",
                   padding: "9px 14px",
                   borderRadius: "10px",
@@ -5565,7 +5565,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     style={{
                       border: `2px solid ${t.colorBorde}44`,
                       borderRadius: "16px",
-                      background: "#ffffff",
+                      background: "var(--cf-ffffff, #ffffff)",
                       boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
                       overflow: "hidden"
                     }}
@@ -5607,10 +5607,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                             <span style={{ fontSize: "0.72rem", fontWeight: 800, padding: "3px 10px", borderRadius: "999px", background: t.badgeBg, color: t.badgeTexto, border: `1px solid ${t.colorBorde}33` }}>
                               Nivel {p.nivel} (Jerarquía 1-100)
                             </span>
-                            <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: "#ffffff", color: "#555", border: "1px solid #E4E4E4" }}>
+                            <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: "var(--cf-ffffff, #ffffff)", color: "var(--ct-555555, #555)", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
                               {p.clave}
                             </span>
-                            <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: "#ffffff", color: "#555", border: "1px solid #E4E4E4" }}>
+                            <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "3px 10px", borderRadius: "999px", background: "var(--cf-ffffff, #ffffff)", color: "var(--ct-555555, #555)", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
                               Ámbito: {p.ambito}
                             </span>
                           </div>
@@ -5622,17 +5622,17 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                       {/* BADGES METRICAS */}
                       <div style={{ display: "flex", gap: "10px" }}>
-                        <div style={{ textAlign: "center", padding: "6px 14px", background: "#ffffff", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
+                        <div style={{ textAlign: "center", padding: "6px 14px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "10px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
                           <span style={{ fontSize: "1.1rem", fontWeight: 900, color: t.colorPrimario, display: "block", lineHeight: 1 }}>{panelesDelPerfil.length}</span>
-                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#737373", textTransform: "uppercase" }}>Paneles</span>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--ct-737373, #737373)", textTransform: "uppercase" }}>Paneles</span>
                         </div>
-                        <div style={{ textAlign: "center", padding: "6px 14px", background: "#ffffff", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
+                        <div style={{ textAlign: "center", padding: "6px 14px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "10px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
                           <span style={{ fontSize: "1.1rem", fontWeight: 900, color: t.colorPrimario, display: "block", lineHeight: 1 }}>{totalWidgets}</span>
-                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#737373", textTransform: "uppercase" }}>Widgets</span>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--ct-737373, #737373)", textTransform: "uppercase" }}>Widgets</span>
                         </div>
-                        <div style={{ textAlign: "center", padding: "6px 14px", background: "#ffffff", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
-                          <span style={{ fontSize: "1.1rem", fontWeight: 900, color: "#05876E", display: "block", lineHeight: 1 }}>{usuariosDelPerfil.length}</span>
-                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#737373", textTransform: "uppercase" }}>Usuarios</span>
+                        <div style={{ textAlign: "center", padding: "6px 14px", background: "var(--cf-ffffff, #ffffff)", borderRadius: "10px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
+                          <span style={{ fontSize: "1.1rem", fontWeight: 900, color: "var(--ct-05876e, #05876E)", display: "block", lineHeight: 1 }}>{usuariosDelPerfil.length}</span>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--ct-737373, #737373)", textTransform: "uppercase" }}>Usuarios</span>
                         </div>
                       </div>
                     </div>
@@ -5640,13 +5640,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     {/* CUERPO DEL REPORTE: PANELES / WIDGETS Y USUARIOS */}
                     <div style={{ padding: "clamp(14px, 3vw, 20px) clamp(14px, 3.5vw, 24px)", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(270px, 100%), 1fr))", gap: "20px" }}>
                       {/* COLUMNA 1: PANELES & WIDGETS ASIGNADOS */}
-                      <div style={{ background: "#FBFBFE", padding: "18px", borderRadius: "12px", border: "1px solid #EAE8F2" }}>
-                        <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#1e1b4b", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div style={{ background: "var(--cf-fbfbfe, #FBFBFE)", padding: "18px", borderRadius: "12px", border: "1px solid var(--cb-eae8f2, #EAE8F2)" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--ct-1e1b4b, #1e1b4b)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
                           <Layers size={16} color={t.colorPrimario} /> Paneles del Menú & Módulos Asignados ({panelesDelPerfil.length})
                         </div>
 
                         {panelesDelPerfil.length === 0 ? (
-                          <p style={{ fontSize: "0.82rem", color: "#888", fontStyle: "italic", margin: 0 }}>
+                          <p style={{ fontSize: "0.82rem", color: "var(--ct-888888, #888)", fontStyle: "italic", margin: 0 }}>
                             Este perfil no tiene paneles de navegación asignados actualmente.
                           </p>
                         ) : (
@@ -5663,22 +5663,22 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               });
 
                               return (
-                                <div key={pan.id} style={{ background: "#ffffff", padding: "12px", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
+                                <div key={pan.id} style={{ background: "var(--cf-ffffff, #ffffff)", padding: "12px", borderRadius: "10px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                       <IconoPanelDinamico nombreIcono={pan.icono} color={t.colorPrimario} size={16} />
-                                      <strong style={{ fontSize: "0.88rem", color: "#111" }}>{pan.nombre}</strong>
-                                      <code style={{ fontSize: "0.72rem", color: "#666", background: "#f1f1f1", padding: "1px 6px", borderRadius: "4px" }}>{pan.ruta}</code>
+                                      <strong style={{ fontSize: "0.88rem", color: "var(--ct-111111, #111)" }}>{pan.nombre}</strong>
+                                      <code style={{ fontSize: "0.72rem", color: "var(--ct-666666, #666)", background: "var(--cf-f1f1f1, #f1f1f1)", padding: "1px 6px", borderRadius: "4px" }}>{pan.ruta}</code>
                                     </div>
                                     {pan.requiereMfa && (
-                                      <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#dc2626", background: "#fef2f2", padding: "2px 8px", borderRadius: "999px", border: "1px solid #fecaca" }}>
+                                      <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "var(--ct-dc2626, #dc2626)", background: "var(--cf-fef2f2, #fef2f2)", padding: "2px 8px", borderRadius: "999px", border: "1px solid var(--cb-fecaca, #fecaca)" }}>
                                         MFA TOTP
                                       </span>
                                     )}
                                   </div>
 
                                   {widgetsDeEstePanel.length === 0 ? (
-                                    <span style={{ fontSize: "0.75rem", color: "#999", fontStyle: "italic" }}>
+                                    <span style={{ fontSize: "0.75rem", color: "var(--ct-999999, #999)", fontStyle: "italic" }}>
                                       (Sin widgets configurados en este panel)
                                     </span>
                                   ) : (
@@ -5713,15 +5713,15 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       </div>
 
                       {/* COLUMNA 2: USUARIOS ASIGNADOS AL PERFIL */}
-                      <div style={{ background: "#FBFBFE", padding: "18px", borderRadius: "12px", border: "1px solid #EAE8F2" }}>
-                        <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#1e1b4b", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div style={{ background: "var(--cf-fbfbfe, #FBFBFE)", padding: "18px", borderRadius: "12px", border: "1px solid var(--cb-eae8f2, #EAE8F2)" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--ct-1e1b4b, #1e1b4b)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
                           <Users size={16} color="#05876E" /> Usuarios con este Perfil ({usuariosDelPerfil.length})
                         </div>
 
                         {usuariosDelPerfil.length === 0 ? (
-                          <div style={{ padding: "24px", textAlign: "center", background: "#ffffff", borderRadius: "10px", border: "1px dashed #D1D5DB" }}>
+                          <div style={{ padding: "24px", textAlign: "center", background: "var(--cf-ffffff, #ffffff)", borderRadius: "10px", border: "1px dashed var(--cb-d1d5db, #D1D5DB)" }}>
                             <UserCheck size={28} color="#9CA3AF" style={{ margin: "0 auto 8px" }} />
-                            <p style={{ fontSize: "0.82rem", color: "#6B7280", margin: 0, fontWeight: 600 }}>
+                            <p style={{ fontSize: "0.82rem", color: "var(--ct-6b7280, #6B7280)", margin: 0, fontWeight: 600 }}>
                               No hay usuarios registrados que tengan asignado este perfil actualmente.
                             </p>
                           </div>
@@ -5739,9 +5739,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                     alignItems: "center",
                                     justifyContent: "space-between",
                                     padding: "10px 12px",
-                                    background: "#ffffff",
+                                    background: "var(--cf-ffffff, #ffffff)",
                                     borderRadius: "8px",
-                                    border: "1px solid #E4E4E4",
+                                    border: "1px solid var(--cb-e4e4e4, #E4E4E4)",
                                     gap: "10px"
                                   }}
                                 >
@@ -5764,17 +5764,17 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                       {iniciales}
                                     </div>
                                     <div style={{ minWidth: 0 }}>
-                                      <strong style={{ fontSize: "0.84rem", color: "#111", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                      <strong style={{ fontSize: "0.84rem", color: "var(--ct-111111, #111)", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                         {nombreCompleto}
                                       </strong>
-                                      <span style={{ fontSize: "0.74rem", color: "#737373", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                      <span style={{ fontSize: "0.74rem", color: "var(--ct-737373, #737373)", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                         {u.usu_correo}
                                       </span>
                                     </div>
                                   </div>
 
                                   <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                                    <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "2px 8px", borderRadius: "999px", background: "#ECFDF5", color: "#059669", border: "1px solid #A7F3D0" }}>
+                                    <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "2px 8px", borderRadius: "999px", background: "var(--cf-ecfdf5, #ECFDF5)", color: "var(--ct-059669, #059669)", border: "1px solid var(--cb-a7f3d0, #A7F3D0)" }}>
                                       {u.mem_estado || "ACTIVO"}
                                     </span>
                                   </div>
@@ -5795,10 +5795,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {/* MODAL DE PREVISUALIZACIÓN FLOTANTE EN VIVO CON RENDERIZADO INTERACTIVO DEL WIDGET REAL */}
       {widgetPrevisualizar && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: "20px" }}>
-          <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "720px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.35)" }}>
+          <div style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "18px", padding: "24px", maxWidth: "720px", width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.35)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid var(--panel-linea, #E4E4E4)", paddingBottom: "14px" }}>
               <div>
-                <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--violeta, #5000BA)", display: "flex", alignItems: "center", gap: "8px" }}>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--ct-5000ba, var(--violeta, #5000BA))", display: "flex", alignItems: "center", gap: "8px" }}>
                   <Sparkles size={20} color="var(--violeta, #5000BA)" /> Vista Previa del Widget Real: {widgetPrevisualizar.nombre}
                 </h3>
                 <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
@@ -5808,7 +5808,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <button
                 type="button"
                 onClick={() => setWidgetPrevisualizar(null)}
-                style={{ background: "#ffffff", border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <X size={16} />
               </button>
@@ -5820,7 +5820,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
             {/* CONTENEDOR CON EL COMPONENTE REACT REAL INTERACTIVO */}
             <div style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "14px", padding: "20px", background: "var(--panel-papel, #F7F6FA)", marginBottom: "20px" }}>
-              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--violeta, #5000BA)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--ct-5000ba, var(--violeta, #5000BA))", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Eye size={16} /> Interfaz Interactiva Real del Componente
               </div>
 
@@ -5840,7 +5840,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   padding: "9px 16px",
                   borderRadius: "8px",
                   border: "1.5px solid var(--violeta, #5000BA)",
-                  color: "var(--violeta, #5000BA)",
+                  color: "var(--ct-5000ba, var(--violeta, #5000BA))",
                   fontWeight: 700,
                   textDecoration: "none",
                   fontSize: "0.82rem"
@@ -5872,7 +5872,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {/* MODAL CREAR PERFIL */}
       {mostrarModalPerfil && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-          <form onSubmit={handleGuardarPerfil} style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", maxWidth: "500px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
+          <form onSubmit={handleGuardarPerfil} style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", padding: "24px", maxWidth: "500px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
             <h3 style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: "16px" }}>+ Crear Nuevo Perfil</h3>
             
             <div style={{ marginBottom: "12px" }}>
@@ -5920,7 +5920,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             </div>
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => setMostrarModalPerfil(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", cursor: "pointer" }}>Cancelar</button>
+              <button type="button" onClick={() => setMostrarModalPerfil(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "var(--cf-ffffff, #fff)", cursor: "pointer" }}>Cancelar</button>
               <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar Perfil</button>
             </div>
           </form>
@@ -5930,7 +5930,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {/* MODAL CREAR WIDGET CON SELECCIÓN DE PERFILES AUTORIZADOS */}
       {mostrarModalWidget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-          <form onSubmit={handleGuardarWidget} style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
+          <form onSubmit={handleGuardarWidget} style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", padding: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
             <h3 style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: "16px" }}>+ Registrar Nuevo Widget</h3>
 
             <div style={{ marginBottom: "12px" }}>
@@ -5970,7 +5970,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
             {/* SELECTOR DE PERFILES AUTORIZADOS CON COLORES */}
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "6px", color: "var(--violeta, #5000BA)" }}>
+              <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "6px", color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
                 Perfiles Autorizados para este Widget:
               </label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -5984,7 +5984,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       style={{
                         fontSize: "0.78rem",
                         fontWeight: 700,
-                        background: seleccionado ? t.colorFondoSuave : "#ffffff",
+                        background: seleccionado ? t.colorFondoSuave : "var(--cf-ffffff, #ffffff)",
                         padding: "6px 10px",
                         borderRadius: "6px",
                         border: seleccionado ? `1.5px solid ${t.colorBorde}` : "1px solid var(--panel-linea, #E4E4E4)",
@@ -5992,7 +5992,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         alignItems: "center",
                         gap: "6px",
                         cursor: "pointer",
-                        color: seleccionado ? t.colorTexto : "#111"
+                        color: seleccionado ? t.colorTexto : "var(--ct-111111, #111)"
                       }}
                     >
                       <input
@@ -6018,7 +6018,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             </div>
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => setMostrarModalWidget(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", cursor: "pointer" }}>Cancelar</button>
+              <button type="button" onClick={() => setMostrarModalWidget(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "var(--cf-ffffff, #fff)", cursor: "pointer" }}>Cancelar</button>
               <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Guardar Widget & Permisos</button>
             </div>
           </form>
@@ -6028,7 +6028,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {/* MODAL CREAR NUEVO PANEL CON CONFIGURACIÓN MFA (PLT-002) */}
       {mostrarModalPanel && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-          <form onSubmit={e => { e.preventDefault(); handleGuardarPanel(); }} style={{ background: "#ffffff", borderRadius: "16px", padding: "24px", maxWidth: "480px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
+          <form onSubmit={e => { e.preventDefault(); handleGuardarPanel(); }} style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "16px", padding: "24px", maxWidth: "480px", width: "100%", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
             <h3 style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <LayoutGrid size={20} color="var(--violeta, #5000BA)" /> + Crear Nuevo Panel Personalizado
             </h3>
@@ -6048,27 +6048,27 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     ruta: `/panel/${slug || "nuevo"}`
                   });
                 }}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.88rem", fontWeight: 700 }}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--cb-d1d5db, #D1D5DB)", fontSize: "0.88rem", fontWeight: 700 }}
                 placeholder="Ej. Gestión"
               />
             </div>
 
             {/* Ruta del Panel (Auto-generada) */}
-            <div style={{ marginBottom: "16px", background: "#F3F4F6", padding: "10px 14px", borderRadius: "8px", border: "1px solid #E5E7EB" }}>
+            <div style={{ marginBottom: "16px", background: "var(--cf-f3f4f6, #F3F4F6)", padding: "10px 14px", borderRadius: "8px", border: "1px solid var(--cb-e5e7eb, #E5E7EB)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--ct-4b5563, #4B5563)", textTransform: "uppercase" }}>
                     Ruta de Navegación (Generada Automáticamente):
                   </span>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", fontFamily: "monospace", marginTop: "2px" }}>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)", fontFamily: "monospace", marginTop: "2px" }}>
                     {nuevoPanel.ruta || `/panel/${nuevoPanel.nombre.toLowerCase().trim().replace(/[^a-z0-9]/g, "_") || "nuevo"}`}
                   </div>
                 </div>
-                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#D1FAE5", padding: "4px 8px", borderRadius: "6px" }}>
+                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--ct-05876e, #05876E)", background: "var(--cf-d1fae5, #D1FAE5)", padding: "4px 8px", borderRadius: "6px" }}>
                   Automática
                 </span>
               </div>
-              <p style={{ fontSize: "0.74rem", color: "#6B7280", margin: "4px 0 0 0" }}>
+              <p style={{ fontSize: "0.74rem", color: "var(--ct-6b7280, #6B7280)", margin: "4px 0 0 0" }}>
                 No necesitas escribir rutas técnicas. Los widgets vinculados a este panel se renderizarán automáticamente en esta dirección.
               </p>
             </div>
@@ -6085,10 +6085,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
             {/* SELECTOR DE ÍCONO DE SIDEBAR */}
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ fontSize: "0.82rem", fontWeight: 800, display: "block", marginBottom: "6px", color: "var(--violeta, #5000BA)" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 800, display: "block", marginBottom: "6px", color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
                 Seleccionar Ícono para Visualizar en el Sidebar:
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(75px, 1fr))", gap: "8px", maxHeight: "150px", overflowY: "auto", border: "1px solid #E4E4E4", borderRadius: "8px", padding: "8px", background: "#ffffff" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(75px, 1fr))", gap: "8px", maxHeight: "150px", overflowY: "auto", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", borderRadius: "8px", padding: "8px", background: "var(--cf-ffffff, #ffffff)" }}>
                 {Object.keys(CATALOGO_ICONOS_PANEL).map(iconKey => {
                   const esSeleccionado = nuevoPanel.icono === iconKey;
                   return (
@@ -6104,13 +6104,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         gap: "4px",
                         padding: "8px 4px",
                         borderRadius: "6px",
-                        border: esSeleccionado ? "2px solid #5000BA" : "1px solid #E4E4E4",
-                        background: esSeleccionado ? "#F3E8FF" : "#ffffff",
+                        border: esSeleccionado ? "2px solid #5000BA" : "1px solid var(--cb-e4e4e4, #E4E4E4)",
+                        background: esSeleccionado ? "var(--cf-f3e8ff, #F3E8FF)" : "var(--cf-ffffff, #ffffff)",
                         cursor: "pointer"
                       }}
                     >
                       <IconoPanelDinamico nombreIcono={iconKey} color={esSeleccionado ? "#5000BA" : "#555555"} size={18} />
-                      <span style={{ fontSize: "0.64rem", fontWeight: esSeleccionado ? 800 : 500, color: esSeleccionado ? "#5000BA" : "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65px" }}>
+                      <span style={{ fontSize: "0.64rem", fontWeight: esSeleccionado ? 800 : 500, color: esSeleccionado ? "var(--ct-5000ba, #5000BA)" : "var(--ct-666666, #666)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65px" }}>
                         {iconKey}
                       </span>
                     </button>
@@ -6121,19 +6121,19 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
             {/* CHECKBOX REQUERIR MFA TOTP (PLT-002) */}
             <div style={{ marginBottom: "20px", background: "var(--panel-papel, #F7F6FA)", padding: "12px", borderRadius: "8px", border: "1px solid var(--panel-linea, #E4E4E4)" }}>
-              <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#111" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "var(--ct-111111, #111)" }}>
                 <input
                   type="checkbox"
                   checked={nuevoPanel.requiereMfa}
                   onChange={e => setNuevoPanel({ ...nuevoPanel, requiereMfa: e.target.checked })}
-                  style={{ width: "18px", height: "18px", accentColor: "#DC2626" }}
+                  style={{ width: "18px", height: "18px", accentColor: "var(--ct-dc2626, #DC2626)" }}
                 />
                 Requerir Autenticación Multifactor MFA (TOTP) al ingresar (PLT-002)
               </label>
             </div>
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => setMostrarModalPanel(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "#fff", cursor: "pointer" }}>Cancelar</button>
+              <button type="button" onClick={() => setMostrarModalPanel(false)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)", background: "var(--cf-ffffff, #fff)", cursor: "pointer" }}>Cancelar</button>
               <button type="submit" style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Crear Panel</button>
             </div>
           </form>
@@ -6151,23 +6151,23 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               setMensajeExito(`Panel '${panelEditarModal.nombre}' e ícono '${panelEditarModal.icono || "PanelLeft"}' actualizados.`);
               setTimeout(() => setMensajeExito(null), 3500);
             }}
-            style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "560px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}
+            style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "18px", padding: "24px", maxWidth: "560px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid #E4E4E4", paddingBottom: "12px" }}>
-              <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--violeta, #5000BA)", display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid var(--cb-e4e4e4, #E4E4E4)", paddingBottom: "12px" }}>
+              <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--ct-5000ba, var(--violeta, #5000BA))", display: "flex", alignItems: "center", gap: "8px" }}>
                 <IconoPanelDinamico nombreIcono={panelEditarModal.icono} color="var(--violeta, #5000BA)" size={20} /> Configurar Ícono & Panel: {panelEditarModal.nombre}
               </h3>
-              <button type="button" onClick={() => setPanelEditarModal(null)} style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <button type="button" onClick={() => setPanelEditarModal(null)} style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <X size={16} />
               </button>
             </div>
 
             {/* Selector de Ícono para el Sidebar */}
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ fontSize: "0.82rem", fontWeight: 800, display: "block", marginBottom: "6px", color: "var(--violeta, #5000BA)" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 800, display: "block", marginBottom: "6px", color: "var(--ct-5000ba, var(--violeta, #5000BA))" }}>
                 Seleccionar Ícono para Visualizar en el Sidebar:
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(75px, 1fr))", gap: "8px", maxHeight: "160px", overflowY: "auto", border: "1px solid #E4E4E4", borderRadius: "8px", padding: "8px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(75px, 1fr))", gap: "8px", maxHeight: "160px", overflowY: "auto", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", borderRadius: "8px", padding: "8px" }}>
                 {Object.keys(CATALOGO_ICONOS_PANEL).map(iconKey => {
                   const esSeleccionado = panelEditarModal.icono === iconKey;
                   return (
@@ -6183,13 +6183,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         gap: "4px",
                         padding: "8px 4px",
                         borderRadius: "6px",
-                        border: esSeleccionado ? "2px solid #5000BA" : "1px solid #E4E4E4",
-                        background: esSeleccionado ? "#F3E8FF" : "#ffffff",
+                        border: esSeleccionado ? "2px solid #5000BA" : "1px solid var(--cb-e4e4e4, #E4E4E4)",
+                        background: esSeleccionado ? "var(--cf-f3e8ff, #F3E8FF)" : "var(--cf-ffffff, #ffffff)",
                         cursor: "pointer"
                       }}
                     >
                       <IconoPanelDinamico nombreIcono={iconKey} color={esSeleccionado ? "#5000BA" : "#555555"} size={18} />
-                      <span style={{ fontSize: "0.64rem", fontWeight: esSeleccionado ? 800 : 500, color: esSeleccionado ? "#5000BA" : "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65px" }}>
+                      <span style={{ fontSize: "0.64rem", fontWeight: esSeleccionado ? 800 : 500, color: esSeleccionado ? "var(--ct-5000ba, #5000BA)" : "var(--ct-666666, #666)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65px" }}>
                         {iconKey}
                       </span>
                     </button>
@@ -6212,26 +6212,26 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   const rutaAuto = esBase ? panelEditarModal.ruta : `/panel/${slug || "nuevo"}`;
                   setPanelEditarModal({ ...panelEditarModal, nombre: val, ruta: rutaAuto });
                 }}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid #D1D5DB", fontSize: "0.88rem", fontWeight: 700 }}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: "1px solid var(--cb-d1d5db, #D1D5DB)", fontSize: "0.88rem", fontWeight: 700 }}
               />
             </div>
 
             {/* Ruta de Navegación (Auto-generada) */}
-            <div style={{ marginBottom: "16px", background: "#F3F4F6", padding: "10px 14px", borderRadius: "8px", border: "1px solid #E5E7EB" }}>
+            <div style={{ marginBottom: "16px", background: "var(--cf-f3f4f6, #F3F4F6)", padding: "10px 14px", borderRadius: "8px", border: "1px solid var(--cb-e5e7eb, #E5E7EB)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#4B5563", textTransform: "uppercase" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--ct-4b5563, #4B5563)", textTransform: "uppercase" }}>
                     Ruta de Navegación (Generada Automáticamente):
                   </span>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", fontFamily: "monospace", marginTop: "2px" }}>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--ct-5000ba, #5000BA)", fontFamily: "monospace", marginTop: "2px" }}>
                     {panelEditarModal.ruta}
                   </div>
                 </div>
-                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#05876E", background: "#D1FAE5", padding: "4px 8px", borderRadius: "6px" }}>
+                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--ct-05876e, #05876E)", background: "var(--cf-d1fae5, #D1FAE5)", padding: "4px 8px", borderRadius: "6px" }}>
                   Automática
                 </span>
               </div>
-              <p style={{ fontSize: "0.74rem", color: "#6B7280", margin: "4px 0 0 0" }}>
+              <p style={{ fontSize: "0.74rem", color: "var(--ct-6b7280, #6B7280)", margin: "4px 0 0 0" }}>
                 No necesitas escribir rutas técnicas. Los widgets vinculados a este panel se renderizarán automáticamente en esta dirección.
               </p>
             </div>
@@ -6242,38 +6242,38 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               <textarea
                 value={panelEditarModal.descripcion}
                 onChange={e => setPanelEditarModal({ ...panelEditarModal, descripcion: e.target.value })}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #E4E4E4", minHeight: "50px", fontSize: "0.82rem" }}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", minHeight: "50px", fontSize: "0.82rem" }}
               />
             </div>
 
             {/* Mostrar u Ocultar si no tiene widgets */}
-            <div style={{ marginBottom: "12px", background: "#F7F6FA", padding: "10px 12px", borderRadius: "8px", border: "1px solid #E4E4E4" }}>
-              <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#111111" }}>
+            <div style={{ marginBottom: "12px", background: "var(--cf-f7f6fa, #F7F6FA)", padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "var(--ct-111111, #111111)" }}>
                 <input
                   type="checkbox"
                   checked={panelEditarModal.mostrarSinWidgets !== false}
                   onChange={e => setPanelEditarModal({ ...panelEditarModal, mostrarSinWidgets: e.target.checked })}
-                  style={{ width: "16px", height: "16px", accentColor: "#5000BA" }}
+                  style={{ width: "16px", height: "16px", accentColor: "var(--ct-5000ba, #5000BA)" }}
                 />
                 Mostrar este panel en el sidebar aunque no tenga widgets asignados (como 'Próximamente')
               </label>
             </div>
 
             {/* Requerir MFA */}
-            <div style={{ marginBottom: "18px", background: "#F7F6FA", padding: "10px 12px", borderRadius: "8px", border: "1px solid #E4E4E4" }}>
+            <div style={{ marginBottom: "18px", background: "var(--cf-f7f6fa, #F7F6FA)", padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
               <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={!!panelEditarModal.requiereMfa}
                   onChange={e => setPanelEditarModal({ ...panelEditarModal, requiereMfa: e.target.checked })}
-                  style={{ width: "16px", height: "16px", accentColor: "#DC2626" }}
+                  style={{ width: "16px", height: "16px", accentColor: "var(--ct-dc2626, #DC2626)" }}
                 />
                 Requerir MFA TOTP al ingresar a este panel
               </label>
             </div>
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => setPanelEditarModal(null)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid #E4E4E4", background: "#fff", cursor: "pointer" }}>Cancelar</button>
+              <button type="button" onClick={() => setPanelEditarModal(null)} style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", background: "var(--cf-ffffff, #fff)", cursor: "pointer" }}>Cancelar</button>
               <button type="submit" style={{ padding: "8px 18px", borderRadius: "6px", border: "none", background: "var(--violeta, #5000BA)", color: "#fff", fontWeight: 800, cursor: "pointer" }}>Guardar Ajustes</button>
             </div>
           </form>
@@ -6283,20 +6283,20 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {/* MODAL REORGANIZAR / TRANSFERIR WIDGET ENTRE PANELES (MOVER VS DUPLICAR) */}
       {widgetTransferir && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200, padding: "20px" }}>
-          <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid #E4E4E4", paddingBottom: "12px" }}>
+          <div style={{ background: "var(--cf-ffffff, #ffffff)", borderRadius: "18px", padding: "24px", maxWidth: "520px", width: "100%", boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid var(--cb-e4e4e4, #E4E4E4)", paddingBottom: "12px" }}>
               <div>
-                <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "#5000BA", display: "flex", alignItems: "center", gap: "8px" }}>
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--ct-5000ba, #5000BA)", display: "flex", alignItems: "center", gap: "8px" }}>
                   <Move size={18} /> Reorganizar / Transferir Widget
                 </h3>
-                <span style={{ fontSize: "0.78rem", color: "#737373" }}>
+                <span style={{ fontSize: "0.78rem", color: "var(--ct-737373, #737373)" }}>
                   Perfil: <strong>{perfilActualObj?.nombre}</strong>
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setWidgetTransferir(null)}
-                style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ background: "var(--cf-ffffff, #ffffff)", border: "1px solid var(--cb-e4e4e4, #E4E4E4)", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <X size={16} />
               </button>
@@ -6304,16 +6304,16 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
             <form onSubmit={handleEjecutarTransferencia} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Información del Widget */}
-              <div style={{ background: "#F7F6FA", padding: "12px 14px", borderRadius: "10px", border: "1px solid #E4E4E4" }}>
-                <strong style={{ fontSize: "0.88rem", display: "block", color: "#111111" }}>{widgetTransferir.widget.nombre}</strong>
-                <span style={{ fontSize: "0.75rem", color: "#737373", display: "block", marginTop: "2px" }}>
+              <div style={{ background: "var(--cf-f7f6fa, #F7F6FA)", padding: "12px 14px", borderRadius: "10px", border: "1px solid var(--cb-e4e4e4, #E4E4E4)" }}>
+                <strong style={{ fontSize: "0.88rem", display: "block", color: "var(--ct-111111, #111111)" }}>{widgetTransferir.widget.nombre}</strong>
+                <span style={{ fontSize: "0.75rem", color: "var(--ct-737373, #737373)", display: "block", marginTop: "2px" }}>
                   Panel Origen Actual: <strong>{panelesSidebar.find(p => p.id === widgetTransferir.panelOrigenId)?.nombre || widgetTransferir.panelOrigenId}</strong>
                 </span>
               </div>
 
               {/* Selección de Acción: Mover (por defecto) vs Duplicar */}
               <div>
-                <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111111", display: "block", marginBottom: "8px" }}>
+                <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--ct-111111, #111111)", display: "block", marginBottom: "8px" }}>
                   ¿Qué deseas hacer con este widget?
                 </label>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -6324,8 +6324,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       gap: "10px",
                       padding: "10px 12px",
                       borderRadius: "8px",
-                      border: accionTransferir === "mover" ? "1.5px solid #5000BA" : "1px solid #E4E4E4",
-                      background: accionTransferir === "mover" ? "#F3E8FF" : "#FFFFFF",
+                      border: accionTransferir === "mover" ? "1.5px solid #5000BA" : "1px solid var(--cb-e4e4e4, #E4E4E4)",
+                      background: accionTransferir === "mover" ? "var(--cf-f3e8ff, #F3E8FF)" : "var(--cf-ffffff, #FFFFFF)",
                       cursor: "pointer",
                       fontSize: "0.84rem",
                       fontWeight: 700
@@ -6340,7 +6340,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     />
                     <div>
                       <span>⇄ Mover Widget (Por Defecto)</span>
-                      <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "#737373" }}>
+                      <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "var(--ct-737373, #737373)" }}>
                         Quita el widget del panel origen y lo transfiere al panel destino.
                       </span>
                     </div>
@@ -6353,8 +6353,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       gap: "10px",
                       padding: "10px 12px",
                       borderRadius: "8px",
-                      border: accionTransferir === "duplicar" ? "1.5px solid #5000BA" : "1px solid #E4E4E4",
-                      background: accionTransferir === "duplicar" ? "#F3E8FF" : "#FFFFFF",
+                      border: accionTransferir === "duplicar" ? "1.5px solid #5000BA" : "1px solid var(--cb-e4e4e4, #E4E4E4)",
+                      background: accionTransferir === "duplicar" ? "var(--cf-f3e8ff, #F3E8FF)" : "var(--cf-ffffff, #FFFFFF)",
                       cursor: "pointer",
                       fontSize: "0.84rem",
                       fontWeight: 700
@@ -6369,7 +6369,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     />
                     <div>
                       <span>Duplicar Widget</span>
-                      <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "#737373" }}>
+                      <span style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "var(--ct-737373, #737373)" }}>
                         Conserva el widget en el panel origen y lo añade también al panel destino.
                       </span>
                     </div>
@@ -6379,7 +6379,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
               {/* Selección del Panel Destino */}
               <div>
-                <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111111", display: "block", marginBottom: "6px" }}>
+                <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--ct-111111, #111111)", display: "block", marginBottom: "6px" }}>
                   Seleccionar Panel Destino
                 </label>
                 <SelectConBuscador
@@ -6390,10 +6390,10 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     width: "100%",
                     padding: "10px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #E4E4E4",
+                    border: "1px solid var(--cb-e4e4e4, #E4E4E4)",
                     fontSize: "0.88rem",
                     fontWeight: 700,
-                    background: "#FFFFFF"
+                    background: "var(--cf-ffffff, #FFFFFF)"
                   }}
                 >
                   {panelesSidebar
@@ -6412,8 +6412,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   type="button"
                   onClick={() => setWidgetTransferir(null)}
                   style={{
-                    background: "#F7F6FA",
-                    border: "1px solid #E4E4E4",
+                    background: "var(--cf-f7f6fa, #F7F6FA)",
+                    border: "1px solid var(--cb-e4e4e4, #E4E4E4)",
                     borderRadius: "8px",
                     padding: "8px 16px",
                     fontSize: "0.82rem",
@@ -6466,27 +6466,27 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "24px",
               maxWidth: "520px",
               width: "100%",
               boxShadow: "0 20px 40px rgba(0, 0, 0, 0.2)",
-              border: "1px solid #E4E4E4"
+              border: "1px solid var(--cb-e4e4e4, #E4E4E4)"
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", color: "#5000BA" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "var(--cf-f5f3ff, #F5F3FF)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ct-5000ba, #5000BA)" }}>
                   <Pencil size={18} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "#111111" }}>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, #111111)" }}>
                     Editar Nombre en Panel
                   </h3>
-                  <p style={{ fontSize: "0.78rem", color: "#737373", margin: "2px 0 0 0" }}>
-                    Panel: <strong style={{ color: "#5000BA" }}>{widgetEditarNombre.panelNombre}</strong>
+                  <p style={{ fontSize: "0.78rem", color: "var(--ct-737373, #737373)", margin: "2px 0 0 0" }}>
+                    Panel: <strong style={{ color: "var(--ct-5000ba, #5000BA)" }}>{widgetEditarNombre.panelNombre}</strong>
                   </p>
                 </div>
               </div>
@@ -6494,26 +6494,26 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 type="button"
                 onClick={() => setWidgetEditarNombre(null)}
                 disabled={guardandoNombreWidget}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#737373", padding: "4px" }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ct-737373, #737373)", padding: "4px" }}
               >
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleGuardarNombreWidget} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div style={{ background: "#F8FAFC", borderRadius: "10px", padding: "12px", border: "1px solid #E2E8F0", fontSize: "0.82rem" }}>
+              <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", borderRadius: "10px", padding: "12px", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", fontSize: "0.82rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                  <span style={{ color: "#64748B", fontWeight: 600 }}>Identificador Clave:</span>
-                  <code style={{ color: "#0F172A", fontWeight: 700 }}>{widgetEditarNombre.widgetClave}</code>
+                  <span style={{ color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>Identificador Clave:</span>
+                  <code style={{ color: "var(--ct-0f172a, #0F172A)", fontWeight: 700 }}>{widgetEditarNombre.widgetClave}</code>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#64748B", fontWeight: 600 }}>Nombre Original Base:</span>
-                  <span style={{ color: "#334155", fontWeight: 700 }}>{widgetEditarNombre.widgetNombreBase}</span>
+                  <span style={{ color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>Nombre Original Base:</span>
+                  <span style={{ color: "var(--ct-334155, #334155)", fontWeight: 700 }}>{widgetEditarNombre.widgetNombreBase}</span>
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: "0.84rem", fontWeight: 800, color: "#111111", display: "block", marginBottom: "6px" }}>
+                <label style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--ct-111111, #111111)", display: "block", marginBottom: "6px" }}>
                   Nombre Visual para este Panel
                 </label>
                 <input
@@ -6527,14 +6527,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     width: "100%",
                     padding: "10px 12px",
                     borderRadius: "8px",
-                    border: "1.5px solid #DDD6FE",
+                    border: "1.5px solid var(--cb-ddd6fe, #DDD6FE)",
                     fontSize: "0.92rem",
                     fontWeight: 600,
                     outline: "none",
                     boxSizing: "border-box"
                   }}
                 />
-                <span style={{ display: "block", fontSize: "0.74rem", color: "#737373", marginTop: "5px" }}>
+                <span style={{ display: "block", fontSize: "0.74rem", color: "var(--ct-737373, #737373)", marginTop: "5px" }}>
                   💡 Este nombre personalizado solo se aplicará al visualizar este widget dentro del panel <strong>{widgetEditarNombre.panelNombre}</strong>.
                 </span>
               </div>
@@ -6545,9 +6545,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   onClick={handleRestaurarNombreOriginal}
                   disabled={guardandoNombreWidget}
                   style={{
-                    background: "#FEF2F2",
-                    border: "1px solid #FECACA",
-                    color: "#DC2626",
+                    background: "var(--cf-fef2f2, #FEF2F2)",
+                    border: "1px solid var(--cb-fecaca, #FECACA)",
+                    color: "var(--ct-dc2626, #DC2626)",
                     borderRadius: "8px",
                     padding: "8px 12px",
                     fontSize: "0.78rem",
@@ -6568,8 +6568,8 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     onClick={() => setWidgetEditarNombre(null)}
                     disabled={guardandoNombreWidget}
                     style={{
-                      background: "#F7F6FA",
-                      border: "1px solid #E4E4E4",
+                      background: "var(--cf-f7f6fa, #F7F6FA)",
+                      border: "1px solid var(--cb-e4e4e4, #E4E4E4)",
                       borderRadius: "8px",
                       padding: "8px 14px",
                       fontSize: "0.82rem",

@@ -38,8 +38,8 @@ const DATOS_POR_NEGOCIO: Record<string, DatosManualNegocio> = {
     nombreNegocio: "Tranqi Legaltech",
     etiquetaRubro: "SERVICIOS LEGALES & HONORARIOS PROFESIONALES",
     colorTema: "#5000BA",
-    colorBgBadge: "#EDE9FE",
-    colorTextoBadge: "#5000BA",
+    colorBgBadge: "var(--cf-ede9fe, #EDE9FE)",
+    colorTextoBadge: "var(--ct-5000ba, #5000BA)",
     icono: <Scale size={16} />,
     capa1Ejemplos: '"Derecho Societario", "Inquilinato", "Laboral", "Contratos & Minutas", "Patrocinios"',
     capa1Desc: "(Agrupa áreas del derecho, trámites y servicios jurídicos)",
@@ -52,8 +52,8 @@ const DATOS_POR_NEGOCIO: Record<string, DatosManualNegocio> = {
     nombreNegocio: "Tinkay Floristería",
     etiquetaRubro: "FLORISTERÍA DE EXPORTACIÓN & ARREGLOS ON-DEMAND",
     colorTema: "#BE123C",
-    colorBgBadge: "#FFE4E6",
-    colorTextoBadge: "#BE123C",
+    colorBgBadge: "var(--cf-ffe4e6, #FFE4E6)",
+    colorTextoBadge: "var(--ct-be123c, #BE123C)",
     icono: <Flower2 size={16} />,
     capa1Ejemplos: '"Bouquets Estilo Coreano", "Box Florales", "Para Florero", "Eventos y Ceremonias", "Condolencias"',
     capa1Desc: "(Agrupa colecciones de arreglos, ocasiones botánicas, banners y fotos reales de taller)",
@@ -66,8 +66,8 @@ const DATOS_POR_NEGOCIO: Record<string, DatosManualNegocio> = {
     nombreNegocio: "FastFix Home",
     etiquetaRubro: "MANTENIMIENTO DEL HOGAR & REPARACIONES",
     colorTema: "#0284C7",
-    colorBgBadge: "#E0F2FE",
-    colorTextoBadge: "#0284C7",
+    colorBgBadge: "var(--cf-e0f2fe, #E0F2FE)",
+    colorTextoBadge: "var(--ct-0284c7, #0284C7)",
     icono: <Wrench size={16} />,
     capa1Ejemplos: '"Plomería & Fugas", "Electricidad", "Calefones & Bombas", "Cerrajería"',
     capa1Desc: "(Agrupa rubros técnicos de diagnóstico y reparación)",
@@ -80,8 +80,8 @@ const DATOS_POR_NEGOCIO: Record<string, DatosManualNegocio> = {
     nombreNegocio: "Margaritas Floristería",
     etiquetaRubro: "FLORISTERÍA BOUTIQUE & SUSCRIPCIONES",
     colorTema: "#D97706",
-    colorBgBadge: "#FEF3C7",
-    colorTextoBadge: "#B45309",
+    colorBgBadge: "var(--cf-fef3c7, #FEF3C7)",
+    colorTextoBadge: "var(--ct-b45309, #B45309)",
     icono: <Flower2 size={16} />,
     capa1Ejemplos: '"Ramos Exclusivos", "Centros de Mesa", "Suscripciones Semanales", "Ocasiones Especiales"',
     capa1Desc: "(Agrupa colecciones de flores silvestres y ambientaciones florales boutique)",
@@ -134,7 +134,7 @@ export function ManualConfiguracionCatalogoModal({
     >
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "800px",
@@ -150,7 +150,7 @@ export function ManualConfiguracionCatalogoModal({
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -177,7 +177,7 @@ export function ManualConfiguracionCatalogoModal({
               <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800 }}>
                 Manual de Configuración de Catálogo Comercial (PLT-009)
               </h2>
-              <span style={{ fontSize: "0.75rem", color: "#94A3B8" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--ct-94a3b8, #94A3B8)" }}>
                 Guía oficial de administración, recursos digitales, multivariantes e impuestos SRI
               </span>
             </div>
@@ -189,7 +189,7 @@ export function ManualConfiguracionCatalogoModal({
             style={{
               background: "transparent",
               border: "none",
-              color: "#94A3B8",
+              color: "var(--ct-94a3b8, #94A3B8)",
               cursor: "pointer",
               padding: "6px",
             }}
@@ -203,8 +203,8 @@ export function ManualConfiguracionCatalogoModal({
           <div
             style={{
               display: "flex",
-              background: "#F8FAFC",
-              borderBottom: "1px solid #E2E8F0",
+              background: "var(--cf-f8fafc, #F8FAFC)",
+              borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)",
               padding: "8px 16px",
               gap: "8px",
             }}
@@ -215,9 +215,9 @@ export function ManualConfiguracionCatalogoModal({
               style={{
                 padding: "7px 14px",
                 borderRadius: "8px",
-                border: tabActiva === "tranqi" ? "1.5px solid #5000BA" : "1px solid #CBD5E1",
-                background: tabActiva === "tranqi" ? "#F5F3FF" : "#FFFFFF",
-                color: tabActiva === "tranqi" ? "#5000BA" : "#475569",
+                border: tabActiva === "tranqi" ? "1.5px solid #5000BA" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                background: tabActiva === "tranqi" ? "var(--cf-f5f3ff, #F5F3FF)" : "var(--cf-ffffff, #FFFFFF)",
+                color: tabActiva === "tranqi" ? "var(--ct-5000ba, #5000BA)" : "var(--ct-475569, #475569)",
                 fontWeight: 700,
                 fontSize: "0.82rem",
                 cursor: "pointer",
@@ -236,8 +236,8 @@ export function ManualConfiguracionCatalogoModal({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              background: "#F8FAFC",
-              borderBottom: "1px solid #E2E8F0",
+              background: "var(--cf-f8fafc, #F8FAFC)",
+              borderBottom: "1px solid var(--cb-e2e8f0, #E2E8F0)",
               padding: "10px 20px",
             }}
           >
@@ -257,7 +257,7 @@ export function ManualConfiguracionCatalogoModal({
               {datos.icono}
               <span>{datos.nombreNegocio}</span>
             </div>
-            <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 600 }}>
+            <span style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)", fontWeight: 600 }}>
               {datos.etiquetaRubro}
             </span>
           </div>
@@ -270,7 +270,7 @@ export function ManualConfiguracionCatalogoModal({
             overflowY: "auto",
             flex: 1,
             fontSize: "0.88rem",
-            color: "#334155",
+            color: "var(--ct-334155, #334155)",
             lineHeight: 1.5,
           }}
         >
@@ -315,28 +315,28 @@ export function ManualConfiguracionCatalogoModal({
               <div style={{ color: "#E2E8F0" }}>
                 [ <strong style={{ color: "#38BDF8" }}>CAPA 1: CATEGORÍA / COLECCIÓN</strong> ]  ➔  {datos.capa1Ejemplos}
               </div>
-              <div style={{ color: "#94A3B8" }}>
+              <div style={{ color: "var(--ct-94a3b8, #94A3B8)" }}>
                 {"                                       "}{datos.capa1Desc}
               </div>
               <div style={{ color: "#38BDF8" }}>              │</div>
               <div style={{ color: "#E2E8F0" }}>
                 [ <strong style={{ color: "#38BDF8" }}>CAPA 2: PRODUCTO MASTER</strong> ]        ➔  {datos.capa2Ejemplos}
               </div>
-              <div style={{ color: "#94A3B8" }}>
+              <div style={{ color: "var(--ct-94a3b8, #94A3B8)" }}>
                 {"                                       "}{datos.capa2Desc}
               </div>
               <div style={{ color: "#38BDF8" }}>              │</div>
               <div style={{ color: "#E2E8F0" }}>
                 [ <strong style={{ color: "#38BDF8" }}>CAPA 3: VARIANTES / SKUs</strong> ]       ➔  {datos.capa3Ejemplos}
               </div>
-              <div style={{ color: "#94A3B8" }}>
+              <div style={{ color: "var(--ct-94a3b8, #94A3B8)" }}>
                 {"                                       "}{datos.capa3Desc}
               </div>
             </div>
 
             {/* Paso a paso de configuración */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px" }}>
-              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid var(--cb-ffffff-a100, rgba(255,255,255,0.1))" }}>
                 <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
                   1️⃣ Paso 1: Colección
                 </div>
@@ -345,7 +345,7 @@ export function ManualConfiguracionCatalogoModal({
                 </div>
               </div>
 
-              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid var(--cb-ffffff-a100, rgba(255,255,255,0.1))" }}>
                 <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
                   2️⃣ Paso 2: Producto Master
                 </div>
@@ -354,7 +354,7 @@ export function ManualConfiguracionCatalogoModal({
                 </div>
               </div>
 
-              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "10px 12px", border: "1px solid var(--cb-ffffff-a100, rgba(255,255,255,0.1))" }}>
                 <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.78rem", marginBottom: "3px" }}>
                   3️⃣ Paso 3: Variantes / SKUs
                 </div>
@@ -373,8 +373,8 @@ export function ManualConfiguracionCatalogoModal({
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                 <span
                   style={{
-                    background: "#EDE9FE",
-                    color: "#5000BA",
+                    background: "var(--cf-ede9fe, #EDE9FE)",
+                    color: "var(--ct-5000ba, #5000BA)",
                     padding: "3px 10px",
                     borderRadius: "12px",
                     fontSize: "0.75rem",
@@ -385,15 +385,15 @@ export function ManualConfiguracionCatalogoModal({
                 </span>
               </div>
 
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
+              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                 Manual de Catálogo: Tranqi Legal
               </h3>
-              <p style={{ margin: "0 0 16px", color: "#64748B" }}>
+              <p style={{ margin: "0 0 16px", color: "var(--ct-64748b, #64748B)" }}>
                 En Tranqi el catálogo comercial liquida <strong>honorarios profesionales, patrocinios jurídicos y planes de retención legal</strong> con desglose tributario SRI y Payphone.
               </p>
 
-              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#334155" }}>
+              <div style={{ background: "var(--cf-f8fafc, #F8FAFC)", border: "1px solid var(--cb-e2e8f0, #E2E8F0)", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "var(--ct-334155, #334155)" }}>
                   <Scale size={17} />
                   <span>1. Tipos de Honorarios y Servicios Jurídicos</span>
                 </div>
@@ -404,12 +404,12 @@ export function ManualConfiguracionCatalogoModal({
                 </ul>
               </div>
 
-              <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: "10px", padding: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#5B21B6" }}>
+              <div style={{ background: "var(--cf-f5f3ff, #F5F3FF)", border: "1px solid var(--cb-ddd6fe, #DDD6FE)", borderRadius: "10px", padding: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "var(--ct-5b21b6, #5B21B6)" }}>
                   <Calculator size={17} />
                   <span>2. Facturación Electrónica e IVA 15% SRI</span>
                 </div>
-                <p style={{ margin: "0", fontSize: "0.82rem", color: "#4C1D95" }}>
+                <p style={{ margin: "0", fontSize: "0.82rem", color: "var(--ct-4c1d95, #4C1D95)" }}>
                   Todo honorario cobrado liquida automáticamente el comprobante con la base imponible y el IVA desglosado. Si el servicio goza de exención tributaria (art. 56 LRTI), configurar como <code>IVA 0% (Exento SRI)</code>.
                 </p>
               </div>
@@ -424,8 +424,8 @@ export function ManualConfiguracionCatalogoModal({
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                 <span
                   style={{
-                    background: "#FFE4E6",
-                    color: "#BE123C",
+                    background: "var(--cf-ffe4e6, #FFE4E6)",
+                    color: "var(--ct-be123c, #BE123C)",
                     padding: "3px 10px",
                     borderRadius: "12px",
                     fontSize: "0.75rem",
@@ -436,20 +436,20 @@ export function ManualConfiguracionCatalogoModal({
                 </span>
               </div>
 
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
+              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                 Manual de Catálogo: Tinkay Floristería
               </h3>
-              <p style={{ margin: "0 0 16px", color: "#64748B" }}>
+              <p style={{ margin: "0 0 16px", color: "var(--ct-64748b, #64748B)" }}>
                 En Tinkay el catálogo comercial se estructura en torno a{" "}
                 <strong>flores frescas de exportación, regalos on-demand y montajes de eventos</strong>.
               </p>
 
-              <div style={{ background: "#FFFDF8", border: "1px solid #FED7AA", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#9A3412" }}>
+              <div style={{ background: "var(--cf-fffdf8, #FFFDF8)", border: "1px solid var(--cb-fed7aa, #FED7AA)", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "var(--ct-9a3412, #9A3412)" }}>
                   <Layers size={17} />
                   <span>1. Multivariantes y Tarifa IVA 0% / 15% SRI</span>
                 </div>
-                <ul style={{ margin: "0 0 10px 0", paddingLeft: "18px", fontSize: "0.82rem", color: "#431407" }}>
+                <ul style={{ margin: "0 0 10px 0", paddingLeft: "18px", fontSize: "0.82rem", color: "var(--ct-431407, #431407)" }}>
                   <li><strong>Bouquets y Box Florales:</strong> Tarifa IVA 0% (PVP = Base Imponible).</li>
                   <li><strong>Complementos (Chocolates, Peluches, Globos):</strong> Tarifa IVA 15%.</li>
                 </ul>
@@ -462,10 +462,10 @@ export function ManualConfiguracionCatalogoModal({
         <div
           style={{
             padding: "12px 20px",
-            borderTop: "1px solid #E2E8F0",
+            borderTop: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             display: "flex",
             justifyContent: "flex-end",
-            background: "#F8FAFC",
+            background: "var(--cf-f8fafc, #F8FAFC)",
           }}
         >
           <button

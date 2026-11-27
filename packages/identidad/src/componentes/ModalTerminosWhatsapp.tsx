@@ -105,7 +105,7 @@ export function ModalTerminosWhatsapp({
     >
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--cf-ffffff, #ffffff)",
           borderRadius: "20px",
           maxWidth: "640px",
           width: "100%",
@@ -113,7 +113,7 @@ export function ModalTerminosWhatsapp({
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          border: "1px solid #E5E7EB",
+          border: "1px solid var(--cb-e5e7eb, #E5E7EB)",
           overflow: "hidden",
         }}
       >
@@ -121,11 +121,11 @@ export function ModalTerminosWhatsapp({
         <div
           style={{
             padding: "20px 24px",
-            borderBottom: "1px solid #F3F4F6",
+            borderBottom: "1px solid var(--cb-f3f4f6, #F3F4F6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+            background: "linear-gradient(135deg, var(--cf-ecfdf5, #ECFDF5) 0%, var(--cf-d1fae5, #D1FAE5) 100%)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -144,10 +144,10 @@ export function ModalTerminosWhatsapp({
               <MessageSquare size={22} color="#ffffff" />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "#065F46" }}>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--ct-065f46, #065F46)" }}>
                 Autorización de Contacto por WhatsApp
               </h3>
-              <p style={{ fontSize: "0.78rem", color: "#047857", margin: 0 }}>
+              <p style={{ fontSize: "0.78rem", color: "var(--ct-047857, #047857)", margin: 0 }}>
                 {negocioNombre} — Cláusula de Consentimiento LOPDP
               </p>
             </div>
@@ -160,7 +160,7 @@ export function ModalTerminosWhatsapp({
               border: "none",
               cursor: "pointer",
               padding: "6px",
-              color: "#059669",
+              color: "var(--ct-059669, #059669)",
               borderRadius: "8px",
             }}
           >
@@ -169,7 +169,7 @@ export function ModalTerminosWhatsapp({
         </div>
 
         {/* BARRA DE PROGRESO */}
-        <div style={{ height: "4px", width: "100%", background: "#E5E7EB" }}>
+        <div style={{ height: "4px", width: "100%", background: "var(--cf-e5e7eb, #E5E7EB)" }}>
           <div
             style={{
               height: "100%",
@@ -184,14 +184,14 @@ export function ModalTerminosWhatsapp({
         <div
           style={{
             padding: "10px 24px",
-            background: leidoFinal ? "#ECFDF5" : "#F0FDF4",
-            borderBottom: "1px solid #E5E7EB",
+            background: leidoFinal ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-f0fdf4, #F0FDF4)",
+            borderBottom: "1px solid var(--cb-e5e7eb, #E5E7EB)",
             display: "flex",
             alignItems: "center",
             gap: "8px",
             fontSize: "0.8rem",
             fontWeight: 700,
-            color: leidoFinal ? "#047857" : "#065F46",
+            color: leidoFinal ? "var(--ct-047857, #047857)" : "var(--ct-065f46, #065F46)",
           }}
         >
           {leidoFinal ? (
@@ -219,17 +219,17 @@ export function ModalTerminosWhatsapp({
             flex: 1,
             fontSize: "0.88rem",
             lineHeight: 1.65,
-            color: "#374151",
+            color: "var(--ct-374151, #374151)",
           }}
         >
-          <h4 style={{ fontSize: "1rem", color: "#065F46", marginTop: 0 }}>
+          <h4 style={{ fontSize: "1rem", color: "var(--ct-065f46, #065F46)", marginTop: 0 }}>
             Cláusula de Consentimiento Expreso para Contacto por WhatsApp
           </h4>
           <p>
             Al marcar la opción de contacto por WhatsApp en la Plataforma <strong>{negocioNombre}</strong>, autorizas de forma libre, voluntaria, explícita e informada la vinculación de tu número telefónico registrado para la recepción de mensajes automáticos e interactivos de WhatsApp.
           </p>
 
-          <h4 style={{ fontSize: "0.95rem", color: "#111827" }}>1. Finalidad del Contacto y Envío de Información</h4>
+          <h4 style={{ fontSize: "0.95rem", color: "var(--ct-111827, #111827)" }}>1. Finalidad del Contacto y Envío de Información</h4>
           <p>
             Tu número telefónico de WhatsApp se utilizará para:
           </p>
@@ -239,12 +239,12 @@ export function ModalTerminosWhatsapp({
             <li>Recordatorios de citas, entregas, confirmaciones de seguridad y soporte directo al cliente.</li>
           </ul>
 
-          <h4 style={{ fontSize: "0.95rem", color: "#111827" }}>2. Confidencialidad y Protección LOPDP</h4>
+          <h4 style={{ fontSize: "0.95rem", color: "var(--ct-111827, #111827)" }}>2. Confidencialidad y Protección LOPDP</h4>
           <p>
             En cumplimiento estricto con la Ley Orgánica de Protección de Datos Personales (LOPDP) de Ecuador, tu número telefónico no será compartido, cedido ni vendido a terceros no autorizados.
           </p>
 
-          <h4 style={{ fontSize: "0.95rem", color: "#111827" }}>3. Revocación del Consentimiento (Carácter Opcional)</h4>
+          <h4 style={{ fontSize: "0.95rem", color: "var(--ct-111827, #111827)" }}>3. Revocación del Consentimiento (Carácter Opcional)</h4>
           <p>
             Recordamos que el contacto por WhatsApp es <strong>100% opcional</strong>. Puedes revocar esta autorización o desvincular tu número telefónico en cualquier momento desde la configuración de tu perfil en <code>Mi Cuenta → Notificaciones & Consentimientos</code>.
           </p>
@@ -253,13 +253,13 @@ export function ModalTerminosWhatsapp({
             style={{
               marginTop: "24px",
               padding: "14px",
-              background: "#ECFDF5",
+              background: "var(--cf-ecfdf5, #ECFDF5)",
               borderRadius: "12px",
               border: "1px dashed #6EE7B7",
               textAlign: "center",
               fontWeight: 800,
               fontSize: "0.82rem",
-              color: "#047857",
+              color: "var(--ct-047857, #047857)",
             }}
           >
             fin de la cláusula de autorización de whatsapp 
@@ -270,11 +270,11 @@ export function ModalTerminosWhatsapp({
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid #F3F4F6",
+            borderTop: "1px solid var(--cb-f3f4f6, #F3F4F6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#ffffff",
+            background: "var(--cf-ffffff, #ffffff)",
             gap: "12px",
           }}
         >
@@ -284,9 +284,9 @@ export function ModalTerminosWhatsapp({
             style={{
               padding: "10px 18px",
               borderRadius: "10px",
-              border: "1px solid #D1D5DB",
-              background: "#ffffff",
-              color: "#374151",
+              border: "1px solid var(--cb-d1d5db, #D1D5DB)",
+              background: "var(--cf-ffffff, #ffffff)",
+              color: "var(--ct-374151, #374151)",
               fontWeight: 700,
               fontSize: "0.85rem",
               cursor: "pointer",
@@ -305,8 +305,8 @@ export function ModalTerminosWhatsapp({
               border: "none",
               background: leidoFinal
                 ? "linear-gradient(135deg, #059669 0%, #047857 100%)"
-                : "#E5E7EB",
-              color: leidoFinal ? "#ffffff" : "#9CA3AF",
+                : "var(--cf-e5e7eb, #E5E7EB)",
+              color: leidoFinal ? "#ffffff" : "var(--ct-9ca3af, #9CA3AF)",
               fontWeight: 800,
               fontSize: "0.9rem",
               cursor: leidoFinal ? "pointer" : "not-allowed",

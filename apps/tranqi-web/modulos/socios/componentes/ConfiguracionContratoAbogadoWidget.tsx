@@ -140,7 +140,7 @@ export function ConfiguracionContratoAbogadoWidget() {
             onClick={() => setVista("editar")}
             style={{
               padding: "8px 16px",
-              background: vista === "editar" ? "#5000BA" : "#FFF",
+              background: vista === "editar" ? "#5000BA" : "var(--cf-ffffff, #FFF)",
               color: vista === "editar" ? "#FFF" : "var(--texto-2)",
               border: "1px solid " + (vista === "editar" ? "#5000BA" : "var(--linea-fuerte)"),
               borderRadius: "8px",
@@ -159,7 +159,7 @@ export function ConfiguracionContratoAbogadoWidget() {
             onClick={() => setVista("vista_previa")}
             style={{
               padding: "8px 16px",
-              background: vista === "vista_previa" ? "#5000BA" : "#FFF",
+              background: vista === "vista_previa" ? "#5000BA" : "var(--cf-ffffff, #FFF)",
               color: vista === "vista_previa" ? "#FFF" : "var(--texto-2)",
               border: "1px solid " + (vista === "vista_previa" ? "#5000BA" : "var(--linea-fuerte)"),
               borderRadius: "8px",
@@ -223,7 +223,7 @@ export function ConfiguracionContratoAbogadoWidget() {
       {vista === "editar" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div>
-            <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 800, color: "#111", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 800, color: "var(--ct-111111, #111)", marginBottom: "6px" }}>
               Título del Contrato
             </label>
             <input
@@ -243,7 +243,7 @@ export function ConfiguracionContratoAbogadoWidget() {
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 800, color: "#111", marginBottom: "8px" }}>
+            <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 800, color: "var(--ct-111111, #111)", marginBottom: "8px" }}>
               Contenido de la Plantilla (Formato Markdown)
             </label>
 
@@ -275,7 +275,7 @@ export function ConfiguracionContratoAbogadoWidget() {
       ) : (
         <div
           style={{
-            background: "#FFF",
+            background: "var(--cf-ffffff, #FFF)",
             padding: "30px 40px",
             borderRadius: "12px",
             border: "1px solid var(--linea)",

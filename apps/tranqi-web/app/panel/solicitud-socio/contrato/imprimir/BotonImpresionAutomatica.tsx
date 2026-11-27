@@ -30,7 +30,7 @@ export function BotonImpresionAutomatica() {
           display: "flex",
           alignItems: "center",
           gap: "6px",
-          background: "#FFF",
+          background: "var(--cf-ffffff, #FFF)",
           border: "1px solid var(--linea-fuerte)",
           borderRadius: "6px",
           padding: "6px 12px",

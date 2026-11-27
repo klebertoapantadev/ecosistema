@@ -38,7 +38,7 @@ export default async function PaginaBienvenida({ searchParams }: PageProps) {
               Incorporación al Equipo Jurídico
             </div>
             <div className="saludo-bienvenida">¡Bienvenido(a), Doctor(a)!</div>
-            <p style={{ marginTop: "8px", marginBottom: "16px", fontSize: "0.88rem", color: "#555" }}>
+            <p style={{ marginTop: "8px", marginBottom: "16px", fontSize: "0.88rem", color: "var(--ct-555555, #555)" }}>
               Estás a un paso de completar tu solicitud para unirte a la <strong>Red de Abogados Verificados de tranqi</strong>. Confirma tus nombres y apellidos completos tal como constan en tu matrícula profesional / SENESCYT.
             </p>
           </>

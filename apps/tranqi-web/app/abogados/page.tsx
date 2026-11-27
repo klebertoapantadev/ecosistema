@@ -3,7 +3,7 @@ import { Check, ArrowRight, ArrowLeft } from "lucide-react";
 
 export default function PaginaRedAbogados() {
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#ffffff", color: "#333333", fontFamily: "var(--fuente-sans, 'Poppins', 'Inter', sans-serif)", overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--cf-ffffff, #ffffff)", color: "var(--ct-333333, #333333)", fontFamily: "var(--fuente-sans, 'Poppins', 'Inter', sans-serif)", overflowX: "hidden" }}>
       {/* ═════════════════════════════════════════════════════════════ */}
       {/* NAVEGACIÓN SUPERIOR (Fondo Blanco, idéntica al original) */}
       {/* ═════════════════════════════════════════════════════════════ */}
@@ -12,9 +12,9 @@ export default function PaginaRedAbogados() {
           position: "sticky",
           top: 0,
           zIndex: 50,
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--cf-ffffff, #ffffff)",
           boxShadow: "0 1px 10px rgba(0, 0, 0, 0.06)",
-          borderBottom: "1px solid #f0f0f0"
+          borderBottom: "1px solid var(--cb-f0f0f0, #f0f0f0)"
         }}
       >
         <div
@@ -49,7 +49,7 @@ export default function PaginaRedAbogados() {
             <a
               href="#beneficios"
               style={{
-                color: "#5100bb",
+                color: "var(--ct-5100bb, #5100bb)",
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 fontWeight: 600,
@@ -61,7 +61,7 @@ export default function PaginaRedAbogados() {
             <a
               href="#comofunciona"
               style={{
-                color: "#5100bb",
+                color: "var(--ct-5100bb, #5100bb)",
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 fontWeight: 600,
@@ -73,7 +73,7 @@ export default function PaginaRedAbogados() {
             <a
               href="#app"
               style={{
-                color: "#5100bb",
+                color: "var(--ct-5100bb, #5100bb)",
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 fontWeight: 600,
@@ -85,7 +85,7 @@ export default function PaginaRedAbogados() {
             <a
               href="#unete"
               style={{
-                color: "#5100bb",
+                color: "var(--ct-5100bb, #5100bb)",
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 fontWeight: 600,
@@ -105,7 +105,7 @@ export default function PaginaRedAbogados() {
                 alignItems: "center",
                 gap: "5px",
                 fontSize: "0.88rem",
-                color: "#666666",
+                color: "var(--ct-666666, #666666)",
                 textDecoration: "none",
                 fontWeight: 600
               }}
@@ -193,7 +193,7 @@ export default function PaginaRedAbogados() {
                 color: "#ffffff",
                 letterSpacing: "-0.02em",
                 margin: "0 0 24px 0",
-                textShadow: "0 2px 14px rgba(0, 0, 0, 0.3)"
+                textShadow: "0 2px 14px var(--ct-000000-a300, rgba(0, 0, 0, 0.3))"
               }}
             >
               Tu práctica legal con más casos, más ingresos y más respaldo.
@@ -206,7 +206,7 @@ export default function PaginaRedAbogados() {
                 color: "#ffffff",
                 margin: "0 0 36px 0",
                 maxWidth: "580px",
-                textShadow: "0 1px 8px rgba(0, 0, 0, 0.4)"
+                textShadow: "0 1px 8px var(--ct-000000-a400, rgba(0, 0, 0, 0.4))"
               }}
             >
               Únete a la red de abogados de Tranqi y conecta con clientes reales que necesitan tu ayuda, mientras accedes a beneficios exclusivos, capacitación y una cuenta digital pensada para tu profesión.
@@ -324,8 +324,8 @@ export default function PaginaRedAbogados() {
                     width: "36px",
                     height: "36px",
                     borderRadius: "50%",
-                    backgroundColor: "#ffffff",
-                    color: "#5100bb",
+                    backgroundColor: "var(--cf-ffffff, #ffffff)",
+                    color: "var(--ct-5100bb, #5100bb)",
                     display: "grid",
                     placeItems: "center",
                     flexShrink: 0
@@ -355,9 +355,9 @@ export default function PaginaRedAbogados() {
       <section
         id="comofunciona"
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--cf-ffffff, #ffffff)",
           padding: "90px 24px",
-          color: "#333333"
+          color: "var(--ct-333333, #333333)"
         }}
       >
         <div style={{ maxWidth: "1180px", margin: "0 auto" }}>
@@ -365,7 +365,7 @@ export default function PaginaRedAbogados() {
             <span
               style={{
                 display: "inline-block",
-                color: "#5100bb",
+                color: "var(--ct-5100bb, #5100bb)",
                 fontSize: "0.85rem",
                 fontWeight: 700,
                 textTransform: "uppercase",
@@ -381,7 +381,7 @@ export default function PaginaRedAbogados() {
               style={{
                 fontSize: "clamp(2.1rem, 3.8vw, 3rem)",
                 fontWeight: 800,
-                color: "#1e1e2f",
+                color: "var(--ct-1e1e2f, #1e1e2f)",
                 margin: "12px 0 0 0"
               }}
             >
@@ -419,7 +419,7 @@ export default function PaginaRedAbogados() {
                 style={{
                   fontSize: "1.35rem",
                   fontWeight: 700,
-                  color: "#1e1e2f",
+                  color: "var(--ct-1e1e2f, #1e1e2f)",
                   margin: "0 0 10px 0"
                 }}
               >
@@ -429,7 +429,7 @@ export default function PaginaRedAbogados() {
                 style={{
                   fontSize: "0.98rem",
                   lineHeight: 1.6,
-                  color: "#666666",
+                  color: "var(--ct-666666, #666666)",
                   margin: 0
                 }}
               >
@@ -460,7 +460,7 @@ export default function PaginaRedAbogados() {
                 style={{
                   fontSize: "1.35rem",
                   fontWeight: 700,
-                  color: "#1e1e2f",
+                  color: "var(--ct-1e1e2f, #1e1e2f)",
                   margin: "0 0 10px 0"
                 }}
               >
@@ -470,7 +470,7 @@ export default function PaginaRedAbogados() {
                 style={{
                   fontSize: "0.98rem",
                   lineHeight: 1.6,
-                  color: "#666666",
+                  color: "var(--ct-666666, #666666)",
                   margin: 0
                 }}
               >
@@ -501,7 +501,7 @@ export default function PaginaRedAbogados() {
                 style={{
                   fontSize: "1.35rem",
                   fontWeight: 700,
-                  color: "#1e1e2f",
+                  color: "var(--ct-1e1e2f, #1e1e2f)",
                   margin: "0 0 10px 0"
                 }}
               >
@@ -511,7 +511,7 @@ export default function PaginaRedAbogados() {
                 style={{
                   fontSize: "0.98rem",
                   lineHeight: 1.6,
-                  color: "#666666",
+                  color: "var(--ct-666666, #666666)",
                   margin: 0
                 }}
               >
@@ -527,9 +527,9 @@ export default function PaginaRedAbogados() {
       {/* ═════════════════════════════════════════════════════════════ */}
       <section
         style={{
-          backgroundColor: "#f9fafb",
-          borderTop: "1px solid #eeeeee",
-          borderBottom: "1px solid #eeeeee",
+          backgroundColor: "var(--cf-f9fafb, #f9fafb)",
+          borderTop: "1px solid var(--cb-eeeeee, #eeeeee)",
+          borderBottom: "1px solid var(--cb-eeeeee, #eeeeee)",
           padding: "80px 24px",
           textAlign: "center"
         }}
@@ -539,7 +539,7 @@ export default function PaginaRedAbogados() {
             style={{
               fontSize: "clamp(1.5rem, 2.8vw, 2.2rem)",
               fontWeight: 700,
-              color: "#333333",
+              color: "var(--ct-333333, #333333)",
               lineHeight: 1.4,
               margin: "0 0 20px 0"
             }}
@@ -550,7 +550,7 @@ export default function PaginaRedAbogados() {
             style={{
               fontSize: "1.1rem",
               fontWeight: 800,
-              color: "#5100bb",
+              color: "var(--ct-5100bb, #5100bb)",
               textTransform: "uppercase",
               letterSpacing: "0.06em",
               margin: 0
@@ -567,9 +567,9 @@ export default function PaginaRedAbogados() {
       <section
         id="app"
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--cf-ffffff, #ffffff)",
           padding: "90px 24px",
-          color: "#333333"
+          color: "var(--ct-333333, #333333)"
         }}
       >
         <div
@@ -587,7 +587,7 @@ export default function PaginaRedAbogados() {
             <span
               style={{
                 display: "inline-block",
-                color: "#5100bb",
+                color: "var(--ct-5100bb, #5100bb)",
                 fontSize: "0.85rem",
                 fontWeight: 700,
                 textTransform: "uppercase",
@@ -603,7 +603,7 @@ export default function PaginaRedAbogados() {
               style={{
                 fontSize: "clamp(2.1rem, 3.8vw, 2.9rem)",
                 fontWeight: 800,
-                color: "#1e1e2f",
+                color: "var(--ct-1e1e2f, #1e1e2f)",
                 lineHeight: 1.18,
                 margin: "10px 0 16px 0"
               }}
@@ -614,7 +614,7 @@ export default function PaginaRedAbogados() {
               style={{
                 fontSize: "1.2rem",
                 fontWeight: 600,
-                color: "#5100bb",
+                color: "var(--ct-5100bb, #5100bb)",
                 margin: "0 0 28px 0"
               }}
             >
@@ -644,7 +644,7 @@ export default function PaginaRedAbogados() {
                   >
                     <Check size={16} strokeWidth={3} />
                   </div>
-                  <span style={{ fontSize: "1.05rem", color: "#444444", fontWeight: 500 }}>
+                  <span style={{ fontSize: "1.05rem", color: "var(--ct-444444, #444444)", fontWeight: 500 }}>
                     {item}
                   </span>
                 </div>
@@ -676,7 +676,7 @@ export default function PaginaRedAbogados() {
         id="unete"
         style={{
           padding: "50px 24px 90px",
-          backgroundColor: "#ffffff"
+          backgroundColor: "var(--cf-ffffff, #ffffff)"
         }}
       >
         <div
@@ -748,7 +748,7 @@ export default function PaginaRedAbogados() {
                       width: "22px",
                       height: "22px",
                       borderRadius: "5px",
-                      border: "2px solid #ffffff",
+                      border: "2px solid var(--cb-ffffff, #ffffff)",
                       display: "grid",
                       placeItems: "center",
                       flexShrink: 0
@@ -791,14 +791,14 @@ export default function PaginaRedAbogados() {
       {/* ═════════════════════════════════════════════════════════════ */}
       <footer
         style={{
-          borderTop: "1px solid #eeeeee",
+          borderTop: "1px solid var(--cb-eeeeee, #eeeeee)",
           padding: "30px 24px",
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--cf-ffffff, #ffffff)",
           textAlign: "center"
         }}
       >
         <div style={{ maxWidth: "1180px", margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", justifyContent: "center", fontSize: "0.85rem", color: "#666666" }}>
+          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", justifyContent: "center", fontSize: "0.85rem", color: "var(--ct-666666, #666666)" }}>
             <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
               Inicio
             </Link>
@@ -815,7 +815,7 @@ export default function PaginaRedAbogados() {
               Términos
             </Link>
           </div>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "#999999" }}>
+          <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ct-999999, #999999)" }}>
             © 2026 Tranqi. Todos los derechos reservados.
           </p>
         </div>

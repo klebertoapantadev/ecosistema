@@ -18,14 +18,14 @@ export default async function EmisionNotificacionesPage() {
       <div className="contenedor-panel" style={{ maxWidth: "780px", margin: "40px auto", padding: "0 16px" }}>
         <section className="tarjeta-seccion" style={{ borderLeft: "4px solid var(--error)", padding: "36px 28px", textAlign: "center", background: "#0d1117" }}>
           <ShieldAlert style={{ width: 52, height: 52, color: "var(--error)", margin: "0 auto 16px" }} />
-          <h1 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f87171", marginBottom: "8px" }}>
+          <h1 style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--ct-f87171, #f87171)", marginBottom: "8px" }}>
             Acceso Restringido — Consola de Emisión
           </h1>
-          <p style={{ fontSize: "0.88rem", color: "#8b949e", lineHeight: 1.6, marginBottom: "16px" }}>
+          <p style={{ fontSize: "0.88rem", color: "var(--ct-8b949e, #8b949e)", lineHeight: 1.6, marginBottom: "16px" }}>
             Tu usuario <strong style={{ color: "#c9d1d9" }}>{perfil?.usu_correo}</strong> cuenta únicamente con el perfil <strong style={{ color: "#a5d6ff" }}>CLIENTE</strong>.
           </p>
-          <div style={{ background: "#161b22", border: "1px solid #30363d", borderRadius: "8px", padding: "14px", marginBottom: "24px", fontSize: "0.8rem", color: "#8b949e", textAlign: "left" }}>
-            <span style={{ color: "#388bfd", fontWeight: 700, display: "block", marginBottom: "4px" }}>
+          <div style={{ background: "#161b22", border: "1px solid var(--cb-30363d, #30363d)", borderRadius: "8px", padding: "14px", marginBottom: "24px", fontSize: "0.8rem", color: "#8b949e", textAlign: "left" }}>
+            <span style={{ color: "var(--ct-388bfd, #388bfd)", fontWeight: 700, display: "block", marginBottom: "4px" }}>
               ℹPolítica de Seguridad de Notificaciones:
             </span>
             La emisión masiva y despacho multicanal (In-App, Push, Email y WhatsApp) está estrictamente restringida a <strong>SuperAdministradores</strong> y <strong>Administradores del Negocio</strong>. Los clientes únicamente tienen acceso a consultar y gestionar sus notificaciones recibidas.
@@ -56,7 +56,7 @@ export default async function EmisionNotificacionesPage() {
                 fontSize: "0.82rem",
                 color: "#c9d1d9",
                 background: "#21262d",
-                border: "1px solid #30363d",
+                border: "1px solid var(--cb-30363d, #30363d)",
                 borderRadius: "6px",
                 padding: "8px 16px",
                 textDecoration: "none",

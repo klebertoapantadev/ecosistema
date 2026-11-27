@@ -172,7 +172,7 @@ export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[]
               alignItems: "center",
               gap: "4px",
               paddingTop: "8px",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+              borderTop: "1px solid var(--cb-ffffff-a080, rgba(255, 255, 255, 0.08))",
             }}
           >
             {itemsConfiguracion.map((item) => (
@@ -193,7 +193,7 @@ export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[]
               background: enRutaConfiguracion
                 ? "rgba(255, 255, 255, 0.055)"
                 : "rgba(255, 255, 255, 0.025)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              border: "1px solid var(--cb-ffffff-a080, rgba(255, 255, 255, 0.08))",
               borderRadius: "11px",
               padding: "7px 6px",
             }}
@@ -250,7 +250,7 @@ export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[]
           style={{
             marginTop: "auto",
             paddingTop: "10px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+            borderTop: "1px solid var(--cb-ffffff-a080, rgba(255, 255, 255, 0.08))",
             display: "flex",
             flexDirection: "column",
             alignItems: plegada ? "center" : "stretch",
@@ -301,7 +301,7 @@ function EnlaceMenuLateral({
           textDecoration: "none",
           color: activo ? "#F6F1E8" : "rgba(255, 255, 255, 0.68)",
           background: activo ? "rgba(200, 162, 90, 0.14)" : "transparent",
-          border: activo ? "1px solid rgba(200, 162, 90, 0.36)" : "1px solid transparent",
+          border: activo ? "1px solid var(--cb-c8a25a-a360, rgba(200, 162, 90, 0.36))" : "1px solid transparent",
           boxShadow: "none",
           transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
         }}
@@ -326,7 +326,7 @@ function EnlaceMenuLateral({
         fontWeight: activo ? 600 : 400,
         color: activo ? "#F6F1E8" : "rgba(235, 229, 220, 0.76)",
         background: activo ? "rgba(200, 162, 90, 0.13)" : "transparent",
-        boxShadow: activo ? "inset 2px 0 0 #C8A25A" : "none",
+        boxShadow: activo ? "inset 2px 0 0 var(--cb-c8a25a, #C8A25A)" : "none",
         transition: "background 0.15s ease, color 0.15s ease",
       }}
     >

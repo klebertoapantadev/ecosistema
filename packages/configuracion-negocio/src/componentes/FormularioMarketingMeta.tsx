@@ -224,12 +224,12 @@ export function FormularioMarketingMeta({ negocio, inicial = null }: PropsFormul
                 margin: 0,
                 fontSize: "0.98rem",
                 fontWeight: 600,
-                color: "#1F1C19",
+                color: "var(--ct-1f1c19, #1F1C19)",
               }}
             >
               Meta Pixel, Conversions API (CAPI) y Catálogo Facebook / WhatsApp
             </h2>
-            <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+            <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--ct-6b7280, #6B7280)" }}>
               Un único Pixel por negocio con deduplicación servidor, catálogo vivo y atribución de campañas para ARIA.
             </p>
           </div>
@@ -342,7 +342,7 @@ export function FormularioMarketingMeta({ negocio, inicial = null }: PropsFormul
             style={{ marginTop: "3px", width: "17px", height: "17px", cursor: "pointer" }}
           />
           <div>
-            <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#111827" }}>
+            <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--ct-111827, #111827)" }}>
               Activar Meta Pixel y API de Conversiones en este negocio
             </div>
             <div style={estiloTextoAyuda}>
@@ -361,8 +361,8 @@ export function FormularioMarketingMeta({ negocio, inicial = null }: PropsFormul
           style={{
             padding: "16px",
             borderRadius: "10px",
-            border: "1px solid #E5E7EB",
-            background: "#F9FAFB",
+            border: "1px solid var(--cb-e5e7eb, #E5E7EB)",
+            background: "var(--cf-f9fafb, #F9FAFB)",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
@@ -375,7 +375,7 @@ export function FormularioMarketingMeta({ negocio, inicial = null }: PropsFormul
               onChange={(e) => setCatalogoActivo(e.target.checked)}
               style={{ width: "16px", height: "16px", cursor: "pointer" }}
             />
-            <span style={{ fontSize: "0.86rem", fontWeight: 600, color: "#111827" }}>
+            <span style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-111827, #111827)" }}>
               Publicar Feed XML vivo de productos y variantes activas / en temporada
             </span>
           </label>
@@ -389,11 +389,11 @@ export function FormularioMarketingMeta({ negocio, inicial = null }: PropsFormul
                 gap: "8px",
                 padding: "9px 12px",
                 borderRadius: "8px",
-                border: "1px solid #D1D5DB",
-                background: "#FFFFFF",
+                border: "1px solid var(--cb-d1d5db, #D1D5DB)",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                 fontSize: "0.8rem",
-                color: "#1F2937",
+                color: "var(--ct-1f2937, #1F2937)",
                 overflowX: "auto",
               }}
             >
@@ -430,14 +430,14 @@ export function FormularioMarketingMeta({ negocio, inicial = null }: PropsFormul
           style={{
             padding: "16px",
             borderRadius: "10px",
-            border: "1px solid #E0E7FF",
-            background: "#EEF2FF",
+            border: "1px solid var(--cb-e0e7ff, #E0E7FF)",
+            background: "var(--cf-eef2ff, #EEF2FF)",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#312E81" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--ct-312e81, #312E81)" }}>
             <Sparkles size={16} />
             <strong style={{ fontSize: "0.85rem" }}>
               Parámetros de URL para pegar en tus anuncios de Meta Ads
@@ -449,7 +449,7 @@ export function FormularioMarketingMeta({ negocio, inicial = null }: PropsFormul
               readOnly
               value={FORMULA_UTM_META_ADS}
               aria-label="Fórmula de parámetros UTM para Meta Ads"
-              style={{ ...estiloInputMonoespaciado, flex: "1 1 280px", background: "#FFFFFF" }}
+              style={{ ...estiloInputMonoespaciado, flex: "1 1 280px", background: "var(--cf-ffffff, #FFFFFF)" }}
             />
             <button
               type="button"
@@ -465,7 +465,7 @@ export function FormularioMarketingMeta({ negocio, inicial = null }: PropsFormul
               </span>
             </button>
           </div>
-          <span style={{ ...estiloTextoAyuda, color: "#3730A3" }}>
+          <span style={{ ...estiloTextoAyuda, color: "var(--ct-3730a3, #3730A3)" }}>
             Con esto (y automáticamente en anuncios Clic a WhatsApp de YCloud), ARIA detecta si el
             cliente viene por <strong>Eventos</strong>, <strong>Condolencias</strong>,{" "}
             <strong>Entrega Inmediata</strong> o un arreglo puntual y adapta su tono y recomendaciones desde el primer saludo.

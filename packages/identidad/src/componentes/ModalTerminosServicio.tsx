@@ -79,7 +79,7 @@ export function ModalTerminosServicio({
     >
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--cf-ffffff, #ffffff)",
           borderRadius: "20px",
           maxWidth: "680px",
           width: "100%",
@@ -87,7 +87,7 @@ export function ModalTerminosServicio({
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          border: "1px solid #E5E7EB",
+          border: "1px solid var(--cb-e5e7eb, #E5E7EB)",
           overflow: "hidden",
         }}
       >
@@ -95,11 +95,11 @@ export function ModalTerminosServicio({
         <div
           style={{
             padding: "20px 24px",
-            borderBottom: "1px solid #F3F4F6",
+            borderBottom: "1px solid var(--cb-f3f4f6, #F3F4F6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)",
+            background: "linear-gradient(135deg, var(--cf-f9fafb, #F9FAFB) 0%, var(--cf-f3f4f6, #F3F4F6) 100%)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -108,7 +108,7 @@ export function ModalTerminosServicio({
                 width: "40px",
                 height: "40px",
                 borderRadius: "10px",
-                background: "#EEF2FF",
+                background: "var(--cf-eef2ff, #EEF2FF)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -117,10 +117,10 @@ export function ModalTerminosServicio({
               <ScrollText size={22} color="#4F46E5" />
             </div>
             <div>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "#111827" }}>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--ct-111827, #111827)" }}>
                 Términos y Condiciones de Servicio
               </h3>
-              <p style={{ fontSize: "0.78rem", color: "#6B7280", margin: 0 }}>
+              <p style={{ fontSize: "0.78rem", color: "var(--ct-6b7280, #6B7280)", margin: 0 }}>
                 {negocioNombre} — Lectura obligatoria requerida
               </p>
             </div>
@@ -133,7 +133,7 @@ export function ModalTerminosServicio({
               border: "none",
               cursor: "pointer",
               padding: "6px",
-              color: "#9CA3AF",
+              color: "var(--ct-9ca3af, #9CA3AF)",
               borderRadius: "8px",
             }}
           >
@@ -142,7 +142,7 @@ export function ModalTerminosServicio({
         </div>
 
         {/* BARRA DE PROGRESO DE LECTURA */}
-        <div style={{ height: "4px", width: "100%", background: "#E5E7EB" }}>
+        <div style={{ height: "4px", width: "100%", background: "var(--cf-e5e7eb, #E5E7EB)" }}>
           <div
             style={{
               height: "100%",
@@ -159,14 +159,14 @@ export function ModalTerminosServicio({
         <div
           style={{
             padding: "10px 24px",
-            background: leidoFinal ? "#ECFDF5" : "#EFF6FF",
-            borderBottom: "1px solid #E5E7EB",
+            background: leidoFinal ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-eff6ff, #EFF6FF)",
+            borderBottom: "1px solid var(--cb-e5e7eb, #E5E7EB)",
             display: "flex",
             alignItems: "center",
             gap: "8px",
             fontSize: "0.8rem",
             fontWeight: 700,
-            color: leidoFinal ? "#047857" : "#1D4ED8",
+            color: leidoFinal ? "var(--ct-047857, #047857)" : "var(--ct-1d4ed8, #1D4ED8)",
           }}
         >
           {leidoFinal ? (
@@ -194,35 +194,35 @@ export function ModalTerminosServicio({
             flex: 1,
             fontSize: "0.88rem",
             lineHeight: 1.65,
-            color: "#374151",
+            color: "var(--ct-374151, #374151)",
           }}
         >
-          <h4 style={{ fontSize: "1rem", color: "#111827", marginTop: 0 }}>1. Aceptación y Consentimiento Expreso (LOPDP)</h4>
+          <h4 style={{ fontSize: "1rem", color: "var(--ct-111827, #111827)", marginTop: 0 }}>1. Aceptación y Consentimiento Expreso (LOPDP)</h4>
           <p>
             Al registrarte e interactuar en nuestras plataformas digitales y servicios web/móviles (en adelante la Plataforma), otorgas tu consentimiento libre, previo, expreso, informado e inequívoco para la creación de tu cuenta de usuario e identidad base única.
           </p>
 
-          <h4 style={{ fontSize: "1rem", color: "#111827" }}>2. Registro Ultra-Fluido e Identidad Única</h4>
+          <h4 style={{ fontSize: "1rem", color: "var(--ct-111827, #111827)" }}>2. Registro Ultra-Fluido e Identidad Única</h4>
           <p>
             El usuario declara que la información provista en los formularios de registro (vía Google OAuth o correo directo) es veraz y actualizada. Se asignará por defecto el perfil jerárquico base de Cliente en la membresía correspondiente.
           </p>
 
-          <h4 style={{ fontSize: "1rem", color: "#111827" }}>3. Protección de Datos y Privacidad</h4>
+          <h4 style={{ fontSize: "1rem", color: "var(--ct-111827, #111827)" }}>3. Protección de Datos y Privacidad</h4>
           <p>
             En estricto cumplimiento de la Ley Orgánica de Protección de Datos Personales (LOPDP), nos comprometemos a salvaguardar y proteger la privacidad de tu información. La Plataforma aplica cifrado a nivel de base de datos (`pgcrypto`) y almacenamiento seguro para documentos confidenciales.
           </p>
 
-          <h4 style={{ fontSize: "1rem", color: "#111827" }}>4. Uso de Notificaciones y WhatsApp</h4>
+          <h4 style={{ fontSize: "1rem", color: "var(--ct-111827, #111827)" }}>4. Uso de Notificaciones y WhatsApp</h4>
           <p>
             El envío de notificaciones por WhatsApp o medios de mensajería directa es estrictamente opcional y requerirá tu autorización explícita posterior. En cualquier momento podrás configurar tus preferencias de notificaciones desde tu perfil.
           </p>
 
-          <h4 style={{ fontSize: "1rem", color: "#111827" }}>5. Derecho al Olvido y Baja de Cuenta (PLT-012)</h4>
+          <h4 style={{ fontSize: "1rem", color: "var(--ct-111827, #111827)" }}>5. Derecho al Olvido y Baja de Cuenta (PLT-012)</h4>
           <p>
             Tienes derecho a solicitar la eliminación de tu cuenta e historial en cualquier momento desde la sección Mi Cuenta (Zona de Peligro). Se procesará la baja lógica o borrado de conformidad con las regulaciones aplicables.
           </p>
 
-          <h4 style={{ fontSize: "1rem", color: "#111827" }}>6. Actualización de Términos</h4>
+          <h4 style={{ fontSize: "1rem", color: "var(--ct-111827, #111827)" }}>6. Actualización de Términos</h4>
           <p>
             Nos reservamos el derecho de actualizar estos Términos y Condiciones en cualquier momento. Se notificará a los usuarios sobre cambios relevantes a través de los canales oficiales de la Plataforma.
           </p>
@@ -231,13 +231,13 @@ export function ModalTerminosServicio({
             style={{
               marginTop: "30px",
               padding: "16px",
-              background: "#F9FAFB",
+              background: "var(--cf-f9fafb, #F9FAFB)",
               borderRadius: "12px",
-              border: "1px dashed #D1D5DB",
+              border: "1px dashed var(--cb-d1d5db, #D1D5DB)",
               textAlign: "center",
               fontWeight: 800,
               fontSize: "0.82rem",
-              color: leidoFinal ? "#047857" : "#6B7280",
+              color: leidoFinal ? "var(--ct-047857, #047857)" : "var(--ct-6b7280, #6B7280)",
             }}
           >
             fin del documento de términos y condiciones de servicio 
@@ -248,11 +248,11 @@ export function ModalTerminosServicio({
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid #F3F4F6",
+            borderTop: "1px solid var(--cb-f3f4f6, #F3F4F6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#ffffff",
+            background: "var(--cf-ffffff, #ffffff)",
             gap: "12px",
           }}
         >
@@ -262,9 +262,9 @@ export function ModalTerminosServicio({
             style={{
               padding: "10px 18px",
               borderRadius: "10px",
-              border: "1px solid #D1D5DB",
-              background: "#ffffff",
-              color: "#374151",
+              border: "1px solid var(--cb-d1d5db, #D1D5DB)",
+              background: "var(--cf-ffffff, #ffffff)",
+              color: "var(--ct-374151, #374151)",
               fontWeight: 700,
               fontSize: "0.85rem",
               cursor: "pointer",
@@ -283,8 +283,8 @@ export function ModalTerminosServicio({
               border: "none",
               background: leidoFinal
                 ? "linear-gradient(135deg, #059669 0%, #047857 100%)"
-                : "#E5E7EB",
-              color: leidoFinal ? "#ffffff" : "#9CA3AF",
+                : "var(--cf-e5e7eb, #E5E7EB)",
+              color: leidoFinal ? "#ffffff" : "var(--ct-9ca3af, #9CA3AF)",
               fontWeight: 800,
               fontSize: "0.9rem",
               cursor: leidoFinal ? "pointer" : "not-allowed",

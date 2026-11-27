@@ -176,8 +176,8 @@ export function ConsolaConfiguracionUnificada({
       {/* Cabecera Ejecutiva Sobria */}
       <section
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E5E7EB",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e5e7eb, #E5E7EB)",
           borderRadius: "14px",
           padding: "clamp(14px, 3.5vw, 24px)",
           boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
@@ -201,12 +201,12 @@ export function ConsolaConfiguracionUnificada({
                 width: "42px",
                 height: "42px",
                 borderRadius: "10px",
-                background: "#F4F4F5",
-                border: "1px solid #E4E4E7",
+                background: "var(--cf-f4f4f5, #F4F4F5)",
+                border: "1px solid var(--cb-e4e4e7, #E4E4E7)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#18181B",
+                color: "var(--ct-18181b, #18181B)",
                 flexShrink: 0,
               }}
             >
@@ -219,7 +219,7 @@ export function ConsolaConfiguracionUnificada({
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
-                  color: "#6B7280",
+                  color: "var(--ct-6b7280, #6B7280)",
                   marginBottom: "4px",
                 }}
               >
@@ -230,7 +230,7 @@ export function ConsolaConfiguracionUnificada({
                   margin: 0,
                   fontSize: "1.12rem",
                   fontWeight: 600,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   lineHeight: 1.25,
                 }}
               >
@@ -240,7 +240,7 @@ export function ConsolaConfiguracionUnificada({
                 style={{
                   margin: "4px 0 0 0",
                   fontSize: "0.8rem",
-                  color: "#6E6861",
+                  color: "var(--ct-6e6861, #6E6861)",
                   lineHeight: 1.45,
                   maxWidth: "640px",
                 }}
@@ -259,7 +259,7 @@ export function ConsolaConfiguracionUnificada({
             flexWrap: "wrap",
             gap: "10px",
             paddingTop: "14px",
-            borderTop: "1px solid #F3F4F6",
+            borderTop: "1px solid var(--cb-f3f4f6, #F3F4F6)",
           }}
         >
           <IndicadorResumen
@@ -340,8 +340,8 @@ export function ConsolaConfiguracionUnificada({
           flexWrap: "wrap",
           gap: "6px",
           padding: "6px",
-          background: "#FFFFFF",
-          border: "1px solid #E5E7EB",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e5e7eb, #E5E7EB)",
           borderRadius: "12px",
           boxShadow: "0 1px 2px rgba(15, 23, 42, 0.03)",
         }}
@@ -365,7 +365,7 @@ export function ConsolaConfiguracionUnificada({
                 gap: "8px",
                 padding: "10px 16px",
                 borderRadius: "8px",
-                border: esActiva ? "1px solid #18181B" : "1px solid transparent",
+                border: esActiva ? "1px solid var(--cb-18181b, #18181B)" : "1px solid transparent",
                 background: esActiva ? "#18181B" : "transparent",
                 color: esActiva ? "#FFFFFF" : "#4B5563",
                 fontFamily: "inherit",
@@ -447,16 +447,16 @@ function IndicadorResumen({
         gap: "7px",
         padding: "5px 11px",
         borderRadius: "999px",
-        border: `1px solid ${activo ? "#BBF7D0" : "#E5E7EB"}`,
-        background: activo ? "#F0FDF4" : "#F9FAFB",
-        color: activo ? "#166534" : "#4B5563",
+        border: `1px solid ${activo ? "var(--cb-bbf7d0, #BBF7D0)" : "var(--cb-e5e7eb, #E5E7EB)"}`,
+        background: activo ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-f9fafb, #F9FAFB)",
+        color: activo ? "var(--ct-166534, #166534)" : "var(--ct-4b5563, #4B5563)",
         fontFamily: "inherit",
         fontSize: "0.76rem",
         cursor: "pointer",
       }}
     >
       {activo ? <CheckCircle2 size={13} color="#16A34A" /> : <CircleDashed size={13} color="#9CA3AF" />}
-      <span style={{ color: "#6B7280", fontWeight: 500 }}>{etiqueta}:</span>
+      <span style={{ color: "var(--ct-6b7280, #6B7280)", fontWeight: 500 }}>{etiqueta}:</span>
       <strong style={{ fontWeight: 600 }}>{valor}</strong>
     </button>
   );

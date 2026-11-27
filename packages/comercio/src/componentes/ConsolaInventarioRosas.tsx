@@ -871,10 +871,10 @@ export function ConsolaInventarioRosas({
         valor: (c) => new Date(c.fechaCorte).getTime(),
         render: (c) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1F1C19" }}>
+            <strong style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               {formatearFechaCorteInventario(c.fechaCorte)}
             </strong>
-            <span style={{ fontSize: "0.72rem", color: "#847D74" }}>
+            <span style={{ fontSize: "0.72rem", color: "var(--ct-847d74, #847D74)" }}>
               Por: {c.registradoNombre}
             </span>
           </div>
@@ -894,9 +894,9 @@ export function ConsolaInventarioRosas({
                   alignItems: "center",
                   padding: "2.5px 8px",
                   borderRadius: "999px",
-                  background: "#F2F6F3",
-                  border: "1px solid #CEDDD3",
-                  color: "#2B4A36",
+                  background: "var(--cf-f2f6f3, #F2F6F3)",
+                  border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                  color: "var(--ct-2b4a36, #2B4A36)",
                   fontWeight: 600,
                   fontSize: "0.75rem",
                   width: "fit-content",
@@ -911,9 +911,9 @@ export function ConsolaInventarioRosas({
                     alignItems: "center",
                     padding: "2px 8px",
                     borderRadius: "999px",
-                    background: "#FEFCE8",
+                    background: "var(--cf-fefce8, #FEFCE8)",
                     border: "1px solid #FDE047",
-                    color: "#854D0E",
+                    color: "var(--ct-854d0e, #854D0E)",
                     fontWeight: 600,
                     fontSize: "0.71rem",
                     width: "fit-content",
@@ -929,9 +929,9 @@ export function ConsolaInventarioRosas({
                     alignItems: "center",
                     padding: "2px 8px",
                     borderRadius: "999px",
-                    background: "#FAF5FF",
-                    border: "1px solid #E9D5FF",
-                    color: "#6B21A8",
+                    background: "var(--cf-faf5ff, #FAF5FF)",
+                    border: "1px solid var(--cb-e9d5ff, #E9D5FF)",
+                    color: "var(--ct-6b21a8, #6B21A8)",
                     fontWeight: 600,
                     fontSize: "0.71rem",
                     width: "fit-content",
@@ -949,7 +949,7 @@ export function ConsolaInventarioRosas({
         encabezado: "Consolidado por Variedad",
         valor: (c) => formatearTextoConsolidadoVariedades(c, catalogoVariedades),
         render: (c) => (
-          <span style={{ fontSize: "0.8rem", color: "#3A3530" }}>
+          <span style={{ fontSize: "0.8rem", color: "var(--ct-3a3530, #3A3530)" }}>
             {formatearTextoConsolidadoVariedades(c, catalogoVariedades)}
           </span>
         ),
@@ -966,7 +966,7 @@ export function ConsolaInventarioRosas({
             ? c.fotos.filter((f) => !f.imagenUrl).length
             : 0;
           return (
-            <span style={{ fontSize: "0.76rem", color: "#6E6861" }}>
+            <span style={{ fontSize: "0.76rem", color: "var(--ct-6e6861, #6E6861)" }}>
               {fotosConImg} foto(s){lotesManuales > 0 ? ` + ${lotesManuales} manual` : ""}
             </span>
           );
@@ -1005,9 +1005,9 @@ export function ConsolaInventarioRosas({
               gap: "6px",
               padding: "7px 13px",
               borderRadius: "8px",
-              border: pestanaActiva === "conteo" ? "1px solid #221E1B" : "1px solid #D5CFC4",
-              background: pestanaActiva === "conteo" ? "#221E1B" : "#FFFFFF",
-              color: pestanaActiva === "conteo" ? "#FAF8F5" : "#57524C",
+              border: pestanaActiva === "conteo" ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: pestanaActiva === "conteo" ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
+              color: pestanaActiva === "conteo" ? "#FAF8F5" : "var(--ct-57524c, #57524C)",
               fontSize: "0.79rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -1026,9 +1026,9 @@ export function ConsolaInventarioRosas({
               gap: "6px",
               padding: "7px 13px",
               borderRadius: "8px",
-              border: pestanaActiva === "catalogo" ? "1px solid #221E1B" : "1px solid #D5CFC4",
-              background: pestanaActiva === "catalogo" ? "#221E1B" : "#FFFFFF",
-              color: pestanaActiva === "catalogo" ? "#FAF8F5" : "#57524C",
+              border: pestanaActiva === "catalogo" ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+              background: pestanaActiva === "catalogo" ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
+              color: pestanaActiva === "catalogo" ? "#FAF8F5" : "var(--ct-57524c, #57524C)",
               fontSize: "0.79rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -1058,9 +1058,9 @@ export function ConsolaInventarioRosas({
               style={{
                 padding: "12px 14px",
                 borderRadius: "12px",
-                background: "#FFFBEB",
+                background: "var(--cf-fffbeb, #FFFBEB)",
                 border: "1.5px solid #F59E0B",
-                color: "#78350F",
+                color: "var(--ct-78350f, #78350F)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -1093,21 +1093,21 @@ export function ConsolaInventarioRosas({
                     wordBreak: "break-word",
                   }}
                 >
-                  <strong style={{ fontSize: "0.85rem", color: "#92400E", lineHeight: 1.35 }}>
+                  <strong style={{ fontSize: "0.85rem", color: "var(--ct-92400e, #92400E)", lineHeight: 1.35 }}>
                     {vigenciaInventario.horasDesdeUltimoCorte === null
                       ? "Inventario de rosas pendiente (sin registro previo)"
                       : `Han pasado ${vigenciaInventario.horasDesdeUltimoCorte}h desde el último inventario (límite ${vigenciaInventario.horasLimite}h)`}
                   </strong>
-                  <span style={{ fontSize: "0.76rem", color: "#78350F", lineHeight: 1.4 }}>
+                  <span style={{ fontSize: "0.76rem", color: "var(--ct-78350f, #78350F)", lineHeight: 1.4 }}>
                     Registra un nuevo conteo de bonches hoy para que la tienda muestre los colores disponibles en tiempo real.
                   </span>
                   {mensajeAlertaEquipo && (
-                    <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#2B4A36", marginTop: "2px", lineHeight: 1.35 }}>
+                    <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "var(--ct-2b4a36, #2B4A36)", marginTop: "2px", lineHeight: 1.35 }}>
                       ✓ {mensajeAlertaEquipo}
                     </span>
                   )}
                   {errorAlertaEquipo && (
-                    <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#991B1B", marginTop: "2px", lineHeight: 1.35 }}>
+                    <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "var(--ct-991b1b, #991B1B)", marginTop: "2px", lineHeight: 1.35 }}>
                       ⚠ {errorAlertaEquipo}
                     </span>
                   )}
@@ -1127,8 +1127,8 @@ export function ConsolaInventarioRosas({
                   padding: "7px 12px",
                   borderRadius: "9px",
                   border: "1px solid #D97706",
-                  background: "#FFFFFF",
-                  color: "#92400E",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-92400e, #92400E)",
                   fontSize: "0.76rem",
                   fontWeight: 700,
                   cursor: enviandoAlertaEquipo ? "wait" : "pointer",
@@ -1147,10 +1147,10 @@ export function ConsolaInventarioRosas({
             style={{
               padding: "14px 16px",
               borderRadius: "12px",
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderLeft: "3px solid #2F4737",
-              color: "#1F1C19",
+              color: "var(--ct-1f1c19, #1F1C19)",
               display: "flex",
               flexDirection: "column",
               gap: "10px",
@@ -1171,12 +1171,12 @@ export function ConsolaInventarioRosas({
                     width: "34px",
                     height: "34px",
                     borderRadius: "8px",
-                    background: "#F6F4F0",
-                    border: "1px solid #E6E2DA",
+                    background: "var(--cf-f6f4f0, #F6F4F0)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#2F4737",
+                    color: "var(--ct-2f4737, #2F4737)",
                     flexShrink: 0,
                   }}
                 >
@@ -1188,16 +1188,16 @@ export function ConsolaInventarioRosas({
                       fontSize: "0.68rem",
                       textTransform: "uppercase",
                       letterSpacing: "0.07em",
-                      color: "#847D74",
+                      color: "var(--ct-847d74, #847D74)",
                       fontWeight: 600,
                     }}
                   >
                     Último inventario en tienda
                   </div>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 600, marginTop: "2px", color: "#1F1C19", lineHeight: 1.35 }}>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 600, marginTop: "2px", color: "var(--ct-1f1c19, #1F1C19)", lineHeight: 1.35 }}>
                     {ultimoCorte ? (
                       <>
-                        <span style={{ color: "#2F4737" }}>
+                        <span style={{ color: "var(--ct-2f4737, #2F4737)" }}>
                           {formatearFechaCorteInventario(ultimoCorte.fechaCorte)}
                         </span>
                         {" · "}
@@ -1206,7 +1206,7 @@ export function ConsolaInventarioRosas({
                         </span>
                       </>
                     ) : (
-                      <span style={{ color: "#6E6861", fontWeight: 500 }}>
+                      <span style={{ color: "var(--ct-6e6861, #6E6861)", fontWeight: 500 }}>
                         Aún no se ha registrado un corte de inventario fotográfico
                       </span>
                     )}
@@ -1220,9 +1220,9 @@ export function ConsolaInventarioRosas({
                     style={{
                       padding: "4px 10px",
                       borderRadius: "999px",
-                      background: "#F2F6F3",
-                      border: "1px solid #CEDDD3",
-                      color: "#2B4A36",
+                      background: "var(--cf-f2f6f3, #F2F6F3)",
+                      border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                      color: "var(--ct-2b4a36, #2B4A36)",
                       fontSize: "0.76rem",
                       fontWeight: 600,
                     }}
@@ -1239,9 +1239,9 @@ export function ConsolaInventarioRosas({
                     style={{
                       padding: "4px 10px",
                       borderRadius: "999px",
-                      background: "#FEFCE8",
+                      background: "var(--cf-fefce8, #FEFCE8)",
                       border: "1px solid #FDE047",
-                      color: "#854D0E",
+                      color: "var(--ct-854d0e, #854D0E)",
                       fontSize: "0.76rem",
                       fontWeight: 600,
                     }}
@@ -1254,9 +1254,9 @@ export function ConsolaInventarioRosas({
                     style={{
                       padding: "4px 10px",
                       borderRadius: "999px",
-                      background: "#FAF5FF",
-                      border: "1px solid #E9D5FF",
-                      color: "#6B21A8",
+                      background: "var(--cf-faf5ff, #FAF5FF)",
+                      border: "1px solid var(--cb-e9d5ff, #E9D5FF)",
+                      color: "var(--ct-6b21a8, #6B21A8)",
                       fontSize: "0.76rem",
                       fontWeight: 600,
                     }}
@@ -1276,9 +1276,9 @@ export function ConsolaInventarioRosas({
                     gap: "5px",
                     padding: "6px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#221E1B",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-221e1b, #221E1B)",
                     fontSize: "0.76rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1291,7 +1291,7 @@ export function ConsolaInventarioRosas({
             </div>
 
             {ultimoCorte && consolidadoUltimoCorte && (
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center", paddingTop: "8px", borderTop: "1px solid #F1EEE8" }}>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center", paddingTop: "8px", borderTop: "1px solid var(--cb-f1eee8, #F1EEE8)" }}>
                 {consolidadoUltimoCorte.resumenVariedades.map((item, idx) => {
                   const colInfo =
                     item.tipoFlor === "orquidea"
@@ -1310,17 +1310,17 @@ export function ConsolaInventarioRosas({
                         borderRadius: "999px",
                         background:
                           item.tipoFlor === "girasol"
-                            ? "#FEFCE8"
+                            ? "var(--cf-fefce8, #FEFCE8)"
                             : item.tipoFlor === "orquidea"
-                              ? "#FAF5FF"
-                              : "#F8F7F4",
+                              ? "var(--cf-faf5ff, #FAF5FF)"
+                              : "var(--cf-f8f7f4, #F8F7F4)",
                         border:
                           item.tipoFlor === "girasol"
                             ? "1px solid #FDE047"
                             : item.tipoFlor === "orquidea"
-                              ? "1px solid #E9D5FF"
-                              : "1px solid #E6E2DA",
-                        color: "#2E2A26",
+                              ? "1px solid var(--cb-e9d5ff, #E9D5FF)"
+                              : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                        color: "var(--ct-2e2a26, #2E2A26)",
                         fontSize: "0.74rem",
                         fontWeight: 500,
                       }}
@@ -1334,7 +1334,7 @@ export function ConsolaInventarioRosas({
                             height: "16px",
                             borderRadius: "50%",
                             objectFit: "cover",
-                            border: "1px solid #D5CFC4",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                           }}
                         />
                       ) : (
@@ -1344,7 +1344,7 @@ export function ConsolaInventarioRosas({
                             height: "8px",
                             borderRadius: "50%",
                             background: colInfo?.colorHex ?? "#847D74",
-                            border: "1px solid rgba(0,0,0,0.18)",
+                            border: "1px solid var(--cb-000000-a180, rgba(0,0,0,0.18))",
                           }}
                         />
                       )}
@@ -1356,7 +1356,7 @@ export function ConsolaInventarioRosas({
                     </span>
                   );
                 })}
-                <span style={{ fontSize: "0.72rem", color: "#847D74", marginLeft: "4px" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--ct-847d74, #847D74)", marginLeft: "4px" }}>
                   <Clock size={11} style={{ verticalAlign: "middle", marginRight: "4px" }} />
                   Registrado por {ultimoCorte.registradoNombre}
                 </span>
@@ -1369,9 +1369,9 @@ export function ConsolaInventarioRosas({
             style={{
               padding: "14px 16px",
               borderRadius: "12px",
-              background: "#FFFFFF",
-              border: ofertaActiva && clavesOfertaActivas.length > 0 ? "1.5px solid #FBCFE8" : "1px solid #E6E2DA",
-              borderLeft: ofertaActiva && clavesOfertaActivas.length > 0 ? "3px solid #BE185D" : "3px solid #D5CFC4",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: ofertaActiva && clavesOfertaActivas.length > 0 ? "1.5px solid var(--cb-fbcfe8, #FBCFE8)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+              borderLeft: ofertaActiva && clavesOfertaActivas.length > 0 ? "3px solid #BE185D" : "3px solid var(--cb-d5cfc4, #D5CFC4)",
               display: "flex",
               flexDirection: "column",
               gap: "12px",
@@ -1394,9 +1394,9 @@ export function ConsolaInventarioRosas({
                     width: "32px",
                     height: "32px",
                     borderRadius: "8px",
-                    background: ofertaActiva ? "#FDF2F8" : "#F6F4F0",
-                    border: ofertaActiva ? "1px solid #FBCFE8" : "1px solid #E6E2DA",
-                    color: ofertaActiva ? "#BE185D" : "#57524C",
+                    background: ofertaActiva ? "var(--cf-fdf2f8, #FDF2F8)" : "var(--cf-f6f4f0, #F6F4F0)",
+                    border: ofertaActiva ? "1px solid var(--cb-fbcfe8, #FBCFE8)" : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                    color: ofertaActiva ? "var(--ct-be185d, #BE185D)" : "var(--ct-57524c, #57524C)",
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1406,10 +1406,10 @@ export function ConsolaInventarioRosas({
                   <Tag size={15} />
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <strong style={{ display: "block", fontSize: "0.86rem", color: "#1F1C19" }}>
+                  <strong style={{ display: "block", fontSize: "0.86rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                     Colores y Flores en Oferta en Tienda
                   </strong>
-                  <span style={{ fontSize: "0.73rem", color: "#6E6861", lineHeight: 1.38 }}>
+                  <span style={{ fontSize: "0.73rem", color: "var(--ct-6e6861, #6E6861)", lineHeight: 1.38 }}>
                     Define un porcentaje de descuento por cada color de rosa, girasoles u orquídeas. Al elegirlos en la tienda, el descuento se aplica automáticamente.
                   </span>
                 </div>
@@ -1423,9 +1423,9 @@ export function ConsolaInventarioRosas({
                     gap: "7px",
                     padding: "6px 11px",
                     borderRadius: "999px",
-                    background: ofertaActiva ? "#FDF2F8" : "#F4F2EE",
-                    border: ofertaActiva ? "1px solid #FBCFE8" : "1px solid #D5CFC4",
-                    color: ofertaActiva ? "#9D174D" : "#57524C",
+                    background: ofertaActiva ? "var(--cf-fdf2f8, #FDF2F8)" : "var(--cf-f4f2ee, #F4F2EE)",
+                    border: ofertaActiva ? "1px solid var(--cb-fbcfe8, #FBCFE8)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    color: ofertaActiva ? "var(--ct-9d174d, #9D174D)" : "var(--ct-57524c, #57524C)",
                     fontSize: "0.75rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1478,7 +1478,7 @@ export function ConsolaInventarioRosas({
                     display: "block",
                     fontSize: "0.72rem",
                     fontWeight: 700,
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     marginBottom: "6px",
                   }}
                 >
@@ -1517,14 +1517,14 @@ export function ConsolaInventarioRosas({
                             border: seleccionado
                               ? "2px solid #9D174D"
                               : enStockCant > 0
-                                ? "1px solid #CEDDD3"
-                                : "1px dashed #D5CFC4",
+                                ? "1px solid var(--cb-ceddd3, #CEDDD3)"
+                                : "1px dashed var(--cb-d5cfc4, #D5CFC4)",
                             background: seleccionado
                               ? "#BE185D"
                               : enStockCant > 0
-                                ? "#FFFFFF"
-                                : "#FAF8F5",
-                            color: seleccionado ? "#FFFFFF" : enStockCant > 0 ? "#1F1C19" : "#847D74",
+                                ? "var(--cf-ffffff, #FFFFFF)"
+                                : "var(--cf-faf8f5, #FAF8F5)",
+                            color: seleccionado ? "#FFFFFF" : enStockCant > 0 ? "var(--ct-1f1c19, #1F1C19)" : "var(--ct-847d74, #847D74)",
                             fontSize: "0.75rem",
                             fontWeight: seleccionado ? 700 : 600,
                             cursor: "pointer",
@@ -1537,7 +1537,7 @@ export function ConsolaInventarioRosas({
                               height: "11px",
                               borderRadius: "999px",
                               background: col.colorHex,
-                              border: seleccionado ? "1.5px solid #FFFFFF" : "1px solid rgba(0,0,0,0.2)",
+                              border: seleccionado ? "1.5px solid var(--cb-ffffff, #FFFFFF)" : "1px solid var(--cb-000000-a200, rgba(0,0,0,0.2))",
                               flexShrink: 0,
                             }}
                           />
@@ -1546,7 +1546,7 @@ export function ConsolaInventarioRosas({
                             <span
                               style={{
                                 fontSize: "0.68rem",
-                                color: seleccionado ? "#FCE7F3" : "#2B4A36",
+                                color: seleccionado ? "#FCE7F3" : "var(--ct-2b4a36, #2B4A36)",
                                 fontWeight: 700,
                               }}
                             >
@@ -1561,8 +1561,8 @@ export function ConsolaInventarioRosas({
                                 gap: "2px",
                                 padding: "1px 6px",
                                 borderRadius: "999px",
-                                background: "#FFFFFF",
-                                color: "#9D174D",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                color: "var(--ct-9d174d, #9D174D)",
                                 fontSize: "0.65rem",
                                 fontWeight: 800,
                               }}
@@ -1583,7 +1583,7 @@ export function ConsolaInventarioRosas({
                     display: "block",
                     fontSize: "0.72rem",
                     fontWeight: 700,
-                    color: "#57524C",
+                    color: "var(--ct-57524c, #57524C)",
                     marginBottom: "6px",
                   }}
                 >
@@ -1614,13 +1614,13 @@ export function ConsolaInventarioRosas({
                             ? "2px solid #9D174D"
                             : stockGirasolesUltimoCorte > 0
                               ? "1px solid #FDE047"
-                              : "1px dashed #D5CFC4",
+                              : "1px dashed var(--cb-d5cfc4, #D5CFC4)",
                           background: selGir
                             ? "#BE185D"
                             : stockGirasolesUltimoCorte > 0
-                              ? "#FEFCE8"
-                              : "#FAF8F5",
-                          color: selGir ? "#FFFFFF" : stockGirasolesUltimoCorte > 0 ? "#854D0E" : "#847D74",
+                              ? "var(--cf-fefce8, #FEFCE8)"
+                              : "var(--cf-faf8f5, #FAF8F5)",
+                          color: selGir ? "#FFFFFF" : stockGirasolesUltimoCorte > 0 ? "var(--ct-854d0e, #854D0E)" : "var(--ct-847d74, #847D74)",
                           fontSize: "0.75rem",
                           fontWeight: selGir ? 700 : 600,
                           cursor: "pointer",
@@ -1633,7 +1633,7 @@ export function ConsolaInventarioRosas({
                           <span
                             style={{
                               fontSize: "0.68rem",
-                              color: selGir ? "#FCE7F3" : "#854D0E",
+                              color: selGir ? "#FCE7F3" : "var(--ct-854d0e, #854D0E)",
                               fontWeight: 700,
                             }}
                           >
@@ -1645,8 +1645,8 @@ export function ConsolaInventarioRosas({
                             style={{
                               padding: "1px 6px",
                               borderRadius: "999px",
-                              background: "#FFFFFF",
-                              color: "#9D174D",
+                              background: "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-9d174d, #9D174D)",
                               fontSize: "0.65rem",
                               fontWeight: 800,
                             }}
@@ -1684,14 +1684,14 @@ export function ConsolaInventarioRosas({
                           border: selOrq
                             ? "2px solid #9D174D"
                             : stockOrq > 0
-                              ? "1px solid #D8B4FE"
-                              : "1px dashed #D5CFC4",
+                              ? "1px solid var(--cb-d8b4fe, #D8B4FE)"
+                              : "1px dashed var(--cb-d5cfc4, #D5CFC4)",
                           background: selOrq
                             ? "#BE185D"
                             : stockOrq > 0
-                              ? "#FAF5FF"
-                              : "#FAF8F5",
-                          color: selOrq ? "#FFFFFF" : stockOrq > 0 ? "#581C87" : "#847D74",
+                              ? "var(--cf-faf5ff, #FAF5FF)"
+                              : "var(--cf-faf8f5, #FAF8F5)",
+                          color: selOrq ? "#FFFFFF" : stockOrq > 0 ? "var(--ct-581c87, #581C87)" : "var(--ct-847d74, #847D74)",
                           fontSize: "0.75rem",
                           fontWeight: selOrq ? 700 : 600,
                           cursor: "pointer",
@@ -1704,7 +1704,7 @@ export function ConsolaInventarioRosas({
                             height: "11px",
                             borderRadius: "999px",
                             background: orq.colorHex,
-                            border: selOrq ? "1.5px solid #FFFFFF" : "1px solid rgba(0,0,0,0.22)",
+                            border: selOrq ? "1.5px solid var(--cb-ffffff, #FFFFFF)" : "1px solid var(--cb-000000-a220, rgba(0,0,0,0.22))",
                             flexShrink: 0,
                           }}
                         />
@@ -1713,7 +1713,7 @@ export function ConsolaInventarioRosas({
                           <span
                             style={{
                               fontSize: "0.68rem",
-                              color: selOrq ? "#FCE7F3" : "#6B21A8",
+                              color: selOrq ? "#FCE7F3" : "var(--ct-6b21a8, #6B21A8)",
                               fontWeight: 700,
                             }}
                           >
@@ -1725,8 +1725,8 @@ export function ConsolaInventarioRosas({
                             style={{
                               padding: "1px 6px",
                               borderRadius: "999px",
-                              background: "#FFFFFF",
-                              color: "#9D174D",
+                              background: "var(--cf-ffffff, #FFFFFF)",
+                              color: "var(--ct-9d174d, #9D174D)",
                               fontSize: "0.65rem",
                               fontWeight: 800,
                             }}
@@ -1746,14 +1746,14 @@ export function ConsolaInventarioRosas({
                   style={{
                     padding: "10px 12px",
                     borderRadius: "10px",
-                    background: "#FDF2F8",
-                    border: "1px solid #FBCFE8",
+                    background: "var(--cf-fdf2f8, #FDF2F8)",
+                    border: "1px solid var(--cb-fbcfe8, #FBCFE8)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "8px",
                   }}
                 >
-                  <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#9D174D" }}>
+                  <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-9d174d, #9D174D)" }}>
                     Porcentaje de descuento por cada color / flor seleccionado:
                   </span>
                   <div
@@ -1777,8 +1777,8 @@ export function ConsolaInventarioRosas({
                             gap: "8px",
                             padding: "6px 9px",
                             borderRadius: "9px",
-                            background: "#FFFFFF",
-                            border: "1px solid #F9A8D4",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            border: "1px solid var(--cb-f9a8d4, #F9A8D4)",
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
@@ -1791,7 +1791,7 @@ export function ConsolaInventarioRosas({
                                   height: "11px",
                                   borderRadius: "999px",
                                   background: hex,
-                                  border: "1px solid rgba(0,0,0,0.22)",
+                                  border: "1px solid var(--cb-000000-a220, rgba(0,0,0,0.22))",
                                   flexShrink: 0,
                                 }}
                               />
@@ -1800,7 +1800,7 @@ export function ConsolaInventarioRosas({
                               style={{
                                 fontSize: "0.75rem",
                                 fontWeight: 700,
-                                color: "#1F1C19",
+                                color: "var(--ct-1f1c19, #1F1C19)",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -1825,15 +1825,15 @@ export function ConsolaInventarioRosas({
                                 width: "52px",
                                 padding: "3px 5px",
                                 borderRadius: "6px",
-                                border: "1px solid #D5CFC4",
-                                background: "#FAF8F5",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                background: "var(--cf-faf8f5, #FAF8F5)",
                                 fontSize: "0.78rem",
                                 fontWeight: 800,
-                                color: "#9D174D",
+                                color: "var(--ct-9d174d, #9D174D)",
                                 textAlign: "center",
                               }}
                             />
-                            <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#9D174D" }}>%</span>
+                            <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-9d174d, #9D174D)" }}>%</span>
                             <button
                               type="button"
                               onClick={() => toggleColorOferta(clave)}
@@ -1842,7 +1842,7 @@ export function ConsolaInventarioRosas({
                               style={{
                                 border: "none",
                                 background: "transparent",
-                                color: "#9D174D",
+                                color: "var(--ct-9d174d, #9D174D)",
                                 cursor: "pointer",
                                 padding: "2px",
                                 display: "inline-flex",
@@ -1862,9 +1862,9 @@ export function ConsolaInventarioRosas({
                 <div
                   style={{
                     fontSize: "0.73rem",
-                    color: "#2B4A36",
-                    background: "#F0FDF4",
-                    border: "1px solid #BBF7D0",
+                    color: "var(--ct-2b4a36, #2B4A36)",
+                    background: "var(--cf-f0fdf4, #F0FDF4)",
+                    border: "1px solid var(--cb-bbf7d0, #BBF7D0)",
                     borderRadius: "8px",
                     padding: "6px 10px",
                     lineHeight: 1.4,
@@ -1880,12 +1880,12 @@ export function ConsolaInventarioRosas({
                 </div>
               )}
               {mensajeOfertaOk && (
-                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#2B4A36" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-2b4a36, #2B4A36)" }}>
                   ✓ {mensajeOfertaOk}
                 </div>
               )}
               {errorOfertaMsg && (
-                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#991B1B" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-991b1b, #991B1B)" }}>
                   ⚠️ {errorOfertaMsg}
                 </div>
               )}
@@ -1897,9 +1897,9 @@ export function ConsolaInventarioRosas({
               style={{
                 padding: "9px 12px",
                 borderRadius: "9px",
-                background: "#FAF6EE",
-                border: "1px solid #E5D7BC",
-                color: "#745622",
+                background: "var(--cf-faf6ee, #FAF6EE)",
+                border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                color: "var(--ct-745622, #745622)",
                 fontSize: "0.78rem",
                 display: "flex",
                 alignItems: "center",
@@ -1921,9 +1921,9 @@ export function ConsolaInventarioRosas({
               style={{
                 padding: "9px 12px",
                 borderRadius: "9px",
-                background: "#FAF2F2",
-                border: "1px solid #E5CACA",
-                color: "#8A2E2E",
+                background: "var(--cf-faf2f2, #FAF2F2)",
+                border: "1px solid var(--cb-e5caca, #E5CACA)",
+                color: "var(--ct-8a2e2e, #8A2E2E)",
                 fontSize: "0.79rem",
               }}
             >
@@ -1938,9 +1938,9 @@ export function ConsolaInventarioRosas({
               style={{
                 padding: "9px 12px",
                 borderRadius: "9px",
-                background: "#F2F6F3",
-                border: "1px solid #CEDDD3",
-                color: "#2B4A36",
+                background: "var(--cf-f2f6f3, #F2F6F3)",
+                border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                color: "var(--ct-2b4a36, #2B4A36)",
                 fontSize: "0.8rem",
                 display: "flex",
                 alignItems: "center",
@@ -1959,9 +1959,9 @@ export function ConsolaInventarioRosas({
               style={{
                 padding: "9px 12px",
                 borderRadius: "9px",
-                background: "#FAF6EE",
-                border: "1px solid #E5D7BC",
-                color: "#745622",
+                background: "var(--cf-faf6ee, #FAF6EE)",
+                border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                color: "var(--ct-745622, #745622)",
                 fontSize: "0.79rem",
                 display: "flex",
                 alignItems: "center",
@@ -1983,8 +1983,8 @@ export function ConsolaInventarioRosas({
                     padding: "4px 10px",
                     borderRadius: "7px",
                     border: "1px solid #745622",
-                    background: "#FFFFFF",
-                    color: "#745622",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-745622, #745622)",
                     fontSize: "0.75rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -1999,7 +1999,7 @@ export function ConsolaInventarioRosas({
                   style={{
                     background: "transparent",
                     border: "none",
-                    color: "#745622",
+                    color: "var(--ct-745622, #745622)",
                     cursor: "pointer",
                     padding: "2px",
                     display: "inline-flex",
@@ -2014,8 +2014,8 @@ export function ConsolaInventarioRosas({
           {/* SECCIÓN DE NUEVO CORTE POR FOTOS CON ARIA + MANUALES */}
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "12px",
               padding: "16px 18px",
               display: "flex",
@@ -2033,7 +2033,7 @@ export function ConsolaInventarioRosas({
               }}
             >
               <div>
-                <h2 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 600, color: "#1F1C19" }}>
+                <h2 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                   Nuevo Conteo de Rosas, Girasoles y Orquídeas (ARIA)
                 </h2>
               </div>
@@ -2048,7 +2048,7 @@ export function ConsolaInventarioRosas({
                     gap: "6px",
                     padding: "7px 13px",
                     borderRadius: "8px",
-                    border: "1px solid #221E1B",
+                    border: "1px solid var(--cb-221e1b, #221E1B)",
                     background: "#221E1B",
                     color: "#FAF8F5",
                     fontSize: "0.78rem",
@@ -2077,9 +2077,9 @@ export function ConsolaInventarioRosas({
                     gap: "6px",
                     padding: "7px 13px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#221E1B",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-221e1b, #221E1B)",
                     fontSize: "0.78rem",
                     fontWeight: 600,
                     cursor: subiendoFotos ? "wait" : "pointer",
@@ -2108,9 +2108,9 @@ export function ConsolaInventarioRosas({
                     gap: "5px",
                     padding: "7px 12px",
                     borderRadius: "8px",
-                    border: mostrarPanelManual ? "1px solid #221E1B" : "1px solid #D5CFC4",
-                    background: mostrarPanelManual ? "#F1EFEA" : "#FFFFFF",
-                    color: "#221E1B",
+                    border: mostrarPanelManual ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: mostrarPanelManual ? "var(--cf-f1efea, #F1EFEA)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-221e1b, #221E1B)",
                     fontSize: "0.78rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -2129,8 +2129,8 @@ export function ConsolaInventarioRosas({
                 style={{
                   padding: "13px 15px",
                   borderRadius: "10px",
-                  background: "#F8F7F4",
-                  border: "1px solid #E6E2DA",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   display: "flex",
                   flexDirection: "column",
                   gap: "11px",
@@ -2145,7 +2145,7 @@ export function ConsolaInventarioRosas({
                     flexWrap: "wrap",
                   }}
                 >
-                  <strong style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19" }}>
+                  <strong style={{ fontSize: "0.84rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                     Agregar Rosas, Girasoles u Orquídeas Manualmente
                   </strong>
                   <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -2159,9 +2159,9 @@ export function ConsolaInventarioRosas({
                       style={{
                         padding: "5px 10px",
                         borderRadius: "7px",
-                        border: manualTipoFlor === "rosa" ? "1px solid #221E1B" : "1px solid #D5CFC4",
-                        background: manualTipoFlor === "rosa" ? "#221E1B" : "#FFFFFF",
-                        color: manualTipoFlor === "rosa" ? "#FAF8F5" : "#57524C",
+                        border: manualTipoFlor === "rosa" ? "1px solid var(--cb-221e1b, #221E1B)" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: manualTipoFlor === "rosa" ? "#221E1B" : "var(--cf-ffffff, #FFFFFF)",
+                        color: manualTipoFlor === "rosa" ? "#FAF8F5" : "var(--ct-57524c, #57524C)",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         cursor: "pointer",
@@ -2179,9 +2179,9 @@ export function ConsolaInventarioRosas({
                       style={{
                         padding: "5px 10px",
                         borderRadius: "7px",
-                        border: manualTipoFlor === "girasol" ? "1px solid #854D0E" : "1px solid #D5CFC4",
-                        background: manualTipoFlor === "girasol" ? "#854D0E" : "#FFFFFF",
-                        color: manualTipoFlor === "girasol" ? "#FEFCE8" : "#57524C",
+                        border: manualTipoFlor === "girasol" ? "1px solid #854D0E" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: manualTipoFlor === "girasol" ? "#854D0E" : "var(--cf-ffffff, #FFFFFF)",
+                        color: manualTipoFlor === "girasol" ? "#FEFCE8" : "var(--ct-57524c, #57524C)",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         cursor: "pointer",
@@ -2200,9 +2200,9 @@ export function ConsolaInventarioRosas({
                       style={{
                         padding: "5px 10px",
                         borderRadius: "7px",
-                        border: manualTipoFlor === "orquidea" ? "1px solid #6B21A8" : "1px solid #D5CFC4",
-                        background: manualTipoFlor === "orquidea" ? "#6B21A8" : "#FFFFFF",
-                        color: manualTipoFlor === "orquidea" ? "#FAF5FF" : "#57524C",
+                        border: manualTipoFlor === "orquidea" ? "1px solid #6B21A8" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: manualTipoFlor === "orquidea" ? "#6B21A8" : "var(--cf-ffffff, #FFFFFF)",
+                        color: manualTipoFlor === "orquidea" ? "#FAF5FF" : "var(--ct-57524c, #57524C)",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         cursor: "pointer",
@@ -2222,7 +2222,7 @@ export function ConsolaInventarioRosas({
                   }}
                 >
                   {manualTipoFlor !== "girasol" && (
-                    <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
+                    <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                       Color
                       <select
                         value={manualColor}
@@ -2230,10 +2230,10 @@ export function ConsolaInventarioRosas({
                         style={{
                           padding: "7px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           fontSize: "0.8rem",
-                          color: "#1F1C19",
+                          color: "var(--ct-1f1c19, #1F1C19)",
                         }}
                       >
                         {(manualTipoFlor === "orquidea"
@@ -2249,7 +2249,7 @@ export function ConsolaInventarioRosas({
                   )}
 
                   {manualTipoFlor === "rosa" && (
-                    <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
+                    <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                       Variedad
                       <select
                         value={manualVariedadId}
@@ -2257,10 +2257,10 @@ export function ConsolaInventarioRosas({
                         style={{
                           padding: "7px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           fontSize: "0.8rem",
-                          color: "#1F1C19",
+                          color: "var(--ct-1f1c19, #1F1C19)",
                         }}
                       >
                         {variedadesColorManual.map((v) => (
@@ -2274,7 +2274,7 @@ export function ConsolaInventarioRosas({
 
                   {manualTipoFlor === "orquidea" ? (
                     <>
-                      <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 700, color: "#6B21A8" }}>
+                      <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-6b21a8, #6B21A8)" }}>
                         Nº de Orquídeas (flores)
                         <input
                           type="number"
@@ -2288,14 +2288,14 @@ export function ConsolaInventarioRosas({
                             padding: "7px 10px",
                             borderRadius: "8px",
                             border: "1.5px solid #C084FC",
-                            background: "#FFFFFF",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             fontSize: "0.81rem",
                             fontWeight: 700,
-                            color: "#581C87",
+                            color: "var(--ct-581c87, #581C87)",
                           }}
                         />
                       </label>
-                      <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
+                      <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                         Varas (opcional)
                         <input
                           type="number"
@@ -2306,16 +2306,16 @@ export function ConsolaInventarioRosas({
                           style={{
                             padding: "7px 10px",
                             borderRadius: "8px",
-                            border: "1px solid #D5CFC4",
-                            background: "#FFFFFF",
+                            border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             fontSize: "0.81rem",
-                            color: "#1F1C19",
+                            color: "var(--ct-1f1c19, #1F1C19)",
                           }}
                         />
                       </label>
                     </>
                   ) : (
-                    <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "#57524C" }}>
+                    <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.74rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
                       {manualTipoFlor === "girasol" ? "Nº de Girasoles (unidades)" : "Paquetes (Bonches)"}
                       <input
                         type="number"
@@ -2326,10 +2326,10 @@ export function ConsolaInventarioRosas({
                         style={{
                           padding: "7px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           fontSize: "0.81rem",
-                          color: "#1F1C19",
+                          color: "var(--ct-1f1c19, #1F1C19)",
                         }}
                       />
                     </label>
@@ -2386,10 +2386,10 @@ export function ConsolaInventarioRosas({
                     <div
                       key={foto.id}
                       style={{
-                        border: "1px solid #E6E2DA",
+                        border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                         borderRadius: "10px",
                         padding: "12px",
-                        background: "#F8F7F4",
+                        background: "var(--cf-f8f7f4, #F8F7F4)",
                         display: "flex",
                         flexWrap: "wrap",
                         gap: "12px",
@@ -2417,7 +2417,7 @@ export function ConsolaInventarioRosas({
                               height: "144px",
                               objectFit: "cover",
                               borderRadius: "8px",
-                              border: "1px solid #D5CFC4",
+                              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                             }}
                           />
                           {/^https?:\/\//i.test(foto.imagenUrl) && (
@@ -2434,9 +2434,9 @@ export function ConsolaInventarioRosas({
                                 gap: "5px",
                                 padding: "5px 9px",
                                 borderRadius: "7px",
-                                border: "1px solid #D5CFC4",
-                                background: "#FFFFFF",
-                                color: "#221E1B",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                color: "var(--ct-221e1b, #221E1B)",
                                 fontSize: "0.73rem",
                                 fontWeight: 600,
                                 cursor: analizando ? "wait" : "pointer",
@@ -2469,7 +2469,7 @@ export function ConsolaInventarioRosas({
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                            <strong style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19" }}>
+                            <strong style={{ fontSize: "0.84rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                               {foto.esManual || !foto.imagenUrl
                                 ? "Conteo Manual (Sin Foto)"
                                 : `Foto #${idx + 1}`}
@@ -2488,7 +2488,7 @@ export function ConsolaInventarioRosas({
                                 alignItems: "center",
                                 gap: "4px",
                                 fontSize: "0.73rem",
-                                color: analizando ? "#2F4737" : "#6E6861",
+                                color: analizando ? "var(--ct-2f4737, #2F4737)" : "var(--ct-6e6861, #6E6861)",
                               }}
                             >
                               <Bot size={12} />
@@ -2512,9 +2512,9 @@ export function ConsolaInventarioRosas({
                                 gap: "4px",
                                 padding: "5px 9px",
                                 borderRadius: "7px",
-                                border: "1px solid #D5CFC4",
-                                background: "#FFFFFF",
-                                color: "#221E1B",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                color: "var(--ct-221e1b, #221E1B)",
                                 fontSize: "0.73rem",
                                 fontWeight: 600,
                                 cursor: "pointer",
@@ -2535,9 +2535,9 @@ export function ConsolaInventarioRosas({
                                 gap: "4px",
                                 padding: "5px 9px",
                                 borderRadius: "7px",
-                                border: "1px solid #E5CACA",
-                                background: "#FAF2F2",
-                                color: "#8A2E2E",
+                                border: "1px solid var(--cb-e5caca, #E5CACA)",
+                                background: "var(--cf-faf2f2, #FAF2F2)",
+                                color: "var(--ct-8a2e2e, #8A2E2E)",
                                 fontSize: "0.73rem",
                                 fontWeight: 600,
                                 cursor: "pointer",
@@ -2583,8 +2583,8 @@ export function ConsolaInventarioRosas({
                                     gap: "7px",
                                     padding: "9px 10px",
                                     borderRadius: "9px",
-                                    background: "#FFFFFF",
-                                    border: "1px solid #E6E2DA",
+                                    background: "var(--cf-ffffff, #FFFFFF)",
+                                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                                   }}
                                 >
                                   <div
@@ -2615,9 +2615,9 @@ export function ConsolaInventarioRosas({
                                             width: "32px",
                                             height: "32px",
                                             borderRadius: "7px",
-                                            background: "#F6F4F0",
-                                            border: "1px solid #E6E2DA",
-                                            color: "#57524C",
+                                            background: "var(--cf-f6f4f0, #F6F4F0)",
+                                            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                                            color: "var(--ct-57524c, #57524C)",
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",
@@ -2638,7 +2638,7 @@ export function ConsolaInventarioRosas({
                                             fontWeight: 600,
                                             textTransform: "uppercase",
                                             letterSpacing: "0.04em",
-                                            color: "#6E6861",
+                                            color: "var(--ct-6e6861, #6E6861)",
                                           }}
                                         >
                                           <span
@@ -2647,7 +2647,7 @@ export function ConsolaInventarioRosas({
                                               height: "7px",
                                               borderRadius: "50%",
                                               background: colDef?.colorHex ?? "#847D74",
-                                              border: "1px solid rgba(0,0,0,0.14)",
+                                              border: "1px solid var(--cb-000000-a140, rgba(0,0,0,0.14))",
                                               flexShrink: 0,
                                             }}
                                           />
@@ -2667,11 +2667,11 @@ export function ConsolaInventarioRosas({
                                             style={{
                                               padding: "3px 6px",
                                               borderRadius: "6px",
-                                              border: "1px solid #D5CFC4",
-                                              background: "#FFFFFF",
+                                              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                              background: "var(--cf-ffffff, #FFFFFF)",
                                               fontSize: "0.78rem",
                                               fontWeight: 600,
-                                              color: "#1F1C19",
+                                              color: "var(--ct-1f1c19, #1F1C19)",
                                               width: "100%",
                                             }}
                                           >
@@ -2682,7 +2682,7 @@ export function ConsolaInventarioRosas({
                                             ))}
                                           </select>
                                         ) : esGir ? (
-                                          <strong style={{ fontSize: "0.79rem", color: "#854D0E" }}>
+                                          <strong style={{ fontSize: "0.79rem", color: "var(--ct-854d0e, #854D0E)" }}>
                                             Girasoles (Unidades)
                                           </strong>
                                         ) : (
@@ -2699,11 +2699,11 @@ export function ConsolaInventarioRosas({
                                             style={{
                                               padding: "3px 6px",
                                               borderRadius: "6px",
-                                              border: "1px solid #D5CFC4",
-                                              background: "#FFFFFF",
+                                              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                              background: "var(--cf-ffffff, #FFFFFF)",
                                               fontSize: "0.78rem",
                                               fontWeight: 600,
-                                              color: "#1F1C19",
+                                              color: "var(--ct-1f1c19, #1F1C19)",
                                               width: "100%",
                                             }}
                                           >
@@ -2728,7 +2728,7 @@ export function ConsolaInventarioRosas({
                                       style={{
                                         border: "none",
                                         background: "transparent",
-                                        color: "#847D74",
+                                        color: "var(--ct-847d74, #847D74)",
                                         cursor: "pointer",
                                         padding: "2px",
                                       }}
@@ -2748,7 +2748,7 @@ export function ConsolaInventarioRosas({
                                     }}
                                   >
                                     <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                      <span style={{ fontSize: "0.72rem", color: "#6E6861", fontWeight: 500 }}>
+                                      <span style={{ fontSize: "0.72rem", color: "var(--ct-6e6861, #6E6861)", fontWeight: 500 }}>
                                         {esOrq ? "Varas:" : esGir ? "Unid.:" : "Paq.:"}
                                       </span>
                                       <button
@@ -2760,9 +2760,9 @@ export function ConsolaInventarioRosas({
                                           minWidth: "36px",
                                           minHeight: "36px",
                                           borderRadius: "8px",
-                                          border: "1px solid #D5CFC4",
-                                          background: "#FFFFFF",
-                                          color: "#221E1B",
+                                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                          background: "var(--cf-ffffff, #FFFFFF)",
+                                          color: "var(--ct-221e1b, #221E1B)",
                                           display: "inline-flex",
                                           alignItems: "center",
                                           justifyContent: "center",
@@ -2785,10 +2785,10 @@ export function ConsolaInventarioRosas({
                                           textAlign: "center",
                                           fontSize: "0.84rem",
                                           fontWeight: 600,
-                                          color: "#1F1C19",
+                                          color: "var(--ct-1f1c19, #1F1C19)",
                                           borderRadius: "8px",
-                                          border: "1px solid #D5CFC4",
-                                          background: "#FFFFFF",
+                                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                          background: "var(--cf-ffffff, #FFFFFF)",
                                           padding: "0 4px",
                                         }}
                                       />
@@ -2801,9 +2801,9 @@ export function ConsolaInventarioRosas({
                                           minWidth: "36px",
                                           minHeight: "36px",
                                           borderRadius: "8px",
-                                          border: "1px solid #D5CFC4",
-                                          background: "#FFFFFF",
-                                          color: "#221E1B",
+                                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                          background: "var(--cf-ffffff, #FFFFFF)",
+                                          color: "var(--ct-221e1b, #221E1B)",
                                           display: "inline-flex",
                                           alignItems: "center",
                                           justifyContent: "center",
@@ -2816,7 +2816,7 @@ export function ConsolaInventarioRosas({
 
                                     {esOrq && (
                                       <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                        <span style={{ fontSize: "0.72rem", color: "#6B21A8", fontWeight: 700 }}>
+                                        <span style={{ fontSize: "0.72rem", color: "var(--ct-6b21a8, #6B21A8)", fontWeight: 700 }}>
                                           Nº Orq.:
                                         </span>
                                         <button
@@ -2830,9 +2830,9 @@ export function ConsolaInventarioRosas({
                                             minWidth: "36px",
                                             minHeight: "36px",
                                             borderRadius: "8px",
-                                            border: "1px solid #E5D7BC",
-                                            background: "#FFFFFF",
-                                            color: "#745622",
+                                            border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                                            background: "var(--cf-ffffff, #FFFFFF)",
+                                            color: "var(--ct-745622, #745622)",
                                             display: "inline-flex",
                                             alignItems: "center",
                                             justifyContent: "center",
@@ -2857,10 +2857,10 @@ export function ConsolaInventarioRosas({
                                             textAlign: "center",
                                             fontSize: "0.84rem",
                                             fontWeight: 600,
-                                            color: "#745622",
+                                            color: "var(--ct-745622, #745622)",
                                             borderRadius: "8px",
-                                            border: "1px solid #E5D7BC",
-                                            background: "#FFFFFF",
+                                            border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                                            background: "var(--cf-ffffff, #FFFFFF)",
                                             padding: "0 4px",
                                           }}
                                         />
@@ -2875,9 +2875,9 @@ export function ConsolaInventarioRosas({
                                             minWidth: "36px",
                                             minHeight: "36px",
                                             borderRadius: "8px",
-                                            border: "1px solid #E5D7BC",
-                                            background: "#FFFFFF",
-                                            color: "#745622",
+                                            border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                                            background: "var(--cf-ffffff, #FFFFFF)",
+                                            color: "var(--ct-745622, #745622)",
                                             display: "inline-flex",
                                             alignItems: "center",
                                             justifyContent: "center",
@@ -2895,7 +2895,7 @@ export function ConsolaInventarioRosas({
                           </div>
                         ) : (
                           !analizando && (
-                            <div style={{ fontSize: "0.8rem", color: "#847D74" }}>
+                            <div style={{ fontSize: "0.8rem", color: "var(--ct-847d74, #847D74)" }}>
                               Sin variedades cargadas aún. Usa el botón <strong>+ Variedad</strong>{" "}
                               para añadir manualmente.
                             </div>
@@ -2908,8 +2908,8 @@ export function ConsolaInventarioRosas({
                             style={{
                               padding: "10px",
                               borderRadius: "10px",
-                              background: "#FFFFFF",
-                              border: "1px dashed #847D74",
+                              background: "var(--cf-ffffff, #FFFFFF)",
+                              border: "1px dashed var(--cb-847d74, #847D74)",
                               display: "flex",
                               gap: "8px",
                               flexWrap: "wrap",
@@ -2928,7 +2928,7 @@ export function ConsolaInventarioRosas({
                               style={{
                                 padding: "6px 8px",
                                 borderRadius: "7px",
-                                border: "1px solid #D5CFC4",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                 fontSize: "0.78rem",
                               }}
                             >
@@ -2944,7 +2944,7 @@ export function ConsolaInventarioRosas({
                                 style={{
                                   padding: "6px 8px",
                                   borderRadius: "7px",
-                                  border: "1px solid #D5CFC4",
+                                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                   fontSize: "0.78rem",
                                 }}
                               >
@@ -2966,7 +2966,7 @@ export function ConsolaInventarioRosas({
                                 style={{
                                   padding: "6px 8px",
                                   borderRadius: "7px",
-                                  border: "1px solid #D5CFC4",
+                                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                   fontSize: "0.78rem",
                                 }}
                               >
@@ -3010,7 +3010,7 @@ export function ConsolaInventarioRosas({
                                     width: "60px",
                                     padding: "6px 8px",
                                     borderRadius: "7px",
-                                    border: "1px solid #D5CFC4",
+                                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                     fontSize: "0.78rem",
                                   }}
                                 />
@@ -3028,7 +3028,7 @@ export function ConsolaInventarioRosas({
                                   width: "66px",
                                   padding: "6px 8px",
                                   borderRadius: "7px",
-                                  border: "1px solid #D5CFC4",
+                                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                                   fontSize: "0.78rem",
                                 }}
                               />
@@ -3062,8 +3062,8 @@ export function ConsolaInventarioRosas({
                   style={{
                     padding: "14px 16px",
                     borderRadius: "10px",
-                    background: "#F8F7F4",
-                    border: "1px solid #DFDAD0",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
+                    border: "1px solid var(--cb-dfdad0, #DFDAD0)",
                     borderLeft: "3px solid #2F4737",
                     display: "flex",
                     justifyContent: "space-between",
@@ -3073,9 +3073,9 @@ export function ConsolaInventarioRosas({
                   }}
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: "7px", flex: 1, minWidth: "220px" }}>
-                    <strong style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+                    <strong style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
                       Consolidado Total ({fotosActuales.length} foto/lote):{" "}
-                      <span style={{ color: "#2F4737" }}>
+                      <span style={{ color: "var(--ct-2f4737, #2F4737)" }}>
                         {consolidadoEnCurso.totalPaquetes} paq. rosas
                       </span>
                       {consolidadoEnCurso.totalGirasoles > 0
@@ -3096,11 +3096,11 @@ export function ConsolaInventarioRosas({
                             gap: "5px",
                             padding: "3px 9px",
                             borderRadius: "999px",
-                            background: "#FFFFFF",
-                            border: "1px solid #E2DDD4",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            border: "1px solid var(--cb-e2ddd4, #E2DDD4)",
                             fontSize: "0.74rem",
                             fontWeight: 600,
-                            color: "#2E2A26",
+                            color: "var(--ct-2e2a26, #2E2A26)",
                           }}
                         >
                           {v.imagenUrl && (
@@ -3133,9 +3133,9 @@ export function ConsolaInventarioRosas({
                         marginTop: "2px",
                         padding: "7px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #D5CFC4",
-                        background: "#FFFFFF",
-                        color: "#1F1C19",
+                        border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        color: "var(--ct-1f1c19, #1F1C19)",
                         fontSize: "0.79rem",
                         maxWidth: "440px",
                       }}
@@ -3173,8 +3173,8 @@ export function ConsolaInventarioRosas({
           {/* HISTORIAL DE CORTES EN DATAGRID ESTÁNDAR */}
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e6e2da, #E6E2DA)",
               borderRadius: "12px",
               padding: "16px 18px",
               display: "flex",
@@ -3182,7 +3182,7 @@ export function ConsolaInventarioRosas({
               gap: "10px",
             }}
           >
-            <h3 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "#1F1C19" }}>
+            <h3 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "var(--ct-1f1c19, #1F1C19)" }}>
               Historial de Cortes de Inventario
             </h3>
             <DataGrid
@@ -3193,7 +3193,7 @@ export function ConsolaInventarioRosas({
               contenidoExpandible={(c) => (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "8px 0" }}>
                   {c.observaciones && (
-                    <div style={{ fontSize: "0.82rem", color: "#57524C" }}>
+                    <div style={{ fontSize: "0.82rem", color: "var(--ct-57524c, #57524C)" }}>
                       <strong>Observaciones:</strong> {c.observaciones}
                     </div>
                   )}
@@ -3211,10 +3211,10 @@ export function ConsolaInventarioRosas({
                         <div
                           key={f.id || i}
                           style={{
-                            border: "1px solid #E6E2DA",
+                            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                             borderRadius: "10px",
                             padding: "8px",
-                            background: "#FFFFFF",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                             width: "210px",
                           }}
                         >
@@ -3231,7 +3231,7 @@ export function ConsolaInventarioRosas({
                               }}
                             />
                           )}
-                          <div style={{ fontSize: "0.75rem", color: "#1F1C19", fontWeight: 600 }}>
+                          <div style={{ fontSize: "0.75rem", color: "var(--ct-1f1c19, #1F1C19)", fontWeight: 600 }}>
                             {itemsFoto.length > 0
                               ? itemsFoto
                                   .map((it) =>

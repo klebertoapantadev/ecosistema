@@ -184,17 +184,17 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
                 fontWeight: 800,
                 padding: "4px 12px",
                 borderRadius: "999px",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 border: `1px solid ${info.border}`,
                 color: info.color,
               }}
             >
               {info.chip}
             </span>
-            {fecha && <span style={{ fontSize: "0.78rem", color: "#666" }}>Registrada el {fecha}</span>}
+            {fecha && <span style={{ fontSize: "0.78rem", color: "var(--ct-666666, #666)" }}>Registrada el {fecha}</span>}
           </div>
-          <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111111", margin: "6px 0 4px" }}>{info.titulo}</h2>
-          <p style={{ fontSize: "0.88rem", color: "#444444", margin: 0, lineHeight: "1.45" }}>{info.desc}</p>
+          <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--ct-111111, #111111)", margin: "6px 0 4px" }}>{info.titulo}</h2>
+          <p style={{ fontSize: "0.88rem", color: "var(--ct-444444, #444444)", margin: 0, lineHeight: "1.45" }}>{info.desc}</p>
         </div>
 
         {/* Botonera de Acciones: Firma de Contrato (si está aceptada) o Editar, Reiniciar y Eliminar */}
@@ -248,8 +248,8 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  background: "#FFFFFF",
-                  color: "#5000BA",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-5000ba, #5000BA)",
                   border: "1px solid #5000BA",
                   padding: "9px 14px",
                   borderRadius: "10px",
@@ -268,7 +268,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   color: "var(--error)",
                   border: "1px solid var(--error)",
                   padding: "9px 14px",
@@ -304,7 +304,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
         >
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               padding: "24px",
               maxWidth: "460px",
@@ -319,7 +319,7 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
                 height: "48px",
                 borderRadius: "50%",
                 background: modalConfirmar === "eliminar" ? "var(--error-diluido)" : "var(--acento-diluido)",
-                color: modalConfirmar === "eliminar" ? "var(--error)" : "#5000BA",
+                color: modalConfirmar === "eliminar" ? "var(--error)" : "var(--ct-5000ba, #5000BA)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -329,11 +329,11 @@ export function TarjetaEstadoSolicitudHome({ solicitud }: Props) {
               {modalConfirmar === "eliminar" ? <AlertTriangle size={26} /> : <RotateCcw size={26} />}
             </div>
 
-            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", margin: "0 0 8px" }}>
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--ct-111111, #111)", margin: "0 0 8px" }}>
               {modalConfirmar === "eliminar" ? "¿Eliminar solicitud de socio abogado?" : "¿Reiniciar solicitud desde cero?"}
             </h3>
 
-            <p style={{ fontSize: "0.88rem", color: "#555", lineHeight: "1.5", margin: "0 0 20px" }}>
+            <p style={{ fontSize: "0.88rem", color: "var(--ct-555555, #555)", lineHeight: "1.5", margin: "0 0 20px" }}>
               {modalConfirmar === "eliminar"
                 ? "Esta acción cancelará tu postulación y eliminará los documentos y materias asociadas. Podrás volver a iniciar una nueva solicitud cuando lo desees."
                 : "Se limpiarán los datos y archivos cargados previamente para que puedas comenzar el formulario completamente limpio."}

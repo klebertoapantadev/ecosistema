@@ -379,15 +379,15 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
         aria-label={`Centro de notificaciones (${noLeidasCount} pendientes)`}
         style={{
           position: "relative",
-          background: esClara ? "#FFFFFF" : "rgba(255, 255, 255, 0.06)",
-          border: esClara ? "1px solid #D5CFC4" : "1px solid rgba(214, 195, 165, 0.2)",
+          background: esClara ? "var(--cf-ffffff, #FFFFFF)" : "rgba(255, 255, 255, 0.06)",
+          border: esClara ? "1px solid var(--cb-d5cfc4, #D5CFC4)" : "1px solid var(--cb-d6c3a5-a200, rgba(214, 195, 165, 0.2))",
           borderRadius: "50%",
           width: "36px",
           height: "36px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: esClara ? "#2F4737" : "#E5DDD2",
+          color: esClara ? "var(--ct-2f4737, #2F4737)" : "#E5DDD2",
           cursor: "pointer",
           transition: "all 0.2s ease",
           flexShrink: 0,
@@ -407,7 +407,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
               borderRadius: "999px",
               padding: "1px 5.5px",
               boxShadow: "0 1px 4px rgba(0, 0, 0, 0.22)",
-              border: esClara ? "1.5px solid #FFFFFF" : "1.5px solid #1A1512",
+              border: esClara ? "1.5px solid var(--cb-ffffff, #FFFFFF)" : "1.5px solid var(--cb-1a1512, #1A1512)",
             }}
           >
             {noLeidasCount}
@@ -428,7 +428,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
             background: "#221E1B",
             color: "#F6F1E8",
             borderRadius: "12px",
-            border: "1px solid rgba(200, 162, 90, 0.45)",
+            border: "1px solid var(--cb-c8a25a-a450, rgba(200, 162, 90, 0.45))",
             boxShadow: "0 14px 32px rgba(24, 18, 14, 0.32)",
             padding: "13px 15px",
             zIndex: 100001,
@@ -462,7 +462,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                     fontWeight: 700,
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
-                    color: "#C8A25A",
+                    color: "var(--ct-c8a25a, #C8A25A)",
                     marginBottom: "2px",
                   }}
                 >
@@ -531,8 +531,8 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                   padding: "6px 14px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#FFFFFF",
-                  color: "#0F172A",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-0f172a, #0F172A)",
                   fontSize: "0.76rem",
                   fontWeight: 800,
                   textDecoration: "none",
@@ -554,8 +554,8 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                   padding: "6px 14px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#FFFFFF",
-                  color: "#0F172A",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-0f172a, #0F172A)",
                   fontSize: "0.76rem",
                   fontWeight: 800,
                   cursor: "pointer",
@@ -592,8 +592,8 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
               bottom: 0,
               width: "100%",
               maxWidth: "430px",
-              background: "#F7F3EC",
-              borderLeft: "1px solid #DFD7CA",
+              background: "var(--cf-f7f3ec, #F7F3EC)",
+              borderLeft: "1px solid var(--cb-dfd7ca, #DFD7CA)",
               boxShadow: "-10px 0 36px rgba(24, 18, 14, 0.28)",
               zIndex: 99999,
               display: "flex",
@@ -604,7 +604,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
             <div
               style={{
                 padding: "16px 20px",
-                borderBottom: "1px solid rgba(214, 195, 165, 0.16)",
+                borderBottom: "1px solid var(--cb-d6c3a5-a160, rgba(214, 195, 165, 0.16))",
                 background: "#1C1714",
                 display: "flex",
                 alignItems: "center",
@@ -617,7 +617,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                   <span style={{ fontWeight: 700, fontSize: "0.96rem", color: "#F6F1E8", display: "block" }}>
                     Notificaciones ({noLeidasCount})
                   </span>
-                  <span style={{ fontSize: "0.73rem", color: "#A89D8F", textTransform: "capitalize" }}>
+                  <span style={{ fontSize: "0.73rem", color: "var(--ct-a89d8f, #A89D8F)", textTransform: "capitalize" }}>
                     {negocio}
                   </span>
                 </div>
@@ -626,7 +626,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                 onClick={() => setAbierto(false)}
                 style={{
                   background: "rgba(255, 255, 255, 0.08)",
-                  border: "1px solid rgba(214, 195, 165, 0.22)",
+                  border: "1px solid var(--cb-d6c3a5-a220, rgba(214, 195, 165, 0.22))",
                   borderRadius: "50%",
                   width: "32px",
                   height: "32px",
@@ -645,8 +645,8 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
               <div
                 style={{
                   padding: "8px 14px",
-                  background: "#EFE9DF",
-                  borderBottom: "1px solid #E2D9CB",
+                  background: "var(--cf-efe9df, #EFE9DF)",
+                  borderBottom: "1px solid var(--cb-e2d9cb, #E2D9CB)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -655,7 +655,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                   fontSize: "0.73rem",
                 }}
               >
-                <span style={{ color: "#6E6359", fontWeight: 600 }}>Alertas:</span>
+                <span style={{ color: "var(--ct-6e6359, #6E6359)", fontWeight: 600 }}>Alertas:</span>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                   <button
                     type="button"
@@ -667,9 +667,9 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                     title="Instalar aplicación en el dispositivo"
                     aria-label="Instalar aplicación"
                     style={{
-                      background: "#FFFFFF",
-                      color: "#221D1A",
-                      border: "1px solid #D8CFC1",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-221d1a, #221D1A)",
+                      border: "1px solid var(--cb-d8cfc1, #D8CFC1)",
                       borderRadius: "8px",
                       padding: "4px 9px",
                       cursor: "pointer",
@@ -713,9 +713,9 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                     title="Enviar una notificación Push de prueba a este dispositivo"
                     aria-label="Probar notificación Push"
                     style={{
-                      background: "#FFFFFF",
-                      color: "#574E46",
-                      border: "1px solid #D8CFC1",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-574e46, #574E46)",
+                      border: "1px solid var(--cb-d8cfc1, #D8CFC1)",
                       borderRadius: "8px",
                       padding: "4px 9px",
                       cursor: "pointer",
@@ -732,8 +732,8 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
             <div
               style={{
                 padding: "10px 14px",
-                background: "#FAF7F2",
-                borderBottom: "1px solid #E5DDD0",
+                background: "var(--cf-faf7f2, #FAF7F2)",
+                borderBottom: "1px solid var(--cb-e5ddd0, #E5DDD0)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -745,9 +745,9 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                 <button
                   onClick={() => setFiltro("todas")}
                   style={{
-                    background: filtro === "todas" ? "#221D1A" : "#FFFFFF",
-                    color: filtro === "todas" ? "#F6F1E8" : "#574E46",
-                    border: "1px solid #D8CFC1",
+                    background: filtro === "todas" ? "#221D1A" : "var(--cf-ffffff, #FFFFFF)",
+                    color: filtro === "todas" ? "#F6F1E8" : "var(--ct-574e46, #574E46)",
+                    border: "1px solid var(--cb-d8cfc1, #D8CFC1)",
                     borderRadius: "999px",
                     padding: "4px 10px",
                     cursor: "pointer",
@@ -759,9 +759,9 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                 <button
                   onClick={() => setFiltro("no_leidas")}
                   style={{
-                    background: filtro === "no_leidas" ? "#3D5A45" : "#FFFFFF",
-                    color: filtro === "no_leidas" ? "#FFFFFF" : "#574E46",
-                    border: "1px solid #D8CFC1",
+                    background: filtro === "no_leidas" ? "#3D5A45" : "var(--cf-ffffff, #FFFFFF)",
+                    color: filtro === "no_leidas" ? "#FFFFFF" : "var(--ct-574e46, #574E46)",
+                    border: "1px solid var(--cb-d8cfc1, #D8CFC1)",
                     borderRadius: "999px",
                     padding: "4px 10px",
                     cursor: "pointer",
@@ -773,9 +773,9 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                 <button
                   onClick={() => setFiltro("eliminadas")}
                   style={{
-                    background: filtro === "eliminadas" ? "#8F3D34" : "#FFFFFF",
-                    color: filtro === "eliminadas" ? "#FFFFFF" : "#574E46",
-                    border: "1px solid #D8CFC1",
+                    background: filtro === "eliminadas" ? "#8F3D34" : "var(--cf-ffffff, #FFFFFF)",
+                    color: filtro === "eliminadas" ? "#FFFFFF" : "var(--ct-574e46, #574E46)",
+                    border: "1px solid var(--cb-d8cfc1, #D8CFC1)",
                     borderRadius: "999px",
                     padding: "4px 10px",
                     cursor: "pointer",
@@ -793,7 +793,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#3D5A45",
+                      color: "var(--ct-3d5a45, #3D5A45)",
                       cursor: "pointer",
                       fontWeight: 700,
                       display: "flex",
@@ -812,7 +812,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#9E4438",
+                      color: "var(--ct-9e4438, #9E4438)",
                       cursor: "pointer",
                       fontWeight: 600,
                       display: "flex",
@@ -831,7 +831,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
             {/* Lista de Notificaciones */}
             <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
               {listaFiltrada.length === 0 ? (
-                <div style={{ padding: "40px 20px", textAlign: "center", color: "#8A7F73", fontSize: "0.85rem" }}>
+                <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ct-8a7f73, #8A7F73)", fontSize: "0.85rem" }}>
                   <Bell size={30} style={{ opacity: 0.35, marginBottom: "8px" }} />
                   <p>No hay notificaciones en esta sección.</p>
                 </div>
@@ -854,41 +854,41 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                       marginBottom: "10px",
                       cursor: !n.not_eliminada && n.not_url_accion ? "pointer" : "default",
                       background: n.not_eliminada
-                        ? "#FAF3F2"
+                        ? "var(--cf-faf3f2, #FAF3F2)"
                         : n.not_leido_en
-                        ? "#FFFFFF"
-                        : "#FFFDF8",
+                        ? "var(--cf-ffffff, #FFFFFF)"
+                        : "var(--cf-fffdf8, #FFFDF8)",
                       border: n.not_eliminada
-                        ? "1px dashed #DFC2BD"
+                        ? "1px dashed var(--cb-dfc2bd, #DFC2BD)"
                         : n.not_leido_en
-                        ? "1px solid #E6DFD3"
-                        : "1px solid #D9C49B",
+                        ? "1px solid var(--cb-e6dfd3, #E6DFD3)"
+                        : "1px solid var(--cb-d9c49b, #D9C49B)",
                       borderLeft: n.not_eliminada
                         ? "3.5px solid #A64438"
                         : n.not_leido_en
                         ? "3.5px solid transparent"
-                        : "3.5px solid #B8923F",
+                        : "3.5px solid var(--cb-b8923f, #B8923F)",
                       boxShadow: "0 2px 6px rgba(34, 29, 26, 0.04)",
                       transition: "background 0.2s"
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", marginBottom: "5px" }}>
-                      <span style={{ fontWeight: 700, fontSize: "0.85rem", color: n.not_eliminada ? "#8F3D34" : "#221D1A" }}>
+                      <span style={{ fontWeight: 700, fontSize: "0.85rem", color: n.not_eliminada ? "var(--ct-8f3d34, #8F3D34)" : "var(--ct-221d1a, #221D1A)" }}>
                         {vista(n).titulo}
                       </span>
-                      <span style={{ fontSize: "0.72rem", color: "#8A7F73", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
+                      <span style={{ fontSize: "0.72rem", color: "var(--ct-8a7f73, #8A7F73)", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
                         {new Date(n.not_creado_en).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                     {n.not_eliminada && (
                       <div style={{ marginBottom: "5px" }}>
-                        <span style={{ fontSize: "0.68rem", color: "#8F3D34", fontWeight: 700 }}>
+                        <span style={{ fontSize: "0.68rem", color: "var(--ct-8f3d34, #8F3D34)", fontWeight: 700 }}>
                           • Eliminada
                         </span>
                       </div>
                     )}
                     <div
-                      style={{ fontSize: "0.8rem", color: "#574E46", lineHeight: 1.45 }}
+                      style={{ fontSize: "0.8rem", color: "var(--ct-574e46, #574E46)", lineHeight: 1.45 }}
                       dangerouslySetInnerHTML={{ __html: vista(n).html }}
                     />
                     {n.not_url_accion && (
@@ -906,7 +906,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                           alignItems: "center",
                           gap: "4px",
                           fontSize: "0.77rem",
-                          color: "#3D5A45",
+                          color: "var(--ct-3d5a45, #3D5A45)",
                           marginTop: "8px",
                           textDecoration: "none",
                           fontWeight: 700
@@ -919,7 +919,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                     {/* Botones de acción sobrios */}
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", borderTop: "1px solid #EFE9DF", paddingTop: "8px" }}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", borderTop: "1px solid var(--cb-efe9df, #EFE9DF)", paddingTop: "8px" }}
                     >
                       {n.not_eliminada ? (
                         <button
@@ -969,9 +969,9 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                             type="button"
                             onClick={() => posponerItem(n, 3)}
                             style={{
-                              background: "#F5F0E8",
-                              color: "#4A433C",
-                              border: "1px solid #DDD4C7",
+                              background: "var(--cf-f5f0e8, #F5F0E8)",
+                              color: "var(--ct-4a433c, #4A433C)",
+                              border: "1px solid var(--cb-ddd4c7, #DDD4C7)",
                               borderRadius: "7px",
                               padding: "4px 9px",
                               fontSize: "0.72rem",
@@ -994,7 +994,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                             title={`Copiar ID de referencia (${n.not_id})`}
                             style={{
                               background: "transparent",
-                              color: idCopiado === n.not_id ? "#3D5A45" : "#9A8F83",
+                              color: idCopiado === n.not_id ? "var(--ct-3d5a45, #3D5A45)" : "var(--ct-9a8f83, #9A8F83)",
                               border: "none",
                               padding: "4px 5px",
                               fontSize: "0.7rem",
@@ -1009,7 +1009,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                             onClick={() => eliminarItem(n)}
                             style={{
                               background: "transparent",
-                              color: "#9E4438",
+                              color: "var(--ct-9e4438, #9E4438)",
                               border: "none",
                               padding: "4px 6px",
                               fontSize: "0.72rem",
@@ -1032,7 +1032,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
             </div>
 
             {/* Footer con Enlace a Preferencias */}
-            <div style={{ padding: "12px 16px", borderTop: "1px solid #E5DDD0", background: "#FAF7F2" }}>
+            <div style={{ padding: "12px 16px", borderTop: "1px solid var(--cb-e5ddd0, #E5DDD0)", background: "var(--cf-faf7f2, #FAF7F2)" }}>
               <a
                 href="/panel/configuracion"
                 onClick={() => setAbierto(false)}
@@ -1041,9 +1041,9 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "6px",
-                  background: "#FFFFFF",
-                  border: "1px solid #D8CFC1",
-                  color: "#221D1A",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: "1px solid var(--cb-d8cfc1, #D8CFC1)",
+                  color: "var(--ct-221d1a, #221D1A)",
                   borderRadius: "9px",
                   padding: "9px",
                   fontSize: "0.8rem",

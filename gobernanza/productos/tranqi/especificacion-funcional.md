@@ -38,6 +38,7 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-COM-001`** | **Común (Todos)** | **Billetera Digital de Documentos Seguros, Extracción OCR y Enlaces TTL** | ✅ Implementado | **100%** | Jesus Navarrete / Kleber Toapanta |
 | **`TRQ-COM-002`** | **Común (Todos)** | **Compartición de Documentos a Tranqi (Revisión de Contratos & Vinculación a Casos)** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-COM-003`** | **Común (Todos)** | **Herramienta Universal de Firma Digital de Documentos PDF (.p12 / QR / PAdES)** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TRQ-COM-004`** | **Común (Todos)** | **Tema Claro / Oscuro / Sistema del Panel, Guardado en el Perfil del Usuario** | 🟡 En Desarrollo | **90%** | Jesus Navarrete |
 | **`TRQ-CRM-001`** | **CRM Jurídico** | **Gestión de Clientes (Naturales/Jurídicas), Registro Manual, Auto-Lead Web (Prospecto) y Conflict Check** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-CAS-001`** | **Expediente** | **Gestión de Trámites Judiciales y Extrajudiciales (Expediente Digital Unificado)** | 🟡 Especificado | **30%** | Kleber Toapanta / Jesus Navarrete |
 | **`TRQ-CAS-002`** | **Equipo Legal** | **Asignación Multirrol de Abogados (Titular / Co-patrocinadores / Mesa de Control)** | 🟡 Especificado | **25%** | Kleber Toapanta |

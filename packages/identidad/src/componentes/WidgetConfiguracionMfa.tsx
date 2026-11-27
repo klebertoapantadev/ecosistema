@@ -127,7 +127,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
   return (
     <div
       style={{
-        background: "#FFFFFF",
+        background: "var(--cf-ffffff, #FFFFFF)",
         borderRadius: "14px",
         border: "1px solid var(--panel-linea, #E4E4E4)",
         padding: "20px",
@@ -186,7 +186,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
                 {mfaActivo ? <ShieldCheck size={22} /> : <ShieldAlert size={22} />}
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: "0.94rem", fontWeight: 800, color: "var(--negro, #111111)" }}>
+                <h4 style={{ margin: 0, fontSize: "0.94rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))" }}>
                   {mfaActivo ? "Autenticador MFA Activo" : "Autenticador MFA No Configurado"}
                 </h4>
                 <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--panel-gris, #737373)" }}>
@@ -203,8 +203,8 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
                 borderRadius: "999px",
                 fontSize: "0.76rem",
                 fontWeight: 800,
-                background: mfaActivo ? "var(--esmeralda, #05876e)" : "#E4E4E4",
-                color: mfaActivo ? "#FFF" : "#444",
+                background: mfaActivo ? "var(--esmeralda, #05876e)" : "var(--cf-e4e4e4, #E4E4E4)",
+                color: mfaActivo ? "#FFF" : "var(--ct-444444, #444)",
               }}
             >
               {mfaActivo ? "MFA ACTIVADO " : "INACTIVO "}
@@ -260,7 +260,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
       {modo === "configurar" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "8px" }}>
+            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", display: "flex", alignItems: "center", gap: "8px" }}>
               <QrCode size={18} color="var(--violeta, #5000BA)" /> Configurar App Autenticadora (TOTP)
             </h4>
             <button
@@ -277,28 +277,28 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
           </p>
 
           {/* Tarjeta de Código QR y Clave Manual */}
-          <div style={{ display: "flex", gap: "20px", alignItems: "center", background: "#F9F9FB", padding: "16px", borderRadius: "12px", border: "1px solid #E6E6E6", flexWrap: "wrap" }}>
-            <div style={{ background: "#FFFFFF", padding: "8px", borderRadius: "10px", border: "1px solid #DDD", flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: "20px", alignItems: "center", background: "var(--cf-f9f9fb, #F9F9FB)", padding: "16px", borderRadius: "12px", border: "1px solid var(--cb-e6e6e6, #E6E6E6)", flexWrap: "wrap" }}>
+            <div style={{ background: "var(--cf-ffffff, #FFFFFF)", padding: "8px", borderRadius: "10px", border: "1px solid var(--cb-dddddd, #DDD)", flexShrink: 0 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={qrImageUrl} alt="Código QR MFA" style={{ width: "140px", height: "140px", display: "block" }} />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1, minWidth: "200px" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-111111, var(--negro, #111111))" }}>
                 ¿No puedes escanear el código QR?
               </span>
               <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, #737373)" }}>
                 Ingresa esta Clave Secreta en tu aplicación:
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <code style={{ background: "#EEE", padding: "6px 10px", borderRadius: "6px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.1em", color: "#111" }}>
+                <code style={{ background: "var(--cf-eeeeee, #EEE)", padding: "6px 10px", borderRadius: "6px", fontSize: "0.95rem", fontWeight: 800, letterSpacing: "0.1em", color: "var(--ct-111111, #111)" }}>
                   {secretKey}
                 </code>
                 <button
                   type="button"
                   onClick={handleCopiarSecret}
                   className="btn-mini btn-responsive-accion"
-                  style={{ background: "#FFF", border: "1px solid #CCC", color: copiado ? "#05876e" : "#333", fontWeight: 700, gap: "4px", display: "inline-flex", alignItems: "center" }}
+                  style={{ background: "var(--cf-ffffff, #FFF)", border: "1px solid var(--cb-cccccc, #CCC)", color: copiado ? "var(--ct-05876e, #05876e)" : "var(--ct-333333, #333)", fontWeight: 700, gap: "4px", display: "inline-flex", alignItems: "center" }}
                   title="Copiar Clave Secreta"
                 >
                   {copiado ? <Check size={14} /> : <Copy size={14} />}
@@ -310,7 +310,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
 
           {/* Formulario de Confirmación TOTP */}
           <form onSubmit={handleActivarTotp} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
+            <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "var(--ct-111111, var(--negro, #111111))" }}>
               Paso 2: Ingresa el código de 6 dígitos generado por la app para confirmar la vinculación:
               <input
                 type="text"
@@ -350,7 +350,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
       {modo === "resetear" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "8px" }}>
+            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", display: "flex", alignItems: "center", gap: "8px" }}>
               <RefreshCw size={18} color="#B00020" /> Proceso Estándar de Reseteo por Correo
             </h4>
             <button
@@ -364,7 +364,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
 
           <div style={{ background: "rgba(176, 0, 32, 0.05)", border: "1px solid rgba(176, 0, 32, 0.2)", borderRadius: "10px", padding: "14px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
             <AlertCircle size={20} color="#B00020" style={{ flexShrink: 0, marginTop: "2px" }} />
-            <div style={{ fontSize: "0.82rem", color: "#333", lineHeight: 1.45 }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ct-333333, #333)", lineHeight: 1.45 }}>
               Si cambiaste de teléfono o perdiste tu app autenticadora, enviaremos un <strong>Código de Rescate de 6 dígitos</strong> a tu correo de registro principal (<strong>{correo || "tu correo registrado"}</strong>) para validar tu identidad y desvincular el MFA anterior.
             </div>
           </div>
@@ -391,7 +391,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
             </button>
           ) : (
             <form onSubmit={handleValidarCodigoCorreo} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "var(--negro, #111111)" }}>
+              <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "var(--ct-111111, var(--negro, #111111))" }}>
                 Ingresa el código de 6 dígitos que enviamos a tu correo electrónico ({correo}):
                 <input
                   type="text"
@@ -438,7 +438,7 @@ export function WidgetConfiguracionMfa({ negocio = "tranqi", correoUsuario = "",
                   type="button"
                   onClick={handleSolicitarCodigoCorreo}
                   className="btn-mini"
-                  style={{ background: "#F5F5F5", border: "1px solid #DDD", color: "#444", fontWeight: 700 }}
+                  style={{ background: "var(--cf-f5f5f5, #F5F5F5)", border: "1px solid var(--cb-dddddd, #DDD)", color: "var(--ct-444444, #444)", fontWeight: 700 }}
                 >
                   Reenviar Código
                 </button>

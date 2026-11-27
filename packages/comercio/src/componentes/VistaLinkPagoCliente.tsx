@@ -281,9 +281,9 @@ export function VistaLinkPagoCliente({
     width: "100%",
     padding: "10px 12px",
     borderRadius: "10px",
-    border: "1px solid #D6D3D1",
-    background: "#FFFFFF",
-    color: "#1C1917",
+    border: "1px solid var(--cb-d6d3d1, #D6D3D1)",
+    background: "var(--cf-ffffff, #FFFFFF)",
+    color: "var(--ct-1c1917, #1C1917)",
     fontSize: "0.9rem",
     boxSizing: "border-box",
     fontFamily: "inherit",
@@ -293,8 +293,8 @@ export function VistaLinkPagoCliente({
     <main
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(180deg, #FAF8F5 0%, #F3EFE8 100%)",
-        color: "#1C1917",
+        background: "linear-gradient(180deg, var(--cf-faf8f5, #FAF8F5) 0%, var(--cf-f3efe8, #F3EFE8) 100%)",
+        color: "var(--ct-1c1917, #1C1917)",
         fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         padding: "20px 14px 48px",
       }}
@@ -328,7 +328,7 @@ export function VistaLinkPagoCliente({
               {marca.charAt(0).toUpperCase()}
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: "0.98rem", color: "#1C1917", lineHeight: 1.15 }}>
+              <div style={{ fontWeight: 800, fontSize: "0.98rem", color: "var(--ct-1c1917, #1C1917)", lineHeight: 1.15 }}>
                 {marca}
               </div>
               <div
@@ -337,7 +337,7 @@ export function VistaLinkPagoCliente({
                   alignItems: "center",
                   gap: "4px",
                   fontSize: "0.73rem",
-                  color: "#2D4734",
+                  color: "var(--ct-2d4734, #2D4734)",
                   fontWeight: 600,
                 }}
               >
@@ -353,12 +353,12 @@ export function VistaLinkPagoCliente({
             style={{
               fontSize: "0.78rem",
               fontWeight: 700,
-              color: "#57534E",
+              color: "var(--ct-57534e, #57534E)",
               textDecoration: "none",
               padding: "7px 12px",
               borderRadius: "999px",
-              background: "#FFFFFF",
-              border: "1px solid #E7E5E4",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
             }}
           >
             Ir a la tienda
@@ -368,9 +368,9 @@ export function VistaLinkPagoCliente({
         {/* Tarjeta principal de cobro */}
         <section
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "18px",
-            border: "1px solid #E7E5E4",
+            border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
             boxShadow: "0 10px 32px rgba(28, 25, 23, 0.06)",
             overflow: "hidden",
           }}
@@ -415,14 +415,14 @@ export function VistaLinkPagoCliente({
                   padding: "4px 10px",
                   borderRadius: "999px",
                   background: estaPagado
-                    ? "#DCFCE7"
+                    ? "var(--cf-dcfce7, #DCFCE7)"
                     : esTransferenciaConfirmada
-                      ? "#FEF3C7"
+                      ? "var(--cf-fef3c7, #FEF3C7)"
                       : "rgba(255,255,255,0.16)",
                   color: estaPagado
-                    ? "#166534"
+                    ? "var(--ct-166534, #166534)"
                     : esTransferenciaConfirmada
-                      ? "#92400E"
+                      ? "var(--ct-92400e, #92400E)"
                       : "#FFFFFF",
                 }}
               >
@@ -469,9 +469,9 @@ export function VistaLinkPagoCliente({
                 style={{
                   padding: "12px 14px",
                   borderRadius: "12px",
-                  background: feedback.tipo === "ok" ? "#F0FDF4" : "#FEF2F2",
-                  border: feedback.tipo === "ok" ? "1px solid #BBF7D0" : "1px solid #FECACA",
-                  color: feedback.tipo === "ok" ? "#166534" : "#B91C1C",
+                  background: feedback.tipo === "ok" ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-fef2f2, #FEF2F2)",
+                  border: feedback.tipo === "ok" ? "1px solid var(--cb-bbf7d0, #BBF7D0)" : "1px solid var(--cb-fecaca, #FECACA)",
+                  color: feedback.tipo === "ok" ? "var(--ct-166534, #166534)" : "var(--ct-b91c1c, #B91C1C)",
                   fontSize: "0.85rem",
                   fontWeight: 600,
                   display: "flex",
@@ -495,8 +495,8 @@ export function VistaLinkPagoCliente({
                   style={{
                     padding: "16px",
                     borderRadius: "14px",
-                    background: estaPagado ? "#F0FDF4" : "#FFFBEB",
-                    border: estaPagado ? "1px solid #BBF7D0" : "1px solid #FDE68A",
+                    background: estaPagado ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-fffbeb, #FFFBEB)",
+                    border: estaPagado ? "1px solid var(--cb-bbf7d0, #BBF7D0)" : "1px solid var(--cb-fde68a, #FDE68A)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "6px",
@@ -507,7 +507,7 @@ export function VistaLinkPagoCliente({
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
-                      color: estaPagado ? "#166534" : "#92400E",
+                      color: estaPagado ? "var(--ct-166534, #166534)" : "var(--ct-92400e, #92400E)",
                       fontWeight: 800,
                       fontSize: "1rem",
                     }}
@@ -519,13 +519,13 @@ export function VistaLinkPagoCliente({
                         : "Comprobante recibido en verificación"}
                     </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: "0.85rem", color: "#44403C", lineHeight: 1.5 }}>
+                  <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ct-44403c, #44403C)", lineHeight: 1.5 }}>
                     {estaPagado
                       ? `Hemos registrado el pago de $${proforma.total.toFixed(2)} USD correspondiente a "${conceptoPrincipal}".`
                       : `Recibimos tu comprobante de transferencia por $${proforma.total.toFixed(2)} USD. ${configCheckout.transferencia.advertenciaAcreditacion}`}
                   </p>
                   {proforma.ultimoPagoPlux?.autorizacion && (
-                    <div style={{ marginTop: "4px", fontSize: "0.78rem", color: "#166534", fontWeight: 600 }}>
+                    <div style={{ marginTop: "4px", fontSize: "0.78rem", color: "var(--ct-166534, #166534)", fontWeight: 600 }}>
                       Autorización: {proforma.ultimoPagoPlux.autorizacion}
                       {proforma.ultimoPagoPlux.marca
                         ? ` · ${proforma.ultimoPagoPlux.marca}${
@@ -543,14 +543,14 @@ export function VistaLinkPagoCliente({
                     style={{
                       padding: "14px",
                       borderRadius: "12px",
-                      background: "#FAF8F5",
-                      border: "1px solid #E7E5E4",
+                      background: "var(--cf-faf8f5, #FAF8F5)",
+                      border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
                       display: "flex",
                       flexDirection: "column",
                       gap: "10px",
                     }}
                   >
-                    <strong style={{ fontSize: "0.86rem", color: "#1C1917" }}>
+                    <strong style={{ fontSize: "0.86rem", color: "var(--ct-1c1917, #1C1917)" }}>
                       Factura Electrónica SRI · {facturaEmitida.factura.numero_comprobante}
                     </strong>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -653,9 +653,9 @@ export function VistaLinkPagoCliente({
                           gap: "6px",
                           padding: "9px 14px",
                           borderRadius: "10px",
-                          border: "1px solid #D6D3D1",
-                          background: "#FFFFFF",
-                          color: "#1C1917",
+                          border: "1px solid var(--cb-d6d3d1, #D6D3D1)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-1c1917, #1C1917)",
                           fontSize: "0.82rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -695,9 +695,9 @@ export function VistaLinkPagoCliente({
                 style={{
                   padding: "16px",
                   borderRadius: "12px",
-                  background: "#FEF2F2",
-                  border: "1px solid #FECACA",
-                  color: "#991B1B",
+                  background: "var(--cf-fef2f2, #FEF2F2)",
+                  border: "1px solid var(--cb-fecaca, #FECACA)",
+                  color: "var(--ct-991b1b, #991B1B)",
                   fontSize: "0.88rem",
                 }}
               >
@@ -713,20 +713,20 @@ export function VistaLinkPagoCliente({
                       style={{
                         padding: "14px",
                         borderRadius: "14px",
-                        background: "#FAF8F5",
-                        border: "1px solid #E7E5E4",
+                        background: "var(--cf-faf8f5, #FAF8F5)",
+                        border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
                         display: "flex",
                         flexDirection: "column",
                         gap: "8px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.86rem", color: "#1C1917" }}>
+                      <strong style={{ fontSize: "0.86rem", color: "var(--ct-1c1917, #1C1917)" }}>
                         Transferencia / Depósito Bancario
                       </strong>
                       <div
                         style={{
                           fontSize: "0.82rem",
-                          color: "#44403C",
+                          color: "var(--ct-44403c, #44403C)",
                           display: "flex",
                           flexDirection: "column",
                           gap: "4px",
@@ -748,8 +748,8 @@ export function VistaLinkPagoCliente({
                             title="Copiar identificación"
                             aria-label="Copiar identificación"
                             style={{
-                              border: "1px solid #D6D3D1",
-                              background: "#FFFFFF",
+                              border: "1px solid var(--cb-d6d3d1, #D6D3D1)",
+                              background: "var(--cf-ffffff, #FFFFFF)",
                               borderRadius: "6px",
                               padding: "2px 6px",
                               fontSize: "0.7rem",
@@ -782,15 +782,15 @@ export function VistaLinkPagoCliente({
                                 gap: "8px",
                                 padding: "8px 10px",
                                 borderRadius: "9px",
-                                background: "#FFFFFF",
-                                border: "1px solid #E7E5E4",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
                               }}
                             >
                               <div style={{ fontSize: "0.8rem" }}>
-                                <div style={{ fontWeight: 700, color: "#1C1917" }}>
+                                <div style={{ fontWeight: 700, color: "var(--ct-1c1917, #1C1917)" }}>
                                   {cta.banco} ({cta.tipoCuenta})
                                 </div>
-                                <div style={{ fontFamily: "monospace", color: "#2D4734", fontWeight: 700 }}>
+                                <div style={{ fontFamily: "monospace", color: "var(--ct-2d4734, #2D4734)", fontWeight: 700 }}>
                                   {cta.numeroCuenta}
                                 </div>
                               </div>
@@ -800,8 +800,8 @@ export function VistaLinkPagoCliente({
                                 title="Copiar número de cuenta"
                                 aria-label={`Copiar cuenta ${cta.banco}`}
                                 style={{
-                                  border: "1px solid #D6D3D1",
-                                  background: "#FAF8F5",
+                                  border: "1px solid var(--cb-d6d3d1, #D6D3D1)",
+                                  background: "var(--cf-faf8f5, #FAF8F5)",
                                   borderRadius: "7px",
                                   padding: "5px 9px",
                                   fontSize: "0.74rem",
@@ -831,14 +831,14 @@ export function VistaLinkPagoCliente({
                         style={{
                           padding: "14px",
                           borderRadius: "14px",
-                          background: "#F5F3FF",
-                          border: "1px solid #DDD6FE",
+                          background: "var(--cf-f5f3ff, #F5F3FF)",
+                          border: "1px solid var(--cb-ddd6fe, #DDD6FE)",
                           display: "flex",
                           flexDirection: "column",
                           gap: "10px",
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#4C1D95" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--ct-4c1d95, #4C1D95)" }}>
                           <Smartphone size={18} />
                           <strong style={{ fontSize: "0.9rem" }}>Pago rápido con DeUna</strong>
                         </div>
@@ -872,8 +872,8 @@ export function VistaLinkPagoCliente({
                         style={{
                           padding: "14px",
                           borderRadius: "14px",
-                          background: "#FAF8F5",
-                          border: "1px solid #E7E5E4",
+                          background: "var(--cf-faf8f5, #FAF8F5)",
+                          border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
                           textAlign: "center",
                           display: "flex",
                           flexDirection: "column",
@@ -881,7 +881,7 @@ export function VistaLinkPagoCliente({
                           gap: "8px",
                         }}
                       >
-                        <strong style={{ fontSize: "0.82rem", color: "#44403C" }}>
+                        <strong style={{ fontSize: "0.82rem", color: "var(--ct-44403c, #44403C)" }}>
                           Escanea el código QR DeUna
                         </strong>
                         <img
@@ -892,8 +892,8 @@ export function VistaLinkPagoCliente({
                             height: "168px",
                             objectFit: "contain",
                             borderRadius: "10px",
-                            background: "#FFFFFF",
-                            border: "1px solid #E7E5E4",
+                            background: "var(--cf-ffffff, #FFFFFF)",
+                            border: "1px solid var(--cb-e7e5e4, #E7E5E4)",
                             padding: "6px",
                           }}
                         />
@@ -910,9 +910,9 @@ export function VistaLinkPagoCliente({
                           gap: "8px",
                           padding: "12px",
                           borderRadius: "12px",
-                          border: comprobanteSubido ? "1.5px solid #16A34A" : "1.5px dashed #A8A29E",
-                          background: comprobanteSubido ? "#F0FDF4" : "#FAF8F5",
-                          color: comprobanteSubido ? "#166534" : "#44403C",
+                          border: comprobanteSubido ? "1.5px solid #16A34A" : "1.5px dashed var(--cb-a8a29e, #A8A29E)",
+                          background: comprobanteSubido ? "var(--cf-f0fdf4, #F0FDF4)" : "var(--cf-faf8f5, #FAF8F5)",
+                          color: comprobanteSubido ? "var(--ct-166534, #166534)" : "var(--ct-44403c, #44403C)",
                           fontWeight: 700,
                           fontSize: "0.84rem",
                           cursor: subiendoComprobante ? "wait" : "pointer",
@@ -960,7 +960,7 @@ export function VistaLinkPagoCliente({
                           padding: "13px 16px",
                           borderRadius: "12px",
                           border: "none",
-                          background: comprobanteSubido ? "#2D4734" : "#A8A29E",
+                          background: comprobanteSubido ? "#2D4734" : "var(--cf-a8a29e, #A8A29E)",
                           color: "#FFFFFF",
                           fontWeight: 700,
                           fontSize: "0.94rem",
@@ -983,7 +983,7 @@ export function VistaLinkPagoCliente({
                       </button>
 
                       {configCheckout.transferencia.advertenciaAcreditacion && (
-                        <p style={{ margin: 0, fontSize: "0.75rem", color: "#78716C", textAlign: "center" }}>
+                        <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--ct-78716c, #78716C)", textAlign: "center" }}>
                           {configCheckout.transferencia.advertenciaAcreditacion}
                         </p>
                       )}
@@ -996,7 +996,7 @@ export function VistaLinkPagoCliente({
                   <div
                     style={{
                       paddingTop: transferenciaDisponible ? "14px" : "0",
-                      borderTop: transferenciaDisponible ? "1px solid #E7E5E4" : "none",
+                      borderTop: transferenciaDisponible ? "1px solid var(--cb-e7e5e4, #E7E5E4)" : "none",
                       display: "flex",
                       flexDirection: "column",
                       gap: "12px",
@@ -1013,9 +1013,9 @@ export function VistaLinkPagoCliente({
                           width: "100%",
                           padding: "11px 14px",
                           borderRadius: "12px",
-                          border: "1px solid #D6D3D1",
-                          background: mostrarPagoTarjeta ? "#FAF8F5" : "#FFFFFF",
-                          color: "#44403C",
+                          border: "1px solid var(--cb-d6d3d1, #D6D3D1)",
+                          background: mostrarPagoTarjeta ? "var(--cf-faf8f5, #FAF8F5)" : "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-44403c, #44403C)",
                           fontWeight: 700,
                           fontSize: "0.84rem",
                           cursor: "pointer",
@@ -1073,7 +1073,7 @@ export function VistaLinkPagoCliente({
                             justifyContent: "center",
                             gap: "6px",
                             fontSize: "0.75rem",
-                            color: "#78716C",
+                            color: "var(--ct-78716c, #78716C)",
                           }}
                         >
                           <ShieldCheck size={14} color="#2D4734" />
@@ -1100,7 +1100,7 @@ export function VistaLinkPagoCliente({
               gap: "6px",
               fontSize: "0.82rem",
               fontWeight: 700,
-              color: "#2D4734",
+              color: "var(--ct-2d4734, #2D4734)",
               textDecoration: "none",
             }}
           >

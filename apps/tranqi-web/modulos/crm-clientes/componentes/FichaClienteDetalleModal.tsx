@@ -109,7 +109,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
     >
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "920px",
@@ -138,7 +138,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                 height: "44px",
                 borderRadius: "12px",
                 background: perfil?.clp_tipo_personeria === "juridica" ? "var(--acento-diluido)" : "var(--acento-diluido)",
-                color: perfil?.clp_tipo_personeria === "juridica" ? "var(--acento)" : "#7E22CE",
+                color: perfil?.clp_tipo_personeria === "juridica" ? "var(--acento)" : "var(--ct-7e22ce, #7E22CE)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -197,7 +197,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
               onClick={manejarImprimir}
               title="Imprimir o Exportar Ficha"
               style={{
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 border: "1px solid var(--linea-fuerte)",
                 padding: "8px 12px",
                 borderRadius: "8px",
@@ -230,7 +230,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
         </div>
 
         {/* Barra de Pestañas (Tabs) */}
-        <div style={{ display: "flex", borderBottom: "1px solid var(--linea)", padding: "0 24px", background: "#FFFFFF" }}>
+        <div style={{ display: "flex", borderBottom: "1px solid var(--linea)", padding: "0 24px", background: "var(--cf-ffffff, #FFFFFF)" }}>
           {[
             { id: "general", label: "Datos Generales", icon: User },
             { id: "expedientes", label: `Expedientes (${detalle?.expedientes?.length || 0})`, icon: Scale },
@@ -359,7 +359,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                       <div
                         key={exp.cas_id}
                         style={{
-                          background: "#FFFFFF",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           border: "1px solid var(--linea)",
                           borderRadius: "10px",
                           padding: "14px",
@@ -427,7 +427,7 @@ export function FichaClienteDetalleModal({ clienteId, alCerrar, alEditarCliente,
                     </div>
                   ) : (
                     detalle?.citas?.map((cit) => (
-                      <div key={cit.cit_id} style={{ background: "#FFFFFF", border: "1px solid var(--linea)", borderRadius: "8px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div key={cit.cit_id} style={{ background: "var(--cf-ffffff, #FFFFFF)", border: "1px solid var(--linea)", borderRadius: "8px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "var(--texto)" }}>
                             {new Date(cit.cit_inicio_en).toLocaleDateString()} · {new Date(cit.cit_inicio_en).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

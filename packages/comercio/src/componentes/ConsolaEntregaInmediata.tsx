@@ -611,10 +611,10 @@ export function ConsolaEntregaInmediata({
               />
             )}
             <div>
-              <strong style={{ fontSize: "0.84rem", color: "#1F1C19", display: "block" }}>
+              <strong style={{ fontSize: "0.84rem", color: "var(--ct-1f1c19, #1F1C19)", display: "block" }}>
                 {x.nombre}
               </strong>
-              <span style={{ fontSize: "0.72rem", color: "#847D74" }}>{x.sku}</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--ct-847d74, #847D74)" }}>{x.sku}</span>
             </div>
           </div>
         ),
@@ -641,8 +641,8 @@ export function ConsolaEntregaInmediata({
                 borderRadius: "999px",
                 fontSize: "0.74rem",
                 fontWeight: 700,
-                background: esWeb ? "#F2F6F3" : "#F4F2EE",
-                color: esWeb ? "#2B4A36" : "#57524C",
+                background: esWeb ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f4f2ee, #F4F2EE)",
+                color: esWeb ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-57524c, #57524C)",
               }}
             >
               {esWeb
@@ -692,9 +692,9 @@ export function ConsolaEntregaInmediata({
                   gap: "5px",
                   padding: "6px 10px",
                   borderRadius: "8px",
-                  border: confirmando ? "none" : "1px solid #E5CACA",
-                  background: confirmando ? "#8A2E2E" : "#FAF2F2",
-                  color: confirmando ? "#FFFFFF" : "#8A2E2E",
+                  border: confirmando ? "none" : "1px solid var(--cb-e5caca, #E5CACA)",
+                  background: confirmando ? "#8A2E2E" : "var(--cf-faf2f2, #FAF2F2)",
+                  color: confirmando ? "#FFFFFF" : "var(--ct-8a2e2e, #8A2E2E)",
                   fontSize: "0.75rem",
                   fontWeight: 700,
                   cursor: enProceso ? "wait" : "pointer",
@@ -719,9 +719,9 @@ export function ConsolaEntregaInmediata({
                   style={{
                     padding: "6px 8px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#57524C",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-57524c, #57524C)",
                     fontSize: "0.73rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -745,9 +745,9 @@ export function ConsolaEntregaInmediata({
           style={{
             padding: "9px 12px",
             borderRadius: "10px",
-            background: "#FAF6EE",
-            border: "1px solid #E5D7BC",
-            color: "#745622",
+            background: "var(--cf-faf6ee, #FAF6EE)",
+            border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+            color: "var(--ct-745622, #745622)",
             fontSize: "0.78rem",
             display: "flex",
             alignItems: "center",
@@ -766,8 +766,8 @@ export function ConsolaEntregaInmediata({
       <form
         onSubmit={(e) => void handlePublicar(e)}
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           borderRadius: "14px",
           padding: "14px",
           display: "flex",
@@ -781,9 +781,9 @@ export function ConsolaEntregaInmediata({
             style={{
               padding: "8px 11px",
               borderRadius: "9px",
-              background: "#FAF2F2",
-              border: "1px solid #E5CACA",
-              color: "#8A2E2E",
+              background: "var(--cf-faf2f2, #FAF2F2)",
+              border: "1px solid var(--cb-e5caca, #E5CACA)",
+              color: "var(--ct-8a2e2e, #8A2E2E)",
               fontSize: "0.79rem",
               display: "flex",
               alignItems: "center",
@@ -807,8 +807,8 @@ export function ConsolaEntregaInmediata({
                       padding: "4px 9px",
                       borderRadius: "7px",
                       border: "1px solid #8A2E2E",
-                      background: "#FFFFFF",
-                      color: "#8A2E2E",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      color: "var(--ct-8a2e2e, #8A2E2E)",
                       fontSize: "0.73rem",
                       fontWeight: 700,
                       textDecoration: "none",
@@ -833,7 +833,7 @@ export function ConsolaEntregaInmediata({
                   borderRadius: "6px",
                   border: "none",
                   background: "transparent",
-                  color: "#8A2E2E",
+                  color: "var(--ct-8a2e2e, #8A2E2E)",
                   cursor: "pointer",
                   flexShrink: 0,
                 }}
@@ -850,9 +850,9 @@ export function ConsolaEntregaInmediata({
             style={{
               padding: "8px 11px",
               borderRadius: "9px",
-              background: "#F2F6F3",
-              border: "1px solid #CEDDD3",
-              color: "#2B4A36",
+              background: "var(--cf-f2f6f3, #F2F6F3)",
+              border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+              color: "var(--ct-2b4a36, #2B4A36)",
               fontSize: "0.79rem",
               display: "flex",
               alignItems: "center",
@@ -878,7 +878,7 @@ export function ConsolaEntregaInmediata({
                 borderRadius: "6px",
                 border: "none",
                 background: "transparent",
-                color: "#2B4A36",
+                color: "var(--ct-2b4a36, #2B4A36)",
                 cursor: "pointer",
                 flexShrink: 0,
               }}
@@ -902,7 +902,7 @@ export function ConsolaEntregaInmediata({
                 display: "block",
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#57524C",
+                color: "var(--ct-57524c, #57524C)",
                 marginBottom: "4px",
               }}
             >
@@ -950,9 +950,9 @@ export function ConsolaEntregaInmediata({
                   minHeight: "38px",
                   padding: "8px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
-                  background: "#F8F7F4",
-                  color: "#1F1C19",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   fontSize: "0.8rem",
                   fontWeight: 600,
                   cursor: subiendoImagen ? "wait" : "pointer",
@@ -987,7 +987,7 @@ export function ConsolaEntregaInmediata({
                 style={{
                   fontSize: "0.75rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                 }}
               >
                 Producto
@@ -1000,9 +1000,9 @@ export function ConsolaEntregaInmediata({
                     alignItems: "center",
                     padding: "1px 7px",
                     borderRadius: "999px",
-                    background: "#F4F2EE",
-                    border: "1px solid #DDD8CE",
-                    color: "#3A3530",
+                    background: "var(--cf-f4f2ee, #F4F2EE)",
+                    border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
+                    color: "var(--ct-3a3530, #3A3530)",
                     fontSize: "0.68rem",
                     fontWeight: 700,
                     lineHeight: 1.4,
@@ -1026,9 +1026,9 @@ export function ConsolaEntregaInmediata({
                   minHeight: "38px",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
-                  background: "#F8F7F4",
-                  color: "#1F1C19",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-f8f7f4, #F8F7F4)",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   fontSize: "0.84rem",
                   fontWeight: 600,
                 }}
@@ -1054,9 +1054,9 @@ export function ConsolaEntregaInmediata({
                   minHeight: "38px",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
-                  background: "#FFFFFF",
-                  color: "#1F1C19",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   fontSize: "0.84rem",
                 }}
               />
@@ -1071,7 +1071,7 @@ export function ConsolaEntregaInmediata({
                   display: "block",
                   fontSize: "0.75rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -1092,7 +1092,7 @@ export function ConsolaEntregaInmediata({
                   minHeight: "38px",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.85rem",
                   fontWeight: 700,
                   fontVariantNumeric: "tabular-nums",
@@ -1107,7 +1107,7 @@ export function ConsolaEntregaInmediata({
                   display: "block",
                   fontSize: "0.75rem",
                   fontWeight: 600,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -1127,7 +1127,7 @@ export function ConsolaEntregaInmediata({
                   minHeight: "38px",
                   padding: "8px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #E6E2DA",
+                  border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                   fontSize: "0.84rem",
                   fontVariantNumeric: "tabular-nums",
                 }}
@@ -1141,7 +1141,7 @@ export function ConsolaEntregaInmediata({
                   display: "block",
                   fontSize: "0.75rem",
                   fontWeight: 600,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                   marginBottom: "4px",
                 }}
               >
@@ -1160,7 +1160,7 @@ export function ConsolaEntregaInmediata({
                   minHeight: "38px",
                   padding: "8px 8px",
                   borderRadius: "9px",
-                  border: "1px solid #D5CFC4",
+                  border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   fontSize: "0.84rem",
                   fontVariantNumeric: "tabular-nums",
                 }}
@@ -1190,7 +1190,7 @@ export function ConsolaEntregaInmediata({
                     height: "72px",
                     objectFit: "cover",
                     borderRadius: "9px",
-                    border: idx === 0 ? "2px solid #2F4737" : "1px solid #D5CFC4",
+                    border: idx === 0 ? "2px solid #2F4737" : "1px solid var(--cb-d5cfc4, #D5CFC4)",
                   }}
                 />
                 {endpointEstudioIa && idx === 0 && (
@@ -1246,9 +1246,9 @@ export function ConsolaEntregaInmediata({
                       gap: "3px",
                       padding: "3px 7px",
                       borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      background: "#F8F7F4",
-                      color: "#57524C",
+                      border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                      background: "var(--cf-f8f7f4, #F8F7F4)",
+                      color: "var(--ct-57524c, #57524C)",
                       fontSize: "0.68rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -1267,8 +1267,8 @@ export function ConsolaEntregaInmediata({
         {endpointEstudioIa && fotosSubidas.length > 0 && (
           <div
             style={{
-              background: "#FAF6EE",
-              border: "1px solid #E5D7BC",
+              background: "var(--cf-faf6ee, #FAF6EE)",
+              border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
               borderRadius: "12px",
               padding: "11px",
               display: "flex",
@@ -1291,9 +1291,9 @@ export function ConsolaEntregaInmediata({
                     width: "28px",
                     height: "28px",
                     borderRadius: "7px",
-                    background: "#FFFFFF",
-                    border: "1px solid #E5D7BC",
-                    color: "#8F6A2E",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                    color: "var(--ct-8f6a2e, #8F6A2E)",
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1302,7 +1302,7 @@ export function ConsolaEntregaInmediata({
                 >
                   <Sparkles size={14} />
                 </div>
-                <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>Estudio IA</strong>
+                <strong style={{ fontSize: "0.82rem", color: "var(--ct-1f1c19, #1F1C19)" }}>Estudio IA</strong>
               </div>
 
               <button
@@ -1356,7 +1356,7 @@ export function ConsolaEntregaInmediata({
                   gap: "6px",
                   fontSize: "0.75rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                 }}
               >
                 <span>Soporte</span>
@@ -1370,9 +1370,9 @@ export function ConsolaEntregaInmediata({
                   style={{
                     padding: "6px 9px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#1F1C19",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     fontSize: "0.78rem",
                     fontWeight: 600,
                   }}
@@ -1390,7 +1390,7 @@ export function ConsolaEntregaInmediata({
                   gap: "6px",
                   fontSize: "0.75rem",
                   fontWeight: 700,
-                  color: "#57524C",
+                  color: "var(--ct-57524c, #57524C)",
                 }}
               >
                 <span>Geometría</span>
@@ -1404,9 +1404,9 @@ export function ConsolaEntregaInmediata({
                   style={{
                     padding: "6px 9px",
                     borderRadius: "8px",
-                    border: "1px solid #D5CFC4",
-                    background: "#FFFFFF",
-                    color: "#1F1C19",
+                    border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                    background: "var(--cf-ffffff, #FFFFFF)",
+                    color: "var(--ct-1f1c19, #1F1C19)",
                     fontSize: "0.78rem",
                     fontWeight: 600,
                   }}
@@ -1424,11 +1424,11 @@ export function ConsolaEntregaInmediata({
                   gap: "6px",
                   fontSize: "0.78rem",
                   fontWeight: 600,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   padding: "5px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #E5D7BC",
-                  background: "#FFFFFF",
+                  border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   cursor: "pointer",
                 }}
               >
@@ -1437,7 +1437,7 @@ export function ConsolaEntregaInmediata({
                   checked={coreanoIa}
                   onChange={(e) => setCoreanoIa(e.target.checked)}
                   disabled={generandoIa.estudio || generandoIa.taller}
-                  style={{ accentColor: "#2F4737", width: "15px", height: "15px" }}
+                  style={{ accentColor: "var(--ct-2f4737, #2F4737)", width: "15px", height: "15px" }}
                 />
                 <span>Estilo coreano</span>
               </label>
@@ -1449,11 +1449,11 @@ export function ConsolaEntregaInmediata({
                   gap: "6px",
                   fontSize: "0.78rem",
                   fontWeight: 600,
-                  color: "#1F1C19",
+                  color: "var(--ct-1f1c19, #1F1C19)",
                   padding: "5px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #E5D7BC",
-                  background: "#FFFFFF",
+                  border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   cursor: "pointer",
                 }}
               >
@@ -1462,7 +1462,7 @@ export function ConsolaEntregaInmediata({
                   checked={incluirTarjetaIa}
                   onChange={(e) => setIncluirTarjetaIa(e.target.checked)}
                   disabled={generandoIa.estudio || generandoIa.taller}
-                  style={{ accentColor: "#2F4737", width: "15px", height: "15px" }}
+                  style={{ accentColor: "var(--ct-2f4737, #2F4737)", width: "15px", height: "15px" }}
                 />
                 <span>Tarjeta Tinkay</span>
               </label>
@@ -1504,12 +1504,12 @@ export function ConsolaEntregaInmediata({
                       <div
                         key={modo}
                         style={{
-                          background: "#FFFFFF",
+                          background: "var(--cf-ffffff, #FFFFFF)",
                           border: seleccionada
                             ? "2px solid #2F4737"
                             : errorModo
-                              ? "1px solid #E5CACA"
-                              : "1px solid #E6E2DA",
+                              ? "1px solid var(--cb-e5caca, #E5CACA)"
+                              : "1px solid var(--cb-e6e2da, #E6E2DA)",
                           borderRadius: "12px",
                           padding: "10px",
                           display: "flex",
@@ -1525,7 +1525,7 @@ export function ConsolaEntregaInmediata({
                             gap: "6px",
                           }}
                         >
-                          <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>
+                          <strong style={{ fontSize: "0.82rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                             {titulo}
                           </strong>
                           {cargandoModo ? (
@@ -1535,9 +1535,9 @@ export function ConsolaEntregaInmediata({
                                 fontWeight: 700,
                                 padding: "2px 8px",
                                 borderRadius: "999px",
-                                background: "#FAF6EE",
-                                color: "#8F6A2E",
-                                border: "1px solid #E5D7BC",
+                                background: "var(--cf-faf6ee, #FAF6EE)",
+                                color: "var(--ct-8f6a2e, #8F6A2E)",
+                                border: "1px solid var(--cb-e5d7bc, #E5D7BC)",
                               }}
                             >
                               Generando
@@ -1549,11 +1549,11 @@ export function ConsolaEntregaInmediata({
                                 fontWeight: 700,
                                 padding: "2px 8px",
                                 borderRadius: "999px",
-                                background: seleccionada ? "#F2F6F3" : "#F4F2EE",
-                                color: seleccionada ? "#2B4A36" : "#57524C",
+                                background: seleccionada ? "var(--cf-f2f6f3, #F2F6F3)" : "var(--cf-f4f2ee, #F4F2EE)",
+                                color: seleccionada ? "var(--ct-2b4a36, #2B4A36)" : "var(--ct-57524c, #57524C)",
                                 border: seleccionada
-                                  ? "1px solid #CEDDD3"
-                                  : "1px solid #E6E2DA",
+                                  ? "1px solid var(--cb-ceddd3, #CEDDD3)"
+                                  : "1px solid var(--cb-e6e2da, #E6E2DA)",
                               }}
                             >
                               {seleccionada ? "Incluida" : "Omitida"}
@@ -1568,8 +1568,8 @@ export function ConsolaEntregaInmediata({
                             aspectRatio: "3 / 4",
                             borderRadius: "9px",
                             overflow: "hidden",
-                            background: "#F4F2EE",
-                            border: "1px solid #E6E2DA",
+                            background: "var(--cf-f4f2ee, #F4F2EE)",
+                            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -1593,13 +1593,13 @@ export function ConsolaEntregaInmediata({
                                   style={{
                                     position: "absolute",
                                     inset: 0,
-                                    background: "rgba(248, 247, 244, 0.78)",
+                                    background: "var(--cf-f8f7f4-a780, rgba(248, 247, 244, 0.78))",
                                     display: "flex",
                                     flexDirection: "column",
                                     alignItems: "center",
                                     justifyContent: "center",
                                     gap: "8px",
-                                    color: "#8F6A2E",
+                                    color: "var(--ct-8f6a2e, #8F6A2E)",
                                     fontSize: "0.78rem",
                                     fontWeight: 700,
                                   }}
@@ -1618,14 +1618,14 @@ export function ConsolaEntregaInmediata({
                                 gap: "8px",
                                 padding: "16px",
                                 textAlign: "center",
-                                color: "#8F6A2E",
+                                color: "var(--ct-8f6a2e, #8F6A2E)",
                               }}
                             >
                               <Loader2 size={24} className="eco-spin" />
                               <span style={{ fontSize: "0.78rem", fontWeight: 700 }}>
                                 Creando foto {titulo}...
                               </span>
-                              <span style={{ fontSize: "0.7rem", color: "#847D74" }}>
+                              <span style={{ fontSize: "0.7rem", color: "var(--ct-847d74, #847D74)" }}>
                                 Tomará ~15 a 30 segundos
                               </span>
                             </div>
@@ -1638,7 +1638,7 @@ export function ConsolaEntregaInmediata({
                                 flexDirection: "column",
                                 alignItems: "center",
                                 gap: "8px",
-                                color: "#8A2E2E",
+                                color: "var(--ct-8a2e2e, #8A2E2E)",
                               }}
                             >
                               <AlertTriangle size={20} />
@@ -1647,7 +1647,7 @@ export function ConsolaEntregaInmediata({
                               </span>
                             </div>
                           ) : (
-                            <span style={{ fontSize: "0.75rem", color: "#847D74" }}>
+                            <span style={{ fontSize: "0.75rem", color: "var(--ct-847d74, #847D74)" }}>
                               Sin generar aún
                             </span>
                           )}
@@ -1658,9 +1658,9 @@ export function ConsolaEntregaInmediata({
                             style={{
                               padding: "6px 8px",
                               borderRadius: "7px",
-                              background: "#FAF2F2",
-                              border: "1px solid #E5CACA",
-                              color: "#8A2E2E",
+                              background: "var(--cf-faf2f2, #FAF2F2)",
+                              border: "1px solid var(--cb-e5caca, #E5CACA)",
+                              color: "var(--ct-8a2e2e, #8A2E2E)",
                               fontSize: "0.71rem",
                             }}
                           >
@@ -1697,10 +1697,10 @@ export function ConsolaEntregaInmediata({
                                 padding: "7px 9px",
                                 borderRadius: "8px",
                                 border: seleccionada
-                                  ? "1px solid #E5CACA"
-                                  : "1px solid #CEDDD3",
-                                background: seleccionada ? "#FAF2F2" : "#F2F6F3",
-                                color: seleccionada ? "#8A2E2E" : "#2B4A36",
+                                  ? "1px solid var(--cb-e5caca, #E5CACA)"
+                                  : "1px solid var(--cb-ceddd3, #CEDDD3)",
+                                background: seleccionada ? "var(--cf-faf2f2, #FAF2F2)" : "var(--cf-f2f6f3, #F2F6F3)",
+                                color: seleccionada ? "var(--ct-8a2e2e, #8A2E2E)" : "var(--ct-2b4a36, #2B4A36)",
                                 fontSize: "0.75rem",
                                 fontWeight: 700,
                                 cursor: "pointer",
@@ -1728,9 +1728,9 @@ export function ConsolaEntregaInmediata({
                               gap: "5px",
                               padding: "7px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #D5CFC4",
-                              background: "#F8F7F4",
-                              color: "#1F1C19",
+                              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                              background: "var(--cf-f8f7f4, #F8F7F4)",
+                              color: "var(--ct-1f1c19, #1F1C19)",
                               fontSize: "0.75rem",
                               fontWeight: 600,
                               cursor: cargandoModo ? "wait" : "pointer",
@@ -1759,9 +1759,9 @@ export function ConsolaEntregaInmediata({
                                 gap: "5px",
                                 padding: "7px 9px",
                                 borderRadius: "8px",
-                                border: "1px solid #D5CFC4",
-                                background: "#FFFFFF",
-                                color: "#57524C",
+                                border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                                background: "var(--cf-ffffff, #FFFFFF)",
+                                color: "var(--ct-57524c, #57524C)",
                                 fontSize: "0.75rem",
                                 fontWeight: 600,
                                 cursor: "pointer",
@@ -1787,7 +1787,7 @@ export function ConsolaEntregaInmediata({
                       gap: "10px",
                       flexWrap: "wrap",
                       paddingTop: "8px",
-                      borderTop: "1px solid #E5D7BC",
+                      borderTop: "1px solid var(--cb-e5d7bc, #E5D7BC)",
                     }}
                   >
                     <label
@@ -1797,7 +1797,7 @@ export function ConsolaEntregaInmediata({
                         gap: "7px",
                         fontSize: "0.79rem",
                         fontWeight: 600,
-                        color: "#1F1C19",
+                        color: "var(--ct-1f1c19, #1F1C19)",
                         cursor: "pointer",
                       }}
                     >
@@ -1806,7 +1806,7 @@ export function ConsolaEntregaInmediata({
                         checked={reemplazarOriginalIa}
                         onChange={(e) => setReemplazarOriginalIa(e.target.checked)}
                         disabled={aplicandoIa}
-                        style={{ accentColor: "#2F4737", width: "16px", height: "16px" }}
+                        style={{ accentColor: "var(--ct-2f4737, #2F4737)", width: "16px", height: "16px" }}
                       />
                       <span>Reemplazar foto original</span>
                     </label>
@@ -1876,7 +1876,7 @@ export function ConsolaEntregaInmediata({
               minHeight: "38px",
               padding: "8px 10px",
               borderRadius: "9px",
-              border: "1px solid #D5CFC4",
+              border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
               fontSize: "0.84rem",
             }}
           />
@@ -1911,8 +1911,8 @@ export function ConsolaEntregaInmediata({
       {/* GRILLA EN VIVO DE DISPONIBLES ACTUALES */}
       <div
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
+          background: "var(--cf-ffffff, #FFFFFF)",
+          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
           borderRadius: "14px",
           padding: "14px",
           display: "flex",
@@ -1926,7 +1926,7 @@ export function ConsolaEntregaInmediata({
               margin: 0,
               fontSize: "0.9rem",
               fontWeight: 700,
-              color: "#1F1C19",
+              color: "var(--ct-1f1c19, #1F1C19)",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
@@ -1942,10 +1942,10 @@ export function ConsolaEntregaInmediata({
             style={{
               padding: "16px 12px",
               textAlign: "center",
-              color: "#847D74",
-              background: "#F8F7F4",
+              color: "var(--ct-847d74, #847D74)",
+              background: "var(--cf-f8f7f4, #F8F7F4)",
               borderRadius: "10px",
-              border: "1px dashed #D5CFC4",
+              border: "1px dashed var(--cb-d5cfc4, #D5CFC4)",
               fontSize: "0.82rem",
             }}
           >
@@ -1970,15 +1970,15 @@ export function ConsolaEntregaInmediata({
                 <div
                   key={item.productoId}
                   style={{
-                    border: "1px solid #E6E2DA",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     borderRadius: "12px",
                     overflow: "hidden",
-                    background: "#FFFFFF",
+                    background: "var(--cf-ffffff, #FFFFFF)",
                     display: "flex",
                     flexDirection: "column",
                   }}
                 >
-                  <div style={{ position: "relative", height: "196px", background: "#F4F2EE" }}>
+                  <div style={{ position: "relative", height: "196px", background: "var(--cf-f4f2ee, #F4F2EE)" }}>
                     <img
                       src={item.imagenUrl}
                       alt={item.nombre}
@@ -2024,18 +2024,18 @@ export function ConsolaEntregaInmediata({
                         gap: "8px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.9rem", color: "#1F1C19" }}>
+                      <strong style={{ fontSize: "0.9rem", color: "var(--ct-1f1c19, #1F1C19)" }}>
                         {item.nombre}
                       </strong>
                       <div style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                        <strong style={{ fontSize: "0.88rem", color: "#2F4737" }}>
+                        <strong style={{ fontSize: "0.88rem", color: "var(--ct-2f4737, #2F4737)" }}>
                           ${Number(item.precio).toFixed(2)}
                         </strong>
                         {item.precioComparacion && item.precioComparacion > item.precio && (
                           <div
                             style={{
                               fontSize: "0.72rem",
-                              color: "#847D74",
+                              color: "var(--ct-847d74, #847D74)",
                               textDecoration: "line-through",
                             }}
                           >
@@ -2053,9 +2053,9 @@ export function ConsolaEntregaInmediata({
                             alignItems: "center",
                             padding: "2px 7px",
                             borderRadius: "999px",
-                            background: "#F4F2EE",
-                            border: "1px solid #DDD8CE",
-                            color: "#3A3530",
+                            background: "var(--cf-f4f2ee, #F4F2EE)",
+                            border: "1px solid var(--cb-ddd8ce, #DDD8CE)",
+                            color: "var(--ct-3a3530, #3A3530)",
                             fontSize: "0.68rem",
                             fontWeight: 700,
                           }}
@@ -2070,7 +2070,7 @@ export function ConsolaEntregaInmediata({
                         style={{
                           margin: 0,
                           fontSize: "0.77rem",
-                          color: "#847D74",
+                          color: "var(--ct-847d74, #847D74)",
                           lineHeight: 1.38,
                           flex: 1,
                         }}
@@ -2085,7 +2085,7 @@ export function ConsolaEntregaInmediata({
                         gap: "6px",
                         flexWrap: "wrap",
                         paddingTop: "6px",
-                        borderTop: "1px solid #F4F2EE",
+                        borderTop: "1px solid var(--cb-f4f2ee, #F4F2EE)",
                       }}
                     >
                       <button
@@ -2101,9 +2101,9 @@ export function ConsolaEntregaInmediata({
                           gap: "5px",
                           padding: "7px 9px",
                           borderRadius: "8px",
-                          border: "1px solid #D5CFC4",
-                          background: "#F8F7F4",
-                          color: "#1F1C19",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-f8f7f4, #F8F7F4)",
+                          color: "var(--ct-1f1c19, #1F1C19)",
                           fontSize: "0.75rem",
                           fontWeight: 600,
                           cursor: "pointer",
@@ -2125,9 +2125,9 @@ export function ConsolaEntregaInmediata({
                           justifyContent: "center",
                           padding: "7px 9px",
                           borderRadius: "8px",
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
-                          color: "#57524C",
+                          border: "1px solid var(--cb-d5cfc4, #D5CFC4)",
+                          background: "var(--cf-ffffff, #FFFFFF)",
+                          color: "var(--ct-57524c, #57524C)",
                         }}
                       >
                         <ExternalLink size={13} />
@@ -2171,9 +2171,9 @@ export function ConsolaEntregaInmediata({
                           justifyContent: "center",
                           padding: "7px 9px",
                           borderRadius: "8px",
-                          border: "1px solid #E5CACA",
-                          background: "#FAF2F2",
-                          color: "#8A2E2E",
+                          border: "1px solid var(--cb-e5caca, #E5CACA)",
+                          background: "var(--cf-faf2f2, #FAF2F2)",
+                          color: "var(--ct-8a2e2e, #8A2E2E)",
                           cursor: enProceso ? "wait" : "pointer",
                         }}
                       >
@@ -2192,8 +2192,8 @@ export function ConsolaEntregaInmediata({
       {historialBajas.length > 0 && (
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px solid #E6E2DA",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px solid var(--cb-e6e2da, #E6E2DA)",
             borderRadius: "14px",
             padding: "14px",
             display: "flex",
@@ -2201,7 +2201,7 @@ export function ConsolaEntregaInmediata({
             gap: "10px",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
+          <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "var(--ct-1f1c19, #1F1C19)" }}>
             Historial ({historialBajas.length})
           </h3>
           <DataGrid

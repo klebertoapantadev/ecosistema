@@ -173,7 +173,7 @@ export function BannerInformativoSuperior({
               alignItems: "center",
               gap: "5px",
               background: colorTag ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.2)",
-              border: colorTag ? "1px solid rgba(255,255,255,0.4)" : "none",
+              border: colorTag ? "1px solid var(--cb-ffffff-a400, rgba(255,255,255,0.4))" : "none",
               padding: "2px 9px",
               borderRadius: "12px",
               fontSize: "0.68rem",
@@ -196,8 +196,8 @@ export function BannerInformativoSuperior({
               rel="noreferrer"
               onClick={(e) => e.stopPropagation()}
               style={{
-                background: "#FFFFFF",
-                color: colorTag || (esAlerta ? "#991B1B" : "#312E81"),
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: colorTag || (esAlerta ? "var(--ct-991b1b, #991B1B)" : "var(--ct-312e81, #312E81)"),
                 padding: "3px 10px",
                 borderRadius: "12px",
                 fontSize: "0.72rem",
@@ -257,14 +257,14 @@ export function BannerInformativoSuperior({
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "18px",
               maxWidth: "620px",
               width: "100%",
               maxHeight: "90vh",
               overflowY: "auto",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
-              border: "1px solid rgba(226, 232, 240, 0.9)",
+              border: "1px solid var(--cb-e2e8f0-a900, rgba(226, 232, 240, 0.9))",
               position: "relative",
               display: "flex",
               flexDirection: "column",
@@ -445,14 +445,14 @@ export function BannerInformativoSuperior({
             <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
               {modalDetalle.inf_detalle?.imagen_url && (
                 <div>
-                  <h3 style={{ margin: "0 0 4px 0", fontSize: "1.3rem", fontWeight: 800, color: "#0F172A", lineHeight: 1.3 }}>
+                  <h3 style={{ margin: "0 0 4px 0", fontSize: "1.3rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", lineHeight: 1.3 }}>
                     {modalDetalle.inf_titulo}
                   </h3>
                 </div>
               )}
 
               {modalDetalle.inf_subtitulo && (
-                <p style={{ margin: 0, fontSize: "0.95rem", color: "#475569", fontWeight: 600, lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: "0.95rem", color: "var(--ct-475569, #475569)", fontWeight: 600, lineHeight: 1.45 }}>
                   {modalDetalle.inf_subtitulo}
                 </p>
               )}
@@ -463,9 +463,9 @@ export function BannerInformativoSuperior({
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "6px",
-                    background: "#ECFDF5",
-                    color: "#059669",
-                    border: "1px solid #A7F3D0",
+                    background: "var(--cf-ecfdf5, #ECFDF5)",
+                    color: "var(--ct-059669, #059669)",
+                    border: "1px solid var(--cb-a7f3d0, #A7F3D0)",
                     padding: "6px 12px",
                     borderRadius: "10px",
                     fontSize: "0.84rem",
@@ -480,11 +480,11 @@ export function BannerInformativoSuperior({
               {modalDetalle.inf_contenido_md && (
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "var(--cf-f8fafc, #F8FAFC)",
+                    border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                     borderRadius: "12px",
                     padding: "16px",
-                    color: "#334155",
+                    color: "var(--ct-334155, #334155)",
                     fontSize: "0.88rem",
                     lineHeight: 1.6,
                     whiteSpace: "pre-line",
@@ -501,9 +501,9 @@ export function BannerInformativoSuperior({
                   alignItems: "center",
                   gap: "8px",
                   fontSize: "0.78rem",
-                  color: "#64748B",
+                  color: "var(--ct-64748b, #64748B)",
                   padding: "8px 12px",
-                  background: "#F1F5F9",
+                  background: "var(--cf-f1f5f9, #F1F5F9)",
                   borderRadius: "8px",
                 }}
               >
@@ -544,7 +544,7 @@ export function BannerInformativoSuperior({
                 style={{
                   marginTop: "8px",
                   paddingTop: "16px",
-                  borderTop: "1px solid #E2E8F0",
+                  borderTop: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
@@ -556,8 +556,8 @@ export function BannerInformativoSuperior({
                   type="button"
                   onClick={() => setModalDetalle(null)}
                   style={{
-                    background: "#F1F5F9",
-                    color: "#475569",
+                    background: "var(--cf-f1f5f9, #F1F5F9)",
+                    color: "var(--ct-475569, #475569)",
                     border: "none",
                     padding: "9px 18px",
                     borderRadius: "10px",

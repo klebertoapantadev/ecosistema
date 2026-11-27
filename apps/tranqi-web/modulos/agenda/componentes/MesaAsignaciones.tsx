@@ -306,7 +306,7 @@ export default function MesaAsignaciones({
           style={{
             padding: "14px 16px",
             borderRadius: "12px",
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             border: "1px solid var(--linea)",
           }}
         >
@@ -365,10 +365,10 @@ export default function MesaAsignaciones({
             border: "1px solid var(--acento-linea)",
           }}
         >
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#5000BA", display: "block" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-5000ba, #5000BA)", display: "block" }}>
             🎥 TELEMÁTICAS vs 🏢 OFICINA
           </span>
-          <strong style={{ fontSize: "1.25rem", fontWeight: 900, color: "#5000BA" }}>
+          <strong style={{ fontSize: "1.25rem", fontWeight: 900, color: "var(--ct-5000ba, #5000BA)" }}>
             {kpis.telematicas} video · {kpis.presenciales} ofic.
           </strong>
           <span style={{ fontSize: "0.76rem", color: "var(--acento)", display: "block" }}>
@@ -400,8 +400,8 @@ export default function MesaAsignaciones({
               padding: "9px 16px",
               borderRadius: "10px",
               border: vistaActiva === "calendario" ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
-              background: vistaActiva === "calendario" ? "var(--acento-diluido)" : "#FFFFFF",
-              color: vistaActiva === "calendario" ? "#5000BA" : "var(--texto-2)",
+              background: vistaActiva === "calendario" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
+              color: vistaActiva === "calendario" ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)",
               fontWeight: 800,
               fontSize: "0.86rem",
               cursor: "pointer",
@@ -420,8 +420,8 @@ export default function MesaAsignaciones({
               padding: "9px 16px",
               borderRadius: "10px",
               border: vistaActiva === "historial" ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
-              background: vistaActiva === "historial" ? "var(--acento-diluido)" : "#FFFFFF",
-              color: vistaActiva === "historial" ? "#5000BA" : "var(--texto-2)",
+              background: vistaActiva === "historial" ? "var(--acento-diluido)" : "var(--cf-ffffff, #FFFFFF)",
+              color: vistaActiva === "historial" ? "var(--ct-5000ba, #5000BA)" : "var(--texto-2)",
               fontWeight: 800,
               fontSize: "0.86rem",
               cursor: "pointer",
@@ -434,7 +434,7 @@ export default function MesaAsignaciones({
 
         {/* Leyenda visual */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", fontSize: "0.78rem" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#5000BA", fontWeight: 700 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--ct-5000ba, #5000BA)", fontWeight: 700 }}>
             🎥 Telemática
           </span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--acento-hondo)", fontWeight: 700 }}>
@@ -486,7 +486,7 @@ export default function MesaAsignaciones({
           {/* Calendario Mensual */}
           <div
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "16px",
@@ -620,7 +620,7 @@ export default function MesaAsignaciones({
                       background: esSeleccionado
                         ? "var(--acento-diluido)"
                         : citasDia.length > 0
-                        ? "#FFFFFF"
+                        ? "var(--cf-ffffff, #FFFFFF)"
                         : "var(--fondo-suave)",
                       cursor: "pointer",
                       display: "flex",
@@ -738,7 +738,7 @@ export default function MesaAsignaciones({
                     padding: "7px 13px",
                     borderRadius: "999px",
                     border: activo ? "1.5px solid #5000BA" : "1px solid var(--linea-fuerte)",
-                    background: activo ? "#5000BA" : "#FFFFFF",
+                    background: activo ? "#5000BA" : "var(--cf-ffffff, #FFFFFF)",
                     color: activo ? "#FFFFFF" : "var(--texto-2)",
                     fontSize: "0.8rem",
                     fontWeight: 700,
@@ -890,7 +890,7 @@ export default function MesaAsignaciones({
                               padding: "5px 10px",
                               borderRadius: "8px",
                               border: "1px solid var(--texto-tenue)",
-                              background: verLog ? "var(--texto-2)" : "#FFFFFF",
+                              background: verLog ? "var(--texto-2)" : "var(--cf-ffffff, #FFFFFF)",
                               color: verLog ? "#FFFFFF" : "var(--texto-2)",
                               fontWeight: 800,
                               fontSize: "0.75rem",
@@ -923,7 +923,7 @@ export default function MesaAsignaciones({
                   <div
                     key={c.cit_id}
                     style={{
-                      background: "#FFFFFF",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                       borderRadius: "14px",
                       border: !c.tiene_abogado ? "1.5px solid var(--aviso)" : "1px solid var(--linea)",
                       padding: "18px",
@@ -1152,7 +1152,7 @@ export default function MesaAsignaciones({
                             borderRadius: "8px",
                             border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.85rem",
-                            background: "#FFFFFF",
+                            background: "var(--cf-ffffff, #FFFFFF)",
                           }}
                         >
                           <option value="" disabled>
@@ -1230,7 +1230,7 @@ export default function MesaAsignaciones({
                             padding: "9px 12px",
                             borderRadius: "8px",
                             border: "1px solid var(--linea-fuerte)",
-                            background: verLog ? "var(--texto)" : "#FFFFFF",
+                            background: verLog ? "var(--texto)" : "var(--cf-ffffff, #FFFFFF)",
                             color: verLog ? "#FFFFFF" : "var(--texto-2)",
                             fontSize: "0.78rem",
                             fontWeight: 800,
@@ -1266,7 +1266,7 @@ export default function MesaAsignaciones({
         /* Pestaña: Historial Global de Asignaciones (Log) */
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "14px",
             border: "1px solid var(--linea)",
             padding: "18px",

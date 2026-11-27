@@ -111,7 +111,7 @@ export default function PaginaContactoEmpresas() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#ffffff", color: "#111111", fontFamily: "var(--fuente-sans, sans-serif)" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--cf-ffffff, #ffffff)", color: "var(--ct-111111, #111111)", fontFamily: "var(--fuente-sans, sans-serif)" }}>
       {/* Barra Superior de Navegación */}
       <header
         style={{
@@ -198,9 +198,9 @@ export default function PaginaContactoEmpresas() {
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
-              background: "#F3EEFF",
-              border: "1px solid #D9C8F2",
-              color: "#5000BA",
+              background: "var(--cf-f3eeff, #F3EEFF)",
+              border: "1px solid var(--cb-d9c8f2, #D9C8F2)",
+              color: "var(--ct-5000ba, #5000BA)",
               fontSize: "0.78rem",
               fontWeight: 800,
               textTransform: "uppercase",
@@ -219,15 +219,15 @@ export default function PaginaContactoEmpresas() {
               fontWeight: 900,
               letterSpacing: "-0.03em",
               lineHeight: 1.15,
-              color: "#111111",
+              color: "var(--ct-111111, #111111)",
               margin: "0 0 16px 0"
             }}
           >
-            Protección Legal Continua para tu <span style={{ color: "#5000BA" }}>Empresa</span> y tu{" "}
-            <span style={{ color: "#5000BA" }}>Nómina</span>
+            Protección Legal Continua para tu <span style={{ color: "var(--ct-5000ba, #5000BA)" }}>Empresa</span> y tu{" "}
+            <span style={{ color: "var(--ct-5000ba, #5000BA)" }}>Nómina</span>
           </h1>
 
-          <p style={{ fontSize: "1.12rem", color: "#5F5F66", lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontSize: "1.12rem", color: "var(--ct-5f5f66, #5F5F66)", lineHeight: 1.6, margin: 0 }}>
             Optimiza los costos legales de tu empresa, blinda tus contratos y entrega un paquete de bienestar jurídico de
             alto impacto para tus colaboradores. Solicita asesoría y un especialista se comunicará hoy mismo.
           </p>
@@ -245,8 +245,8 @@ export default function PaginaContactoEmpresas() {
           {/* COLUMNA IZQUIERDA: Beneficios y Funciones para Empresas */}
           <div
             style={{
-              backgroundColor: "#F7F6FA",
-              border: "1px solid #E7E5EE",
+              backgroundColor: "var(--cf-f7f6fa, #F7F6FA)",
+              border: "1px solid var(--cb-e7e5ee, #E7E5EE)",
               borderRadius: "24px",
               padding: "36px 32px"
             }}
@@ -266,10 +266,10 @@ export default function PaginaContactoEmpresas() {
                 <Building2 size={24} />
               </div>
               <div>
-                <h2 style={{ fontSize: "1.28rem", fontWeight: 800, margin: 0, color: "#111111" }}>
+                <h2 style={{ fontSize: "1.28rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, #111111)" }}>
                   Beneficios Corporativos Tranqi
                 </h2>
-                <p style={{ fontSize: "0.84rem", color: "#5F5F66", margin: "2px 0 0 0" }}>
+                <p style={{ fontSize: "0.84rem", color: "var(--ct-5f5f66, #5F5F66)", margin: "2px 0 0 0" }}>
                   Diseñados para gerencia, talento humano y equipos legales
                 </p>
               </div>
@@ -280,8 +280,8 @@ export default function PaginaContactoEmpresas() {
               <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
                 <div
                   style={{
-                    background: "#EBE3FA",
-                    color: "#5000BA",
+                    background: "var(--cf-ebe3fa, #EBE3FA)",
+                    color: "var(--ct-5000ba, #5000BA)",
                     padding: "8px",
                     borderRadius: "10px",
                     flexShrink: 0
@@ -290,10 +290,10 @@ export default function PaginaContactoEmpresas() {
                   <Briefcase size={20} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#111111" }}>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "var(--ct-111111, #111111)" }}>
                     Abogado Empresarial Dedicado
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#5F5F66", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-5f5f66, #5F5F66)", lineHeight: 1.5, margin: 0 }}>
                     Asignación de un especialista corporativo para absolver consultas laborales, contractuales,
                     tributarias y societarias de tu organización sin demoras.
                   </p>
@@ -304,8 +304,8 @@ export default function PaginaContactoEmpresas() {
               <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
                 <div
                   style={{
-                    background: "#EBE3FA",
-                    color: "#5000BA",
+                    background: "var(--cf-ebe3fa, #EBE3FA)",
+                    color: "var(--ct-5000ba, #5000BA)",
                     padding: "8px",
                     borderRadius: "10px",
                     flexShrink: 0
@@ -314,10 +314,10 @@ export default function PaginaContactoEmpresas() {
                   <Users size={20} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#111111" }}>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "var(--ct-111111, #111111)" }}>
                     Bienestar Legal para tus Empleados (B2B2C)
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#5F5F66", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-5f5f66, #5F5F66)", lineHeight: 1.5, margin: 0 }}>
                     Consultas legales sin costo y descuentos preferenciales para toda tu nómina de colaboradores y sus
                     familias, fortaleciendo el clima laboral.
                   </p>
@@ -328,8 +328,8 @@ export default function PaginaContactoEmpresas() {
               <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
                 <div
                   style={{
-                    background: "#EBE3FA",
-                    color: "#5000BA",
+                    background: "var(--cf-ebe3fa, #EBE3FA)",
+                    color: "var(--ct-5000ba, #5000BA)",
                     padding: "8px",
                     borderRadius: "10px",
                     flexShrink: 0
@@ -338,10 +338,10 @@ export default function PaginaContactoEmpresas() {
                   <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#111111" }}>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "var(--ct-111111, #111111)" }}>
                     Portal Empresa con Roles RBAC
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#5F5F66", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-5f5f66, #5F5F66)", lineHeight: 1.5, margin: 0 }}>
                     Consola corporativa para Administrador, Talento Humano y Auditor Legal, con reportes de uso en
                     tiempo real y estricta garantía de confidencialidad y secreto profesional.
                   </p>
@@ -352,8 +352,8 @@ export default function PaginaContactoEmpresas() {
               <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
                 <div
                   style={{
-                    background: "#EBE3FA",
-                    color: "#5000BA",
+                    background: "var(--cf-ebe3fa, #EBE3FA)",
+                    color: "var(--ct-5000ba, #5000BA)",
                     padding: "8px",
                     borderRadius: "10px",
                     flexShrink: 0
@@ -362,10 +362,10 @@ export default function PaginaContactoEmpresas() {
                   <FileCheck2 size={20} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#111111" }}>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "var(--ct-111111, #111111)" }}>
                     Revisión y Blindaje Contractual Preventivo
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#5F5F66", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-5f5f66, #5F5F66)", lineHeight: 1.5, margin: 0 }}>
                     Elaboración, auditoría y firma de contratos comerciales, convenios laborales, acuerdos de
                     confidencialidad (NDA) y cumplimiento normativo.
                   </p>
@@ -376,8 +376,8 @@ export default function PaginaContactoEmpresas() {
               <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
                 <div
                   style={{
-                    background: "#EBE3FA",
-                    color: "#5000BA",
+                    background: "var(--cf-ebe3fa, #EBE3FA)",
+                    color: "var(--ct-5000ba, #5000BA)",
                     padding: "8px",
                     borderRadius: "10px",
                     flexShrink: 0
@@ -386,10 +386,10 @@ export default function PaginaContactoEmpresas() {
                   <TrendingDown size={20} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "#111111" }}>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 4px 0", color: "var(--ct-111111, #111111)" }}>
                     Tarifas Escalables desde $10.35 / Colaborador
                   </h3>
-                  <p style={{ fontSize: "0.88rem", color: "#5F5F66", lineHeight: 1.5, margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-5f5f66, #5F5F66)", lineHeight: 1.5, margin: 0 }}>
                     Planes por tramos adaptados al número de empleados de tu empresa, reduciendo drásticamente el costo
                     comparado con firmas jurídicas tradicionales.
                   </p>
@@ -402,9 +402,9 @@ export default function PaginaContactoEmpresas() {
               style={{
                 marginTop: "32px",
                 padding: "18px 20px",
-                background: "#F3EEFF",
+                background: "var(--cf-f3eeff, #F3EEFF)",
                 borderRadius: "14px",
-                border: "1px solid #D9C8F2",
+                border: "1px solid var(--cb-d9c8f2, #D9C8F2)",
                 display: "flex",
                 alignItems: "center",
                 gap: "14px"
@@ -425,14 +425,14 @@ export default function PaginaContactoEmpresas() {
                 <Phone size={18} />
               </div>
               <div style={{ fontSize: "0.86rem" }}>
-                <span style={{ color: "#111111", fontWeight: 700, display: "block" }}>
+                <span style={{ color: "var(--ct-111111, #111111)", fontWeight: 700, display: "block" }}>
                   ¿Necesitas atención inmediata?
                 </span>
-                <span style={{ color: "#3F3F46" }}>
+                <span style={{ color: "var(--ct-3f3f46, #3F3F46)" }}>
                   Escríbenos a{" "}
                   <a
                     href="mailto:admin.operaciones@tranqi24.com"
-                    style={{ color: "#5000BA", fontWeight: 700, textDecoration: "underline" }}
+                    style={{ color: "var(--ct-5000ba, #5000BA)", fontWeight: 700, textDecoration: "underline" }}
                   >
                     admin.operaciones@tranqi24.com
                   </a>
@@ -444,8 +444,8 @@ export default function PaginaContactoEmpresas() {
           {/* COLUMNA DERECHA: Formulario de Contacto Corporativo */}
           <div
             style={{
-              backgroundColor: "#ffffff",
-              border: "1.5px solid #D9C8F2",
+              backgroundColor: "var(--cf-ffffff, #ffffff)",
+              border: "1.5px solid var(--cb-d9c8f2, #D9C8F2)",
               borderRadius: "24px",
               padding: "36px 32px",
               boxShadow: "0 24px 50px rgba(80, 0, 186, 0.14)"
@@ -457,8 +457,8 @@ export default function PaginaContactoEmpresas() {
                   style={{
                     width: "72px",
                     height: "72px",
-                    backgroundColor: "#EAF7F2",
-                    color: "#0E6648",
+                    backgroundColor: "var(--cf-eaf7f2, #EAF7F2)",
+                    color: "var(--ct-0e6648, #0E6648)",
                     borderRadius: "50%",
                     display: "grid",
                     placeItems: "center",
@@ -467,21 +467,21 @@ export default function PaginaContactoEmpresas() {
                 >
                   <CheckCircle2 size={42} />
                 </div>
-                <h3 style={{ fontSize: "1.6rem", fontWeight: 900, color: "#111111", marginBottom: "12px" }}>
+                <h3 style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--ct-111111, #111111)", marginBottom: "12px" }}>
                   ¡Solicitud Recibida con Éxito!
                 </h3>
-                <p style={{ fontSize: "0.98rem", color: "#3F3F46", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto 24px" }}>
+                <p style={{ fontSize: "0.98rem", color: "var(--ct-3f3f46, #3F3F46)", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto 24px" }}>
                   Hemos recibido los datos de <strong>{empresa}</strong> y enviamos un correo de confirmación a{" "}
                   <strong>{correo}</strong>.
                 </p>
                 <div
                   style={{
-                    backgroundColor: "#F7F6FA",
+                    backgroundColor: "var(--cf-f7f6fa, #F7F6FA)",
                     borderRadius: "12px",
                     padding: "16px",
                     marginBottom: "28px",
                     fontSize: "0.88rem",
-                    color: "#5F5F66"
+                    color: "var(--ct-5f5f66, #5F5F66)"
                   }}
                 >
                   Un asesor de Operaciones de Tranqi te contactará vía telefónica o correo electrónico en menos de 24
@@ -501,8 +501,8 @@ export default function PaginaContactoEmpresas() {
                       setMensaje("");
                     }}
                     style={{
-                      background: "#F1F1F4",
-                      color: "#111111",
+                      background: "var(--cf-f1f1f4, #F1F1F4)",
+                      color: "var(--ct-111111, #111111)",
                       border: "none",
                       padding: "12px 20px",
                       borderRadius: "10px",
@@ -533,10 +533,10 @@ export default function PaginaContactoEmpresas() {
             ) : (
               <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: "24px" }}>
-                  <h2 style={{ fontSize: "1.35rem", fontWeight: 900, color: "#111111", margin: "0 0 6px 0" }}>
+                  <h2 style={{ fontSize: "1.35rem", fontWeight: 900, color: "var(--ct-111111, #111111)", margin: "0 0 6px 0" }}>
                     Solicitar Asesoría Corporativa
                   </h2>
-                  <p style={{ fontSize: "0.88rem", color: "#5F5F66", margin: 0 }}>
+                  <p style={{ fontSize: "0.88rem", color: "var(--ct-5f5f66, #5F5F66)", margin: 0 }}>
                     Ingresa los datos de tu empresa para diseñar una propuesta personalizada.
                   </p>
                 </div>
@@ -544,9 +544,9 @@ export default function PaginaContactoEmpresas() {
                 {errorMsg && (
                   <div
                     style={{
-                      backgroundColor: "#FFE9DE",
-                      border: "1px solid #FFC7AD",
-                      color: "#9A3200",
+                      backgroundColor: "var(--cf-ffe9de, #FFE9DE)",
+                      border: "1px solid var(--cb-ffc7ad, #FFC7AD)",
+                      color: "var(--ct-9a3200, #9A3200)",
                       padding: "12px 16px",
                       borderRadius: "10px",
                       fontSize: "0.86rem",
@@ -561,7 +561,7 @@ export default function PaginaContactoEmpresas() {
                   {/* Empresa y RUC */}
                   <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "12px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                         Empresa / Razón Social *
                       </label>
                       <input
@@ -574,9 +574,9 @@ export default function PaginaContactoEmpresas() {
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #D4D4D8",
-                          color: "#111111",
+                          backgroundColor: "var(--cf-ffffff, #ffffff)",
+                          border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                          color: "var(--ct-111111, #111111)",
                           fontSize: "0.9rem",
                           outline: "none"
                         }}
@@ -584,7 +584,7 @@ export default function PaginaContactoEmpresas() {
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                         RUC (Ecuador)
                       </label>
                       <input
@@ -597,9 +597,9 @@ export default function PaginaContactoEmpresas() {
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #D4D4D8",
-                          color: "#111111",
+                          backgroundColor: "var(--cf-ffffff, #ffffff)",
+                          border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                          color: "var(--ct-111111, #111111)",
                           fontSize: "0.9rem",
                           outline: "none"
                         }}
@@ -610,7 +610,7 @@ export default function PaginaContactoEmpresas() {
                   {/* Contacto y Cargo */}
                   <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "12px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                         Nombre del Contacto *
                       </label>
                       <input
@@ -623,9 +623,9 @@ export default function PaginaContactoEmpresas() {
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #D4D4D8",
-                          color: "#111111",
+                          backgroundColor: "var(--cf-ffffff, #ffffff)",
+                          border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                          color: "var(--ct-111111, #111111)",
                           fontSize: "0.9rem",
                           outline: "none"
                         }}
@@ -633,7 +633,7 @@ export default function PaginaContactoEmpresas() {
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                         Cargo / Rol
                       </label>
                       <input
@@ -645,9 +645,9 @@ export default function PaginaContactoEmpresas() {
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #D4D4D8",
-                          color: "#111111",
+                          backgroundColor: "var(--cf-ffffff, #ffffff)",
+                          border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                          color: "var(--ct-111111, #111111)",
                           fontSize: "0.9rem",
                           outline: "none"
                         }}
@@ -658,7 +658,7 @@ export default function PaginaContactoEmpresas() {
                   {/* Correo y Teléfono */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                         Correo Corporativo *
                       </label>
                       <input
@@ -672,9 +672,9 @@ export default function PaginaContactoEmpresas() {
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          backgroundColor: "#ffffff",
-                          border: errorCorreo ? "1.5px solid #C33F00" : "1px solid #D4D4D8",
-                          color: "#111111",
+                          backgroundColor: "var(--cf-ffffff, #ffffff)",
+                          border: errorCorreo ? "1.5px solid #C33F00" : "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                          color: "var(--ct-111111, #111111)",
                           fontSize: "0.9rem",
                           outline: "none"
                         }}
@@ -684,7 +684,7 @@ export default function PaginaContactoEmpresas() {
                           style={{
                             marginTop: "6px",
                             fontSize: "0.78rem",
-                            color: "#C33F00",
+                            color: "var(--ct-c33f00, #C33F00)",
                             display: "flex",
                             flexDirection: "column",
                             gap: "4px"
@@ -703,9 +703,9 @@ export default function PaginaContactoEmpresas() {
                                   validarEmailEnTiempoReal(sugerenciaCorreo);
                                 }}
                                 style={{
-                                  background: "#F3EEFF",
-                                  color: "#5000BA",
-                                  border: "1px solid #D9C8F2",
+                                  background: "var(--cf-f3eeff, #F3EEFF)",
+                                  color: "var(--ct-5000ba, #5000BA)",
+                                  border: "1px solid var(--cb-d9c8f2, #D9C8F2)",
                                   borderRadius: "6px",
                                   padding: "3px 8px",
                                   fontSize: "0.75rem",
@@ -722,7 +722,7 @@ export default function PaginaContactoEmpresas() {
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                         Teléfono / WhatsApp *
                       </label>
                       <input
@@ -735,9 +735,9 @@ export default function PaginaContactoEmpresas() {
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #D4D4D8",
-                          color: "#111111",
+                          backgroundColor: "var(--cf-ffffff, #ffffff)",
+                          border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                          color: "var(--ct-111111, #111111)",
                           fontSize: "0.9rem",
                           outline: "none"
                         }}
@@ -748,7 +748,7 @@ export default function PaginaContactoEmpresas() {
                   {/* Tamaño de nómina e Interés */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                         Nómina / Colaboradores
                       </label>
                       <select
@@ -758,9 +758,9 @@ export default function PaginaContactoEmpresas() {
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #D4D4D8",
-                          color: "#111111",
+                          backgroundColor: "var(--cf-ffffff, #ffffff)",
+                          border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                          color: "var(--ct-111111, #111111)",
                           fontSize: "0.88rem",
                           outline: "none"
                         }}
@@ -773,7 +773,7 @@ export default function PaginaContactoEmpresas() {
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                         Interés Principal
                       </label>
                       <select
@@ -783,9 +783,9 @@ export default function PaginaContactoEmpresas() {
                           width: "100%",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #D4D4D8",
-                          color: "#111111",
+                          backgroundColor: "var(--cf-ffffff, #ffffff)",
+                          border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                          color: "var(--ct-111111, #111111)",
                           fontSize: "0.88rem",
                           outline: "none"
                         }}
@@ -801,7 +801,7 @@ export default function PaginaContactoEmpresas() {
 
                   {/* Mensaje opcional */}
                   <div>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#3F3F46", marginBottom: "6px" }}>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "var(--ct-3f3f46, #3F3F46)", marginBottom: "6px" }}>
                       Mensaje o requerimiento específico (opcional)
                     </label>
                     <textarea
@@ -813,9 +813,9 @@ export default function PaginaContactoEmpresas() {
                         width: "100%",
                         padding: "10px 14px",
                         borderRadius: "10px",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #D4D4D8",
-                        color: "#111111",
+                        backgroundColor: "var(--cf-ffffff, #ffffff)",
+                        border: "1px solid var(--cb-d4d4d8, #D4D4D8)",
+                        color: "var(--ct-111111, #111111)",
                         fontSize: "0.9rem",
                         outline: "none",
                         fontFamily: "inherit",
@@ -830,9 +830,9 @@ export default function PaginaContactoEmpresas() {
                       type="checkbox"
                       checked={aceptaTerminos}
                       onChange={(e) => setAceptaTerminos(e.target.checked)}
-                      style={{ marginTop: "3px", accentColor: "#5000BA" }}
+                      style={{ marginTop: "3px", accentColor: "var(--ct-5000ba, #5000BA)" }}
                     />
-                    <span style={{ fontSize: "0.8rem", color: "#5F5F66", lineHeight: 1.4 }}>
+                    <span style={{ fontSize: "0.8rem", color: "var(--ct-5f5f66, #5F5F66)", lineHeight: 1.4 }}>
                       Autorizo a Tranqi el tratamiento de mis datos de contacto para recibir información personalizada y
                       la propuesta corporativa conforme a la LOPDP.
                     </span>

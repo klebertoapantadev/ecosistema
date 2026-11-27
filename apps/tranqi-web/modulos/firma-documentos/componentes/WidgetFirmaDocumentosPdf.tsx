@@ -567,7 +567,7 @@ export function WidgetFirmaDocumentosPdf({
             title="Cerrar"
             aria-label="Cerrar"
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               border: "1px solid var(--linea-fuerte)",
               borderRadius: "50%",
               width: "36px",
@@ -601,7 +601,7 @@ export function WidgetFirmaDocumentosPdf({
       {/* BARRA DE PASOS */}
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--cf-ffffff, #FFFFFF)",
           border: "1px solid var(--linea)",
           borderRadius: "12px",
           padding: "10px 20px",
@@ -759,7 +759,7 @@ export function WidgetFirmaDocumentosPdf({
       {paso === "1_CARGAR_PDF" && (
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "16px",
             border: "2px dashed var(--linea-fuerte)",
             padding: "48px 24px",
@@ -824,7 +824,7 @@ export function WidgetFirmaDocumentosPdf({
       {paso === "2_CARGAR_CERTIFICADO" && (
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "16px",
             border: "1px solid var(--linea)",
             padding: "32px 24px",
@@ -960,7 +960,7 @@ export function WidgetFirmaDocumentosPdf({
           <div
             className="widget-firma-controles-col"
             style={{
-              background: "#FFFFFF",
+              background: "var(--cf-ffffff, #FFFFFF)",
               borderRadius: "16px",
               border: "1px solid var(--linea)",
               padding: "20px",
@@ -1002,7 +1002,7 @@ export function WidgetFirmaDocumentosPdf({
                   type="button"
                   onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
                   disabled={paginaActual <= 1}
-                  style={{ background: "#FFF", border: "1px solid var(--linea-fuerte)", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: paginaActual <= 1 ? "not-allowed" : "pointer", opacity: paginaActual <= 1 ? 0.5 : 1 }}
+                  style={{ background: "var(--cf-ffffff, #FFF)", border: "1px solid var(--linea-fuerte)", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: paginaActual <= 1 ? "not-allowed" : "pointer", opacity: paginaActual <= 1 ? 0.5 : 1 }}
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -1013,7 +1013,7 @@ export function WidgetFirmaDocumentosPdf({
                   type="button"
                   onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
                   disabled={paginaActual >= totalPaginas}
-                  style={{ background: "#FFF", border: "1px solid var(--linea-fuerte)", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: paginaActual >= totalPaginas ? "not-allowed" : "pointer", opacity: paginaActual >= totalPaginas ? 0.5 : 1 }}
+                  style={{ background: "var(--cf-ffffff, #FFF)", border: "1px solid var(--linea-fuerte)", borderRadius: "6px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: paginaActual >= totalPaginas ? "not-allowed" : "pointer", opacity: paginaActual >= totalPaginas ? 0.5 : 1 }}
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -1102,28 +1102,28 @@ export function WidgetFirmaDocumentosPdf({
                 <button
                   type="button"
                   onClick={() => setPosicionYPorcentaje((y) => Math.max(2, Number((y - 2).toFixed(1))))}
-                  style={{ background: "#FFF", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
+                  style={{ background: "var(--cf-ffffff, #FFF)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
                 >
                   <ArrowUp size={12} /> Subir
                 </button>
                 <button
                   type="button"
                   onClick={() => setPosicionYPorcentaje((y) => Math.min(90, Number((y + 2).toFixed(1))))}
-                  style={{ background: "#FFF", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
+                  style={{ background: "var(--cf-ffffff, #FFF)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
                 >
                   <ArrowDown size={12} /> Bajar
                 </button>
                 <button
                   type="button"
                   onClick={() => setPosicionXPorcentaje((x) => Math.max(2, Number((x - 2).toFixed(1))))}
-                  style={{ background: "#FFF", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
+                  style={{ background: "var(--cf-ffffff, #FFF)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
                 >
                   <ArrowLeft size={12} /> Izquierda
                 </button>
                 <button
                   type="button"
                   onClick={() => setPosicionXPorcentaje((x) => Math.min(60, Number((x + 2).toFixed(1))))}
-                  style={{ background: "#FFF", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
+                  style={{ background: "var(--cf-ffffff, #FFF)", border: "1px solid var(--linea)", borderRadius: "6px", padding: "6px", fontSize: "0.74rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", cursor: "pointer" }}
                 >
                   <ArrowRight size={12} /> Derecha
                 </button>
@@ -1204,7 +1204,7 @@ export function WidgetFirmaDocumentosPdf({
                 width: "100%",
                 maxWidth: "600px",
                 aspectRatio: "595.28 / 841.89",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
                 borderRadius: "4px",
                 overflow: "hidden",
@@ -1238,7 +1238,7 @@ export function WidgetFirmaDocumentosPdf({
                     left: `${posicionXPorcentaje}%`,
                     width: `${((230 / 595.28) * 100).toFixed(2)}%`,
                     height: `${((72 / 841.89) * 100).toFixed(2)}%`,
-                    background: "rgba(255, 255, 255, 0.98)",
+                    background: "var(--cf-ffffff-a980, rgba(255, 255, 255, 0.98))",
                     border: "1.5px solid var(--acento)",
                     borderRadius: "3px",
                     padding: "2px 4px",
@@ -1316,7 +1316,7 @@ export function WidgetFirmaDocumentosPdf({
       {paso === "4_DOCUMENTO_FIRMADO" && (
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "16px",
             border: "1px solid var(--linea)",
             padding: "24px",
@@ -1389,7 +1389,7 @@ export function WidgetFirmaDocumentosPdf({
                 type="button"
                 onClick={handleReiniciar}
                 style={{
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   border: "1px solid var(--linea-fuerte)",
                   color: "var(--texto-2)",
                   padding: "10px 16px",
@@ -1424,7 +1424,7 @@ export function WidgetFirmaDocumentosPdf({
                 width: "100%",
                 maxWidth: "600px",
                 aspectRatio: "595.28 / 841.89",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
                 borderRadius: "4px",
                 overflow: "hidden",

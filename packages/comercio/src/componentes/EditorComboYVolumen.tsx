@@ -55,8 +55,8 @@ export function EditorEscalasVolumenVariante({
     <div
       style={{
         marginTop: "12px",
-        background: "#FFFBEB",
-        border: "1px solid #FDE68A",
+        background: "var(--cf-fffbeb, #FFFBEB)",
+        border: "1px solid var(--cb-fde68a, #FDE68A)",
         borderRadius: "10px",
         padding: "12px",
       }}
@@ -79,13 +79,13 @@ export function EditorEscalasVolumenVariante({
               gap: "6px",
               fontSize: "0.78rem",
               fontWeight: 800,
-              color: "#92400E",
+              color: "var(--ct-92400e, #92400E)",
             }}
           >
             <Percent size={14} color="#D97706" />
             <span>Descuento por Cantidad / Volumen (Opcional)</span>
           </div>
-          <div style={{ fontSize: "0.7rem", color: "#B45309", marginTop: "2px" }}>
+          <div style={{ fontSize: "0.7rem", color: "var(--ct-b45309, #B45309)", marginTop: "2px" }}>
             Ej. Si cuesta ${pvpUnitarioNominal.toFixed(2)}, aplica precio especial o % al llevar 2 o más unidades (en catálogo y en Sets).
           </div>
         </div>
@@ -127,7 +127,7 @@ export function EditorEscalasVolumenVariante({
               <div
                 key={idx}
                 style={{
-                  background: "#FFFFFF",
+                  background: "var(--cf-ffffff, #FFFFFF)",
                   border: "1px solid #FCD34D",
                   borderRadius: "8px",
                   padding: "8px 10px",
@@ -138,7 +138,7 @@ export function EditorEscalasVolumenVariante({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#334155" }}>
+                  <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "var(--ct-334155, #334155)" }}>
                     Desde
                   </span>
                   <input
@@ -155,13 +155,13 @@ export function EditorEscalasVolumenVariante({
                       width: "58px",
                       padding: "5px 7px",
                       borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.8rem",
                       fontWeight: 800,
                       textAlign: "center",
                     }}
                   />
-                  <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#334155" }}>
+                  <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "var(--ct-334155, #334155)" }}>
                     + uds:
                   </span>
                 </div>
@@ -176,11 +176,11 @@ export function EditorEscalasVolumenVariante({
                   style={{
                     padding: "5px 8px",
                     borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.76rem",
                     fontWeight: 600,
-                    background: "#F8FAFC",
-                    color: "#0F172A",
+                    background: "var(--cf-f8fafc, #F8FAFC)",
+                    color: "var(--ct-0f172a, #0F172A)",
                   }}
                 >
                   <option value="PRECIO_FIJO">Precio fijo c/u ($)</option>
@@ -202,10 +202,10 @@ export function EditorEscalasVolumenVariante({
                     width: "82px",
                     padding: "5px 8px",
                     borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                     fontSize: "0.82rem",
                     fontWeight: 800,
-                    color: "#0F172A",
+                    color: "var(--ct-0f172a, #0F172A)",
                   }}
                 />
 
@@ -213,8 +213,8 @@ export function EditorEscalasVolumenVariante({
                   style={{
                     fontSize: "0.72rem",
                     fontWeight: 700,
-                    color: sim.tieneDescuentoVolumen ? "#059669" : "#64748B",
-                    background: sim.tieneDescuentoVolumen ? "#ECFDF5" : "#F1F5F9",
+                    color: sim.tieneDescuentoVolumen ? "var(--ct-059669, #059669)" : "var(--ct-64748b, #64748B)",
+                    background: sim.tieneDescuentoVolumen ? "var(--cf-ecfdf5, #ECFDF5)" : "var(--cf-f1f5f9, #F1F5F9)",
                     padding: "3px 8px",
                     borderRadius: "999px",
                     marginLeft: "auto",
@@ -233,7 +233,7 @@ export function EditorEscalasVolumenVariante({
                   style={{
                     background: "transparent",
                     border: "none",
-                    color: "#EF4444",
+                    color: "var(--ct-ef4444, #EF4444)",
                     cursor: "pointer",
                     padding: "4px",
                     display: "inline-flex",
@@ -448,8 +448,8 @@ export function EditorSetComboConfigurable({
   return (
     <div
       style={{
-        background: esCombo ? "#FDF2F8" : "#F8FAFC",
-        border: esCombo ? "2px solid #EC4899" : "1.5px dashed #CBD5E1",
+        background: esCombo ? "var(--cf-fdf2f8, #FDF2F8)" : "var(--cf-f8fafc, #F8FAFC)",
+        border: esCombo ? "2px solid #EC4899" : "1.5px dashed var(--cb-cbd5e1, #CBD5E1)",
         borderRadius: "12px",
         padding: "14px",
         marginBottom: "14px",
@@ -470,8 +470,8 @@ export function EditorSetComboConfigurable({
               width: "34px",
               height: "34px",
               borderRadius: "8px",
-              background: esCombo ? "#FCE7F3" : "#E2E8F0",
-              color: esCombo ? "#BE185D" : "#475569",
+              background: esCombo ? "var(--cf-fce7f3, #FCE7F3)" : "var(--cf-e2e8f0, #E2E8F0)",
+              color: esCombo ? "var(--ct-be185d, #BE185D)" : "var(--ct-475569, #475569)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -480,10 +480,10 @@ export function EditorSetComboConfigurable({
             <Gift size={18} />
           </div>
           <div>
-            <div style={{ fontSize: "0.84rem", fontWeight: 800, color: "#0F172A" }}>
+            <div style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
               Set / Combo Compuesto
             </div>
-            <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)" }}>
               Agrupa productos o variantes específicas bajo un precio especial de Set o personalizable por el cliente.
             </div>
           </div>
@@ -495,9 +495,9 @@ export function EditorSetComboConfigurable({
           title={esCombo ? "Desactivar modo Set/Combo" : "Activar modo Set/Combo"}
           aria-label={esCombo ? "Desactivar modo Set/Combo" : "Activar modo Set/Combo"}
           style={{
-            background: esCombo ? "#BE185D" : "#FFFFFF",
-            color: esCombo ? "#FFFFFF" : "#334155",
-            border: esCombo ? "1.5px solid #BE185D" : "1.5px solid #94A3B8",
+            background: esCombo ? "#BE185D" : "var(--cf-ffffff, #FFFFFF)",
+            color: esCombo ? "#FFFFFF" : "var(--ct-334155, #334155)",
+            border: esCombo ? "1.5px solid #BE185D" : "1.5px solid var(--cb-94a3b8, #94A3B8)",
             borderRadius: "8px",
             padding: "6px 12px",
             fontSize: "0.76rem",
@@ -518,18 +518,18 @@ export function EditorSetComboConfigurable({
           {/* Selector para agregar productos al Set */}
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #FBCFE8",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-fbcfe8, #FBCFE8)",
               borderRadius: "10px",
               padding: "12px",
             }}
           >
-            <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "#831843", marginBottom: "8px" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--ct-831843, #831843)", marginBottom: "8px" }}>
               1. Agregar elementos individuales al Set Completo
             </div>
 
             {productosElegibles.length === 0 ? (
-              <div style={{ fontSize: "0.76rem", color: "#64748B" }}>
+              <div style={{ fontSize: "0.76rem", color: "var(--ct-64748b, #64748B)" }}>
                 Primero crea los productos individuales del catálogo (ej. Aro Floral, Cartel Bienvenida, Box Floral) para poder incluirlos aquí.
               </div>
             ) : (
@@ -541,7 +541,7 @@ export function EditorSetComboConfigurable({
                       display: "block",
                       fontSize: "0.72rem",
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "var(--ct-475569, #475569)",
                       marginBottom: "4px",
                     }}
                   >
@@ -574,10 +574,10 @@ export function EditorSetComboConfigurable({
                       minHeight: "40px",
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                       fontSize: "0.82rem",
                       fontWeight: 600,
-                      background: "#FFFFFF",
+                      background: "var(--cf-ffffff, #FFFFFF)",
                     }}
                   >
                     {productosElegibles.map((p) => {
@@ -616,8 +616,8 @@ export function EditorSetComboConfigurable({
                 {prodActivoParaAgregar && prodActivoParaAgregar.variantes.length > 1 && (
                   <div
                     style={{
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
+                      background: "var(--cf-f8fafc, #F8FAFC)",
+                      border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                       borderRadius: "9px",
                       padding: "8px 10px",
                     }}
@@ -626,7 +626,7 @@ export function EditorSetComboConfigurable({
                       style={{
                         fontSize: "0.71rem",
                         fontWeight: 700,
-                        color: "#334155",
+                        color: "var(--ct-334155, #334155)",
                         marginBottom: "6px",
                       }}
                     >
@@ -660,9 +660,9 @@ export function EditorSetComboConfigurable({
                               minHeight: "36px",
                               padding: "5px 10px",
                               borderRadius: "8px",
-                              border: esActiva ? "1.5px solid #BE185D" : "1px solid #CBD5E1",
-                              background: esActiva ? "#FDF2F8" : "#FFFFFF",
-                              color: esActiva ? "#9D174D" : "#334155",
+                              border: esActiva ? "1.5px solid #BE185D" : "1px solid var(--cb-cbd5e1, #CBD5E1)",
+                              background: esActiva ? "var(--cf-fdf2f8, #FDF2F8)" : "var(--cf-ffffff, #FFFFFF)",
+                              color: esActiva ? "var(--ct-9d174d, #9D174D)" : "var(--ct-334155, #334155)",
                               fontSize: "0.75rem",
                               fontWeight: esActiva ? 800 : 600,
                               cursor: "pointer",
@@ -683,7 +683,7 @@ export function EditorSetComboConfigurable({
                               />
                             )}
                             <span>{v.var_nombre}</span>
-                            <strong style={{ color: esActiva ? "#BE185D" : "#0F172A" }}>
+                            <strong style={{ color: esActiva ? "var(--ct-be185d, #BE185D)" : "var(--ct-0f172a, #0F172A)" }}>
                               ${pvpV.toFixed(2)}
                             </strong>
                           </button>
@@ -704,16 +704,16 @@ export function EditorSetComboConfigurable({
                   }}
                 >
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#475569" }}>
+                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ct-475569, #475569)" }}>
                       Cantidad:
                     </span>
                     <div
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                         borderRadius: "8px",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         overflow: "hidden",
                       }}
                     >
@@ -726,8 +726,8 @@ export function EditorSetComboConfigurable({
                           width: "34px",
                           height: "36px",
                           border: "none",
-                          background: "#F8FAFC",
-                          color: "#334155",
+                          background: "var(--cf-f8fafc, #F8FAFC)",
+                          color: "var(--ct-334155, #334155)",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -751,8 +751,8 @@ export function EditorSetComboConfigurable({
                           height: "36px",
                           padding: "0 4px",
                           border: "none",
-                          borderLeft: "1px solid #E2E8F0",
-                          borderRight: "1px solid #E2E8F0",
+                          borderLeft: "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                          borderRight: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                           fontSize: "0.86rem",
                           fontWeight: 800,
                           textAlign: "center",
@@ -768,8 +768,8 @@ export function EditorSetComboConfigurable({
                           width: "34px",
                           height: "36px",
                           border: "none",
-                          background: "#F8FAFC",
-                          color: "#334155",
+                          background: "var(--cf-f8fafc, #F8FAFC)",
+                          color: "var(--ct-334155, #334155)",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -816,13 +816,13 @@ export function EditorSetComboConfigurable({
           {/* Lista de componentes agregados */}
           <div
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #FBCFE8",
+              background: "var(--cf-ffffff, #FFFFFF)",
+              border: "1px solid var(--cb-fbcfe8, #FBCFE8)",
               borderRadius: "10px",
               padding: "12px",
             }}
           >
-            <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "#831843", marginBottom: "8px" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--ct-831843, #831843)", marginBottom: "8px" }}>
               2. Composición del Set Completo ({componentes.length} {componentes.length === 1 ? "elemento" : "elementos"})
             </div>
 
@@ -832,8 +832,8 @@ export function EditorSetComboConfigurable({
                   padding: "14px",
                   textAlign: "center",
                   fontSize: "0.76rem",
-                  color: "#94A3B8",
-                  border: "1px dashed #E2E8F0",
+                  color: "var(--ct-94a3b8, #94A3B8)",
+                  border: "1px dashed var(--cb-e2e8f0, #E2E8F0)",
                   borderRadius: "8px",
                 }}
               >
@@ -850,8 +850,8 @@ export function EditorSetComboConfigurable({
                       gap: "10px",
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
+                      background: "var(--cf-f8fafc, #F8FAFC)",
+                      border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
                       flexWrap: "wrap",
                     }}
                   >
@@ -864,7 +864,7 @@ export function EditorSetComboConfigurable({
                           height: "40px",
                           borderRadius: "6px",
                           objectFit: "cover",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                         }}
                       />
                     ) : (
@@ -873,12 +873,12 @@ export function EditorSetComboConfigurable({
                           width: "40px",
                           height: "40px",
                           borderRadius: "6px",
-                          background: "#E2E8F0",
+                          background: "var(--cf-e2e8f0, #E2E8F0)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontSize: "0.7rem",
-                          color: "#64748B",
+                          color: "var(--ct-64748b, #64748B)",
                         }}
                       >
                         🌸
@@ -886,7 +886,7 @@ export function EditorSetComboConfigurable({
                     )}
 
                     <div style={{ flex: 1, minWidth: "150px" }}>
-                      <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#0F172A" }}>
+                      <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                         {fila.prod?.pro_nombre || fila.comp.producto_nombre || "Producto"}
                       </div>
 
@@ -921,10 +921,10 @@ export function EditorSetComboConfigurable({
                               width: "100%",
                               padding: "4px 8px",
                               borderRadius: "6px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                               fontSize: "0.74rem",
                               fontWeight: 600,
-                              background: "#FFFFFF",
+                              background: "var(--cf-ffffff, #FFFFFF)",
                             }}
                           >
                             {fila.prod.variantes.map((v) => (
@@ -935,10 +935,10 @@ export function EditorSetComboConfigurable({
                           </SelectConBuscador>
                         </div>
                       ) : (
-                        <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                        <div style={{ fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)" }}>
                           Precio individual: ${fila.pvpUnit.toFixed(2)} c/u
                           {fila.calcVol.tieneDescuentoVolumen && (
-                            <span style={{ color: "#D97706", fontWeight: 700, marginLeft: "6px" }}>
+                            <span style={{ color: "var(--ct-d97706, #D97706)", fontWeight: 700, marginLeft: "6px" }}>
                               (Volumen {fila.comp.cantidad_base}+: ${fila.calcVol.pvpUnitarioFinal.toFixed(2)} c/u)
                             </span>
                           )}
@@ -952,8 +952,8 @@ export function EditorSetComboConfigurable({
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "6px",
-                        background: "#FFFFFF",
-                        border: "1px solid #CBD5E1",
+                        background: "var(--cf-ffffff, #FFFFFF)",
+                        border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                         borderRadius: "999px",
                         padding: "3px 8px",
                       }}
@@ -1007,10 +1007,10 @@ export function EditorSetComboConfigurable({
                     </div>
 
                     <div style={{ textAlign: "right", minWidth: "78px" }}>
-                      <div style={{ fontSize: "0.84rem", fontWeight: 800, color: "#0F172A" }}>
+                      <div style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)" }}>
                         ${fila.calcVol.subtotalLineaNominal.toFixed(2)}
                       </div>
-                      <div style={{ fontSize: "0.68rem", color: "#64748B" }}>
+                      <div style={{ fontSize: "0.68rem", color: "var(--ct-64748b, #64748B)" }}>
                         nominal
                       </div>
                     </div>
@@ -1023,7 +1023,7 @@ export function EditorSetComboConfigurable({
                       style={{
                         border: "none",
                         background: "transparent",
-                        color: "#EF4444",
+                        color: "var(--ct-ef4444, #EF4444)",
                         cursor: "pointer",
                         padding: "4px",
                       }}
@@ -1040,7 +1040,7 @@ export function EditorSetComboConfigurable({
           {resumenCombo.filas.length > 0 && (
             <div
               style={{
-                background: "linear-gradient(135deg, #FFF1F2 0%, #FCE7F3 100%)",
+                background: "linear-gradient(135deg, var(--cf-fff1f2, #FFF1F2) 0%, var(--cf-fce7f3, #FCE7F3) 100%)",
                 border: "1.5px solid #F472B6",
                 borderRadius: "10px",
                 padding: "12px 14px",
@@ -1055,10 +1055,10 @@ export function EditorSetComboConfigurable({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: "0.73rem", color: "#831843", fontWeight: 700 }}>
+                  <div style={{ fontSize: "0.73rem", color: "var(--ct-831843, #831843)", fontWeight: 700 }}>
                     Suma individual de elementos:
                   </div>
-                  <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "#475569", textDecoration: "line-through" }}>
+                  <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-475569, #475569)", textDecoration: "line-through" }}>
                     ${resumenCombo.sumaNominal.toFixed(2)}
                   </div>
                   {onSincronizarPrecioComparacion && (
@@ -1069,9 +1069,9 @@ export function EditorSetComboConfigurable({
                       aria-label="Fijar suma como precio tachado"
                       style={{
                         marginTop: "4px",
-                        background: "#FFFFFF",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         border: "1px solid #F472B6",
-                        color: "#9D174D",
+                        color: "var(--ct-9d174d, #9D174D)",
                         borderRadius: "6px",
                         padding: "4px 8px",
                         fontSize: "0.7rem",
@@ -1090,7 +1090,7 @@ export function EditorSetComboConfigurable({
                       display: "block",
                       fontSize: "0.73rem",
                       fontWeight: 800,
-                      color: "#831843",
+                      color: "var(--ct-831843, #831843)",
                       marginBottom: "3px",
                     }}
                   >
@@ -1120,13 +1120,13 @@ export function EditorSetComboConfigurable({
                         border: "2px solid #DB2777",
                         fontSize: "0.95rem",
                         fontWeight: 800,
-                        color: "#9D174D",
-                        background: "#FFFFFF",
+                        color: "var(--ct-9d174d, #9D174D)",
+                        background: "var(--cf-ffffff, #FFFFFF)",
                         boxSizing: "border-box",
                       }}
                     />
                   ) : (
-                    <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#9D174D" }}>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--ct-9d174d, #9D174D)" }}>
                       ${pvpSetCompleto.toFixed(2)}
                     </div>
                   )}
@@ -1137,7 +1137,7 @@ export function EditorSetComboConfigurable({
                 style={{
                   marginTop: "10px",
                   paddingTop: "8px",
-                  borderTop: "1px dashed #F9A8D4",
+                  borderTop: "1px dashed var(--cb-f9a8d4, #F9A8D4)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -1146,14 +1146,14 @@ export function EditorSetComboConfigurable({
                 }}
               >
                 {resumenCombo.ahorroNominal > 0 ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", fontWeight: 800, color: "#065F46" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", fontWeight: 800, color: "var(--ct-065f46, #065F46)" }}>
                     <CheckCircle2 size={15} color="#059669" />
                     <span>
                       Cliente ahorra ${resumenCombo.ahorroNominal.toFixed(2)} (-{resumenCombo.porcentajeDescuentoSet}% OFF en el Set Completo)
                     </span>
                   </div>
                 ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", fontWeight: 700, color: "#B45309" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", fontWeight: 700, color: "var(--ct-b45309, #B45309)" }}>
                     <AlertCircle size={15} color="#D97706" />
                     <span>
                       Sugerencia: ingresa un Precio del Set menor a ${resumenCombo.sumaNominal.toFixed(2)} para mostrar el % de ahorro del combo.
@@ -1162,7 +1162,7 @@ export function EditorSetComboConfigurable({
                 )}
 
                 {resumenCombo.sumaConVolumenIndividual < pvpSetCompleto && (
-                  <div style={{ fontSize: "0.72rem", color: "#B91C1C", fontWeight: 700 }}>
+                  <div style={{ fontSize: "0.72rem", color: "var(--ct-b91c1c, #B91C1C)", fontWeight: 700 }}>
                     ⚠️ Nota: comprando las piezas con descuento por volumen suman ${resumenCombo.sumaConVolumenIndividual.toFixed(2)}. Conviene fijar el Set en ≤ ${resumenCombo.sumaConVolumenIndividual.toFixed(2)}.
                   </div>
                 )}

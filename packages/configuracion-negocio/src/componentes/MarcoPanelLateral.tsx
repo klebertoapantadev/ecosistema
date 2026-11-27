@@ -356,7 +356,7 @@ export function MarcoPanelLateral({
                   gap: "5px",
                   padding: plegadaEfectiva ? "7px" : "5px 9px",
                   borderRadius: "8px",
-                  border: "1px solid rgba(255, 255, 255, 0.14)",
+                  border: "1px solid var(--cb-ffffff-a140, rgba(255, 255, 255, 0.14))",
                   background: "rgba(255, 255, 255, 0.06)",
                   color: "rgba(255, 255, 255, 0.85)",
                   fontSize: "0.71rem",
@@ -451,14 +451,14 @@ export function MarcoPanelLateral({
               style={{
                 width: "100%",
                 maxWidth: "400px",
-                background: "#FFFFFF",
+                background: "var(--cf-ffffff, #FFFFFF)",
                 borderRadius: "16px",
                 padding: "22px",
                 boxShadow: "0 20px 38px rgba(0,0,0,0.28)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "14px",
-                color: "#1F1C19",
+                color: "var(--ct-1f1c19, #1F1C19)",
               }}
             >
               <div
@@ -481,8 +481,8 @@ export function MarcoPanelLateral({
                   title="Cerrar guía de instalación"
                   aria-label="Cerrar"
                   style={{
-                    border: "1px solid #E6E2DA",
-                    background: "#F8F7F4",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
                     borderRadius: "8px",
                     width: "32px",
                     height: "32px",
@@ -496,7 +496,7 @@ export function MarcoPanelLateral({
                 </button>
               </div>
 
-              <p style={{ margin: 0, fontSize: "0.85rem", lineHeight: 1.5, color: "#57524C" }}>
+              <p style={{ margin: 0, fontSize: "0.85rem", lineHeight: 1.5, color: "var(--ct-57524c, #57524C)" }}>
                 Instala la aplicación en la pantalla de inicio de tu celular para capturar fotos GPS y
                 confirmar entregas incluso sin conexión a internet:
               </p>
@@ -504,8 +504,8 @@ export function MarcoPanelLateral({
               {esIos ? (
                 <div
                   style={{
-                    background: "#F8F7F4",
-                    border: "1px solid #E6E2DA",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     borderRadius: "12px",
                     padding: "12px 14px",
                     fontSize: "0.84rem",
@@ -529,8 +529,8 @@ export function MarcoPanelLateral({
               ) : (
                 <div
                   style={{
-                    background: "#F8F7F4",
-                    border: "1px solid #E6E2DA",
+                    background: "var(--cf-f8f7f4, #F8F7F4)",
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
                     borderRadius: "12px",
                     padding: "12px 14px",
                     fontSize: "0.84rem",

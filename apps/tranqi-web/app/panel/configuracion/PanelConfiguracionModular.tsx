@@ -72,7 +72,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Configuración del Negocio",
     subtitulo: "Identidad legal, términos, locales, WhatsApp y redes sociales",
     icono: Settings,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Parámetros del Negocio",
     soloAdmin: true
   },
@@ -81,7 +81,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Servidor SMTP & Plantillas Vault",
     subtitulo: "Credenciales cifradas, puerto TLS y plantilla HTML",
     icono: Mail,
-    colorIcono: "var(--esmeralda, #0E6648)",
+    colorIcono: "var(--ct-0e6648, var(--esmeralda, #0E6648))",
     categoria: "Servicios de Despacho",
     soloAdmin: true
   },
@@ -90,7 +90,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Preferencias de Alertas",
     subtitulo: "Canales de contacto, WhatsApp y avisos legales",
     icono: Bell,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Preferencias"
   },
   {
@@ -98,7 +98,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Gestión de Usuarios & Membresías",
     subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
     icono: Sliders,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Gobernanza",
     soloAdmin: true
   },
@@ -107,7 +107,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Términos, Consentimientos & LOPDP",
     subtitulo: "Configuración de cláusulas LOPDP, consentimientos, WhatsApp y avisos legales",
     icono: ShieldCheck,
-    colorIcono: "var(--violeta, #5000BA)",
+    colorIcono: "var(--ct-5000ba, var(--violeta, #5000BA))",
     categoria: "Gobernanza",
     soloAdmin: true
   },
@@ -143,7 +143,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Ventas Omnicanal & Conectores (YCloud / Meta / TikTok)",
     subtitulo: "Monitoreo de chats web, etiquetas, /atajos y estado de conectores WhatsApp, Instagram, Facebook y TikTok",
     icono: MessageSquare,
-    colorIcono: "#DB2777",
+    colorIcono: "var(--ct-db2777, #DB2777)",
     categoria: "Servicios de Despacho",
     soloAdmin: true
   },
@@ -152,7 +152,7 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     titulo: "Contactos, Join/Merge y Teléfonos WhatsApp",
     subtitulo: "Extracción de contactos, lista personal a ignorar (Ignorar Total) y gestión de múltiples líneas WhatsApp",
     icono: MessageSquare,
-    colorIcono: "#7C3AED",
+    colorIcono: "var(--ct-7c3aed, #7C3AED)",
     categoria: "Servicios de Despacho",
     soloAdmin: true
   },
@@ -315,7 +315,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
   if (widgetActivo && widgetActualDef && widgetInfoActual) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
-        <section className="tarjeta-seccion" style={{ background: "var(--blanco, #ffffff)", borderRadius: "16px", overflow: "hidden", width: "100%" }}>
+        <section className="tarjeta-seccion" style={{ background: "var(--cf-ffffff, var(--blanco, #ffffff))", borderRadius: "16px", overflow: "hidden", width: "100%" }}>
           <header
             style={{
               padding: "16px 20px",
@@ -331,7 +331,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                 style={{
                   padding: "8px",
                   borderRadius: "8px",
-                  background: "var(--blanco, #ffffff)",
+                  background: "var(--cf-ffffff, var(--blanco, #ffffff))",
                   border: "1px solid var(--panel-linea, var(--linea))",
                   display: "flex"
                 }}
@@ -340,7 +340,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                  <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--negro, #111111)", margin: 0 }}>
+                  <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-111111, var(--negro, #111111))", margin: 0 }}>
                     {widgetInfoActual.titulo}
                   </h2>
                   {favoritos.includes(widgetActivo) && (
@@ -539,7 +539,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                         });
                       }}
                       style={{
-                        background: "rgba(255,255,255,0.9)",
+                        background: "var(--cf-ffffff-a900, rgba(255,255,255,0.9))",
                         border: "1px solid var(--panel-linea, var(--linea))",
                         borderRadius: "6px",
                         cursor: "pointer",
@@ -585,7 +585,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                         style={{
                           fontSize: "0.58rem",
                           fontWeight: 800,
-                          color: "var(--violeta, #5000BA)",
+                          color: "var(--ct-5000ba, var(--violeta, #5000BA))",
                           background: "var(--violeta-suave, var(--acento-diluido))",
                           padding: "1px 6px",
                           borderRadius: "999px",
@@ -613,7 +613,7 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
                     justifyContent: "flex-end",
                     marginTop: "auto",
                     paddingTop: "10px",
-                    color: "var(--violeta, #5000BA)"
+                    color: "var(--ct-5000ba, var(--violeta, #5000BA))"
                   }}
                 >
                   <ChevronRight size={16} />

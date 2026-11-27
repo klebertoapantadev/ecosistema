@@ -235,8 +235,8 @@ export function TableroBeneficiosAvisosWidget({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
-                background: "#FFFFFF",
-                color: "#0F172A",
+                background: "var(--cf-ffffff, #FFFFFF)",
+                color: "var(--ct-0f172a, #0F172A)",
                 padding: "9px 16px",
                 borderRadius: "10px",
                 fontWeight: 700,
@@ -259,9 +259,9 @@ export function TableroBeneficiosAvisosWidget({
       {!soloBeneficios && (
         <div
           style={{
-            background: "#FFFFFF",
+            background: "var(--cf-ffffff, #FFFFFF)",
             borderRadius: "12px",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--cb-e2e8f0, #E2E8F0)",
             padding: "12px 18px",
             display: "flex",
             alignItems: "center",
@@ -288,9 +288,9 @@ export function TableroBeneficiosAvisosWidget({
                     borderRadius: "20px",
                     fontSize: "0.75rem",
                     fontWeight: 700,
-                    border: sel ? "1.5px solid #4338CA" : "1px solid #E2E8F0",
-                    background: sel ? "#EEF2FF" : "#FFFFFF",
-                    color: sel ? "#4338CA" : "#64748B",
+                    border: sel ? "1.5px solid #4338CA" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
+                    background: sel ? "var(--cf-eef2ff, #EEF2FF)" : "var(--cf-ffffff, #FFFFFF)",
+                    color: sel ? "var(--ct-4338ca, #4338CA)" : "var(--ct-64748b, #64748B)",
                     cursor: "pointer",
                     transition: "all 0.15s ease",
                   }}
@@ -304,7 +304,7 @@ export function TableroBeneficiosAvisosWidget({
           <div style={{ position: "relative", width: "100%", maxWidth: "240px" }}>
             <Search
               size={14}
-              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }}
+              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--ct-94a3b8, #94A3B8)" }}
             />
             <input
               type="text"
@@ -315,7 +315,7 @@ export function TableroBeneficiosAvisosWidget({
                 width: "100%",
                 padding: "6px 10px 6px 30px",
                 borderRadius: "6px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--cb-cbd5e1, #CBD5E1)",
                 fontSize: "0.8rem",
                 boxSizing: "border-box",
               }}
@@ -326,25 +326,25 @@ export function TableroBeneficiosAvisosWidget({
 
       {/* Grid de Tarjetas de Beneficios & Avisos */}
       {cargando ? (
-        <div style={{ padding: "60px 20px", textAlign: "center", color: "#64748B" }}>
-          <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 10px", color: "#4338CA" }} />
+        <div style={{ padding: "60px 20px", textAlign: "center", color: "var(--ct-64748b, #64748B)" }}>
+          <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 10px", color: "var(--ct-4338ca, #4338CA)" }} />
           <div>Cargando convenios y comunicados vigentes...</div>
         </div>
       ) : filtrados.length === 0 ? (
         <div
           style={{
-            background: "#FFFFFF",
-            border: "1px dashed #CBD5E1",
+            background: "var(--cf-ffffff, #FFFFFF)",
+            border: "1px dashed var(--cb-cbd5e1, #CBD5E1)",
             borderRadius: "14px",
             padding: "48px 24px",
             textAlign: "center",
           }}
         >
-          <Award size={36} style={{ color: "#94A3B8", margin: "0 auto 12px" }} />
-          <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem", fontWeight: 800, color: "#1E293B" }}>
+          <Award size={36} style={{ color: "var(--ct-94a3b8, #94A3B8)", margin: "0 auto 12px" }} />
+          <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-1e293b, #1E293B)" }}>
             No hay comunicados o convenios vigentes en este momento
           </h3>
-          <p style={{ margin: "0 auto", fontSize: "0.82rem", color: "#64748B", maxWidth: "420px" }}>
+          <p style={{ margin: "0 auto", fontSize: "0.82rem", color: "var(--ct-64748b, #64748B)", maxWidth: "420px" }}>
             Los nuevos beneficios de formación jurídica, avisos institucionales y oportunidades tributarias se publicarán aquí automáticamente.
           </p>
         </div>
@@ -366,8 +366,8 @@ export function TableroBeneficiosAvisosWidget({
               <div
                 key={c.inf_id}
                 style={{
-                  background: "#FFFFFF",
-                  border: c.inf_prioridad === "ALTA" ? "1.5px solid #4338CA" : "1px solid #E2E8F0",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: c.inf_prioridad === "ALTA" ? "1.5px solid #4338CA" : "1px solid var(--cb-e2e8f0, #E2E8F0)",
                   borderRadius: "16px",
                   overflow: "hidden",
                   display: "flex",
@@ -402,7 +402,7 @@ export function TableroBeneficiosAvisosWidget({
                       style={{
                         background: det.color_tag ? det.color_tag : tipoDef.bg,
                         color: det.color_tag ? "#FFFFFF" : tipoDef.text,
-                        border: det.color_tag ? "1px solid rgba(255,255,255,0.3)" : `1px solid ${tipoDef.border}`,
+                        border: det.color_tag ? "1px solid var(--cb-ffffff-a300, rgba(255,255,255,0.3))" : `1px solid ${tipoDef.border}`,
                         padding: "3px 10px",
                         borderRadius: "12px",
                         fontSize: "0.7rem",
@@ -469,7 +469,7 @@ export function TableroBeneficiosAvisosWidget({
                         color: "#FFFFFF",
                         fontSize: "0.74rem",
                         fontWeight: 700,
-                        textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+                        textShadow: "0 1px 3px var(--ct-000000-a600, rgba(0,0,0,0.6))",
                       }}
                     >
                       🏛️ {det.institucion}
@@ -479,12 +479,12 @@ export function TableroBeneficiosAvisosWidget({
 
                 {/* Contenido de la Tarjeta */}
                 <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
-                  <h3 style={{ margin: "0 0 8px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A", lineHeight: 1.35 }}>
+                  <h3 style={{ margin: "0 0 8px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--ct-0f172a, #0F172A)", lineHeight: 1.35 }}>
                     {c.inf_titulo}
                   </h3>
 
                   {c.inf_subtitulo && (
-                    <p style={{ margin: "0 0 12px 0", fontSize: "0.82rem", color: "#475569", lineHeight: 1.45 }}>
+                    <p style={{ margin: "0 0 12px 0", fontSize: "0.82rem", color: "var(--ct-475569, #475569)", lineHeight: 1.45 }}>
                       {c.inf_subtitulo}
                     </p>
                   )}
@@ -494,9 +494,9 @@ export function TableroBeneficiosAvisosWidget({
                       style={{
                         margin: "0 0 14px 0",
                         fontSize: "0.78rem",
-                        color: "#64748B",
+                        color: "var(--ct-64748b, #64748B)",
                         lineHeight: 1.45,
-                        background: "#F8FAFC",
+                        background: "var(--cf-f8fafc, #F8FAFC)",
                         padding: "10px 12px",
                         borderRadius: "8px",
                         borderLeft: "3px solid #4338CA",
@@ -511,7 +511,7 @@ export function TableroBeneficiosAvisosWidget({
                     style={{
                       marginTop: "auto",
                       paddingTop: "14px",
-                      borderTop: "1px solid #F1F5F9",
+                      borderTop: "1px solid var(--cb-f1f5f9, #F1F5F9)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
@@ -519,7 +519,7 @@ export function TableroBeneficiosAvisosWidget({
                       gap: "10px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "0.72rem", color: "#64748B" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "0.72rem", color: "var(--ct-64748b, #64748B)" }}>
                       <Clock size={12} />
                       <span>
                         Hasta: {c.inf_fecha_fin ? formatearFechaCorta(c.inf_fecha_fin.split("T")[0]) : "Indefinido"}
