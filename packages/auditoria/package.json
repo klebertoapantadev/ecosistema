@@ -6,7 +6,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./consultas": "./src/consultas.ts",
-    "./acciones": "./src/acciones.ts"
+    "./acciones": "./src/acciones.ts",
+    "./trazas": "./src/trazas.ts",
+    "./acciones-trazas": "./src/acciones-trazas.ts",
+    "./consultas-trazas": "./src/consultas-trazas.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

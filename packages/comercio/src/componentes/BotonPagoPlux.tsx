@@ -17,6 +17,7 @@ import {
   type ModalidadCobroProforma,
   type PagoPluxConsultado,
 } from "../acciones-plux";
+import { registrarTrazaClienteAction } from "@eco/auditoria/acciones-trazas";
 import { leerAtribucionNavegador } from "../marketing-meta";
 import { SCRIPT_JQUERY, SCRIPT_PAYBOX, respuestaExitosa, type PagadorPlux } from "../plux";
 
@@ -113,6 +114,29 @@ function existeModalPluxVisible(): boolean {
   return false;
 }
 
+// Traza del navegador en comun_auditoria.aud_traza (TRQ-039). Sin await: el
+// pago no espera a la traza, y si falla da igual.
+function trazaNavegador(
+  negocio: string,
+  paso: string,
+  nivel: "INFO" | "AVISO" | "ERROR",
+  correlacion: string | null,
+  mensaje?: string | null,
+  detalle?: Record<string, unknown>,
+  duracionMs?: number,
+) {
+  void registrarTrazaClienteAction({
+    flujo: "PAGO_PLUX",
+    paso: `cliente.${paso}`,
+    nivel,
+    negocio,
+    correlacion,
+    mensaje: mensaje ?? undefined,
+    detalle,
+    duracionMs,
+  }).catch(() => {});
+}
+
 export function BotonPagoPlux({
   negocio,
   varianteId,
@@ -140,6 +164,22 @@ export function BotonPagoPlux({
   const autoIniciadoRef = useRef(false);
   const autoAbiertoRef = useRef(false);
   const esperaModalTimerRef = useRef<number | null>(null);
+  const inicioRef = useRef<number>(0);
+  const traza = (
+    paso: string,
+    nivel: "INFO" | "AVISO" | "ERROR",
+    mensajeTraza?: string | null,
+    detalle?: Record<string, unknown>,
+  ) =>
+    trazaNavegador(
+      negocio,
+      paso,
+      nivel,
+      identificador.current,
+      mensajeTraza,
+      { ambiente, fase: faseRef.current, ...detalle },
+      inicioRef.current ? Date.now() - inicioRef.current : undefined,
+    );
 
   faseRef.current = fase;
 
@@ -152,6 +192,10 @@ export function BotonPagoPlux({
     detalleTecnico: string,
     faseDestino: "error" | "rechazado" = "error"
   ) => {
+    traza(`error.${codigo.toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 40)}`, faseDestino === "rechazado" ? "AVISO" : "ERROR", detalleTecnico, {
+      codigo,
+      mensaje_usuario: mensajeUsuario,
+    });
     limpiarEsperaModal();
     setAbriendoFormulario(false);
     setFase(faseDestino);
@@ -319,6 +363,11 @@ export function BotonPagoPlux({
       const r = await consultarPagoPluxAction(id);
       if (!r.ok || r.data.estado === "PENDIENTE") continue;
       resuelto.current = true;
+      traza("webhook_respondio", r.data.estado === "APROBADO" ? "INFO" : "AVISO", null, {
+        estado: r.data.estado,
+        motivo: r.data.motivo,
+        consultas: i + 1,
+      });
       if (r.data.estado === "APROBADO") {
         setFase("aprobado");
         alPagoAprobado(id, r.data);
@@ -339,12 +388,16 @@ export function BotonPagoPlux({
     }
     if (!resuelto.current) {
       // Sin botón de reintentar: el banco ya aprobó y otro intento cobraría dos veces.
+      traza("sin_confirmar", "ERROR", `Ni la acción de confirmar ni el webhook confirmaron el pago en ${(ESPERA_MS * ESPERA_INTENTOS) / 1000} s`);
       setFase("sin_confirmar");
       setMensaje("El banco aprobó el pago, pero PLUX aún no lo confirma. Tu plan se activará en cuanto llegue la confirmación.");
     }
   }
 
   async function preparar() {
+    inicioRef.current = Date.now();
+    // Un reintento no debe heredar el identificador del intento anterior en sus trazas.
+    identificador.current = null;
     autoAbiertoRef.current = false;
     setFase("preparando");
     setMensaje(null);
@@ -372,6 +425,9 @@ export function BotonPagoPlux({
     // El script de PLUX lee `data` cada vez que se abre el modal.
     w.data = r.data.paybox;
     w.onAuthorize = async (respuesta: unknown) => {
+      const resp = (respuesta ?? {}) as Record<string, unknown>;
+      // Solo estado y nombres de campos: el resto lo guarda la acción de confirmar.
+      const resumenRespuesta = { status: resp.status ?? null, claves: Object.keys(resp).slice(0, 30) };
       // Al cerrar el modal llega un "failed" con "Paybox cerrado" aunque el pago haya salido bien.
       if (!respuestaExitosa(respuesta)) {
         if (resuelto.current) return;
@@ -380,6 +436,9 @@ export function BotonPagoPlux({
             (respuesta as { message?: unknown } | null)?.message ??
             ""
         ).trim();
+        if (!desc || /cerrad|closed|cancel/i.test(desc)) {
+          traza("modal_cerrado", "INFO", desc || null, resumenRespuesta);
+        }
         if (desc && !/cerrad|closed|cancel/i.test(desc)) {
           reportarErrorPlux(
             "PLUX_AUTORIZACION_FALLIDA",
@@ -392,6 +451,7 @@ export function BotonPagoPlux({
       }
       if (!identificador.current || resuelto.current) return;
       const idActual = identificador.current;
+      traza("autorizado", "INFO", null, resumenRespuesta);
       setFase("esperando");
 
       try {
@@ -412,12 +472,15 @@ export function BotonPagoPlux({
         });
         if (conf.ok && conf.data.estado === "APROBADO") {
           resuelto.current = true;
+          traza("aprobado", "INFO");
           setFase("aprobado");
           alPagoAprobado(idActual, conf.data);
           return;
         }
-      } catch {
+        traza("confirmar_sin_aprobar", "AVISO", conf.ok ? `estado ${conf.data.estado}` : conf.error);
+      } catch (e) {
         // Si falla la acción inmediata, continúa esperando por polling del webhook
+        traza("confirmar_fallo", "AVISO", e instanceof Error ? e.message : String(e));
       }
 
       esperarWebhook(idActual);
@@ -427,6 +490,7 @@ export function BotonPagoPlux({
       await cargarScript(SCRIPT_JQUERY);
       await cargarScript(SCRIPT_PAYBOX[ambiente === "PRODUCCION" ? "PRODUCCION" : "PRUEBAS"]);
       await esperarEntornoPlux();
+      traza("listo", "INFO");
       setFase("listo");
     } catch (e: any) {
       const msg = e?.message || "No se pudo cargar la pasarela PLUX.";

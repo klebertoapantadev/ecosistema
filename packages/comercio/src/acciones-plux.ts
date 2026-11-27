@@ -10,6 +10,7 @@ import {
   asegurarFacturaElectronicaParaPago,
   type FacturaElectronicaResumen,
 } from "./acciones";
+import { cronometro, mensajeDeError, registrarTraza, type NivelTraza } from "@eco/auditoria/trazas";
 import { obtenerEmisorRideNegocioAction } from "./acciones-facturacion-sri";
 import { datosPaybox, respuestaExitosa, type PagadorPlux, type PagoPluxPreparado } from "./plux";
 import {
@@ -179,9 +180,70 @@ const esquemaPrepararProforma = z.object({
 
 // El monto lo fija la base de datos a partir de la variante: el navegador
 // solo dice QUÉ compra, nunca CUÁNTO.
+// Trazas del flujo PAGO_PLUX (TRQ-039): cada acción deja su resultado y su
+// duración en comun_auditoria.aud_traza con el identificador PLUX como
+// correlación, para ver dónde se quedó un pago que no terminó.
+function trazaPlux(
+  paso: string,
+  nivel: NivelTraza,
+  datos: { negocio?: string | null; correlacion?: string | null; mensaje?: string | null; duracionMs?: number; detalle?: Record<string, unknown> },
+) {
+  return registrarTraza({ flujo: "PAGO_PLUX", paso, nivel, ...datos });
+}
+
+async function conTrazaPlux<T>(
+  paso: string,
+  negocioEntrada: string | undefined,
+  correlacionInicial: string | null,
+  ejecutar: () => Promise<Resultado<T>>,
+  correlacionDe: (data: T) => string | null,
+  detalleDe: (data: T) => Record<string, unknown> = () => ({}),
+): Promise<Resultado<T>> {
+  const negocio = normalizarIdentificadorNegocio(negocioEntrada || "tranqi").principal;
+  const fin = cronometro();
+  try {
+    const r = await ejecutar();
+    if (r.ok) {
+      await trazaPlux(`${paso}.ok`, "INFO", {
+        negocio,
+        correlacion: correlacionDe(r.data) ?? correlacionInicial,
+        duracionMs: fin(),
+        detalle: detalleDe(r.data),
+      });
+    } else {
+      await trazaPlux(`${paso}.error`, "ERROR", { negocio, correlacion: correlacionInicial, mensaje: r.error, duracionMs: fin() });
+    }
+    return r;
+  } catch (e) {
+    await trazaPlux(`${paso}.excepcion`, "ERROR", {
+      negocio,
+      correlacion: correlacionInicial,
+      mensaje: mensajeDeError(e),
+      duracionMs: fin(),
+      detalle: { pila: e instanceof Error ? e.stack?.split("\n").slice(0, 6).join("\n") : null },
+    });
+    throw e;
+  }
+}
+
+type PagoPluxPreparadoAccion = { identificador: string; totalCentavos: number; paybox: ReturnType<typeof datosPaybox> };
+
 export async function prepararPagoPluxAction(
   entrada: z.input<typeof esquemaPreparar>,
-): Promise<Resultado<{ identificador: string; totalCentavos: number; paybox: ReturnType<typeof datosPaybox> }>> {
+): Promise<Resultado<PagoPluxPreparadoAccion>> {
+  return conTrazaPlux(
+    "preparar",
+    entrada?.negocio,
+    null,
+    () => prepararPagoPluxInterno(entrada),
+    (d) => d.identificador,
+    (d) => ({ total_centavos: d.totalCentavos, variante_id: entrada?.varianteId }),
+  );
+}
+
+async function prepararPagoPluxInterno(
+  entrada: z.input<typeof esquemaPreparar>,
+): Promise<Resultado<PagoPluxPreparadoAccion>> {
   const v = esquemaPreparar.safeParse(entrada);
   if (!v.success) return { ok: false, error: v.error.issues[0]?.message || "Datos de facturación incompletos." };
 
@@ -324,7 +386,11 @@ export async function prepararPagoPluxAction(
     };
   }
 
-  if (error) return { ok: false, error: "No se pudo preparar el pago." };
+  if (error) {
+    // Al cliente le llega un mensaje genérico; el detalle queda en la traza.
+    await trazaPlux("preparar.rpc_error", "ERROR", { negocio: negPrincipal, mensaje: error.message, detalle: { codigo: error.code } });
+    return { ok: false, error: "No se pudo preparar el pago." };
+  }
   return { ok: false, error: data?.error || "No se pudo preparar el pago." };
 }
 
@@ -335,7 +401,20 @@ export async function prepararPagoPluxAction(
  */
 export async function prepararPagoPluxProformaAction(
   entrada: z.input<typeof esquemaPrepararProforma>,
-): Promise<Resultado<{ identificador: string; totalCentavos: number; paybox: ReturnType<typeof datosPaybox> }>> {
+): Promise<Resultado<PagoPluxPreparadoAccion>> {
+  return conTrazaPlux(
+    "preparar_proforma",
+    entrada?.negocio,
+    null,
+    () => prepararPagoPluxProformaInterno(entrada),
+    (d) => d.identificador,
+    (d) => ({ total_centavos: d.totalCentavos, proforma_id: entrada?.proformaId, modalidad: entrada?.modalidadCobro }),
+  );
+}
+
+async function prepararPagoPluxProformaInterno(
+  entrada: z.input<typeof esquemaPrepararProforma>,
+): Promise<Resultado<PagoPluxPreparadoAccion>> {
   const v = esquemaPrepararProforma.safeParse(entrada);
   if (!v.success) {
     return { ok: false, error: v.error.issues[0]?.message || "Datos de facturación incompletos." };
@@ -785,7 +864,7 @@ async function esVarianteSuscripcion(db: any, varianteId: string): Promise<boole
   }
 }
 
-export async function confirmarPagoPluxAction(entrada: {
+type EntradaConfirmarPlux = {
   negocio?: string;
   identificador: string;
   respuestaPaybox: unknown;
@@ -798,7 +877,21 @@ export async function confirmarPagoPluxAction(entrada: {
     fbp?: string;
     eventSourceUrl?: string;
   };
-}): Promise<Resultado<PagoPluxConsultado>> {
+};
+
+export async function confirmarPagoPluxAction(entrada: EntradaConfirmarPlux): Promise<Resultado<PagoPluxConsultado>> {
+  const correlacion = typeof entrada?.identificador === "string" ? entrada.identificador.slice(0, 80) : null;
+  return conTrazaPlux(
+    "confirmar",
+    entrada?.negocio,
+    correlacion,
+    () => confirmarPagoPluxInterno(entrada),
+    () => correlacion,
+    (d) => ({ estado: d.estado, motivo: d.motivo, factura: d.facturaElectronica?.numero_comprobante ?? null }),
+  );
+}
+
+async function confirmarPagoPluxInterno(entrada: EntradaConfirmarPlux): Promise<Resultado<PagoPluxConsultado>> {
   const { identificador, respuestaPaybox } = entrada;
   const negocio = normalizarIdentificadorNegocio(entrada.negocio || "tranqi").principal;
   const ordenFirmada = entrada.tokenAprobacion
@@ -811,6 +904,13 @@ export async function confirmarPagoPluxAction(entrada: {
     return { ok: false, error: "Pago desconocido." };
   }
   if (!respuestaExitosa(respuestaPaybox)) {
+    const r = (respuestaPaybox ?? {}) as Record<string, unknown>;
+    await trazaPlux("confirmar.respuesta_no_exitosa", "AVISO", {
+      negocio,
+      correlacion: identificador,
+      // Solo estado y nombres de campos: la respuesta la manda el navegador.
+      detalle: { status: r.status ?? null, descripcion: r.description ?? null, claves: Object.keys(r).slice(0, 30) },
+    });
     return { ok: false, error: "La respuesta de PLUX no indica autorización exitosa." };
   }
 
@@ -836,6 +936,14 @@ export async function confirmarPagoPluxAction(entrada: {
     .select("pag_id, pag_negocio, pag_cliente_id, pag_estado, pag_monto_total, pag_titular_email, pag_autorizacion_codigo, pag_tarjeta_marca, pag_tarjeta_ultimos_digitos, pag_detalle_transaccion")
     .eq("pag_identificador_cliente", identificador)
     .maybeSingle();
+
+  if (!pago) {
+    await trazaPlux("confirmar.pago_no_encontrado", "AVISO", {
+      negocio,
+      correlacion: identificador,
+      mensaje: admin ? "No hay com_transaccion_pago con ese identificador" : "Sin service_role: la RLS puede ocultar el pago",
+    });
+  }
 
   const esLinkPagoChat =
     omitirFactura ||
@@ -898,6 +1006,14 @@ export async function confirmarPagoPluxAction(entrada: {
         p_identificador: identificador,
         p_notificacion: notificacionNormalizada,
       });
+    if (rpcClienteErr || !rpcClienteRes?.ok || rpcClienteRes?.estado !== "APROBADO") {
+      await trazaPlux("confirmar.rpc_cliente_sin_aprobar", "INFO", {
+        negocio,
+        correlacion: identificador,
+        mensaje: rpcClienteErr?.message ?? rpcClienteRes?.error ?? rpcClienteRes?.motivo ?? null,
+        detalle: { estado: rpcClienteRes?.estado ?? null, codigo: rpcClienteErr?.code ?? null },
+      });
+    }
     if (!rpcClienteErr && rpcClienteRes?.ok && rpcClienteRes?.estado === "APROBADO") {
       confirmadoPorRpc = true;
       if (rpcClienteRes.factura_electronica?.clave_acceso) {
@@ -907,8 +1023,9 @@ export async function confirmarPagoPluxAction(entrada: {
         };
       }
     }
-  } catch {
+  } catch (e) {
     // Continúa al siguiente mecanismo si la migración aún no está aplicada
+    await trazaPlux("confirmar.rpc_cliente_excepcion", "AVISO", { negocio, correlacion: identificador, mensaje: mensajeDeError(e) });
   }
 
   if (!confirmadoPorRpc && admin) {
@@ -921,10 +1038,25 @@ export async function confirmarPagoPluxAction(entrada: {
         });
       if (!rpcAdminErr && rpcAdminRes?.ok && rpcAdminRes?.estado === "APROBADO") {
         confirmadoPorRpc = true;
+      } else {
+        await trazaPlux("confirmar.rpc_admin_sin_aprobar", "AVISO", {
+          negocio,
+          correlacion: identificador,
+          mensaje: rpcAdminErr?.message ?? rpcAdminRes?.error ?? rpcAdminRes?.motivo ?? null,
+          detalle: { estado: rpcAdminRes?.estado ?? null, codigo: rpcAdminErr?.code ?? null },
+        });
       }
-    } catch {
+    } catch (e) {
       // Continúa al respaldo directo
+      await trazaPlux("confirmar.rpc_admin_excepcion", "AVISO", { negocio, correlacion: identificador, mensaje: mensajeDeError(e) });
     }
+  }
+  if (!confirmadoPorRpc) {
+    await trazaPlux("confirmar.respaldo_directo", "AVISO", {
+      negocio,
+      correlacion: identificador,
+      mensaje: "Ninguna RPC confirmó el pago; se usa el respaldo directo en tablas",
+    });
   }
 
   // 3. Respaldo directo en tablas y activación de suscripción en memoria/BDD
@@ -1191,8 +1323,9 @@ export async function confirmarPagoPluxAction(entrada: {
           }
         }
       }
-    } catch {
+    } catch (e) {
       // Ignorar si RLS restringe escritura directa sin RPC
+      await trazaPlux("confirmar.respaldo_directo_error", "AVISO", { negocio, correlacion: identificador, mensaje: mensajeDeError(e) });
     }
   }
 
@@ -1256,8 +1389,8 @@ export async function confirmarPagoPluxAction(entrada: {
         identificador,
         negocio,
       });
-    } catch {
-      // Continuar
+    } catch (e) {
+      await trazaPlux("confirmar.factura_error", "AVISO", { negocio, correlacion: identificador, mensaje: mensajeDeError(e) });
     }
   }
 
@@ -1392,8 +1525,8 @@ export async function confirmarPagoPluxAction(entrada: {
         clienteNombre: pagadorNombre,
         revalidar: false,
       });
-    } catch {
-      // Continuar
+    } catch (e) {
+      await trazaPlux("confirmar.suscripcion_error", "ERROR", { negocio, correlacion: identificador, mensaje: mensajeDeError(e) });
     }
   }
 
@@ -1607,6 +1740,7 @@ export async function confirmarPagoPluxAction(entrada: {
     }
   } catch (errNotif) {
     console.warn("Aviso al notificar pago PLUX a cliente y staff:", errNotif);
+    await trazaPlux("confirmar.notificacion_error", "AVISO", { negocio, correlacion: identificador, mensaje: mensajeDeError(errNotif) });
   }
 
   // 5. Capturar/actualizar perfil del cliente (autorizado o no autorizado) con la compra confirmada

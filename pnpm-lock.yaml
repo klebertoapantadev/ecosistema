@@ -389,6 +389,9 @@ importers:
       '@eco/agentes-ia':
         specifier: workspace:*
         version: link:../agentes-ia
+      '@eco/auditoria':
+        specifier: workspace:*
+        version: link:../auditoria
       '@eco/datagrid':
         specifier: workspace:*
         version: link:../datagrid
