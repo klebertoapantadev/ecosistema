@@ -148,6 +148,9 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
   const [patronesProveedorTxt, setPatronesProveedorTxt] = useState<string>(
     REGLAS_CLASIFICACION_DEFECTO.patronesProveedor.join(", ")
   );
+  const [patronesExcluirTxt, setPatronesExcluirTxt] = useState<string>(
+    negNorm === "tinkay" ? "cs" : ""
+  );
   const [politicaPersonalDefecto, setPoliticaPersonalDefecto] =
     useState<PoliticaPersonalesLinea>("IGNORAR_TOTAL");
   const [ocultarExistentes, setOcultarExistentes] = useState<boolean>(true);
@@ -227,11 +230,15 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         .map((s) => s.trim())
         .filter(Boolean),
       patronesEquipo: REGLAS_CLASIFICACION_DEFECTO.patronesEquipo,
+      patronesExcluir: patronesExcluirTxt
+        .split(/[,;\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
       politicaPersonalDefecto,
       politicaIaClientesDefecto: "SEGUN_LINEA",
       visibilidadClientesDefecto: "EQUIPO_VENTAS",
     }),
-    [patronesClienteTxt, patronesProveedorTxt, politicaPersonalDefecto]
+    [patronesClienteTxt, patronesProveedorTxt, patronesExcluirTxt, politicaPersonalDefecto]
   );
 
   const recalcularConsolidacion = useCallback(
@@ -1493,6 +1500,15 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                   <input
                     value={patronesProveedorTxt}
                     onChange={(e) => setPatronesProveedorTxt(e.target.value)}
+                    style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.8rem" }}
+                  />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.76rem", fontWeight: 600, color: "var(--ct-57524c, #57524C)" }}>
+                  Patrones a omitir / descartar al importar (ej. cs)
+                  <input
+                    value={patronesExcluirTxt}
+                    onChange={(e) => setPatronesExcluirTxt(e.target.value)}
+                    placeholder="cs"
                     style={{ padding: "7px 9px", borderRadius: "7px", border: "1px solid var(--cb-d5cfc4, #D5CFC4)", fontSize: "0.8rem" }}
                   />
                 </label>

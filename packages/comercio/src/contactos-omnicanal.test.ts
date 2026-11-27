@@ -114,4 +114,73 @@ describe("contactos-omnicanal · normalización y parsers", () => {
     expect(finca?.clasificacion).toBe("PROVEEDOR");
     expect(finca?.politicaIa).toBe("SIEMPRE_MANUAL");
   });
+
+  it("evita falsos positivos reales (Clínica/Click, Ramos, Arreglistas, Tinkay Local, Proveedores Eventos), soporta pre-2012 y exclusiones", () => {
+    expect(normalizarTelefonoE164Contacto("095447253")).toBe("+593995447253");
+    expect(normalizarTelefonoE164Contacto("087275850")).toBe("+593987275850");
+
+    const brutos = parsearListaRapidaContactos(
+      [
+        "Clínica Dental Vejar, 099 100 0001",
+        "Studio Click Fotografía, 099 100 0002",
+        "Iker Ramos Bpac Pasante, 099 100 0003",
+        "Empresa Eléctrica, 099 100 0004",
+        "Byron Monje Cliente Girasoles, 099 100 0005",
+        "Clie te 712, 099 100 0006",
+        "Eventos 14 Isabel Dávila Bodas, 099 100 0007",
+        "Edgar Cerrajería Eventos, 099 100 0008",
+        "David Importadora Eventos, 099 100 0009",
+        "Arreglista Dionar Chirinos, 099 100 0010",
+        "Tinkay Floristería, 099 100 0011",
+        "Sra Maritza mercado De Flores, 099 100 0012",
+        "Verónica Tipan Girasoles, 099 100 0013",
+        "Nancy Guerrero Personal, 099 100 0014",
+        "Paty Personal Florista, 099 100 0015",
+        "Uber Ronny, 099 100 0016",
+        "CS Ramo De Novia Girasol, 099 100 0017",
+      ].join("\n"),
+      { origen: "VCF", esAgendaPersonal: true }
+    );
+
+    const { items } = consolidarContactosJoinMerge({
+      brutos,
+      reglas: {
+        patronesCliente: ["cliente", "clie te", "cli", "evento", "boda"],
+        patronesProveedor: [
+          "proveedor",
+          "mercado de flores",
+          "girasol",
+          "importadora",
+          "cerrajeria",
+          "uber",
+        ],
+        patronesEquipo: ["tinkay floristeria", "arreglista", "florista"],
+        patronesExcluir: ["cs"],
+        politicaPersonalDefecto: "IGNORAR_TOTAL",
+        politicaIaClientesDefecto: "SEGUN_LINEA",
+        visibilidadClientesDefecto: "EQUIPO_VENTAS",
+      },
+    });
+
+    const clasif = (ult4: string) =>
+      items.find((i) => i.telefonoE164.endsWith(ult4))?.clasificacion;
+
+    expect(clasif("0001")).toBe("PERSONAL"); // Clínica Dental
+    expect(clasif("0002")).toBe("PERSONAL"); // Studio Click
+    expect(clasif("0003")).toBe("PERSONAL"); // Iker Ramos
+    expect(clasif("0004")).toBe("PERSONAL"); // Empresa Eléctrica
+    expect(clasif("0005")).toBe("CLIENTE"); // Byron Monje Cliente Girasoles
+    expect(clasif("0006")).toBe("CLIENTE"); // Clie te 712
+    expect(clasif("0007")).toBe("CLIENTE"); // Eventos 14 Bodas
+    expect(clasif("0008")).toBe("PROVEEDOR"); // Edgar Cerrajería Eventos
+    expect(clasif("0009")).toBe("PROVEEDOR"); // David Importadora Eventos
+    expect(clasif("0010")).toBe("EQUIPO_INTERNO"); // Arreglista Dionar
+    expect(clasif("0011")).toBe("EQUIPO_INTERNO"); // Tinkay Floristería
+    expect(clasif("0012")).toBe("PROVEEDOR"); // Sra Maritza mercado De Flores
+    expect(clasif("0013")).toBe("PROVEEDOR"); // Verónica Tipan Girasoles
+    expect(clasif("0014")).toBe("PERSONAL"); // Nancy Guerrero Personal
+    expect(clasif("0015")).toBe("PERSONAL"); // Paty Personal Florista
+    expect(clasif("0016")).toBe("PROVEEDOR"); // Uber Ronny
+    expect(clasif("0017")).toBeUndefined(); // CS excluido por regla
+  });
 });

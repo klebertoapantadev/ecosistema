@@ -52,6 +52,9 @@ begin
   -- Ecuador móvil sin 0 inicial: 9XXXXXXXX (9 dígitos) -> 5939XXXXXXXX
   elsif v_digitos ~ '^9\d{8}$' then
     v_digitos := '593' || v_digitos;
+  -- Ecuador móvil antiguo pre-2012: 0[89]XXXXXXX (9 dígitos) -> 5939[89]XXXXXXX
+  elsif v_digitos ~ '^0[89]\d{7}$' then
+    v_digitos := '5939' || substring(v_digitos from 2);
   -- Ecuador fijo con 0 inicial: 0[2-7]XXXXXXX (9 dígitos) -> 593[2-7]XXXXXXX
   elsif v_digitos ~ '^0[2-7]\d{7}$' then
     v_digitos := '593' || substring(v_digitos from 2);

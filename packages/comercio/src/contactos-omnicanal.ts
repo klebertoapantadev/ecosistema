@@ -140,6 +140,7 @@ export interface ReglasClasificacionContactos {
   patronesCliente: string[];
   patronesProveedor: string[];
   patronesEquipo: string[];
+  patronesExcluir?: string[];
   politicaPersonalDefecto: PoliticaPersonalesLinea;
   politicaIaClientesDefecto: PoliticaIaContacto;
   visibilidadClientesDefecto: VisibilidadConversacion;
@@ -148,33 +149,76 @@ export interface ReglasClasificacionContactos {
 export const REGLAS_CLASIFICACION_DEFECTO: ReglasClasificacionContactos = {
   patronesCliente: [
     "cliente",
-    "cli ",
+    "clie te",
+    "clientd",
+    "clientw",
+    "cliwnte",
+    "cli",
     "clt",
-    "pedido",
-    "compra",
-    "boda",
     "evento",
-    "flor",
-    "ramo",
-    "cotiz",
-    "arregl",
-    "vip",
+    "boda",
     "novia",
-    "empresa",
+    "bouquet",
+    "cotiz",
+    "pedido",
+    "vip",
+    "compro floristeria",
+    "compra en la floreria",
   ],
   patronesProveedor: [
     "proveedor",
     "finca",
     "floricult",
+    "ecuagenera",
+    "mercado de flores",
+    "flores mercado",
+    "girasol",
+    "follaje",
+    "minirosa",
+    "tulipan",
+    "oasis",
+    "bases barro",
+    "bases anturios",
+    "bases don",
+    "bases santa",
+    "de las bases",
+    "cajas de carton",
+    "cajas de madera",
+    "peluche",
+    "etiquetas tinkay",
+    "vivero",
+    "importadora",
+    "distribuidora",
+    "cerrajeria",
+    "toldo",
     "motoriz",
     "delivery",
     "mensajer",
     "courier",
     "transporte",
+    "servientrega",
+    "entregas quito",
+    "uber",
+    "moto",
+    "taxi",
     "mayorista",
     "insumo",
   ],
-  patronesEquipo: ["taller", "vendedor", "asesor", "florista", "equipo", "staff"],
+  patronesEquipo: [
+    "tinkay floristeria",
+    "tinkay local",
+    "tinkay bot",
+    "local margaritas",
+    "margarita floristeria",
+    "floristeria temp",
+    "arreglista",
+    "florista",
+    "taller",
+    "vendedor",
+    "equipo",
+    "staff",
+  ],
+  patronesExcluir: [],
   politicaPersonalDefecto: "IGNORAR_TOTAL",
   politicaIaClientesDefecto: "SEGUN_LINEA",
   visibilidadClientesDefecto: "EQUIPO_VENTAS",
@@ -245,6 +289,9 @@ export function normalizarTelefonoE164Contacto(telefono?: string | null): string
     digitos = `593${digitos.slice(1)}`;
   } else if (/^9\d{8}$/.test(digitos)) {
     digitos = `593${digitos}`;
+  } else if (/^0[89]\d{7}$/.test(digitos)) {
+    // Ecuador móvil antiguo pre-2012 (9 dígitos: 09XXXXXXX / 08XXXXXXX -> 59399XXXXXXX / 59398XXXXXXX)
+    digitos = `5939${digitos.slice(1)}`;
   } else if (/^0[2-7]\d{7}$/.test(digitos)) {
     // Ecuador fijo: 02XXXXXXX -> 5932XXXXXXX
     digitos = `593${digitos.slice(1)}`;
@@ -656,12 +703,71 @@ export function parsearContactosPickerNativo(
   return resultados;
 }
 
+const PATRONES_PALABRA_EXACTA = new Set([
+  "cli",
+  "clt",
+  "cs",
+  "vip",
+  "uber",
+  "moto",
+  "taxi",
+  "ramo",
+  "flor",
+  "bpac",
+  "pbo",
+  "personal",
+  "staff",
+  "taller",
+  "equipo",
+  "toldo",
+  "oasis",
+  "vivero",
+  "boda",
+  "novia",
+]);
+
+function escaparRegex(valor: string): string {
+  return valor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Coincidencia inteligente sin falsos positivos por subcadena:
+ * - Tokens cortos o ambiguos (`cli`, `cs`, `ramo`, `uber`, `moto`, `personal`, `vip`) exigen
+ *   límite completo de palabra (así `cli` no atrapa `Clínica` ni `Click`, ni `ramo` atrapa `Ramos`).
+ * - Raíces o frases (`evento`, `proveedor`, `girasol`, `mercado de flores`) exigen inicio de palabra.
+ */
+export function coincidePatronContacto(textoNorm: string, patronRaw: string): boolean {
+  const pn = normalizarTextoComparacion(patronRaw);
+  if (!pn || !textoNorm) return false;
+  const escaped = escaparRegex(pn);
+  if (pn.length <= 4 || PATRONES_PALABRA_EXACTA.has(pn)) {
+    return new RegExp(`(?:^|[^a-z0-9])${escaped}(?:$|[^a-z0-9])`).test(textoNorm);
+  }
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}`).test(textoNorm);
+}
+
+const PATRONES_CLIENTE_EXPLICITO = [
+  "cliente",
+  "clie te",
+  "clientd",
+  "clientw",
+  "cliwnte",
+  "cli",
+  "clt",
+  "compro floristeria",
+  "compra en la floreria",
+];
+
 /**
  * Motor fail-safe de auto-clasificación:
- * - Si viene de lista a ignorar -> PERSONAL (SIEMPRE_MANUAL + IGNORAR_TOTAL).
- * - Si coincide con patrones de equipo/proveedor -> EQUIPO_INTERNO / PROVEEDOR (SIEMPRE_MANUAL).
- * - Si coincide con patrones de cliente (ej. "cliente juan perez") o tiene historial CRM -> CLIENTE.
- * - Cualquier otro contacto de agenda personal -> PERSONAL por defecto (cero riesgo de bot a familiares).
+ * 1. Lista a ignorar -> PERSONAL (SIEMPRE_MANUAL + IGNORAR_TOTAL).
+ * 2. Palabra explícita `Personal` (sin `Cliente`) -> PERSONAL.
+ * 3. Palabra explícita `Proveedor` -> PROVEEDOR.
+ * 4. Palabra explícita `Cliente` (ej. "Byron Monje Cliente Girasoles") -> CLIENTE.
+ * 5. Equipo interno / locales propios / arreglistas -> EQUIPO_INTERNO (SIEMPRE_MANUAL).
+ * 6. Proveedores / delivery / mercado de flores / insumos -> PROVEEDOR (SIEMPRE_MANUAL).
+ * 7. Otros patrones comerciales (ej. `Eventos 1..18`, `Boda`, `Cotización`) o compras CRM -> CLIENTE.
+ * 8. Cualquier otro contacto de agenda personal -> PERSONAL por defecto (cero riesgo de bot a familiares).
  */
 export function clasificarContactoAutomaticamente(params: {
   nombres: string[];
@@ -707,10 +813,43 @@ export function clasificarContactoAutomaticamente(params: {
     [...params.nombres, params.notas || "", ...(params.etiquetas || [])].join(" ")
   );
 
-  const matchEquipo = reglas.patronesEquipo.find((p) => {
-    const pn = normalizarTextoComparacion(p);
-    return pn && textoCompleto.includes(pn);
-  });
+  const matchClienteExplicito = PATRONES_CLIENTE_EXPLICITO.find((p) =>
+    coincidePatronContacto(textoCompleto, p)
+  );
+
+  // Etiqueta explícita "Personal" (ej. "Nancy Guerrero Personal", "Paty Personal Florista")
+  if (!matchClienteExplicito && coincidePatronContacto(textoCompleto, "personal")) {
+    return {
+      clasificacion: "PERSONAL",
+      politicaIa: "SIEMPRE_MANUAL",
+      visibilidad: visibilidadPersonal,
+      motivo: "Etiquetado explícitamente como «Personal»",
+    };
+  }
+
+  // Etiqueta explícita "Proveedor" tiene prioridad incluso si menciona otras palabras
+  if (coincidePatronContacto(textoCompleto, "proveedor")) {
+    return {
+      clasificacion: "PROVEEDOR",
+      politicaIa: "SIEMPRE_MANUAL",
+      visibilidad: visibilidadPersonal,
+      motivo: "Coincide con patrón de proveedor («proveedor»)",
+    };
+  }
+
+  // Etiqueta explícita "Cliente" prevalece sobre menciones de producto/empresa (ej. "Cliente Girasoles", "Cliente Satcom")
+  if (matchClienteExplicito) {
+    return {
+      clasificacion: "CLIENTE",
+      politicaIa: reglas.politicaIaClientesDefecto,
+      visibilidad: reglas.visibilidadClientesDefecto,
+      motivo: `Coincide con patrón de cliente («${matchClienteExplicito}»)`,
+    };
+  }
+
+  const matchEquipo = reglas.patronesEquipo.find((p) =>
+    coincidePatronContacto(textoCompleto, p)
+  );
   if (matchEquipo) {
     return {
       clasificacion: "EQUIPO_INTERNO",
@@ -720,10 +859,9 @@ export function clasificarContactoAutomaticamente(params: {
     };
   }
 
-  const matchProveedor = reglas.patronesProveedor.find((p) => {
-    const pn = normalizarTextoComparacion(p);
-    return pn && textoCompleto.includes(pn);
-  });
+  const matchProveedor = reglas.patronesProveedor.find((p) =>
+    coincidePatronContacto(textoCompleto, p)
+  );
   if (matchProveedor) {
     return {
       clasificacion: "PROVEEDOR",
@@ -733,10 +871,9 @@ export function clasificarContactoAutomaticamente(params: {
     };
   }
 
-  const matchCliente = reglas.patronesCliente.find((p) => {
-    const pn = normalizarTextoComparacion(p);
-    return pn && textoCompleto.includes(pn);
-  });
+  const matchCliente = reglas.patronesCliente.find((p) =>
+    coincidePatronContacto(textoCompleto, p)
+  );
   if (matchCliente) {
     return {
       clasificacion: "CLIENTE",
@@ -875,6 +1012,17 @@ export function consolidarContactosJoinMerge(params: {
   let actualizaciones = 0;
 
   for (const acc of grupos.values()) {
+    // Exclusión opcional por patrones (ej. "cs")
+    if (reglas.patronesExcluir && reglas.patronesExcluir.length > 0) {
+      const textoGrupo = normalizarTextoComparacion(
+        [...acc.nombres, ...acc.notas, ...acc.etiquetas].join(" ")
+      );
+      if (reglas.patronesExcluir.some((p) => coincidePatronContacto(textoGrupo, p))) {
+        invalidos++;
+        continue;
+      }
+    }
+
     const existente = mapaExistentes.get(acc.u9);
     const crm = mapaCrm.get(acc.u9);
 
