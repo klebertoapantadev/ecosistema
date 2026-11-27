@@ -4,11 +4,11 @@ import { crearClienteAdmin } from "@eco/supabase/servidor";
 //
 // Cada paso de un flujo (preparar pago, abrir PLUX, confirmar, webhook...)
 // deja una fila con la misma `correlacion`, y así se ve dónde se quedó uno que
-// no terminó. Solo servidor: escribe con service_role. Desde el navegador se
+// no terminó. Solo servidor: escribe con el cliente admin. Desde el navegador se
 // usa registrarTrazaClienteAction.
 //
 // Nunca lanza: una traza que falla no puede tumbar el flujo que observa. Si no
-// hay service_role (local sin .env) queda solo la línea de consola, que
+// hay clave de servicio (local sin .env) queda solo la línea de consola, que
 // también llega a los logs de Vercel.
 
 export type NivelTraza = "INFO" | "AVISO" | "ERROR";
@@ -31,7 +31,7 @@ const MAX_MENSAJE = 1000;
 const MAX_DETALLE = 8000;
 // Datos que no deben quedar en una traza aunque vengan en una respuesta de
 // pasarela: número de tarjeta, CVV, secretos y cabeceras de autenticación.
-const CLAVE_SENSIBLE = /^(pan|cvv|cvc|cvv2|jwt)$|card_?number|numero_?tarjeta|password|contrasena|clave_secreta|secret|authorization|authentication|service_?role|api_?key|cookie|bearer|private_?key|access_?token|refresh_?token/i;
+const CLAVE_SENSIBLE = /^(pan|cvv|cvc|cvv2|jwt)$|card_?number|numero_?tarjeta|password|contrasena|clave_secreta|secret|authorization|authentication|service.?role|api_?key|cookie|bearer|private_?key|access_?token|refresh_?token/i;
 const MAX_INT = 2_147_483_647;
 
 function limpiar(valor: unknown, profundidad = 0): unknown {

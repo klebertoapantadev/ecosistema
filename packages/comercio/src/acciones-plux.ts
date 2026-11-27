@@ -941,7 +941,7 @@ async function confirmarPagoPluxInterno(entrada: EntradaConfirmarPlux): Promise<
     await trazaPlux("confirmar.pago_no_encontrado", "AVISO", {
       negocio,
       correlacion: identificador,
-      mensaje: admin ? "No hay com_transaccion_pago con ese identificador" : "Sin service_role: la RLS puede ocultar el pago",
+      mensaje: admin ? "No hay com_transaccion_pago con ese identificador" : "Sin cliente admin: la RLS puede ocultar el pago",
     });
   }
 

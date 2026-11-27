@@ -501,7 +501,7 @@ erDiagram
 | Esquema | Prefijo | N.º Tablas | Propósito Principal |
 | :--- | :---: | :---: | :--- |
 | `comun_seguridad` | `seg_` | **15** | Identidad única (`seg_usuario` ↔ `auth.users`), membresías por negocio (`seg_membresia`), perfiles jerárquicos 1–100 (`seg_perfil`), matriz de widgets (`seg_widget`, `seg_rol_widget`), consentimientos LOPDP, accesos, OTPs y tokens MCP. |
-| `comun_auditoria` | `aud_` | **2** | Bitácora inmutable de cambios en tablas (`aud_registro` vía trigger `aud_fn_auditar_tabla()`) y telemetría de invocaciones a APIs externas (`aud_log_api`). |
+| `comun_auditoria` | `aud_` | **2** | Bitácora inmutable de cambios en tablas (`aud_registro` vía trigger `aud_fn_auditar_tabla()`) y telemetría de invocaciones a APIs externas (`aud_log_api`), trazas de ejecución de flujos (`aud_traza`). |
 | `comun_configuracion` | `cfg_` | **2** | Identidad legal, contactos, redes y locales de los 4 negocios (`cfg_negocio`) y servidores SMTP por negocio con credenciales en Supabase Vault (`cfg_smtp`). |
 | `comun_catalogo` | `cat_` | **1** | Catálogo oficial de las 24 provincias del Ecuador (`cat_provincia`, códigos INEC `01`–`24`). |
 | `comun_notificacion` | `not_` | **2** | Campañas multicanal (`not_campana`) y bandeja de notificaciones por destinatario con telemetría de lectura, confirmación y posposición (`not_registro`). |
@@ -814,6 +814,27 @@ erDiagram
 | `reg_datos_nuevos` | `jsonb` | `NULL` | — | — |
 | `reg_detalle_registro` | `jsonb` | `NOT NULL` | — | `'{}'::jsonb` |
 | `reg_creado_en` | `timestamptz` | `NOT NULL` | — | `now()` |
+
+#### Tabla `comun_auditoria.aud_traza`
+*Definida en:* [`supabase/migrations/20261126000010_comun_auditoria_trazas.sql`](../../supabase/migrations/20261126000010_comun_auditoria_trazas.sql)
+
+Trazas de ejecución de flujos (TRQ-039): cada paso de un flujo deja una fila con la misma `tra_correlacion` (en pagos PLUX, el identificador `XXX-PLX-…`) desde el navegador, el servidor o una Edge Function, para ver dónde se quedó uno que no terminó. Escritura solo con el cliente admin (`registrarTraza` en `@eco/auditoria/trazas`; el navegador pasa por `registrarTrazaClienteAction`, que valida y limita), lectura solo superadmin de plataforma por RLS, retención de 90 días con pg_cron (`aud_traza_retencion`). Sin trigger de auditoría: es bitácora de diagnóstico, no dato de negocio. Vista `aud_v_traza_resumen`: un renglón por correlación con su último paso. Visor: `/panel/auditoria/trazas` en tranqi-web.
+
+| Columna | Tipo de Dato | Nulabilidad | Rol (`PK` / `FK`) | Valor por Defecto |
+| :--- | :--- | :---: | :--- | :--- |
+| `tra_id` | `uuid` | `NOT NULL` | 🔑 **PK** | `gen_random_uuid()` |
+| `tra_secuencial` | `bigint` | `NOT NULL` | — | identity |
+| `tra_negocio` | `text` | `NULL` | — | — |
+| `tra_flujo` | `text` | `NOT NULL` | — | — (p. ej. `PAGO_PLUX`) |
+| `tra_paso` | `text` | `NOT NULL` | — | — (p. ej. `confirmar.ok`, `cliente.sin_confirmar`, `webhook.procesado`) |
+| `tra_nivel` | `text` | `NOT NULL` | — | `'INFO'` (`INFO`, `AVISO`, `ERROR`) |
+| `tra_origen` | `text` | `NOT NULL` | — | — (`CLIENTE`, `SERVIDOR`, `WEBHOOK`) |
+| `tra_correlacion` | `text` | `NULL` | — | — |
+| `tra_duracion_ms` | `integer` | `NULL` | — | — |
+| `tra_mensaje` | `text` | `NULL` | — | — |
+| `tra_usuario_id` | `uuid` | `NULL` | — | — |
+| `tra_detalle_traza` | `jsonb` | `NOT NULL` | — | `'{}'::jsonb` (sin PAN, CVV ni secretos: se ocultan al guardar) |
+| `tra_creado_en` | `timestamptz` | `NOT NULL` | — | `now()` |
 
 #### Tabla `comun_auditoria.aud_log_api`
 *Definida en:* [`supabase/migrations/20260727000001_comun_auditoria.sql`](../../supabase/migrations/20260727000001_comun_auditoria.sql)
