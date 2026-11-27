@@ -55,13 +55,14 @@ import {
   type SemillaCrmContacto,
   type VisibilidadContacto,
 } from "../contactos-omnicanal";
+import { DepuradorAgendaGooglePanel } from "./DepuradorAgendaGooglePanel";
 import { GestorLineasWhatsappPanel } from "./GestorLineasWhatsappPanel";
 
 export interface ConsolaDirectorioContactosProps {
   negocio: string;
 }
 
-type PestanaDirectorio = "importar" | "directorio" | "lineas";
+type PestanaDirectorio = "importar" | "depurador" | "directorio" | "lineas";
 type FiltroPreview = "todos" | "conflictos" | "personales" | "clientes" | "otros" | "nuevos";
 
 const ESTILO_CLASIFICACION: Record<
@@ -181,6 +182,12 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("tab") === "depurador" || sp.get("google_ok") || sp.get("google_error")) {
+        setPestana("depurador");
+      }
+    }
     if (typeof navigator !== "undefined") {
       const nav = navigator as ContactPickerNavigator;
       setSoportaContactPicker(Boolean(nav.contacts && typeof nav.contacts.select === "function"));
@@ -1064,6 +1071,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", borderTop: "1px solid var(--cb-f1efea, #F1EFEA)", paddingTop: "12px" }}>
           {[
             { id: "importar" as const, label: "Extraer & Join/Merge", icono: Upload },
+            { id: "depurador" as const, label: "Depurador & Google", icono: Sparkles },
             { id: "directorio" as const, label: `Directorio (${kpisDirectorio.total})`, icono: Users },
             { id: "lineas" as const, label: `Teléfonos WhatsApp (${lineasWhatsapp.length})`, icono: Smartphone },
           ].map((t) => {
@@ -2403,6 +2411,16 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
             )}
           />
         </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* PESTAÑA 1B: DEPURADOR 2D DE AGENDA & GOOGLE CONTACTS                */}
+      {/* =================================================================== */}
+      {pestana === "depurador" && (
+        <DepuradorAgendaGooglePanel
+          negocio={negNorm}
+          onDirectorioActualizado={cargarDirectorio}
+        />
       )}
 
       {/* =================================================================== */}
