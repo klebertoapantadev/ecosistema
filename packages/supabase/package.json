@@ -7,7 +7,8 @@
     "./cliente": "./src/client.ts",
     "./servidor": "./src/server.ts",
     "./middleware": "./src/middleware.ts",
-    "./token": "./src/token.ts"
+    "./token": "./src/token.ts",
+    "./observador": "./src/observador.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

@@ -1,5 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@eco/db";
+import { fetchObservado } from "./observador";
 
 // Cliente para Client Components. La URL y la publishable key son publicas
 // por diseno -- la seguridad real vive en RLS, no en el secreto de esta clave.
@@ -10,5 +11,5 @@ export function crearClienteNavegador() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     "";
-  return createBrowserClient<Database>(url, key);
+  return createBrowserClient<Database>(url, key, { global: { fetch: fetchObservado("navegador") } });
 }

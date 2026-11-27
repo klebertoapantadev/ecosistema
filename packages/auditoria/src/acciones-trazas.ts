@@ -6,23 +6,25 @@ import { detalleSeguro, registrarTraza, type NivelTraza } from "./trazas";
 
 // Puerta del navegador a aud_traza. Cualquiera puede llamarla (el checkout lo
 // usan invitados), así que solo acepta flujos y negocios conocidos, exige el
-// formato del identificador PLUX, recorta todo, limita llamadas por IP y fija
+// formato de la correlación, recorta todo, limita llamadas por IP y fija
 // el origen en CLIENTE: no puede hacerse pasar por el servidor ni el webhook.
 // Lo que manda el navegador es indicio, no prueba: por eso queda marcado.
 
-const FLUJOS_PERMITIDOS = new Set(["PAGO_PLUX"]);
+const FLUJOS_PERMITIDOS = new Set(["PAGO_PLUX", "PANEL"]);
 const NEGOCIOS_PERMITIDOS = new Set(["tranqi", "tinkay", "fastfix", "margaritas"]);
 const NIVELES: NivelTraza[] = ["INFO", "AVISO", "ERROR"];
 const RE_PASO = /^[a-z0-9_.]{1,60}$/;
-// Mismo formato que REGEX_IDENTIFICADOR_PLUX en @eco/comercio.
-const RE_CORRELACION = /^[A-Z]{3}-PLX-[0-9A-F]{12}$/;
+// Identificador PLUX (mismo formato que REGEX_IDENTIFICADOR_PLUX en
+// @eco/comercio) o el id de carga de página que genera CapturadorErrores.
+const RE_CORRELACION = /^([A-Z]{3}-PLX-[0-9A-F]{12}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
 const MAX_DETALLE_CLIENTE = 2000;
 
 // Límite por IP en memoria de la instancia: no es exacto en serverless (cada
 // instancia cuenta lo suyo), pero corta un bucle o un abuso sencillo. Un pago
-// normal deja menos de 10 trazas del navegador.
+// normal deja menos de 10 trazas del navegador y CapturadorErrores manda como
+// mucho 25 por carga de página; hay holgura para varias personas tras una IP.
 const VENTANA_MS = 10 * 60_000;
-const MAX_POR_VENTANA = 60;
+const MAX_POR_VENTANA = 150;
 const llamadasPorIp = new Map<string, { desde: number; n: number }>();
 
 function superaLimite(ip: string): boolean {

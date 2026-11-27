@@ -1,5 +1,9 @@
 -- comun_auditoria.aud_traza: trazas de ejecución de flujos (TRQ-040).
 --
+-- Flujos: PAGO_PLUX (pasos del cobro con tarjeta) y PANEL (capturas
+-- automáticas de toda la app: excepciones del servidor, llamadas a Supabase
+-- que fallan o tardan y errores JS del navegador).
+--
 -- aud_registro guarda cambios de datos y aud_log_api llamadas a APIs externas;
 -- ninguna explica por qué un flujo se quedó a medias. Ejemplo que lo motivó:
 -- 33 pagos PLUX en PENDIENTE sin rastro de si falló el paybox, la acción de
@@ -64,6 +68,28 @@ where t.tra_correlacion is not null
 group by t.tra_flujo, t.tra_negocio, t.tra_correlacion;
 
 grant select on comun_auditoria.aud_v_traza_resumen to authenticated;
+
+-- Vista de frecuencia: los avisos y errores de los últimos 7 días agrupados
+-- por paso y mensaje, para ver qué falla más en el panel.
+create or replace view comun_auditoria.aud_v_traza_frecuente
+with (security_invoker = true) as
+select
+  t.tra_flujo,
+  t.tra_negocio,
+  t.tra_nivel,
+  t.tra_paso,
+  left(coalesce(t.tra_mensaje, ''), 300) as mensaje,
+  count(*) as veces,
+  count(distinct t.tra_correlacion) as correlaciones,
+  min(t.tra_creado_en) as primera,
+  max(t.tra_creado_en) as ultima,
+  (array_agg(t.tra_detalle_traza->>'ruta' order by t.tra_creado_en desc, t.tra_secuencial desc) filter (where t.tra_detalle_traza ? 'ruta'))[1] as ultima_ruta
+from comun_auditoria.aud_traza t
+where t.tra_nivel <> 'INFO'
+  and t.tra_creado_en > now() - interval '7 days'
+group by t.tra_flujo, t.tra_negocio, t.tra_nivel, t.tra_paso, left(coalesce(t.tra_mensaje, ''), 300);
+
+grant select on comun_auditoria.aud_v_traza_frecuente to authenticated;
 
 -- Retención: las trazas son diagnóstico, no registro contable.
 do $$

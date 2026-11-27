@@ -9,7 +9,8 @@
     "./acciones": "./src/acciones.ts",
     "./trazas": "./src/trazas.ts",
     "./acciones-trazas": "./src/acciones-trazas.ts",
-    "./consultas-trazas": "./src/consultas-trazas.ts"
+    "./consultas-trazas": "./src/consultas-trazas.ts",
+    "./trazas-panel": "./src/trazas-panel.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
