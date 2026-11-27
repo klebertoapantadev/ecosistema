@@ -1000,6 +1000,63 @@ begin
       union all
 
       select
+        comun_agentes.agc_fn_ultimos9_telefono(ot.ota_cliente_telefono) as u9,
+        comun_agentes.agc_fn_normalizar_telefono_e164(ot.ota_cliente_telefono) as e164,
+        coalesce(nullif(btrim(ot.ota_cliente_solicita), ''), 'Cliente Pedido') as nombre,
+        null::text as correo,
+        count(*)::integer as total_compras,
+        coalesce(sum(ot.ota_total_usd), 0)::numeric as monto_acumulado,
+        'ORDEN_TALLER' as origen,
+        null::uuid as cliente_id,
+        null::uuid as usuario_id,
+        1 as prioridad
+      from comun_comercio.com_orden_taller ot
+      where ot.ota_negocio = v_negocio
+        and ot.ota_eliminado_en is null
+        and length(comun_agentes.agc_fn_ultimos9_telefono(ot.ota_cliente_telefono)) >= 8
+      group by 1, 2, 3
+
+      union all
+
+      select
+        comun_agentes.agc_fn_ultimos9_telefono(pr.prf_cliente_contacto->>'telefono') as u9,
+        comun_agentes.agc_fn_normalizar_telefono_e164(pr.prf_cliente_contacto->>'telefono') as e164,
+        coalesce(nullif(btrim(pr.prf_cliente_nombre), ''), nullif(btrim(pr.prf_cliente_contacto->>'nombreCompleto'), ''), 'Cliente Proforma') as nombre,
+        nullif(lower(btrim(coalesce(pr.prf_cliente_contacto->>'correo', ''))), '') as correo,
+        count(*)::integer as total_compras,
+        coalesce(sum(pr.prf_total), 0)::numeric as monto_acumulado,
+        'PROFORMA' as origen,
+        pr.prf_cliente_id as cliente_id,
+        null::uuid as usuario_id,
+        1 as prioridad
+      from comun_comercio.com_proforma pr
+      where pr.prf_negocio = v_negocio
+        and pr.prf_eliminado_en is null
+        and length(comun_agentes.agc_fn_ultimos9_telefono(pr.prf_cliente_contacto->>'telefono')) >= 8
+      group by 1, 2, 3, 4, 8
+
+      union all
+
+      select
+        comun_agentes.agc_fn_ultimos9_telefono(pg.pag_titular_telefono) as u9,
+        comun_agentes.agc_fn_normalizar_telefono_e164(pg.pag_titular_telefono) as e164,
+        coalesce(nullif(btrim(pg.pag_titular_email), ''), 'Cliente Pago Web') as nombre,
+        nullif(lower(btrim(coalesce(pg.pag_titular_email, ''))), '') as correo,
+        count(*)::integer as total_compras,
+        coalesce(sum(pg.pag_monto_total), 0)::numeric as monto_acumulado,
+        'PAGO_WEB' as origen,
+        pg.pag_cliente_id as cliente_id,
+        null::uuid as usuario_id,
+        1 as prioridad
+      from comun_comercio.com_transaccion_pago pg
+      where pg.pag_negocio = v_negocio
+        and pg.pag_eliminado_en is null
+        and length(comun_agentes.agc_fn_ultimos9_telefono(pg.pag_titular_telefono)) >= 8
+      group by 1, 2, 3, 4, 8
+
+      union all
+
+      select
         comun_agentes.agc_fn_ultimos9_telefono(coalesce(
           nullif(btrim(coalesce(u.usu_detalle_usuario->'registros_negocio'->v_negocio->>'whatsapp', '')), ''),
           u.usu_whatsapp

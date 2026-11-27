@@ -161,11 +161,21 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
   const [porPaginaPreview, setPorPaginaPreview] = useState<number>(50);
   const [guardandoLote, setGuardandoLote] = useState<boolean>(false);
   const [progresoGuardado, setProgresoGuardado] = useState<string | null>(null);
+  const [cargandoCrm, setCargandoCrm] = useState<boolean>(false);
+  const [estadoCrmLocal, setEstadoCrmLocal] = useState<string | null>(null);
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
   const [filtroClasifDirectorio, setFiltroClasifDirectorio] = useState<string>("TODOS");
   const [soportaContactPicker, setSoportaContactPicker] = useState<boolean>(false);
 
   const inputArchivoRef = useRef<HTMLInputElement>(null);
+  const previewSectionRef = useRef<HTMLDivElement>(null);
+
+  const desplazarAVistaPrevia = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.setTimeout(() => {
+      previewSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }, []);
 
   useEffect(() => {
     if (typeof navigator !== "undefined") {
@@ -251,7 +261,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
   const agregarFuenteABrutos = (
     nuevos: ContactoCrudoImportado[],
     etiqueta: string,
-    origen: OrigenImportacionContacto
+    origen: OrigenImportacionContacto,
+    semillaOverride?: SemillaCrmContacto[]
   ) => {
     if (nuevos.length === 0) {
       setMensaje({
@@ -263,11 +274,19 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
     const combinados = [...brutosAcumulados, ...nuevos];
     setBrutosAcumulados(combinados);
     setFuentesCargadasResumen((prev) => [...prev, { etiqueta, cantidad: nuevos.length, origen }]);
-    recalcularConsolidacion(combinados);
+    const { items, resumen } = consolidarContactosJoinMerge({
+      brutos: combinados,
+      existentesDirectorio: contactosGuardados,
+      semillaCrm: semillaOverride ?? crmSemilla,
+      reglas: reglasActuales,
+    });
+    setPreviewItems(items);
+    setResumenMerge(resumen);
     setMensaje({
       tipo: "ok",
-      texto: `Se extrajeron ${nuevos.length} número(s) desde «${etiqueta}» y se consolidaron con Join/Merge.`,
+      texto: `Se extrajeron ${nuevos.length} número(s) desde «${etiqueta}» y se consolidaron con Join/Merge (${resumen.totalConsolidados} únicos).`,
     });
+    desplazarAVistaPrevia();
   };
 
   const handleArchivosSeleccionados = async (archivos: FileList | null) => {
@@ -351,6 +370,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         tipo: "ok",
         texto: `Extracción lista: ${acumuladosNuevos.length} número(s) extraídos de ${resumenNuevasFuentes.length} archivo(s). Revisa el resultado Join/Merge abajo antes de guardar.`,
       });
+      desplazarAVistaPrevia();
     } else if (resumenNuevasFuentes.length > 0) {
       setMensaje({
         tipo: "error",
@@ -413,14 +433,46 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
     if (parsed.length > 0) setTextoPegado("");
   };
 
-  const handleCruzarConCrm = () => {
+  const handleCruzarConCrm = async () => {
     setMensaje(null);
-    if (crmSemilla.length === 0) {
-      setMensaje({ tipo: "error", texto: "No se encontraron clientes o chats previos en el CRM." });
+    setEstadoCrmLocal(null);
+
+    const yaCargado = fuentesCargadasResumen.some((f) => f.origen === "CRM");
+    if (yaCargado && previewItems.length > 0) {
+      setEstadoCrmLocal("✓ CRM ya está cargado en la vista previa (desplazando abajo ↓).");
+      setFiltroPreview("clientes");
+      desplazarAVistaPrevia();
       return;
     }
-    const brutosCrm: ContactoCrudoImportado[] = crmSemilla.map((c) => ({
-      nombre: c.nombre,
+
+    let semillaActiva = crmSemilla;
+    if (semillaActiva.length === 0) {
+      setCargandoCrm(true);
+      const res = await listarDirectorioContactosAction(negNorm);
+      setCargandoCrm(false);
+      if (!res.ok) {
+        setEstadoCrmLocal(`Error consultando CRM: ${res.error}`);
+        setMensaje({ tipo: "error", texto: res.error });
+        return;
+      }
+      setEsAdmin(res.esAdmin);
+      setContactosGuardados(res.contactos);
+      setCrmSemilla(res.crmSemilla);
+      setLineasWhatsapp(res.lineasWhatsapp);
+      semillaActiva = res.crmSemilla;
+    }
+
+    if (semillaActiva.length === 0) {
+      setEstadoCrmLocal("No hay teléfonos registrados todavía en compras, usuarios web o chats.");
+      setMensaje({
+        tipo: "error",
+        texto: "No se encontraron clientes o chats previos en el CRM.",
+      });
+      return;
+    }
+
+    const brutosCrm: ContactoCrudoImportado[] = semillaActiva.map((c) => ({
+      nombre: c.nombre || `Cliente ${c.telefonoE164}`,
       telefono: c.telefonoE164,
       correo: c.correo,
       origen: "CRM",
@@ -428,7 +480,16 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
       esAgendaPersonal: false,
       clasificacionSugerida: "CLIENTE",
     }));
-    agregarFuenteABrutos(brutosCrm, "CRM Compras, Usuarios y Chats", "CRM");
+
+    agregarFuenteABrutos(
+      brutosCrm,
+      "CRM Compras, Usuarios y Chats",
+      "CRM",
+      semillaActiva
+    );
+    setEstadoCrmLocal(
+      `✓ ${brutosCrm.length} contactos del CRM cargados en Join/Merge (ver vista previa abajo ↓).`
+    );
   };
 
   const handleLimpiarBorrador = () => {
@@ -436,6 +497,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
     setFuentesCargadasResumen([]);
     setPreviewItems([]);
     setResumenMerge(null);
+    setEstadoCrmLocal(null);
     setMensaje(null);
   };
 
@@ -1268,7 +1330,8 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 </p>
                 <button
                   type="button"
-                  onClick={handleCruzarConCrm}
+                  disabled={cargandoCrm}
+                  onClick={() => void handleCruzarConCrm()}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1276,17 +1339,48 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                     gap: "6px",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #7C3AED",
-                    background: "var(--cf-faf5ff, #FAF5FF)",
-                    color: "var(--ct-6b21a8, #6B21A8)",
+                    border: fuentesCargadasResumen.some((f) => f.origen === "CRM")
+                      ? "1px solid #16A34A"
+                      : "1px solid #7C3AED",
+                    background: fuentesCargadasResumen.some((f) => f.origen === "CRM")
+                      ? "var(--cf-f0fdf4, #F0FDF4)"
+                      : "var(--cf-faf5ff, #FAF5FF)",
+                    color: fuentesCargadasResumen.some((f) => f.origen === "CRM")
+                      ? "var(--ct-166534, #166534)"
+                      : "var(--ct-6b21a8, #6B21A8)",
                     fontSize: "0.79rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
+                    fontWeight: 700,
+                    cursor: cargandoCrm ? "wait" : "pointer",
+                    opacity: cargandoCrm ? 0.7 : 1,
                   }}
                 >
                   <Sparkles size={14} />
-                  <span>Cargar CRM ({crmSemilla.length})</span>
+                  <span>
+                    {cargandoCrm
+                      ? "Consultando CRM…"
+                      : fuentesCargadasResumen.some((f) => f.origen === "CRM")
+                        ? `✓ CRM Cargado (${crmSemilla.length}) · Ver ↓`
+                        : `Cargar CRM (${crmSemilla.length})`}
+                  </span>
                 </button>
+                {estadoCrmLocal && (
+                  <div
+                    style={{
+                      fontSize: "0.73rem",
+                      fontWeight: 600,
+                      color: estadoCrmLocal.startsWith("✓") ? "#166534" : "#991B1B",
+                      background: estadoCrmLocal.startsWith("✓") ? "#F0FDF4" : "#FEF2F2",
+                      border: estadoCrmLocal.startsWith("✓")
+                        ? "1px solid #BBF7D0"
+                        : "1px solid #FECACA",
+                      borderRadius: "7px",
+                      padding: "6px 8px",
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {estadoCrmLocal}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1468,6 +1562,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
           {/* Paso 2: Resultado interactivo del Join/Merge + Depuración antes de guardar */}
           {resumenMerge && previewItems.length > 0 && (
             <div
+              ref={previewSectionRef}
               style={{
                 background: "var(--cf-ffffff, #FFFFFF)",
                 border: "1px solid var(--cb-e6e2da, #E6E2DA)",
@@ -1476,6 +1571,7 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
                 display: "flex",
                 flexDirection: "column",
                 gap: "12px",
+                scrollMarginTop: "16px",
               }}
             >
               <div
