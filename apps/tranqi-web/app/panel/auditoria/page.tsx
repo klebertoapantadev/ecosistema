@@ -44,7 +44,8 @@ export default async function PaginaAuditoria({
             Auditoría
           </div>
           <div className="tarjeta-proteccion-meta" style={{ marginTop: "4px" }}>
-            Quién cambió qué y cuándo en los datos del negocio.
+            Quién cambió qué y cuándo en los datos del negocio.{" "}
+            <Link href="/panel/auditoria/trazas">Ver trazas de errores y pagos</Link>
           </div>
         </div>
 

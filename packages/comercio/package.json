@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@eco/agentes-ia": "workspace:*",
+    "@eco/auditoria": "workspace:*",
     "@eco/datagrid": "workspace:*",
     "@eco/db": "workspace:*",
     "@eco/notificaciones": "workspace:*",

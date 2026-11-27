@@ -82,6 +82,7 @@ Extensiones relevantes ya instaladas en el proyecto (heredadas, no instaladas po
 | Migración | Contenido |
 | :--- | :--- |
 | `20260727000001_comun_auditoria` | `aud_registro`, `aud_log_api`, `aud_fn_auditar_tabla()` |
+| `20261126000010_comun_auditoria_trazas` | `aud_traza`, `aud_v_traza_resumen`, `aud_v_traza_frecuente`, job pg_cron `aud_traza_retencion` |
 | `20260727000002_comun_seguridad` | `seg_usuario`, `seg_membresia`, `seg_widget`, `seg_rol_widget`, trigger de aprovisionamiento, `seg_fn_es_admin_negocio()` |
 | `20260727000003_comun_configuracion` | `cfg_negocio` (PLT-008) |
 | `20260727000004_seg_registro_y_asignacion_rol` | Política de auto-alta como `CLIENTE`, RPC `seg_fn_asignar_rol()` |

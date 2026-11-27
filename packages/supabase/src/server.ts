@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "@eco/db";
+import { fetchObservado } from "./observador";
 
 // Cliente para Server Components / Server Actions / Route Handlers.
 // Propaga la sesion del usuario via cookies -- las politicas RLS ven al
@@ -21,6 +22,7 @@ export async function crearClienteServidor() {
     url,
     key,
     {
+      global: { fetch: fetchObservado("servidor") },
       cookies: {
         getAll() {
           return cookieStore.getAll();
@@ -48,6 +50,7 @@ export function crearClienteAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   if (!url || !serviceKey) return null;
   return createClient<Database>(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false }
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: fetchObservado("servidor") },
   });
 }

@@ -6,6 +6,7 @@ import {
 } from "@eco/comercio";
 import "./globals.css";
 import { GestorPwaCliente } from "./componentes/GestorPwaCliente";
+import { CapturadorErrores } from "./componentes/CapturadorErrores";
 
 // Inter: tipografía del brandbook de tranqi (antes Archivo). Va en el repo
 // (TRQ-030) y no por next/font/google: en Vercel la descarga de Google falló
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ProveedorMarketingMeta negocio="tranqi" />
         {children}
         <GestorPwaCliente />
+        <CapturadorErrores />
       </body>
     </html>
   );
