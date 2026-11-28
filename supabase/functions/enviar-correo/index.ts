@@ -15,9 +15,18 @@
 // solo entre esta funcion y nuestros Server Actions. Sin el, esta funcion
 // seria un relay de spam abierto contra el SMTP del negocio.
 import { createClient } from "jsr:@supabase/supabase-js@2";
-// denomailer y no nodemailer: esto es Deno, no Node. Version fijada, igual
-// que el resto de dependencias del ecosistema.
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+// nodemailer por npm: y no denomailer. denomailer 1.6.0 dejo de funcionar con
+// el runtime Deno 2 de Supabase (edge-runtime 1.79): se queda en un bucle que
+// quema CPU hasta que el runtime mata el worker con WORKER_RESOURCE_LIMIT
+// (546), sin llegar a enviar nada. Version fijada, igual que el resto de
+// dependencias del ecosistema.
+import nodemailer from "npm:nodemailer@6.9.16";
+
+// Un SMTP lento no puede colgar la funcion: se corta antes del limite del
+// runtime y el llamador recibe un 502 que sabe interpretar.
+const TIEMPO_CONEXION_MS = 10_000;
+const TIEMPO_SALUDO_MS = 10_000;
+const TIEMPO_INACTIVIDAD_MS = 20_000;
 
 const CLAVE = Deno.env.get("CORREO_FUNCION_CLAVE");
 
@@ -100,13 +109,15 @@ Deno.serve(async (req: Request) => {
     return respuesta({ error: "El negocio no tiene un servidor SMTP activo" }, 409);
   }
 
-  const cliente = new SMTPClient({
-    connection: {
-      hostname: configuracion.host,
-      port: configuracion.puerto,
-      tls: configuracion.seguro,
-      auth: { username: configuracion.usuario, password: configuracion.contrasena },
-    },
+  const transporte = nodemailer.createTransport({
+    host: configuracion.host,
+    port: configuracion.puerto,
+    // true = TLS directo (465); false = STARTTLS. Supabase bloquea el 25 y el 587.
+    secure: configuracion.seguro,
+    auth: { user: configuracion.usuario, pass: configuracion.contrasena },
+    connectionTimeout: TIEMPO_CONEXION_MS,
+    greetingTimeout: TIEMPO_SALUDO_MS,
+    socketTimeout: TIEMPO_INACTIVIDAD_MS,
   });
 
   try {
@@ -118,7 +129,7 @@ Deno.serve(async (req: Request) => {
               a.encoding === "base64" ||
               (a.contentType || "").toLowerCase().includes("application/pdf");
             return {
-              encoding: usarBase64 ? ("base64" as const) : ("text" as const),
+              encoding: usarBase64 ? ("base64" as const) : ("utf-8" as const),
               filename: a.filename!,
               content: a.content!,
               contentType: a.contentType || "text/calendar; charset=utf-8; method=REQUEST",
@@ -126,7 +137,7 @@ Deno.serve(async (req: Request) => {
           })
       : undefined;
 
-    await cliente.send({
+    await transporte.sendMail({
       from: configuracion.remitente_nombre
         ? `${configuracion.remitente_nombre} <${configuracion.usuario}>`
         : configuracion.usuario,
@@ -141,9 +152,9 @@ Deno.serve(async (req: Request) => {
     console.error("enviar-correo: fallo el envio", e);
     return respuesta({ error: "No se pudo enviar el correo" }, 502);
   } finally {
-    // Cerrar puede fallar si la conexion nunca llego a abrirse; ese error no
-    // debe tapar el del envio, que es el que importa.
-    await cliente.close().catch(() => {});
+    // Sin pool no queda conexion abierta; se cierra por si acaso, sin que un
+    // fallo al cerrar tape el del envio, que es el que importa.
+    transporte.close();
   }
 
   return respuesta({ ok: true }, 200);

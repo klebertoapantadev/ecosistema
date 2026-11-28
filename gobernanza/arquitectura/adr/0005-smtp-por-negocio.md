@@ -123,7 +123,9 @@ guarda en Supabase Vault.**
   3. Cargar la misma `CORREO_FUNCION_CLAVE` en los proyectos de Vercel.
   4. Cargar el SMTP de cada negocio desde su pantalla de Configuración y marcarlo como activo.
 - `@eco/notificaciones` deja de depender de `nodemailer` y pasa a depender de `@eco/supabase`. La dependencia
-  de correo real (`denomailer`) se mueve a la Edge Function, que corre en Deno.
+  de correo real se mueve a la Edge Function, que corre en Deno. Empezó siendo `denomailer`; desde el
+  28-nov-2026 es `npm:nodemailer`, porque `denomailer` 1.6.0 se cuelga quemando CPU en el runtime Deno 2 de
+  Supabase (edge-runtime 1.79) y el worker muere con `WORKER_RESOURCE_LIMIT` (546) sin enviar nada.
 - Los cuatro negocios arrancan con `smt_activo = false`: **hasta que un administrador configure su SMTP, ese
   negocio no envía correos**. Es intencional —no hay un remitente por defecto compartido que enmascare una
   configuración faltante— pero significa que el registro por correo queda inoperativo en un negocio recién
