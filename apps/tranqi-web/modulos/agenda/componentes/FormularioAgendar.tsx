@@ -23,6 +23,10 @@ import { clasificarProblemaConAriaAction, reservarCitaAction } from "../acciones
 import type { MensajeTriajeAria, ResultadoClasificacionAria } from "../clasificador-aria";
 import type { ServicioAgendable } from "../consultas";
 import type { DatosConfigNegocioAgenda } from "../esquema";
+import { detectarTramite } from "../../tramites/deteccion";
+import type { TramiteCatalogo, TramiteDetectado } from "../../tramites/esquema";
+import PedirTramite from "../../tramites/componentes/PedirTramite";
+import { CaminoRecorrido } from "./CaminoRecorrido";
 
 interface Materia {
   mat_id: string;
@@ -55,27 +59,11 @@ interface Props {
    * y al confirmar se queda en el inicio con el caso "en marcha".
    */
   variante?: "pasos" | "recorrido";
-}
-
-const HITOS_RECORRIDO = ["Tu problema", "Tu especialista", "Tu cita", "En marcha"] as const;
-
-/** Los cuatro hitos del recorrido, siempre visibles: orientan sin ser pestañas. */
-function CaminoRecorrido({ hito }: { hito: number }) {
-  return (
-    <ol className="camino-recorrido" aria-label="Progreso">
-      {HITOS_RECORRIDO.map((nombre, i) => {
-        const estado = i < hito ? "es-hecho" : i === hito ? "es-activo" : "";
-        return (
-          <li key={nombre} className={estado} aria-current={i === hito ? "step" : undefined}>
-            <span className="camino-numero" aria-hidden="true">
-              {i < hito ? <Check size={13} strokeWidth={3} /> : i + 1}
-            </span>
-            <span className="camino-etiqueta">{nombre}</span>
-          </li>
-        );
-      })}
-    </ol>
-  );
+  /**
+   * Trámites del catálogo (TRQ-043). Solo en el recorrido: si lo contado es un trámite
+   * (p. ej. «sacar la escritura de la notaría»), se ofrece pedirlo en vez de una cita.
+   */
+  tramites?: TramiteCatalogo[];
 }
 
 /** Bloque interior de la tarjeta del recorrido: sin borde propio, separado por una línea. */
@@ -86,6 +74,16 @@ const BLOQUE_RECORRIDO: CSSProperties = {
   flexDirection: "column",
   gap: "20px",
 };
+
+/** En el recorrido con trámites: primero lo que se pide hecho, luego lo que se habla con un abogado. */
+const EJEMPLOS_RECORRIDO = [
+  { etiqueta: "Escritura en la notaría", texto: "Quiero sacar la escritura de mi casa de la notaría" },
+  { etiqueta: "Poder o declaración", texto: "Necesito hacer un poder especial en la notaría" },
+  { etiqueta: "Cita con abogado", texto: "Quiero una cita con un abogado" },
+  { etiqueta: "Divorcio y bienes", texto: "Necesito asesoría sobre divorcio y repartición de bienes" },
+  { etiqueta: "Despido o liquidación", texto: "Me despidieron o tengo dudas sobre mi liquidación laboral" },
+  { etiqueta: "Arriendo o contrato", texto: "Tengo un problema con un contrato de arriendo o inquilino" },
+];
 
 const EJEMPLOS_CORTOS = [
   { etiqueta: "Divorcio y bienes", texto: "Necesito asesoría sobre divorcio y repartición de bienes" },
@@ -161,8 +159,10 @@ export default function FormularioAgendar({
   configAgenda,
   buscarHuecos,
   variante = "pasos",
+  tramites = [],
 }: Props) {
   const esRecorrido = variante === "recorrido";
+  const conTramites = esRecorrido && tramites.length > 0;
   const router = useRouter();
   const [paso, setPaso] = useState<0 | 1>(0);
 
@@ -173,6 +173,7 @@ export default function FormularioAgendar({
   const [mostrarSelectorManual, setMostrarSelectorManual] = useState(false);
   const [materiaId, setMateriaId] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [tramiteDetectado, setTramiteDetectado] = useState<TramiteDetectado | null>(null);
 
   // Paso 2: Modalidad (Telemática / Presencial), Fecha/Hora y Pago directo
   const [modalidad, setModalidad] = useState<"virtual" | "presencial">("virtual");
@@ -280,7 +281,8 @@ export default function FormularioAgendar({
     }
   }
 
-  async function consultarNeedConAria(textoOpcional?: string) {
+  /** forzarCita: el cliente eligió hablar con un abogado aunque lo contado parezca un trámite. */
+  async function consultarNeedConAria(textoOpcional?: string, forzarCita = false) {
     const texto = (textoOpcional ?? relatoUsuario).trim();
     if (texto.length < 4 || analizandoAria) {
       setError("Cuéntanos brevemente tu necesidad legal para asignarte al especialista adecuado.");
@@ -292,6 +294,17 @@ export default function FormularioAgendar({
     }
 
     setError(null);
+
+    // Un trámite del catálogo no necesita especialista ni horario: se ofrece pedirlo.
+    if (conTramites && !forzarCita) {
+      const detectado = detectarTramite(texto, tramites);
+      if (detectado) {
+        setTriaje(null);
+        setTramiteDetectado(detectado);
+        return;
+      }
+    }
+
     setAnalizandoAria(true);
 
     try {
@@ -415,6 +428,7 @@ export default function FormularioAgendar({
     setHuecos(null);
     setElegido(null);
     setCitaConfirmadaId(null);
+    setTramiteDetectado(null);
     setError(null);
   }
 
@@ -462,6 +476,22 @@ export default function FormularioAgendar({
     { titulo: "Sales con la solución", detalle: "Los pasos para resolverlo: qué hacer, cuánto cuesta y cuánto tarda." },
   ];
 
+  if (esRecorrido && tramiteDetectado) {
+    return (
+      <PedirTramite
+        key={`${tramiteDetectado.tramite.productoId}-${tramiteDetectado.opcionId}`}
+        detectado={tramiteDetectado}
+        relato={relatoUsuario.trim()}
+        alCambiar={() => setTramiteDetectado(null)}
+        alPreferirAbogado={() => {
+          setTramiteDetectado(null);
+          void consultarNeedConAria(relatoUsuario, true);
+        }}
+        alResolverOtraCosa={reiniciarRecorrido}
+      />
+    );
+  }
+
   if (citaConfirmadaId && elegido && esRecorrido) {
     return (
       <section className="recorrido-resolver" id="resolver" aria-label="Resolver una necesidad legal">
@@ -490,7 +520,7 @@ export default function FormularioAgendar({
             </ol>
             <div className="en-marcha-acciones">
               <Link href="/panel/agendamiento?widget=mis_citas" className="btn btn-primario">
-                Ver mis citas
+                Ver mis necesidades
               </Link>
               <button type="button" className="btn btn-neutro" onClick={reiniciarRecorrido}>
                 Resolver otra cosa
@@ -781,7 +811,9 @@ export default function FormularioAgendar({
               );
             })()}
             <p style={{ fontSize: "0.92rem", color: "var(--texto-2)", margin: 0, lineHeight: 1.5 }}>
-              {esRecorrido
+              {conTramites
+                ? "Un trámite que quieres quitarte de encima o un problema que quieres hablar con un abogado. Cuéntalo con tus palabras y te decimos cómo lo resolvemos."
+                : esRecorrido
                 ? "Cuéntalo con tus palabras, como se lo contarías a un amigo. Identificamos el tema y te asignamos al especialista que mejor lo conoce."
                 : "Cuéntanos tu caso con tus propias palabras. Identificaremos de inmediato qué especialista legal debe atenderte."}
             </p>
@@ -793,7 +825,7 @@ export default function FormularioAgendar({
               Ideas rápidas (opcional):
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {EJEMPLOS_CORTOS.map((ej) => {
+              {(conTramites ? EJEMPLOS_RECORRIDO : EJEMPLOS_CORTOS).map((ej) => {
                 const activo = relatoUsuario === ej.texto;
                 return (
                   <button
@@ -832,7 +864,11 @@ export default function FormularioAgendar({
                   void consultarNeedConAria();
                 }
               }}
-              placeholder="Escribe aquí tu necesidad... Ej.: Voy a divorciarme de mutuo acuerdo y quiero asesoría sobre la repartición de bienes."
+              placeholder={
+                conTramites
+                  ? "Ej.: Quiero sacar la escritura de mi casa de la notaría."
+                  : "Escribe aquí tu necesidad... Ej.: Voy a divorciarme de mutuo acuerdo y quiero asesoría sobre la repartición de bienes."
+              }
               disabled={analizandoAria}
               style={{
                 width: "100%",

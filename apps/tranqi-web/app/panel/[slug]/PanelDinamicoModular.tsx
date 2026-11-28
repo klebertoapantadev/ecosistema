@@ -193,15 +193,15 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     categoria: "Comercio Personas"
   },
   agendar_cita: {
-    titulo: "Agendar Consulta o Trámite",
-    subtitulo: "Elige materia legal, fecha y modalidad presencial o videollamada",
+    titulo: "Resolver una necesidad",
+    subtitulo: "Un trámite que hacemos por ti o una cita con un abogado",
     icono: Calendar,
     colorIcono: "var(--acento)",
     categoria: "Operación & Citas"
   },
   mis_citas: {
-    titulo: "Mis Citas & Consultas Programadas",
-    subtitulo: "Consulta tus próximas citas legales, enlaces de videollamada y estado",
+    titulo: "Mis necesidades",
+    subtitulo: "Los trámites que pediste y tus citas, con su estado",
     icono: Calendar,
     colorIcono: "var(--ct-5000ba, #5000BA)",
     categoria: "Operación & Citas"
@@ -1208,6 +1208,12 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
   };
 
   const widgetActivoDef = widgetActivo ? INVENTARIO_GLOBAL_WIDGETS[widgetActivo] : null;
+  // TRQ-043: para el cliente, Agendamiento es lo que pidió (trámites y citas).
+  const esClienteEnAgendamiento =
+    (rolInicial || "CLIENTE").toUpperCase() === "CLIENTE" && panelInfo.id === "panel_agendamiento";
+  const panelVisible = esClienteEnAgendamiento
+    ? { ...panelInfo, nombre: "Mis necesidades", descripcion: "Lo que nos has pedido, trámites y citas, y lo que quieras resolver." }
+    : panelInfo;
   const esPanelRestringidoParaCliente =
     (rolInicial || "CLIENTE").toUpperCase() === "CLIENTE" &&
     (slug === "clientes" || slug === "empresas");
@@ -1239,14 +1245,14 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <BotonVolverWidget
                 onClick={handleCerrarWidget}
-                destino={esPanelRestringidoParaCliente ? "Inicio" : (panelInfo.nombre || "el panel")}
+                destino={esPanelRestringidoParaCliente ? "Inicio" : (panelVisible.nombre || "el panel")}
               />
               <div>
                 <h2 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, #111)" }}>
                   {widgetActivoDef?.titulo || widgetActivo.toUpperCase()}
                 </h2>
                 <p style={{ fontSize: "0.78rem", color: "var(--ct-666666, #666)", margin: 0 }}>
-                  {widgetActivoDef?.subtitulo || `Panel ${panelInfo.nombre}`}
+                  {widgetActivoDef?.subtitulo || `Panel ${panelVisible.nombre}`}
                 </p>
               </div>
             </div>
@@ -1312,10 +1318,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
             </span>
           </div>
           <h1 style={{ fontSize: "1.6rem", fontWeight: 900, margin: "0 0 6px 0", letterSpacing: "-0.02em" }}>
-            {panelInfo.nombre}
+            {panelVisible.nombre}
           </h1>
           <p style={{ fontSize: "0.88rem", opacity: 0.9, margin: 0, maxWidth: "680px" }}>
-            {panelInfo.descripcion}
+            {panelVisible.descripcion}
           </p>
         </div>
 
@@ -1352,7 +1358,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       <section>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
           <h2 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--texto-suave)", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
-            MÓDULOS DE {panelInfo.nombre.toUpperCase()} ASIGNADOS
+            MÓDULOS DE {panelVisible.nombre.toUpperCase()} ASIGNADOS
           </h2>
           <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ct-5000ba, var(--violeta, #5000BA))", background: "var(--acento-diluido)", padding: "4px 10px", borderRadius: "12px" }}>
             {widgetsAsignados.length} Módulos Activos
@@ -1408,7 +1414,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                         {(esSuperAdmin || rolInicial === "SUPERADMIN" || rolInicial === "ADMINISTRADOR") && (
                           <button
                             type="button"
-                            title={`Editar personalización de ${infoCustom.titulo} en ${panelInfo.nombre}`}
+                            title={`Editar personalización de ${infoCustom.titulo} en ${panelVisible.nombre}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               setWidgetEditar({

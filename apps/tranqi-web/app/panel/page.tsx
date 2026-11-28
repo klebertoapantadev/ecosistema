@@ -334,6 +334,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
       {datosAgenda?.ok && (
         <FormularioAgendar
           variante="recorrido"
+          tramites={datosAgenda.data.tramites}
           materias={datosAgenda.data.materias}
           servicios={datosAgenda.data.servicios}
           cobertura={datosAgenda.data.cobertura}

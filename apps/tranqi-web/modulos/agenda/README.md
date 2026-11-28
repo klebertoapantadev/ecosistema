@@ -23,6 +23,13 @@ es el widget `agendar_cita` de Agendamiento: dos pasos y, al confirmar, a Mis ci
 tarjeta con los hitos problema → especialista → cita → en marcha, sin botón «Continuar» (si ARIA
 reconoce la especialidad, la cita aparece debajo) y sin redirigir al confirmar (refresca el
 inicio). La lógica de triaje, huecos, cobertura y pago es la misma: no se duplica.
+Desde `TRQ-043` el widget `agendar_cita` también usa `recorrido`, y con `tramites` el recorrido
+puede acabar en un trámite del catálogo en vez de en una cita (lo pinta `modulos/tramites`).
+`variante="pasos"` queda sin uso en el producto; se conserva por si otro canal lo necesita.
+
+**«Mis citas» es «Mis necesidades» para el cliente (`TRQ-043`).** El widget sigue llamándose
+`mis_citas` (lo nombran la matriz de roles y `seg_widget`), pero muestra los trámites pagados y las
+citas con filtro. Cambiar la clave obligaría a migrar la configuración de roles sin ganar nada.
 
 **El afiliado no elige abogado.** La asignación es por turno rotativo entre los profesionales de la
 materia (`catalogo-productos.md` §6.1). Por eso `buscar_horarios` devuelve horas agregadas, sin
