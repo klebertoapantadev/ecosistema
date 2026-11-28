@@ -290,7 +290,7 @@ export function LandingTranqi() {
             <article className="tarjeta">
               <div className="cuerpo">
                 <h3>Personas</h3>
-                <div className="precio"><div><small>Planes desde</small><b>{precio}</b></div><span>incluido<br />IVA</span></div>
+                <div className="precio"><div><small>Plan anual desde</small><b>{precio}</b></div><span>incluido<br />IVA</span></div>
                 <p className="para">Para personas naturales.</p>
                 <ul>
                   <li><span className="cuadroico"><Ico nombre="escudo" /></span>Asistencia jurídica confiable</li>
