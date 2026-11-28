@@ -190,6 +190,52 @@ function formatearTiempoCorto(iso?: string | null): string {
   return fecha.toLocaleDateString("es-EC", { day: "2-digit", month: "short" });
 }
 
+function formatearNombreVisibleChat(
+  nombre?: string | null,
+  telefono?: string | null
+): string {
+  const n = String(nombre || "").trim();
+  if (/^whatsapp\s*\+?\d+/i.test(n)) {
+    return n.replace(/^whatsapp\s+/i, "").trim();
+  }
+  if (n) return n;
+  return String(telefono || "Cliente").trim();
+}
+
+function resolverLineaWhatsappConversacion(
+  conv: ConversacionOmnicanal,
+  lineas?: DatosTableroOmnicanal["lineasWhatsapp"]
+): {
+  nombre: string;
+  numero: string;
+  ultimos4: string;
+  color: string;
+} | null {
+  if (conv.canal !== "whatsapp") return null;
+  const lista = Array.isArray(lineas) ? lineas : [];
+  const encontrada =
+    (conv.lineaWhatsappId
+      ? lista.find((l) => l.id === conv.lineaWhatsappId)
+      : null) ??
+    lista.find((l) => l.esPrincipal) ??
+    (lista.length === 1 ? lista[0] : null);
+
+  const nombre = String(conv.lineaWhatsappNombre || encontrada?.nombre || "").trim();
+  const numero = String(conv.lineaWhatsappNumero || encontrada?.numeroE164 || "").trim();
+  if (!nombre && !numero) return null;
+
+  const digitos = numero.replace(/\D+/g, "");
+  const ultimos4 = digitos.length >= 4 ? digitos.slice(-4) : digitos;
+  const color = String(conv.lineaWhatsappColor || encontrada?.colorBadge || "#16A34A").trim();
+
+  return {
+    nombre: nombre || "WhatsApp",
+    numero,
+    ultimos4,
+    color,
+  };
+}
+
 function renderTextoConEnlaces(texto: string, esFondoOscuro: boolean): React.ReactNode {
   const partes = texto.split(/(https?:\/\/[^\s]+)/g);
   return partes.map((parte, idx) => {
@@ -4021,11 +4067,15 @@ export function ConsolaVentasOmnicanal({
                         }}
                       >
                         <option value="">📱 Todas las líneas</option>
-                        {(tablero.lineasWhatsapp ?? []).map((lw) => (
-                          <option key={lw.id} value={lw.id}>
-                            {lw.nombre} ({lw.iaDesconocidosActiva ? "Auto" : "Manual"})
-                          </option>
-                        ))}
+                        {(tablero.lineasWhatsapp ?? []).map((lw) => {
+                          const dig = String(lw.numeroE164 || "").replace(/\D+/g, "");
+                          const ult4 = dig.length >= 4 ? ` · ···${dig.slice(-4)}` : "";
+                          return (
+                            <option key={lw.id} value={lw.id}>
+                              {lw.nombre}{ult4} ({lw.iaDesconocidosActiva ? "Auto" : "Manual"})
+                            </option>
+                          );
+                        })}
                       </select>
                     )}
 
@@ -4353,6 +4403,7 @@ export function ConsolaVentasOmnicanal({
                               }}
                             >
                                 <strong
+                                  title={`${grupo.nombreMostrado}${grupo.telefonoEstandar ? ` (${grupo.telefonoEstandar})` : ""}`}
                                   style={{
                                     fontSize: "0.83rem",
                                     fontWeight: tieneNoLeidos ? 800 : 600,
@@ -4362,7 +4413,10 @@ export function ConsolaVentasOmnicanal({
                                     whiteSpace: "nowrap",
                                   }}
                                 >
-                                  {grupo.nombreMostrado}
+                                  {formatearNombreVisibleChat(
+                                    grupo.nombreMostrado,
+                                    grupo.telefonoEstandar || conv.remitenteTelefono
+                                  )}
                                 </strong>
                                 {(conv.visibilidad === "SOLO_ADMIN" ||
                                   conv.visibilidad === "SOLO_TITULAR") && (
@@ -4383,33 +4437,6 @@ export function ConsolaVentasOmnicanal({
                                     <Lock size={9} />
                                   </span>
                                 )}
-                                {conv.canal === "whatsapp" &&
-                                  conv.lineaWhatsappNombre &&
-                                  ((tablero.lineasWhatsapp?.length ?? 0) > 1 ||
-                                    conv.lineaWhatsappRol !== "VENTAS") && (
-                                    <span
-                                      title={`Teléfono WhatsApp: ${conv.lineaWhatsappNombre} (${conv.lineaWhatsappNumero || ""})`}
-                                      style={{
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "3px",
-                                        padding: "1px 6px",
-                                        borderRadius: "999px",
-                                        background: `${conv.lineaWhatsappColor || "#16A34A"}18`,
-                                        color: conv.lineaWhatsappColor || "#16A34A",
-                                        fontSize: "0.63rem",
-                                        fontWeight: 700,
-                                        flexShrink: 0,
-                                        maxWidth: "100px",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                      }}
-                                    >
-                                      <Smartphone size={9} />
-                                      <span>{conv.lineaWhatsappNombre}</span>
-                                    </span>
-                                  )}
                               {grupo.calificacionEstrellas != null &&
                                 grupo.calificacionEstrellas > 0 && (
                                   <span
@@ -4639,20 +4666,64 @@ export function ConsolaVentasOmnicanal({
                             </div>
                           )}
 
-                          {(conv.estadoAtencion === "ESCALADO_HUMANO" ||
-                            conv.estadoAtencion === "EN_ATENCION_ASESORA" ||
-                            (conv.estadoAtencion === "CERRADO" && conv.cierre?.motivoEtiqueta) ||
-                            Boolean(conv.recordatorioEn) ||
-                            etiquetasVisibles.length > 0) && (
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                flexWrap: "wrap",
-                                marginTop: "1px",
-                              }}
-                            >
+                          {(() => {
+                            const lineaWaItem = resolverLineaWhatsappConversacion(
+                              convActivaEnGrupo,
+                              tablero.lineasWhatsapp
+                            );
+                            const mostrarFilaChips =
+                              Boolean(lineaWaItem) ||
+                              conv.estadoAtencion === "ESCALADO_HUMANO" ||
+                              conv.estadoAtencion === "EN_ATENCION_ASESORA" ||
+                              (conv.estadoAtencion === "CERRADO" && Boolean(conv.cierre?.motivoEtiqueta)) ||
+                              Boolean(conv.recordatorioEn) ||
+                              etiquetasVisibles.length > 0;
+                            if (!mostrarFilaChips) return null;
+                            return (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  flexWrap: "wrap",
+                                  marginTop: "1px",
+                                }}
+                              >
+                                {lineaWaItem && (
+                                  <span
+                                    title={`Línea WhatsApp: ${lineaWaItem.nombre}${
+                                      lineaWaItem.numero ? ` (${lineaWaItem.numero})` : ""
+                                    }`}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "3px",
+                                      fontSize: "0.63rem",
+                                      fontWeight: 700,
+                                      padding: "1px 6px",
+                                      borderRadius: "999px",
+                                      background: `${lineaWaItem.color}16`,
+                                      color: lineaWaItem.color,
+                                      border: `1px solid ${lineaWaItem.color}40`,
+                                      maxWidth: "155px",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    <Smartphone size={9} style={{ flexShrink: 0 }} />
+                                    <span
+                                      style={{
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {lineaWaItem.nombre}
+                                      {lineaWaItem.ultimos4 ? ` · ${lineaWaItem.ultimos4}` : ""}
+                                    </span>
+                                  </span>
+                                )}
                               {conv.recordatorioEn && (() => {
                                 const vencido =
                                   new Date(conv.recordatorioEn).getTime() <= ahoraMsTick;
@@ -4760,8 +4831,9 @@ export function ConsolaVentasOmnicanal({
                                   <span>{etq.nombre}</span>
                                 </span>
                               ))}
-                            </div>
-                          )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     );
@@ -4977,7 +5049,11 @@ export function ConsolaVentasOmnicanal({
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              {grupoClienteActivo?.nombreMostrado || conversacionActiva.remitenteNombre}
+                              {formatearNombreVisibleChat(
+                                grupoClienteActivo?.nombreMostrado ||
+                                  conversacionActiva.remitenteNombre,
+                                conversacionActiva.remitenteTelefono
+                              )}
                             </strong>
                             <Pencil
                               size={12}
@@ -5045,6 +5121,65 @@ export function ConsolaVentasOmnicanal({
                         </div>
 
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          {(() => {
+                            const lineaActiva = resolverLineaWhatsappConversacion(
+                              conversacionActiva,
+                              tablero.lineasWhatsapp
+                            );
+                            if (!lineaActiva) return null;
+                            return (
+                              <span
+                                title={`Línea WhatsApp del negocio: ${lineaActiva.nombre}${
+                                  lineaActiva.numero ? ` (${lineaActiva.numero})` : ""
+                                }`}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  padding: "1px 7px",
+                                  borderRadius: "999px",
+                                  background: `${lineaActiva.color}16`,
+                                  color: lineaActiva.color,
+                                  border: `1px solid ${lineaActiva.color}45`,
+                                  fontSize: "0.67rem",
+                                  fontWeight: 700,
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <Smartphone size={10} />
+                                <span>
+                                  {lineaActiva.nombre}
+                                  {lineaActiva.numero
+                                    ? modoLayoutInbox === "movil"
+                                      ? ` · ${lineaActiva.ultimos4}`
+                                      : ` · ${lineaActiva.numero}`
+                                    : ""}
+                                </span>
+                              </span>
+                            );
+                          })()}
+
+                          {conversacionActiva.remitenteTelefono &&
+                            !formatearNombreVisibleChat(
+                              grupoClienteActivo?.nombreMostrado ||
+                                conversacionActiva.remitenteNombre,
+                              conversacionActiva.remitenteTelefono
+                            ).includes(
+                              conversacionActiva.remitenteTelefono.replace(/\D+/g, "").slice(-7)
+                            ) && (
+                              <span
+                                title={`Número del cliente: ${conversacionActiva.remitenteTelefono}`}
+                                style={{
+                                  fontSize: "0.68rem",
+                                  fontWeight: 600,
+                                  color: "var(--ct-6e6861, #6E6861)",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {conversacionActiva.remitenteTelefono}
+                              </span>
+                            )}
+
                           <button
                             type="button"
                             onClick={() => {
@@ -8617,6 +8752,31 @@ export function ConsolaVentasOmnicanal({
                         WhatsApp: {conversacionActiva.remitenteTelefono}
                       </span>
                     )}
+                    {(() => {
+                      const lineaFicha = resolverLineaWhatsappConversacion(
+                        conversacionActiva,
+                        tablero.lineasWhatsapp
+                      );
+                      if (!lineaFicha) return null;
+                      return (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            color: lineaFicha.color,
+                          }}
+                        >
+                          <Smartphone size={11} />
+                          <span>
+                            Línea: {lineaFicha.nombre}
+                            {lineaFicha.numero ? ` (${lineaFicha.numero})` : ""}
+                          </span>
+                        </span>
+                      );
+                    })()}
                     {conversacionActiva.remitenteCorreo && (
                       <span style={{ fontSize: "0.74rem", color: "var(--ct-6e6861, #6E6861)", wordBreak: "break-all" }}>
                         {conversacionActiva.remitenteCorreo}
