@@ -265,14 +265,9 @@ export default function PaginaContactoEmpresas() {
               >
                 <Building2 size={24} />
               </div>
-              <div>
-                <h2 style={{ fontSize: "1.28rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, #111111)" }}>
-                  Beneficios Corporativos Tranqi
-                </h2>
-                <p style={{ fontSize: "0.84rem", color: "var(--ct-5f5f66, #5F5F66)", margin: "2px 0 0 0" }}>
-                  Diseñados para gerencia, talento humano y equipos legales
-                </p>
-              </div>
+              <h2 style={{ fontSize: "1.28rem", fontWeight: 800, margin: 0, color: "var(--ct-111111, #111111)" }}>
+                Beneficios Corporativos Tranqi
+              </h2>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
