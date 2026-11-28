@@ -14,6 +14,7 @@ import {
   Camera,
   Check,
   CheckCircle2,
+  ChevronRight,
   ClipboardList,
   Clock,
   CreditCard,
@@ -772,6 +773,33 @@ function renderContenidoMensajeOmnicanal(
     procesandoAudio?: boolean;
   }
 ): React.ReactNode {
+  if (/^mensaje\s*\(\s*unsupported\s*\)$/i.test((mensaje.contenido || "").trim())) {
+    return (
+      <div
+        style={{
+          padding: "8px 10px",
+          borderRadius: "8px",
+          border: "1px solid var(--cb-fde68a, #FDE68A)",
+          background: "var(--cf-fffbeb, #FFFBEB)",
+          color: "var(--ct-92400e, #92400E)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "3px",
+          fontSize: "0.77rem",
+          lineHeight: 1.4,
+        }}
+      >
+        <strong style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+          <AlertTriangle size={13} style={{ flexShrink: 0 }} />
+          <span>Aviso no compatible con la API de WhatsApp</span>
+        </strong>
+        <span style={{ fontSize: "0.73rem", color: "var(--ct-78350f, #78350F)" }}>
+          Meta no entrega a la web el contenido de alertas automáticas de otras empresas (ej. Facebook, bancos o códigos OTP), encuestas ni mensajes editados. Puedes verlo completo en tu celular.
+        </span>
+      </div>
+    );
+  }
+
   const segmentos = extraerSegmentosMultimediaMensaje(
     mensaje.contenido || "",
     mensaje.detalle
@@ -4398,31 +4426,51 @@ export function ConsolaVentasOmnicanal({
                             setVistaMovilInbox("chat");
                           }
                         }}
+                        aria-current={seleccionada ? "true" : undefined}
                         style={{
                           padding: "10px 12px",
-                          borderBottom: "1px solid var(--cb-f4f2ee, #F4F2EE)",
+                          borderTop: seleccionada
+                            ? "1px solid var(--cb-86efac, #86EFAC)"
+                            : "none",
+                          borderBottom: seleccionada
+                            ? "1px solid var(--cb-86efac, #86EFAC)"
+                            : "1px solid var(--cb-f4f2ee, #F4F2EE)",
                           background: seleccionada
-                            ? "var(--cf-f4f2ee, #F4F2EE)"
+                            ? "var(--cf-e6f4ec, #E6F4EC)"
                             : tieneNoLeidos
                               ? "var(--cf-f8f7f4, #F8F7F4)"
                               : "var(--cf-ffffff, #FFFFFF)",
                           borderLeft: seleccionada
-                            ? "3px solid var(--cb-221e1b, #221E1B)"
+                            ? "4px solid #15803D"
                             : tieneNoLeidos
-                              ? "3px solid var(--cb-847d74, #847D74)"
-                              : "3px solid transparent",
+                              ? "4px solid var(--cb-a39d94, #A39D94)"
+                              : "4px solid transparent",
+                          boxShadow: seleccionada
+                            ? "inset 0 0 0 1px rgba(21, 128, 61, 0.14)"
+                            : "none",
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "flex-start",
                           gap: "10px",
+                          position: "relative",
+                          transition: "background 0.15s ease, border-color 0.15s ease",
                         }}
                       >
-                        <AvatarConCanalOmnicanal
-                          nombre={grupo.nombreMostrado}
-                          canal={convActivaEnGrupo.canal}
-                          fotoUrl={convActivaEnGrupo.remitenteFotoUrl || conv.remitenteFotoUrl}
-                          size={38}
-                        />
+                        <div
+                          style={{
+                            borderRadius: "999px",
+                            flexShrink: 0,
+                            boxShadow: seleccionada ? "0 0 0 2.5px #15803D" : "none",
+                            transition: "box-shadow 0.15s ease",
+                          }}
+                        >
+                          <AvatarConCanalOmnicanal
+                            nombre={grupo.nombreMostrado}
+                            canal={convActivaEnGrupo.canal}
+                            fotoUrl={convActivaEnGrupo.remitenteFotoUrl || conv.remitenteFotoUrl}
+                            size={38}
+                          />
+                        </div>
 
                         <div
                           style={{
@@ -4449,12 +4497,27 @@ export function ConsolaVentasOmnicanal({
                                 minWidth: 0,
                               }}
                             >
+                                {seleccionada && (
+                                  <span
+                                    title="Conversación abierta actualmente"
+                                    style={{
+                                      width: "7px",
+                                      height: "7px",
+                                      borderRadius: "999px",
+                                      background: "#15803D",
+                                      boxShadow: "0 0 0 2px rgba(21, 128, 61, 0.25)",
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                )}
                                 <strong
                                   title={`${grupo.nombreMostrado}${grupo.telefonoEstandar ? ` (${grupo.telefonoEstandar})` : ""}`}
                                   style={{
                                     fontSize: "0.83rem",
-                                    fontWeight: tieneNoLeidos ? 800 : 600,
-                                    color: "var(--ct-221e1b, #221E1B)",
+                                    fontWeight: seleccionada || tieneNoLeidos ? 800 : 600,
+                                    color: seleccionada
+                                      ? "var(--ct-14532d, #14532D)"
+                                      : "var(--ct-221e1b, #221E1B)",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                     whiteSpace: "nowrap",
@@ -4611,6 +4674,25 @@ export function ConsolaVentasOmnicanal({
                                 >
                                   <Trash2 size={12} />
                                 </button>
+                              )}
+                              {seleccionada && (
+                                <span
+                                  aria-hidden="true"
+                                  title="Chat abierto"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "20px",
+                                    height: "20px",
+                                    borderRadius: "999px",
+                                    background: "#15803D",
+                                    color: "#FFFFFF",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <ChevronRight size={13} />
+                                </span>
                               )}
                             </div>
                           </div>

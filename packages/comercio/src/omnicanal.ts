@@ -1430,6 +1430,9 @@ export function normalizarHandleMencion(texto?: string | null): string {
  */
 export function limpiarVistaPreviaMensajeOmnicanal(texto?: string | null): string {
   if (!texto) return "Conversación iniciada";
+  if (/^mensaje\s*\(\s*unsupported\s*\)$/i.test(texto.trim())) {
+    return "⚠️ Aviso no compatible (ver en celular)";
+  }
   const tokens = escanearEnlacesMarkdownLineal(texto);
   let reconstruido = "";
   let cursor = 0;

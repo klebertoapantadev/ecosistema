@@ -2843,6 +2843,15 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       return { ok: true, status: 200, accion };
     }
 
+    // No disparar respuestas automáticas de ARIA sobre avisos no compatibles de Meta (ej. alertas de Facebook, bancos, OTPs, encuestas)
+    const tipoEntranteWa = String(inboundWa?.type || "").toLowerCase();
+    if (
+      tipoEntranteWa === "unsupported" ||
+      /^mensaje\s*\(\s*unsupported\s*\)$/i.test(String(contenidoCliente || "").trim())
+    ) {
+      return { ok: true, status: 200, accion: "IGNORADO_UNSUPPORTED_SIN_IA" };
+    }
+
     // Construir prompt para Mía (ARIA) con el formato exacto de WhatsApp + Entrega Inmediata + Cotización GPS
     const tel = String(rec.remitenteTelefono || "");
     const nombreCorto = String(rec.remitenteNombre || "Cliente").slice(0, 48);
