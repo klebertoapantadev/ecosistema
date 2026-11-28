@@ -782,6 +782,59 @@ html:has(.panel-layout)[data-tema="oscuro"] { color-scheme: dark; }
 .saludo-inicio h1 i { font-style: normal; color: var(--panel-accion); }
 .saludo-inicio .inicio-cliente-sub { margin: 4px 0 0; }
 
+/* TRQ-041: "del problema a la solución". Contar la necesidad es lo principal del
+   inicio del cliente: una sola tarjeta con el recorrido completo (problema →
+   especialista → cita → en marcha), sin pestañas ni saltos a Agendamiento.
+   El formulario es FormularioAgendar con variante="recorrido". */
+.recorrido-resolver {
+  background: var(--cf-ffffff, #FFFFFF); border: 1px solid var(--linea); border-radius: 20px;
+  box-shadow: 0 12px 34px rgba(30, 0, 70, 0.05); overflow: hidden; margin-bottom: 26px;
+  scroll-margin-top: 90px;
+}
+.recorrido-eyebrow { font-size: 0.688rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--texto-suave); }
+
+.camino-recorrido { display: grid; grid-template-columns: repeat(4, 1fr); list-style: none; margin: 0; padding: 0; }
+.camino-recorrido li {
+  position: relative; display: flex; align-items: center; gap: 10px; padding: 14px 18px 16px;
+  font-size: 0.813rem; font-weight: 600; color: var(--texto-suave);
+}
+.camino-recorrido li::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--linea); transition: background 0.3s; }
+.camino-numero {
+  width: 24px; height: 24px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  font-size: 0.75rem; font-weight: 800; background: var(--fondo-hundido); color: var(--texto-suave);
+  transition: background 0.25s, color 0.25s;
+}
+.camino-recorrido li.es-activo { color: var(--texto); }
+.camino-recorrido li.es-activo .camino-numero { background: var(--panel-accion); color: #FFFFFF; }
+.camino-recorrido li.es-activo::after { background: var(--panel-accion); }
+.camino-recorrido li.es-hecho .camino-numero { background: var(--exito-diluido); color: var(--exito-texto); }
+.camino-recorrido li.es-hecho::after { background: var(--exito-linea); }
+
+.recorrido-en-marcha { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start; padding: 26px clamp(18px, 3vw, 30px); }
+.recorrido-en-marcha h2 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.recorrido-en-marcha > div > p { color: var(--texto-2); margin: 4px 0 0; font-size: 0.94rem; }
+.en-marcha-sello { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--exito-diluido); color: var(--exito-texto); }
+.en-marcha-pasos { list-style: none; margin: 18px 0 0; padding: 0; display: grid; }
+.en-marcha-pasos li { position: relative; display: grid; gap: 2px; padding: 0 0 16px 34px; }
+.en-marcha-pasos li:last-child { padding-bottom: 0; }
+.en-marcha-pasos li::before {
+  content: ""; position: absolute; left: 0; top: 1px; width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--linea); background: var(--cf-ffffff, #FFFFFF); box-sizing: border-box;
+}
+.en-marcha-pasos li::after { content: ""; position: absolute; left: 10px; top: 25px; bottom: 2px; width: 2px; background: var(--linea); }
+.en-marcha-pasos li:last-child::after { display: none; }
+.en-marcha-pasos li.es-hecho::before { border-color: var(--exito-texto); background: var(--exito-diluido); }
+.en-marcha-pasos b { font-size: 0.906rem; }
+.en-marcha-pasos span { font-size: 0.813rem; color: var(--texto-suave); }
+.en-marcha-acciones { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .camino-recorrido li { justify-content: center; padding: 12px 6px 14px; }
+  .camino-recorrido li .camino-etiqueta { display: none; }
+  .camino-recorrido li.es-activo .camino-etiqueta { display: inline; }
+  .recorrido-en-marcha { grid-template-columns: 1fr; }
+}
+
 /* Píldora de estado. Naranja solo para lo que exige acción (sistema visual §2). */
 .estado-pill {
   display: inline-flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
