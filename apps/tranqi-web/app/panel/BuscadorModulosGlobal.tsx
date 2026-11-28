@@ -34,8 +34,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "agendar_cita",
-    nombre: "Agendar una consulta",
-    detalle: "Elige materia, servicio y horario disponible",
+    nombre: "Resolver una necesidad",
+    detalle: "Un trámite que hacemos por ti o una cita con un abogado",
     ruta: "/panel/agendar",
     categoria: "Agenda",
     minNivel: 1,
@@ -44,8 +44,8 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "mis_citas",
-    nombre: "Mis citas",
-    detalle: "Próximas consultas, videollamada y cancelación",
+    nombre: "Mis necesidades",
+    detalle: "Trámites pedidos y citas: estado, videollamada y cancelación",
     ruta: "/panel/mis-citas",
     categoria: "Agenda",
     minNivel: 1,

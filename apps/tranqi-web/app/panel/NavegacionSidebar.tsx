@@ -94,6 +94,14 @@ const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_seguridad", nombre: "Seguridad", ruta: "/panel/seguridad", icono: "Shield" },
 ];
 
+/**
+ * Para el cliente, «Agendamiento» es lo que pidió: trámites y citas (TRQ-043). Mismo
+ * panel y ruta; solo cambia el nombre que ve. El abogado y el staff lo siguen viendo igual.
+ */
+const NOMBRES_POR_ROL: Record<string, Record<string, string>> = {
+  CLIENTE: { panel_agendamiento: "Mis necesidades" },
+};
+
 function resolverRolEfectivoSidebar(modoActivo: ModoRol): string {
   if (typeof window !== "undefined") {
     try {
@@ -363,13 +371,14 @@ export function NavegacionSidebar({
       <span className="tooltip-rail" ref={tooltip} aria-hidden="true" />
       {panelesVisibles.map((p) => {
         const IconoComp = MAPA_ICONOS_NAV[p.icono || ""] || MAPA_ICONOS_NAV[p.id] || PanelLeft;
+        const nombre = NOMBRES_POR_ROL[(modoActivo || "CLIENTE").toUpperCase()]?.[p.id] ?? p.nombre;
         return (
           <EnlacePanel
             key={p.id}
             href={p.ruta}
             icono={<IconoComp className="icono-nav" aria-hidden="true" strokeWidth={1.8} />}
           >
-            {p.nombre}
+            {nombre}
           </EnlacePanel>
         );
       })}

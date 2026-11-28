@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarPlus, Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import {
   buscarHuecosMateriaAction,
   obtenerAgendaAbogadoWidgetAction,
@@ -21,6 +21,9 @@ import FormularioAgendar from "./FormularioAgendar";
 import ListaCitasCliente from "./ListaCitasCliente";
 import BandejaCitasAbogado from "./BandejaCitasAbogado";
 import MesaAsignaciones from "./MesaAsignaciones";
+import { obtenerTramitesPedidosAction } from "../../tramites/acciones";
+import type { TramiteCatalogo, TramitePedido } from "../../tramites/esquema";
+import ListaTramitesPedidos from "../../tramites/componentes/ListaTramitesPedidos";
 
 export function WidgetAgendarCitaInline() {
   const [cargando, setCargando] = useState(true);
@@ -36,6 +39,7 @@ export function WidgetAgendarCitaInline() {
       restantes: number | null;
     }>;
     configAgenda: DatosConfigNegocioAgenda;
+    tramites: TramiteCatalogo[];
   } | null>(null);
 
   useEffect(() => {
@@ -108,15 +112,27 @@ export function WidgetAgendarCitaInline() {
         cobertura={datos.cobertura}
         configAgenda={datos.configAgenda}
         buscarHuecos={buscarHuecosMateriaAction}
+        // Mismo recorrido que el inicio (TRQ-043): trámite o cita, según lo que cuente.
+        variante="recorrido"
+        tramites={datos.tramites}
       />
     </div>
   );
 }
 
+type FiltroNecesidades = "todas" | "tramites" | "citas";
+
+/**
+ * «Mis necesidades» del cliente (TRQ-043): los trámites que pidió y sus citas.
+ * La clave del widget sigue siendo `mis_citas` para no tocar la configuración de roles.
+ */
 export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => void }) {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [citas, setCitas] = useState<CitaResumen[]>([]);
+  const [tramites, setTramites] = useState<TramitePedido[]>([]);
+  const [filtro, setFiltro] = useState<FiltroNecesidades>("todas");
+  const [falloTramites, setFalloTramites] = useState(false);
   const [cobertura, setCobertura] = useState<
     Array<{ suscripcion_id: string; concepto: string; incluidos: number | null; restantes: number | null }>
   >([]);
@@ -125,13 +141,19 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
     if (!silencioso) setCargando(true);
     setError(null);
     try {
-      const res = await obtenerMisCitasWidgetAction();
+      const [res, resTramites] = await Promise.all([
+        obtenerMisCitasWidgetAction(),
+        obtenerTramitesPedidosAction().catch(() => null),
+      ]);
       if (!res.ok) {
         setError(res.error);
         return;
       }
       setCitas(res.data.citas);
       setCobertura(res.data.cobertura);
+      // Si fallan los trámites, las citas se siguen mostrando y se avisa del fallo.
+      setFalloTramites(!resTramites?.ok);
+      if (resTramites?.ok) setTramites(resTramites.data);
     } catch {
       setError("No se pudieron cargar tus citas programadas.");
     } finally {
@@ -157,7 +179,7 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
         }}
       >
         <Loader2 size={28} color="#5000BA" style={{ animation: "spin 1s linear infinite" }} />
-        <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>Cargando tus citas programadas…</span>
+        <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>Cargando tus necesidades…</span>
       </div>
     );
   }
@@ -196,7 +218,40 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
         </section>
       )}
 
-      <ListaCitasCliente citas={citas} alActualizar={() => cargarMisCitas(true)} />
+      <div className="necesidades-filtros" role="group" aria-label="Filtrar">
+        {(
+          [
+            ["todas", "Todas", tramites.length + citas.length],
+            ["tramites", "Trámites", tramites.length],
+            ["citas", "Citas", citas.length],
+          ] as const
+        ).map(([clave, etiqueta, total]) => (
+          <button key={clave} type="button" aria-pressed={filtro === clave} onClick={() => setFiltro(clave)}>
+            {etiqueta}
+            <small>{total}</small>
+          </button>
+        ))}
+      </div>
+
+      {filtro !== "citas" && (
+        <section>
+          <h3 className="necesidades-seccion-titulo">Trámites</h3>
+          {falloTramites ? (
+            <p className="estado-vacio">No pudimos cargar tus trámites. Vuelve a intentarlo en un momento.</p>
+          ) : tramites.length > 0 ? (
+            <ListaTramitesPedidos tramites={tramites} />
+          ) : (
+            <p className="estado-vacio">Aún no has pedido ningún trámite.</p>
+          )}
+        </section>
+      )}
+
+      {filtro !== "tramites" && (
+        <section>
+          <h3 className="necesidades-seccion-titulo">Citas</h3>
+          <ListaCitasCliente citas={citas} alActualizar={() => cargarMisCitas(true)} />
+        </section>
+      )}
 
       <div style={{ display: "flex", justifyContent: "flex-start", paddingTop: "6px" }}>
         {onIrAAgendar ? (
@@ -211,8 +266,8 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
               cursor: "pointer",
             }}
           >
-            <CalendarPlus size={16} />
-            Agendar consulta
+            <Plus size={16} />
+            Resolver otra necesidad
           </button>
         ) : (
           <Link
@@ -224,8 +279,8 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
               gap: "8px",
             }}
           >
-            <CalendarPlus size={16} />
-            Agendar consulta
+            <Plus size={16} />
+            Resolver otra necesidad
           </Link>
         )}
       </div>

@@ -45,6 +45,7 @@ import {
   esEnlaceDaily,
   esEnlaceVideollamadaReal,
 } from "./daily-video";
+import { listarTramitesDelCatalogo } from "../tramites/consultas";
 
 // Mutaciones del módulo. Devuelven `{ ok }` y nunca lanzan hacia el componente
 // (01-convenciones §6).
@@ -2259,15 +2260,17 @@ export async function quitarBloqueoAction(bloqueoId: string): Promise<Resultado>
 
 export async function obtenerDatosAgendarCitaWidgetAction() {
   try {
-    const [materias, servicios, cobertura, configAgenda] = await Promise.all([
+    const [materias, servicios, cobertura, configAgenda, tramites] = await Promise.all([
       listarMateriasAgendables(),
       listarServiciosAgendables(),
       obtenerCobertura(),
       obtenerConfiguracionAgendaNegocio(),
+      // Sin catálogo de trámites el recorrido sigue funcionando solo con citas.
+      listarTramitesDelCatalogo().catch(() => []),
     ]);
     return {
       ok: true as const,
-      data: { materias, servicios, cobertura, configAgenda },
+      data: { materias, servicios, cobertura, configAgenda, tramites },
     };
   } catch (err) {
     return {
