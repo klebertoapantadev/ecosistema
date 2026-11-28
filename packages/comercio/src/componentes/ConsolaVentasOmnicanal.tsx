@@ -4842,7 +4842,11 @@ export function ConsolaVentasOmnicanal({
                               convActivaEnGrupo,
                               tablero.lineasWhatsapp
                             );
+                            const esComentarioPost =
+                              convActivaEnGrupo.id.startsWith("cmm-") ||
+                              convActivaEnGrupo.claveHilo.startsWith("cmm:");
                             const mostrarFilaChips =
+                              esComentarioPost ||
                               Boolean(lineaWaItem) ||
                               conv.estadoAtencion === "ESCALADO_HUMANO" ||
                               conv.estadoAtencion === "EN_ATENCION_ASESORA" ||
@@ -4860,6 +4864,26 @@ export function ConsolaVentasOmnicanal({
                                   marginTop: "1px",
                                 }}
                               >
+                                {esComentarioPost && (
+                                  <span
+                                    title="Comentario público en publicación de Facebook / Instagram"
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "3px",
+                                      fontSize: "0.63rem",
+                                      fontWeight: 700,
+                                      padding: "1px 6px",
+                                      borderRadius: "999px",
+                                      background: "var(--cf-eef4ff, #EEF4FF)",
+                                      color: "var(--ct-1d4ed8, #1D4ED8)",
+                                      border: "1px solid #BFDBFE",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    <span>💬 Comentario Post</span>
+                                  </span>
+                                )}
                                 {lineaWaItem && (
                                   <span
                                     title={`Línea WhatsApp: ${lineaWaItem.nombre}${
@@ -5293,6 +5317,27 @@ export function ConsolaVentasOmnicanal({
                         </div>
 
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          {(conversacionActiva.id.startsWith("cmm-") ||
+                            conversacionActiva.claveHilo.startsWith("cmm:")) && (
+                            <span
+                              title="Comentario público en publicación de Facebook / Instagram"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "1px 7px",
+                                borderRadius: "999px",
+                                background: "var(--cf-eef4ff, #EEF4FF)",
+                                color: "var(--ct-1d4ed8, #1D4ED8)",
+                                border: "1px solid #BFDBFE",
+                                fontSize: "0.67rem",
+                                fontWeight: 700,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              💬 Comentario en Post
+                            </span>
+                          )}
                           {(() => {
                             const lineaActiva = resolverLineaWhatsappConversacion(
                               conversacionActiva,
