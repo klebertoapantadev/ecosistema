@@ -12,7 +12,12 @@
   -webkit-font-smoothing: antialiased;
 }
 html:has(.landing) { scroll-behavior: smooth; scroll-padding-top: 72px; scroll-snap-type: none; }
-.landing *, .landing *::before, .landing *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* El buddie y su chat (#buddie, #chat) quedan fuera del reset: sus reglas de
+   globals.css tienen la misma especificidad (0,1,0) y esta hoja carga después,
+   así que les dejaba el padding a cero (globo y mensajes pegados al borde). */
+.landing :where(:not(#buddie, #buddie *, #chat, #chat *)),
+.landing :where(:not(#buddie *, #chat *))::before,
+.landing :where(:not(#buddie *, #chat *))::after { box-sizing: border-box; margin: 0; padding: 0; }
 /* Neutraliza el `section` global (una página completa con anclaje de scroll). */
 .landing section { min-height: 0; display: block; justify-content: normal; scroll-snap-align: none; scroll-snap-stop: normal; }
 

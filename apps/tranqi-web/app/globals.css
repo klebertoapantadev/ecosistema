@@ -82,18 +82,40 @@ p { line-height: 1.55; }
 }
 .avatar .chispa.on { opacity: 1; scale: 1; }
 
+/* Globo del buddie: tarjeta blanca con sombra violeta (el lenguaje de la
+   landing de membresía), firma «Tranqi» arriba y pico que apunta al avatar.
+   La esquina inferior derecha casi recta es la que se apoya en el pico. */
 .globo {
-  position: absolute; right: 0; bottom: 70px;
-  width: max-content; max-width: min(300px, calc(100vw - 60px));
+  position: absolute; right: -2px; bottom: 76px;
+  width: max-content; max-width: min(300px, calc(100vw - 48px));
   background: var(--cf-ffffff, var(--blanco)); color: var(--ct-111111, var(--negro));
-  border: 1.5px solid var(--cb-111111, var(--negro)); border-radius: 14px;
-  padding: 11px 14px; font-size: 0.88rem; line-height: 1.45; font-weight: 500;
-  opacity: 0; scale: 0.92; transform-origin: 85% 100%;
+  border: 1px solid var(--cb-e7e5ee, #E7E5EE); border-radius: 18px 18px 6px 18px;
+  box-shadow: 0 18px 40px rgba(30, 0, 70, 0.16), 0 2px 6px rgba(30, 0, 70, 0.06);
+  padding: 13px 16px 14px; font-size: 0.9rem; line-height: 1.5; font-weight: 500;
+  text-align: left; text-wrap: pretty;
+  opacity: 0; scale: 0.92; translate: 0 6px; transform-origin: calc(100% - 30px) 100%;
   pointer-events: none; cursor: pointer;
-  transition: opacity 0.3s, scale 0.3s;
+  transition: opacity 0.3s, scale 0.3s, translate 0.3s;
 }
-.globo.show { opacity: 1; scale: 1; pointer-events: auto; }
-.globo .pista { display: block; margin-top: 6px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; color: var(--ct-5000ba, var(--violeta)); }
+.globo::before {
+  content: "Tranqi"; display: block; margin-bottom: 5px;
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ct-5000ba, var(--violeta));
+}
+/* pico: cuadrado girado con los mismos borde y fondo, centrado sobre el avatar (56 px) */
+.globo::after {
+  content: ""; position: absolute; right: 23px; bottom: -7px;
+  width: 12px; height: 12px; background: inherit;
+  border: solid var(--cb-e7e5ee, #E7E5EE); border-width: 0 1px 1px 0;
+  border-bottom-right-radius: 3px; rotate: 45deg;
+}
+.globo.show { opacity: 1; scale: 1; translate: 0 0; pointer-events: auto; }
+.globo:hover { box-shadow: 0 20px 44px rgba(30, 0, 70, 0.22), 0 2px 6px rgba(30, 0, 70, 0.08); }
+.globo .pista {
+  display: inline-flex; margin-top: 10px; padding: 5px 11px; border-radius: 999px;
+  background: var(--menta); color: var(--ct-5000ba, var(--violeta));
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em;
+}
 .typing { display: inline-flex; gap: 4px; align-items: center; height: 0.9em; }
 .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--lavanda); animation: tp 1.1s infinite; }
 .typing i:nth-child(2) { animation-delay: 0.18s; }
