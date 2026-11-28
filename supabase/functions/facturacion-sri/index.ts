@@ -16,8 +16,10 @@
 // ("true" para simular, sin firma ni SRI, los comprobantes de ambiente 1 cuyo
 // emisor aún no tiene certificado; ver procesador.ts).
 import { createClient } from "jsr:@supabase/supabase-js@2";
-// denomailer, como enviar-correo: versión fijada.
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { Buffer } from "node:buffer";
+// nodemailer, como enviar-correo: denomailer se cuelga quemando CPU en el
+// runtime Deno 2 de Supabase. Versión fijada.
+import nodemailer from "npm:nodemailer@6.9.16";
 import { consultarAutorizacion, enviarRecepcion } from "../_compartido/sri/soap.ts";
 import { type Dependencias, type ItemCola, Procesador } from "./procesador.ts";
 
@@ -85,16 +87,18 @@ function dependencias(): Dependencias {
       comprobar(error, "cfg_fn_obtener_smtp_credenciales");
       const smtp = Array.isArray(data) ? data[0] : null;
       if (!smtp) return "sin_smtp";
-      const cliente = new SMTPClient({
-        connection: {
-          hostname: smtp.host,
-          port: smtp.puerto,
-          tls: smtp.seguro,
-          auth: { username: smtp.usuario, password: smtp.contrasena },
-        },
+      const transporte = nodemailer.createTransport({
+        host: smtp.host,
+        port: smtp.puerto,
+        secure: smtp.seguro,
+        auth: { user: smtp.usuario, pass: smtp.contrasena },
+        // Un SMTP lento no puede comerse la vuelta de 150 s de la función.
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 20_000,
       });
       try {
-        await cliente.send({
+        await transporte.sendMail({
           from: smtp.remitente_nombre ? `${smtp.remitente_nombre} <${smtp.usuario}>` : smtp.usuario,
           to: correo.para,
           ...(correo.copia ? { bcc: correo.copia } : {}),
@@ -102,16 +106,13 @@ function dependencias(): Dependencias {
           html: correo.html,
           attachments: correo.adjuntos.map((a) => ({
             filename: a.nombre,
-            content: a.contenido,
+            content: Buffer.from(a.contenido),
             contentType: a.tipo,
-            encoding: "binary" as const,
           })),
         });
       } finally {
-        // Cerrar puede fallar si la conexión no llegó a abrirse; no debe tapar el error del envío.
-        try {
-          await cliente.close();
-        } catch { /* ya cerrada */ }
+        // Sin pool no queda conexión abierta; cerrar no debe tapar el error del envío.
+        transporte.close();
       }
       return "enviado";
     },
