@@ -890,48 +890,81 @@ export async function obtenerTableroOmnicanalAction(
       );
 
       // Proyectar comentarios públicos de Facebook / Instagram (`agc_comentario_meta`)
-      // directamente en la Bandeja de Chats para visibilidad unificada (Opción A)
+      // agrupados por (canal + autor) en 1 solo hilo cronológico en Bandeja de Chats
       try {
         const { data: dataCmm } = await esquemaComercio.rpc(
           "com_fn_omnicanal_listar_comentarios_meta",
-          { p_negocio: neg, p_limite: 50 }
+          { p_negocio: neg, p_limite: 80 }
         );
         const itemsCmm = Array.isArray(dataCmm?.items)
           ? (dataCmm.items as import("./omnicanal").RegistroComentarioMetaOmnicanal[])
           : [];
         if (itemsCmm.length > 0) {
+          const gruposPorAutor = new Map<
+            string,
+            import("./omnicanal").RegistroComentarioMetaOmnicanal[]
+          >();
+          for (const it of itemsCmm) {
+            const canalCmm = it.canal === "instagram" ? "instagram" : "facebook";
+            const autorClave = (it.autorNombre || it.comentarioExternoId || it.id)
+              .trim()
+              .toLowerCase()
+              .replace(/\s+/g, "-");
+            const keyGrupo = `${canalCmm}:${autorClave}`;
+            const lista = gruposPorAutor.get(keyGrupo);
+            if (lista) lista.push(it);
+            else gruposPorAutor.set(keyGrupo, [it]);
+          }
+
           const clavesExistentes = new Set(conversacionesNormalizadas.map((c) => c.claveHilo));
           const proyectados: ConversacionOmnicanal[] = [];
-          for (const it of itemsCmm) {
-            const clave = `cmm:${it.comentarioExternoId || it.id}`;
+
+          for (const [keyGrupo, listaGrupo] of gruposPorAutor.entries()) {
+            const ordenados = [...listaGrupo].sort(
+              (a, b) => new Date(b.creadoEn || 0).getTime() - new Date(a.creadoEn || 0).getTime()
+            );
+            const reciente = ordenados[0]!;
+            const clave = `cmm:${keyGrupo}`;
             if (clavesExistentes.has(clave)) continue;
-            const canalCmm = it.canal === "instagram" ? "instagram" : "facebook";
-            const tieneRespuesta = Boolean(it.respuestaPublica && it.respuestaPublica.trim());
-            const previa = tieneRespuesta
-              ? `💬 ${it.textoComentario} → ${it.respuestaPublica}`
-              : `💬 ${it.textoComentario}`;
+
+            const canalCmm = reciente.canal === "instagram" ? "instagram" : "facebook";
+            const respondidos = ordenados.filter(
+              (x) => Boolean(x.respuestaPublica && x.respuestaPublica.trim())
+            );
+            const ultimoConResp = respondidos[0] ?? null;
+            const hayError = ordenados.some((x) => x.estado === "ERROR");
+            const previa =
+              reciente.respuestaPublica && reciente.respuestaPublica.trim()
+                ? `💬 ${reciente.textoComentario} → ${reciente.respuestaPublica}`
+                : ultimoConResp
+                  ? `💬 ${reciente.textoComentario} · última resp: ${ultimoConResp.respuestaPublica}`
+                  : `💬 ${reciente.textoComentario}`;
+
             proyectados.push({
-              id: `cmm-${it.id}`,
+              id: `cmm-${encodeURIComponent(keyGrupo)}`,
               negocio: neg,
               canal: canalCmm,
               claveHilo: clave,
-              remitenteId: it.comentarioExternoId || it.id,
+              remitenteId: reciente.comentarioExternoId || reciente.id,
               remitenteNombre:
-                it.autorNombre?.trim() ||
+                reciente.autorNombre?.trim() ||
                 (canalCmm === "instagram" ? "Usuario Instagram" : "Usuario Facebook"),
-              estadoAtencion:
-                it.estado === "RESPONDIDO" ? "BOT_ACTIVO" : "ESCALADO_HUMANO",
+              estadoAtencion: hayError ? "ESCALADO_HUMANO" : "BOT_ACTIVO",
               ultimoMensajeTexto: previa.slice(0, 220),
-              ultimoMensajeOrigen: tieneRespuesta ? "BOT_ARIA" : "CLIENTE",
-              ultimoMensajeEn: it.creadoEn,
-              noLeidosAsesora: it.estado === "ERROR" || it.estado === "RECIBIDO" ? 1 : 0,
-              mensajesClienteConteo: 1,
-              mensajesIaConteo: tieneRespuesta ? 1 : 0,
+              ultimoMensajeOrigen:
+                reciente.respuestaPublica && reciente.respuestaPublica.trim()
+                  ? "BOT_ARIA"
+                  : "CLIENTE",
+              ultimoMensajeEn: reciente.creadoEn,
+              noLeidosAsesora: hayError ? 1 : 0,
+              mensajesClienteConteo: ordenados.length,
+              mensajesIaConteo: respondidos.length,
               mensajesHumanoConteo: 0,
-              creadoEn: it.creadoEn,
+              creadoEn: ordenados[ordenados.length - 1]?.creadoEn || reciente.creadoEn,
               etiquetasIds: [],
             });
           }
+
           if (proyectados.length > 0) {
             conversacionesNormalizadas = [...conversacionesNormalizadas, ...proyectados].sort(
               (a, b) =>
@@ -1467,7 +1500,7 @@ export async function obtenerMensajesConversacionAction(
     const esquemaComercio = supabase.schema("comun_comercio") as any;
 
     if (conversacionId.startsWith("cmm-")) {
-      const cmmId = conversacionId.slice(4);
+      const claveDecodificada = decodeURIComponent(conversacionId.slice(4));
       const { data: dataCmm } = await esquemaComercio.rpc(
         "com_fn_omnicanal_listar_comentarios_meta",
         { p_negocio: neg, p_limite: 100 }
@@ -1475,14 +1508,27 @@ export async function obtenerMensajesConversacionAction(
       const itemsCmm = Array.isArray(dataCmm?.items)
         ? (dataCmm.items as import("./omnicanal").RegistroComentarioMetaOmnicanal[])
         : [];
-      const encontrado = itemsCmm.find((it) => it.id === cmmId);
-      if (!encontrado) {
+
+      const delHilo = itemsCmm
+        .filter((it) => {
+          if (it.id === claveDecodificada) return true;
+          const canalCmm = it.canal === "instagram" ? "instagram" : "facebook";
+          const autorClave = (it.autorNombre || it.comentarioExternoId || it.id)
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+          return `${canalCmm}:${autorClave}` === claveDecodificada;
+        })
+        .sort((a, b) => new Date(a.creadoEn || 0).getTime() - new Date(b.creadoEn || 0).getTime());
+
+      if (delHilo.length === 0) {
         return { ok: true, mensajes: [] };
       }
 
-      const etiquetaRed = encontrado.canal === "instagram" ? "Instagram" : "Facebook";
-      const msgs: MensajeOmnicanal[] = [
-        {
+      const msgs: MensajeOmnicanal[] = [];
+      for (const encontrado of delHilo) {
+        const etiquetaRed = encontrado.canal === "instagram" ? "Instagram" : "Facebook";
+        msgs.push({
           id: `cmm-in-${encontrado.id}`,
           origen: "CLIENTE",
           autorNombre: encontrado.autorNombre || `Usuario ${etiquetaRed}`,
@@ -1490,45 +1536,45 @@ export async function obtenerMensajesConversacionAction(
           tipoContenido: "TEXTO",
           estadoEntrega: "LEIDO",
           creadoEn: encontrado.creadoEn,
-        },
-      ];
+        });
 
-      if (encontrado.respuestaPublica && encontrado.respuestaPublica.trim()) {
+        if (encontrado.respuestaPublica && encontrado.respuestaPublica.trim()) {
+          msgs.push({
+            id: `cmm-out-${encontrado.id}`,
+            origen: "BOT_ARIA",
+            autorNombre: `Mía · Respuesta en ${etiquetaRed}`,
+            contenido: encontrado.respuestaPublica.trim(),
+            tipoContenido: "TEXTO",
+            estadoEntrega: encontrado.estado === "RESPONDIDO" ? "ENVIADO" : "FALLIDO",
+            creadoEn: encontrado.creadoEn,
+          });
+        }
+
+        const detalle = (encontrado.detalle ?? {}) as Record<string, any>;
+        const notasExtra: string[] = [];
+        if (encontrado.reglaAplicada) {
+          notasExtra.push(`Regla: ${encontrado.reglaAplicada}`);
+        }
+        notasExtra.push(`Estado: ${encontrado.estado}`);
+        if (encontrado.respuestaDm && detalle.dm_enviado) {
+          notasExtra.push(`📩 DM privado enviado: "${encontrado.respuestaDm}"`);
+        } else if (detalle.dm_error) {
+          notasExtra.push(`⚠️ DM privado no enviado: ${String(detalle.dm_error)}`);
+        }
+        if (detalle.error_meta) {
+          notasExtra.push(`⚠️ Error Meta: ${String(detalle.error_meta)}`);
+        }
+
         msgs.push({
-          id: `cmm-out-${encontrado.id}`,
-          origen: "BOT_ARIA",
-          autorNombre: `Mía · Respuesta en ${etiquetaRed}`,
-          contenido: encontrado.respuestaPublica.trim(),
-          tipoContenido: "TEXTO",
-          estadoEntrega: encontrado.estado === "RESPONDIDO" ? "ENVIADO" : "FALLIDO",
+          id: `cmm-meta-${encontrado.id}`,
+          origen: "NOTA_INTERNA",
+          autorNombre: "Registro Comentario Meta",
+          contenido: notasExtra.join(" · "),
+          tipoContenido: "NOTA",
+          estadoEntrega: "ENVIADO",
           creadoEn: encontrado.creadoEn,
         });
       }
-
-      const detalle = (encontrado.detalle ?? {}) as Record<string, any>;
-      const notasExtra: string[] = [];
-      if (encontrado.reglaAplicada) {
-        notasExtra.push(`Regla: ${encontrado.reglaAplicada}`);
-      }
-      notasExtra.push(`Estado: ${encontrado.estado}`);
-      if (encontrado.respuestaDm && detalle.dm_enviado) {
-        notasExtra.push(`📩 DM privado enviado: "${encontrado.respuestaDm}"`);
-      } else if (detalle.dm_error) {
-        notasExtra.push(`⚠️ DM privado no enviado: ${String(detalle.dm_error)}`);
-      }
-      if (detalle.error_meta) {
-        notasExtra.push(`⚠️ Error Meta: ${String(detalle.error_meta)}`);
-      }
-
-      msgs.push({
-        id: `cmm-meta-${encontrado.id}`,
-        origen: "NOTA_INTERNA",
-        autorNombre: "Registro Comentario Meta",
-        contenido: notasExtra.join(" · "),
-        tipoContenido: "NOTA",
-        estadoEntrega: "ENVIADO",
-        creadoEn: encontrado.creadoEn,
-      });
 
       return { ok: true, mensajes: msgs };
     }
