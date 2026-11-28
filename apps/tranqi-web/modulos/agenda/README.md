@@ -17,6 +17,13 @@ los RPC.
 
 ## Decisiones locales
 
+**El asistente de agendar tiene dos caras (`TRQ-041`).** `FormularioAgendar` con `variante="pasos"`
+es el widget `agendar_cita` de Agendamiento: dos pasos y, al confirmar, a Mis citas. Con
+`variante="recorrido"` es lo primero del inicio del cliente (`app/panel/page.tsx`): una sola
+tarjeta con los hitos problema → especialista → cita → en marcha, sin botón «Continuar» (si ARIA
+reconoce la especialidad, la cita aparece debajo) y sin redirigir al confirmar (refresca el
+inicio). La lógica de triaje, huecos, cobertura y pago es la misma: no se duplica.
+
 **El afiliado no elige abogado.** La asignación es por turno rotativo entre los profesionales de la
 materia (`catalogo-productos.md` §6.1). Por eso `buscar_horarios` devuelve horas agregadas, sin
 decir de quién son: enseñar el nombre antes de reservar convertiría el reparto en una elección.

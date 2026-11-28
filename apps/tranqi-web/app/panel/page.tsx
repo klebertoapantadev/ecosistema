@@ -16,6 +16,8 @@ import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { obtenerMiPerfilAbogadoCompletoAction } from "../../modulos/socios/acciones-red-profesional";
 import { listarAgendaDelAbogado } from "../../modulos/agenda/consultas";
 import BandejaCitasAbogado from "../../modulos/agenda/componentes/BandejaCitasAbogado";
+import FormularioAgendar from "../../modulos/agenda/componentes/FormularioAgendar";
+import { buscarHuecosMateriaAction, obtenerDatosAgendarCitaWidgetAction } from "../../modulos/agenda/acciones";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
@@ -38,7 +40,6 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
   { icono: Bell, nombre: "Avisos & Alertas", detalle: "Novedades y alertas legales", href: "/panel/herramientas?widget=muro_informativo_comunidad" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos con OCR y TTL", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
-  { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendamiento?widget=agendar_cita" },
   { icono: Coins, nombre: "Financiamiento", detalle: "Cuotas para tu caso", href: "/panel/herramientas?widget=financiamiento" },
 ];
 
@@ -292,10 +293,11 @@ function vigenciaDocumento(d: DocumentoBilletera): { detalle: string; pildora: {
 }
 
 async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | null; nombre: string; usuarioId: string | null }) {
-  const [resumen, cobertura, pagosCliente] = await Promise.all([
+  const [resumen, cobertura, pagosCliente, datosAgenda] = await Promise.all([
     usuarioId ? obtenerResumenInicioCliente(usuarioId) : null,
     obtenerCoberturaUsuarioAction("tranqi").catch(() => null),
-    obtenerHistorialTransaccionesAction("tranqi", { soloClienteActual: true, modoVista: "cliente" }).catch(() => [])
+    obtenerHistorialTransaccionesAction("tranqi", { soloClienteActual: true, modoVista: "cliente" }).catch(() => []),
+    obtenerDatosAgendarCitaWidgetAction().catch(() => null),
   ]);
   const pagosRecientes = (pagosCliente ?? []).slice(0, 3);
   const tienePlanActivo = Boolean(cobertura?.tienePlanActivo && !cobertura?.suscripcionId?.startsWith("sub-demo"));
@@ -308,9 +310,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
 
   const subtitulo = tramites
     ? `Tienes ${tramites === 1 ? "1 trámite" : `${tramites} trámites`} en marcha${cita ? ` y una cita el ${FECHA_CORTA.format(new Date(cita.inicio))}` : ""}.`
-    : tienePlanActivo
-      ? "¿Qué necesitas resolver hoy?"
-      : "Elige tu plan de cobertura legal o agenda una consulta.";
+    : "Cuéntanos qué pasa y lo resolvemos desde aquí.";
 
   return (
     <>
@@ -319,11 +319,28 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
           <h1>{saludo ?? `Hola de nuevo, ${nombre}`}. Estás <i>Tranqi</i>.</h1>
           <p className="inicio-cliente-sub">{subtitulo}</p>
         </div>
-        <Link href="/panel/agendamiento?widget=agendar_cita" className="btn btn-primario btn-agendar">
-          <Calendar size={16} aria-hidden="true" />
-          Agendar cita
-        </Link>
+        {/* Sin datos de agenda no hay recorrido: queda el acceso clásico al asistente */}
+        {!datosAgenda?.ok && (
+          <Link href="/panel/agendamiento?widget=agendar_cita" className="btn btn-primario btn-agendar">
+            <Calendar size={16} aria-hidden="true" />
+            Agendar cita
+          </Link>
+        )}
       </div>
+
+      {/* TRQ-041 — del problema a la solución: contar la necesidad es lo principal
+          del inicio, así que el asistente de agendar vive aquí y no dentro de
+          Agendamiento. Va antes que planes y cifras. */}
+      {datosAgenda?.ok && (
+        <FormularioAgendar
+          variante="recorrido"
+          materias={datosAgenda.data.materias}
+          servicios={datosAgenda.data.servicios}
+          cobertura={datosAgenda.data.cobertura}
+          configAgenda={datosAgenda.data.configAgenda}
+          buscarHuecos={buscarHuecosMateriaAction}
+        />
+      )}
 
       <div className="rejilla-cliente">
         <div className="columna-cliente">
@@ -371,7 +388,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
                   </span>
                 </Link>
               )}
-              <Link href={cita ? "/panel/agendamiento?widget=mis_citas" : "/panel/agendamiento?widget=agendar_cita"} className="cifra-tarjeta">
+              <Link href={cita ? "/panel/agendamiento?widget=mis_citas" : datosAgenda?.ok ? "#resolver" : "/panel/agendamiento?widget=agendar_cita"} className="cifra-tarjeta">
                 <span className="cifra-cabecera"><span className="cifra-icono"><Calendar size={15} aria-hidden="true" /></span>Próxima cita</span>
                 {cita ? (
                   <b className="cifra-valor es-fecha">{FECHA_CORTA.format(new Date(cita.inicio))}<small>{HORA.format(new Date(cita.inicio))}</small></b>
@@ -383,10 +400,11 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
             </div>
           )}
 
-          {/* 6B + 4A: el caso abierto más reciente, o el estado vacío. */}
+          {/* 6B + 4A: el caso abierto más reciente, o el estado vacío. Con el
+              recorrido arriba el estado vacío sobra: invitaría a lo mismo dos veces. */}
           {caso ? (
             <TarjetaCaso caso={caso} />
-          ) : (
+          ) : datosAgenda?.ok ? null : (
             <section className="tarjeta-seccion vacio-caso" aria-labelledby="t-vacio-caso">
               <div className="vacio-caso-cuerpo">
                 <span className="vacio-caso-icono" aria-hidden="true"><Briefcase size={24} strokeWidth={1.6} /></span>

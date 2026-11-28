@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -47,7 +48,44 @@ interface Props {
   cobertura: Cobertura[];
   configAgenda: DatosConfigNegocioAgenda;
   buscarHuecos: (materiaId: string, varianteId: string | null, modalidad: string) => Promise<Hueco[]>;
+  /**
+   * "pasos": asistente de dos pasos del widget de Agendamiento (al confirmar, va a Mis citas).
+   * "recorrido": inicio del cliente (TRQ-041). Una sola tarjeta que va del problema a la
+   * solución sin cambiar de vista: lo contado queda resumido arriba, la cita se elige debajo
+   * y al confirmar se queda en el inicio con el caso "en marcha".
+   */
+  variante?: "pasos" | "recorrido";
 }
+
+const HITOS_RECORRIDO = ["Tu problema", "Tu especialista", "Tu cita", "En marcha"] as const;
+
+/** Los cuatro hitos del recorrido, siempre visibles: orientan sin ser pestañas. */
+function CaminoRecorrido({ hito }: { hito: number }) {
+  return (
+    <ol className="camino-recorrido" aria-label="Progreso">
+      {HITOS_RECORRIDO.map((nombre, i) => {
+        const estado = i < hito ? "es-hecho" : i === hito ? "es-activo" : "";
+        return (
+          <li key={nombre} className={estado} aria-current={i === hito ? "step" : undefined}>
+            <span className="camino-numero" aria-hidden="true">
+              {i < hito ? <Check size={13} strokeWidth={3} /> : i + 1}
+            </span>
+            <span className="camino-etiqueta">{nombre}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/** Bloque interior de la tarjeta del recorrido: sin borde propio, separado por una línea. */
+const BLOQUE_RECORRIDO: CSSProperties = {
+  padding: "24px clamp(18px, 3vw, 30px)",
+  borderTop: "1px solid var(--linea)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "20px",
+};
 
 const EJEMPLOS_CORTOS = [
   { etiqueta: "Divorcio y bienes", texto: "Necesito asesoría sobre divorcio y repartición de bienes" },
@@ -122,7 +160,9 @@ export default function FormularioAgendar({
   cobertura,
   configAgenda,
   buscarHuecos,
+  variante = "pasos",
 }: Props) {
+  const esRecorrido = variante === "recorrido";
   const router = useRouter();
   const [paso, setPaso] = useState<0 | 1>(0);
 
@@ -273,6 +313,7 @@ export default function FormularioAgendar({
             modalidad_sugerida: "virtual",
             necesita_aclaracion: false,
           });
+          if (esRecorrido) void irAPasoAgendamiento(matFallback.mat_id, texto.slice(0, 500));
         } else {
           setError(res.error);
         }
@@ -283,6 +324,12 @@ export default function FormularioAgendar({
       setTriaje(resultado);
       setMateriaId(resultado.materia_id);
       setMotivo(resultado.motivo_resumido || texto.slice(0, 500));
+      // En el recorrido no hay botón "Continuar": si ARIA ya sabe de qué va, la cita
+      // aparece debajo directamente. Si necesita una aclaración, se queda en la pregunta.
+      if (esRecorrido && !resultado.necesita_aclaracion) {
+        void irAPasoAgendamiento(resultado.materia_id, resultado.motivo_resumido || texto.slice(0, 500));
+        return;
+      }
       setTimeout(() => {
         respuestaRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }, 80);
@@ -291,14 +338,17 @@ export default function FormularioAgendar({
     }
   }
 
-  async function irAPasoAgendamiento() {
+  // matId y motivoNuevo llegan explícitos cuando se llama justo tras setMateriaId/setMotivo
+  // (el estado aún no se ha actualizado en este render).
+  async function irAPasoAgendamiento(matId?: string, motivoNuevo?: string) {
     setError(null);
-    const matEfectiva = materiaId || materiaPorDefecto?.mat_id || "";
+    const matEfectiva = matId || materiaId || materiaPorDefecto?.mat_id || "";
     if (!matEfectiva) {
       setError("Primero cuéntanos tu necesidad para asignar la especialidad.");
       return;
     }
-    if (!motivo || motivo.trim().length < 4) {
+    const motivoEfectivo = motivoNuevo ?? motivo;
+    if (!motivoEfectivo || motivoEfectivo.trim().length < 4) {
       setMotivo(relatoUsuario.trim().slice(0, 500) || "Consulta jurídica con especialista");
     }
     setPaso(1);
@@ -342,10 +392,30 @@ export default function FormularioAgendar({
       }
 
       setCitaConfirmadaId(r.data.citaId);
+      if (esRecorrido) {
+        // Se queda en el inicio: refresca las cifras (próxima cita, trámites) sin perder este estado.
+        router.refresh();
+        return;
+      }
       setTimeout(() => {
         router.push("/panel/agendamiento?widget=mis_citas");
       }, 1500);
     });
+  }
+
+  /** "Resolver otra cosa": vuelve a la pregunta en blanco. */
+  function reiniciarRecorrido() {
+    setPaso(0);
+    setRelatoUsuario("");
+    setTriaje(null);
+    setMateriaId("");
+    setMotivo("");
+    setMostrarSelectorManual(false);
+    setModalidad("virtual");
+    setHuecos(null);
+    setElegido(null);
+    setCitaConfirmadaId(null);
+    setError(null);
   }
 
   function onProcederAlPago() {
@@ -382,6 +452,55 @@ export default function FormularioAgendar({
   }, [servicio, modalidad, materia]);
 
   const grupoDiaActual = huecosPorDia.find((g) => g.clave === diaSeleccionado) ?? huecosPorDia[0];
+
+  const pasosRestantes = [
+    { titulo: "Revisamos lo que nos contaste", detalle: `Un abogado especialista en ${materia?.mat_nombre ?? "Derecho"} llega a la cita sabiendo de qué va tu caso.` },
+    {
+      titulo: `Tu cita: ${elegido ? FORMATO_FECHA_COMPLETA.format(new Date(elegido)) : ""}`,
+      detalle: modalidad === "virtual" ? "La verás en Mis citas, con el enlace para unirte." : "La verás en Mis citas, con la dirección del despacho.",
+    },
+    { titulo: "Sales con la solución", detalle: "Los pasos para resolverlo: qué hacer, cuánto cuesta y cuánto tarda." },
+  ];
+
+  if (citaConfirmadaId && elegido && esRecorrido) {
+    return (
+      <section className="recorrido-resolver" id="resolver" aria-label="Resolver una necesidad legal">
+        <CaminoRecorrido hito={4} />
+        <div className="recorrido-en-marcha" role="status">
+          <span className="en-marcha-sello" aria-hidden="true">
+            <Check size={26} strokeWidth={2.6} />
+          </span>
+          <div>
+            <h2>Tu caso ya está en marcha</h2>
+            <p>
+              Consulta {modalidad === "virtual" ? "por videollamada" : "en el despacho"} con un especialista en{" "}
+              <strong>{materia?.mat_nombre ?? "Derecho"}</strong>.
+            </p>
+            <ol className="en-marcha-pasos">
+              <li className="es-hecho">
+                <b>Nos contaste tu problema</b>
+                <span>Quedó registrado junto a tu cita.</span>
+              </li>
+              {pasosRestantes.map((p) => (
+                <li key={p.titulo}>
+                  <b>{p.titulo}</b>
+                  <span>{p.detalle}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="en-marcha-acciones">
+              <Link href="/panel/agendamiento?widget=mis_citas" className="btn btn-primario">
+                Ver mis citas
+              </Link>
+              <button type="button" className="btn btn-neutro" onClick={reiniciarRecorrido}>
+                Resolver otra cosa
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (citaConfirmadaId && elegido) {
     return (
@@ -421,9 +540,97 @@ export default function FormularioAgendar({
     );
   }
 
+  const hitoActual = paso === 1 ? 2 : triaje ? 1 : 0;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+    <div
+      {...(esRecorrido
+        ? { className: "recorrido-resolver", id: "resolver", role: "region", "aria-label": "Resolver una necesidad legal" }
+        : { style: { display: "flex", flexDirection: "column", gap: "20px" } })}
+    >
+      {esRecorrido && <CaminoRecorrido hito={hitoActual} />}
+
+      {/* Lo contado, resumido: en el recorrido no desaparece al pasar a la cita */}
+      {esRecorrido && paso === 1 && (
+        <div style={{ ...BLOQUE_RECORRIDO, borderTop: "none", gap: "16px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+            <div style={{ minWidth: 0 }}>
+              <div className="recorrido-eyebrow">Nos contaste</div>
+              <p style={{ margin: "4px 0 0", fontSize: "0.94rem", color: "var(--texto)", fontStyle: "italic", lineHeight: 1.5 }}>
+                «{relatoUsuario.trim()}»
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPaso(0)}
+              style={{ background: "transparent", border: "none", color: "var(--panel-accion)", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", padding: 0, whiteSpace: "nowrap" }}
+            >
+              Cambiar
+            </button>
+          </div>
+
+          <div
+            style={{
+              background: "var(--acento-diluido)",
+              border: "1px solid var(--acento-linea)",
+              borderRadius: "16px",
+              padding: "16px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+            }}
+          >
+            <div className="recorrido-eyebrow" style={{ color: "var(--panel-accion)" }}>Lo que entendimos</div>
+            {triaje?.respuesta_aria && (
+              <p style={{ margin: 0, fontSize: "0.94rem", color: "var(--texto)", lineHeight: 1.55 }}>{triaje.respuesta_aria}</p>
+            )}
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "0.92rem", color: "var(--texto)" }}>
+                <Scale size={17} color="var(--panel-accion)" aria-hidden="true" />
+                Te atiende un especialista en <strong>{materia?.mat_nombre ?? "Civil"}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setMostrarSelectorManual((v) => !v)}
+                style={{ background: "transparent", border: "none", color: "var(--panel-accion)", fontSize: "0.8rem", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 }}
+              >
+                {mostrarSelectorManual ? "Cerrar" : "¿No es tu tema?"}
+              </button>
+            </div>
+            {mostrarSelectorManual && (
+              <select
+                aria-label="Especialidad"
+                value={materia?.mat_id ?? ""}
+                onChange={(e) => {
+                  setMateriaId(e.target.value);
+                  setElegido(null);
+                  setMostrarSelectorManual(false);
+                  void cargarHuecos(e.target.value, modalidad);
+                }}
+                style={{
+                  width: "100%",
+                  borderRadius: "12px",
+                  border: "1px solid var(--linea-fuerte)",
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  padding: "10px 12px",
+                  fontSize: "0.88rem",
+                  color: "var(--texto)",
+                  fontWeight: 600,
+                }}
+              >
+                {materias.map((m) => (
+                  <option key={m.mat_id} value={m.mat_id}>
+                    {m.mat_nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Indicador minimalista de 2 pasos */}
+      {!esRecorrido && (
       <div
         style={{
           display: "flex",
@@ -522,24 +729,30 @@ export default function FormularioAgendar({
           </div>
         </button>
       </div>
+      )}
 
       {/* =====================================================================
           PASO 1: PREGUNTA SIMPLE Y RESPUESTA DE ESPECIALIDAD CON ARIA
          ===================================================================== */}
       {paso === 0 && (
         <div
-          style={{
-            background: "var(--cf-ffffff, #FFFFFF)",
-            border: "1px solid var(--linea)",
-            borderRadius: "24px",
-            padding: "28px 26px",
-            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.04)",
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
-          }}
+          style={
+            esRecorrido
+              ? BLOQUE_RECORRIDO
+              : {
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: "1px solid var(--linea)",
+                  borderRadius: "24px",
+                  padding: "28px 26px",
+                  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.04)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "20px",
+                }
+          }
         >
           <div>
+            {!esRecorrido && (
             <span
               style={{
                 display: "inline-flex",
@@ -557,11 +770,20 @@ export default function FormularioAgendar({
             >
               <Sparkles size={14} /> Asistente Legal Tranqi
             </span>
-            <h1 style={{ fontSize: "1.45rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
-              ¿Qué necesitas resolver hoy?
-            </h1>
+            )}
+            {/* En el inicio el h1 es el saludo: aquí la pregunta baja a h2 */}
+            {(() => {
+              const Titulo = esRecorrido ? "h2" : "h1";
+              return (
+                <Titulo style={{ fontSize: esRecorrido ? "clamp(1.3rem, 2.4vw, 1.6rem)" : "1.45rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
+                  ¿Qué necesitas resolver hoy?
+                </Titulo>
+              );
+            })()}
             <p style={{ fontSize: "0.92rem", color: "var(--texto-2)", margin: 0, lineHeight: 1.5 }}>
-              Cuéntanos tu caso con tus propias palabras. Identificaremos de inmediato qué especialista legal debe atenderte.
+              {esRecorrido
+                ? "Cuéntalo con tus palabras, como se lo contarías a un amigo. Identificamos el tema y te asignamos al especialista que mejor lo conoce."
+                : "Cuéntanos tu caso con tus propias palabras. Identificaremos de inmediato qué especialista legal debe atenderte."}
             </p>
           </div>
 
@@ -804,18 +1026,23 @@ export default function FormularioAgendar({
          ===================================================================== */}
       {paso === 1 && (
         <div
-          style={{
-            background: "var(--cf-ffffff, #FFFFFF)",
-            border: "1px solid var(--linea)",
-            borderRadius: "24px",
-            padding: "28px 26px",
-            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.04)",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-          }}
+          style={
+            esRecorrido
+              ? { ...BLOQUE_RECORRIDO, gap: "24px" }
+              : {
+                  background: "var(--cf-ffffff, #FFFFFF)",
+                  border: "1px solid var(--linea)",
+                  borderRadius: "24px",
+                  padding: "28px 26px",
+                  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.04)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "24px",
+                }
+          }
         >
-          {/* Resumen superior de la especialidad */}
+          {/* Resumen superior de la especialidad (en el recorrido ya está en "Lo que entendimos") */}
+          {!esRecorrido && (
           <div
             style={{
               display: "flex",
@@ -851,6 +1078,7 @@ export default function FormularioAgendar({
               Cambiar caso
             </button>
           </div>
+          )}
 
           {/* 1. Selección exclusiva entre Telemática o Presencial */}
           <div>
@@ -1272,6 +1500,7 @@ export default function FormularioAgendar({
             borderRadius: "14px",
             fontSize: "0.86rem",
             fontWeight: 600,
+            margin: esRecorrido ? "0 clamp(18px, 3vw, 30px) 20px" : undefined,
           }}
         >
           {error}
