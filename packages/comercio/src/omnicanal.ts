@@ -1788,7 +1788,11 @@ export function evaluarAutoRespuestaComentarioMeta(entrada: {
       .trim();
 
   const respuestaPublica = interpolar(plantilla);
-  const respuestaDm = r.enviarDm && r.plantillaDm?.trim() ? interpolar(r.plantillaDm) : null;
+  const plantillaDmEfectiva =
+    motivo === "CONDOLENCIAS"
+      ? "Hola {{nombre}}, con todo respeto te compartimos nuestros arreglos de condolencias y entregas prioritarias en Quito: {{url_tienda}}/categoria/condolencias. Si necesitas ayuda personalizada, escríbenos por aquí y una asesora te atenderá de inmediato."
+      : r.plantillaDm;
+  const respuestaDm = r.enviarDm && plantillaDmEfectiva?.trim() ? interpolar(plantillaDmEfectiva) : null;
 
   return {
     debeResponder: Boolean(respuestaPublica),

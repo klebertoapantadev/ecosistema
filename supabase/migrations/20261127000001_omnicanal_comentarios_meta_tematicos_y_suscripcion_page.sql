@@ -55,6 +55,7 @@ declare
   v_tpl_ev text := coalesce(nullif(btrim(v_det->>'meta_comentarios_respuesta_eventos'), ''), v_tpl_general);
   v_enviar_dm boolean := coalesce((v_det->>'meta_comentarios_enviar_dm')::boolean, false);
   v_tpl_dm text := coalesce(nullif(btrim(v_det->>'meta_comentarios_plantilla_dm'), ''), '');
+  v_tpl_dm_cond text := 'Hola {{nombre}}, con todo respeto te compartimos nuestros arreglos de condolencias y entregas prioritarias en Quito: {{url_tienda}}/categoria/condolencias. Si necesitas ayuda personalizada, escríbenos por aquí y una asesora te atenderá de inmediato.';
   v_page_id text := btrim(coalesce(v_det->>'meta_page_id', ''));
   v_ig_id text := btrim(coalesce(v_det->>'meta_ig_account_id', ''));
   v_entry jsonb;
@@ -75,6 +76,7 @@ declare
   v_regla text;
   v_resp_pub text;
   v_resp_dm text;
+  v_tpl_dm_activo text;
   v_estado text;
   v_despacho jsonb;
   v_cmm comun_agentes.agc_comentario_meta;
@@ -181,10 +183,14 @@ begin
           v_resp_pub := regexp_replace(v_resp_pub, 'Hola\s+,', 'Hola,', 'g');
           v_resp_pub := btrim(regexp_replace(v_resp_pub, '\s{2,}', ' ', 'g'));
 
-          if v_enviar_dm and v_tpl_dm <> '' then
-            v_resp_dm := replace(replace(v_tpl_dm, '{{nombre}}', v_primer_nombre), '{{url_tienda}}', v_url_tienda);
-            v_resp_dm := regexp_replace(v_resp_dm, '¡Hola\s+!', '¡Hola!', 'g');
-            v_resp_dm := btrim(regexp_replace(v_resp_dm, '\s{2,}', ' ', 'g'));
+          if v_enviar_dm then
+            v_tpl_dm_activo := case when v_es_condolencias then v_tpl_dm_cond else v_tpl_dm end;
+            if v_tpl_dm_activo <> '' then
+              v_resp_dm := replace(replace(v_tpl_dm_activo, '{{nombre}}', v_primer_nombre), '{{url_tienda}}', v_url_tienda);
+              v_resp_dm := regexp_replace(v_resp_dm, '¡Hola\s+!', '¡Hola!', 'g');
+              v_resp_dm := regexp_replace(v_resp_dm, 'Hola\s+,', 'Hola,', 'g');
+              v_resp_dm := btrim(regexp_replace(v_resp_dm, '\s{2,}', ' ', 'g'));
+            end if;
           end if;
         end if;
       end if;

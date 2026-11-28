@@ -591,6 +591,8 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
     expect(rCond.debeResponder).toBe(true);
     expect(rCond.motivo).toBe("CONDOLENCIAS");
     expect(rCond.respuestaPublica).toContain("/categoria/condolencias");
+    expect(rCond.respuestaDm).toContain("/categoria/condolencias");
+    expect(rCond.respuestaDm).not.toContain("🌿");
 
     // 3. Comentario propio de la página -> JAMÁS responde (anti-bucle)
     const rPropio = evaluarAutoRespuestaComentarioMeta({
