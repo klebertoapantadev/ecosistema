@@ -171,7 +171,14 @@ export async function leerContactosDesdeGoogleAction(entrada: {
   conexionId: string;
   esAgendaPersonal?: boolean;
 }): Promise<
-  | { ok: true; correoGoogle: string; fichas: FichaAgendaCruda[]; totalGrupos: number }
+  | {
+      ok: true;
+      correoGoogle: string;
+      fichas: FichaAgendaCruda[];
+      totalGrupos: number;
+      fotosDetectadas: number;
+      chatsConFotoActualizados: number;
+    }
   | { ok: false; error: string }
 > {
   try {
@@ -188,6 +195,32 @@ export async function leerContactosDesdeGoogleAction(entrada: {
     });
     if (!lectura.ok) return lectura;
 
+    // Sincronizar automáticamente las fotos reales detectadas hacia Directorio y chats WhatsApp activos
+    const itemsFotos: Array<{ telefono: string; fotoUrl: string; nombre: string }> = [];
+    for (const f of lectura.fichas) {
+      if (!f.fotoUrl) continue;
+      for (const tel of f.telefonos) {
+        if (!tel.valor) continue;
+        itemsFotos.push({
+          telefono: tel.valor,
+          fotoUrl: f.fotoUrl,
+          nombre: f.nombreOriginal || "",
+        });
+      }
+    }
+
+    let chatsConFotoActualizados = 0;
+    if (itemsFotos.length > 0) {
+      for (let i = 0; i < itemsFotos.length; i += 300) {
+        const chunk = itemsFotos.slice(i, i + 300);
+        const { data: syncFotosData } = await (supabase.schema("comun_comercio") as any).rpc(
+          "com_fn_omnicanal_sincronizar_fotos_directorio",
+          { p_negocio: neg, p_items: chunk }
+        );
+        chatsConFotoActualizados += Number(syncFotosData?.chatsActualizados || 0);
+      }
+    }
+
     await (supabase.schema("comun_comercio") as any).rpc(
       "com_fn_omnicanal_google_contacts_registrar_sync",
       {
@@ -195,7 +228,11 @@ export async function leerContactosDesdeGoogleAction(entrada: {
         p_conexion_id: entrada.conexionId,
         p_tipo: "LECTURA",
         p_cantidad: lectura.fichas.length,
-        p_detalle: { totalGrupos: lectura.totalGrupos },
+        p_detalle: {
+          totalGrupos: lectura.totalGrupos,
+          fotosDetectadas: itemsFotos.length,
+          chatsConFotoActualizados,
+        },
       }
     );
 
@@ -204,11 +241,128 @@ export async function leerContactosDesdeGoogleAction(entrada: {
       correoGoogle: auth.correoGoogle,
       fichas: lectura.fichas,
       totalGrupos: lectura.totalGrupos,
+      fotosDetectadas: itemsFotos.length,
+      chatsConFotoActualizados,
     };
   } catch (err) {
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error leyendo contactos desde Google.",
+    };
+  }
+}
+
+/**
+ * Sincroniza en 1 clic las fotos reales de perfil de todas las cuentas Google Contacts conectadas
+ * (o de una conexión puntual) hacia el Directorio WhatsApp y los chats en vivo.
+ */
+export async function sincronizarFotosGoogleContactsAction(entrada: {
+  negocio: string;
+  conexionId?: string | null;
+}): Promise<
+  | {
+      ok: true;
+      cuentasProcesadas: number;
+      fotosDetectadas: number;
+      directorioActualizados: number;
+      chatsActualizados: number;
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    let conexionIds: string[] = [];
+    if (entrada.conexionId) {
+      conexionIds = [entrada.conexionId];
+    } else {
+      const { data: estadoData, error: estErr } = await (
+        supabase.schema("comun_comercio") as any
+      ).rpc("com_fn_omnicanal_google_contacts_obtener_estado", { p_negocio: neg });
+      if (estErr) return { ok: false, error: estErr.message };
+      const conexiones = Array.isArray(estadoData?.conexiones)
+        ? (estadoData.conexiones as ConexionGoogleContactsInfo[])
+        : [];
+      conexionIds = conexiones.map((c) => c.id);
+    }
+
+    if (conexionIds.length === 0) {
+      return {
+        ok: false,
+        error:
+          "No hay cuentas de Google Contacts conectadas. Conecta tu cuenta en Contactos → Depurador & Google.",
+      };
+    }
+
+    let cuentasProcesadas = 0;
+    let fotosDetectadas = 0;
+    let directorioActualizados = 0;
+    let chatsActualizados = 0;
+    let ultimoError = "";
+
+    for (const cid of conexionIds) {
+      const auth = await obtenerAccessTokenParaConexion(supabase, neg, cid);
+      if (!auth.ok) {
+        ultimoError = auth.error;
+        continue;
+      }
+
+      const lectura = await leerTodosContactosGooglePeople(auth.accessToken, {
+        correoGoogle: auth.correoGoogle,
+        esAgendaPersonal: true,
+      });
+      if (!lectura.ok) {
+        ultimoError = lectura.error;
+        continue;
+      }
+
+      cuentasProcesadas++;
+      const itemsFotos: Array<{ telefono: string; fotoUrl: string; nombre: string }> = [];
+      for (const f of lectura.fichas) {
+        if (!f.fotoUrl) continue;
+        for (const tel of f.telefonos) {
+          if (!tel.valor) continue;
+          itemsFotos.push({
+            telefono: tel.valor,
+            fotoUrl: f.fotoUrl,
+            nombre: f.nombreOriginal || "",
+          });
+        }
+      }
+
+      fotosDetectadas += itemsFotos.length;
+      for (let i = 0; i < itemsFotos.length; i += 300) {
+        const chunk = itemsFotos.slice(i, i + 300);
+        const { data: syncData } = await (supabase.schema("comun_comercio") as any).rpc(
+          "com_fn_omnicanal_sincronizar_fotos_directorio",
+          { p_negocio: neg, p_items: chunk }
+        );
+        directorioActualizados += Number(syncData?.directorioActualizados || 0);
+        chatsActualizados += Number(syncData?.chatsActualizados || 0);
+      }
+    }
+
+    if (cuentasProcesadas === 0) {
+      return {
+        ok: false,
+        error: ultimoError || "No se pudo leer ninguna cuenta Google Contacts conectada.",
+      };
+    }
+
+    return {
+      ok: true,
+      cuentasProcesadas,
+      fotosDetectadas,
+      directorioActualizados,
+      chatsActualizados,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Error sincronizando fotos desde Google Contacts.",
     };
   }
 }

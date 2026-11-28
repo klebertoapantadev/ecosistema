@@ -48,6 +48,7 @@ export interface FichaAgendaCruda {
   direccion?: string | null;
   cumpleanos?: string | null;
   notas?: string | null;
+  fotoUrl?: string | null;
   etiquetas: string[];
   esAgendaPersonal?: boolean;
 }
@@ -94,6 +95,7 @@ export interface FichaAgendaDepurada {
   direccion: string | null;
   cumpleanos: string | null;
   notas: string | null;
+  fotoUrl: string | null;
   etiquetasOriginales: string[];
   etiquetaCategoriaGoogle: string;
   clasificacion: ClasificacionContacto;
@@ -721,6 +723,7 @@ function construirFichaDepuradaDesdeGrupo(
   let cargo: string | null = null;
   let direccion: string | null = null;
   let cumpleanos: string | null = null;
+  let fotoUrl: string | null = null;
 
   for (const f of grupoFichas) {
     for (const em of f.correos) {
@@ -737,6 +740,7 @@ function construirFichaDepuradaDesdeGrupo(
       direccion = f.direccion.trim();
     }
     if (f.cumpleanos && !cumpleanos) cumpleanos = f.cumpleanos.trim();
+    if (f.fotoUrl && !fotoUrl) fotoUrl = f.fotoUrl.trim();
     if (f.notas?.trim()) notasSet.add(f.notas.trim());
   }
 
@@ -847,6 +851,7 @@ function construirFichaDepuradaDesdeGrupo(
     direccion,
     cumpleanos,
     notas,
+    fotoUrl,
     etiquetasOriginales,
     etiquetaCategoriaGoogle,
     clasificacion: auto.clasificacion,
@@ -1352,6 +1357,7 @@ export function expandirFichasDepuradasParaDirectorio(
           etiquetaGoogle: f.etiquetaCategoriaGoogle,
           empresa: f.empresa,
           notas: f.notas,
+          fotoUrl: f.fotoUrl,
           motivoClasificacion: f.motivoClasificacion,
           depurado2D: true,
         },

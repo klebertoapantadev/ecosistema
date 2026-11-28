@@ -458,7 +458,7 @@ export async function leerTodosContactosGooglePeople(
       const url = new URL("https://people.googleapis.com/v1/people/me/connections");
       url.searchParams.set(
         "personFields",
-        "names,phoneNumbers,emailAddresses,organizations,biographies,addresses,birthdays,memberships,metadata"
+        "names,phoneNumbers,emailAddresses,organizations,biographies,addresses,birthdays,memberships,metadata,photos"
       );
       url.searchParams.set("pageSize", "1000");
       url.searchParams.set("sortOrder", "FIRST_NAME_ASCENDING");
@@ -513,6 +513,17 @@ export async function leerTodosContactosGooglePeople(
           : null;
         const notas = p.biographies?.[0]?.value ? String(p.biographies[0].value).trim() : null;
 
+        // Extraer foto real del contacto (ignorar avatares genéricos `default: true` de Google)
+        const fotosArr = Array.isArray(p.photos) ? (p.photos as Array<Record<string, any>>) : [];
+        const fotoElegida =
+          fotosArr.find((ph) => ph?.url && ph.default !== true && ph?.metadata?.primary === true) ??
+          fotosArr.find((ph) => ph?.url && ph.default !== true) ??
+          null;
+        const fotoUrl =
+          fotoElegida?.url && /^https?:\/\//i.test(String(fotoElegida.url).trim())
+            ? String(fotoElegida.url).trim()
+            : null;
+
         let cumpleanos: string | null = null;
         const bd = p.birthdays?.[0]?.date;
         if (bd?.month && bd?.day) {
@@ -545,6 +556,7 @@ export async function leerTodosContactosGooglePeople(
           direccion,
           cumpleanos,
           notas,
+          fotoUrl,
           etiquetas,
           esAgendaPersonal: meta.esAgendaPersonal,
         });

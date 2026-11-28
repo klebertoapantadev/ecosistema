@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Globe } from "lucide-react";
 import type { CanalOmnicanal } from "../omnicanal";
 
@@ -124,14 +124,23 @@ function obtenerInicialesNombre(nombre?: string | null): string {
 export function AvatarConCanalOmnicanal({
   nombre,
   canal,
+  fotoUrl,
   size = 38,
 }: {
   nombre?: string | null;
   canal: CanalOmnicanal | string;
+  fotoUrl?: string | null;
   size?: number;
 }) {
   const iniciales = obtenerInicialesNombre(nombre);
   const badgeSize = Math.max(15, Math.round(size * 0.44));
+  const [imgFallida, setImgFallida] = useState<boolean>(false);
+
+  useEffect(() => {
+    setImgFallida(false);
+  }, [fotoUrl]);
+
+  const mostrarFoto = Boolean(fotoUrl && /^https?:\/\//i.test(fotoUrl.trim()) && !imgFallida);
 
   return (
     <div
@@ -148,6 +157,7 @@ export function AvatarConCanalOmnicanal({
           width: "100%",
           height: "100%",
           borderRadius: "999px",
+          overflow: "hidden",
           background: "var(--cf-f1ece4, #F1ECE4)",
           border: "1px solid var(--cb-221d1a-a120, rgba(34, 29, 26, 0.12))",
           color: "var(--ct-221d1a, #221D1A)",
@@ -159,7 +169,23 @@ export function AvatarConCanalOmnicanal({
           letterSpacing: "0.02em",
         }}
       >
-        {iniciales}
+        {mostrarFoto ? (
+          <img
+            src={fotoUrl!}
+            alt={nombre || "Contacto"}
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            onError={() => setImgFallida(true)}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        ) : (
+          iniciales
+        )}
       </div>
       <span
         style={{

@@ -893,12 +893,36 @@ export function ConsolaDirectorioContactos({ negocio }: ConsolaDirectorioContact
         id: "nombre",
         encabezado: "Contacto Consolidado",
         valor: (r) => r.nombreConsolidado,
-        render: (r) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ color: "var(--ct-1f1c19, #1F1C19)", fontSize: "0.84rem" }}>{r.nombreConsolidado}</strong>
-            {r.correo && <span style={{ fontSize: "0.73rem", color: "var(--ct-7b746b, #7B746B)" }}>{r.correo}</span>}
-          </div>
-        ),
+        render: (r) => {
+          const fotoUrl =
+            typeof r.detalle?.fotoUrl === "string" && /^https?:\/\//i.test(r.detalle.fotoUrl)
+              ? r.detalle.fotoUrl
+              : null;
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {fotoUrl && (
+                <img
+                  src={fotoUrl}
+                  alt={r.nombreConsolidado}
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                  style={{
+                    width: "26px",
+                    height: "26px",
+                    borderRadius: "999px",
+                    objectFit: "cover",
+                    flexShrink: 0,
+                    border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                  }}
+                />
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <strong style={{ color: "var(--ct-1f1c19, #1F1C19)", fontSize: "0.84rem" }}>{r.nombreConsolidado}</strong>
+                {r.correo && <span style={{ fontSize: "0.73rem", color: "var(--ct-7b746b, #7B746B)" }}>{r.correo}</span>}
+              </div>
+            </div>
+          );
+        },
       },
       {
         id: "telefono",

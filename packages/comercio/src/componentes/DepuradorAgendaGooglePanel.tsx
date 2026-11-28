@@ -646,9 +646,17 @@ export function DepuradorAgendaGooglePanel({
         { nombre: nombreResumenGoogle, total: res.fichas.length },
       ]);
       setModalSync(null);
+      const infoFotos =
+        res.fotosDetectadas > 0
+          ? ` · 📷 ${res.fotosDetectadas} foto(s) de perfil sincronizadas${
+              res.chatsConFotoActualizados > 0
+                ? ` (${res.chatsConFotoActualizados} chat(s) en vivo actualizados)`
+                : ""
+            }`
+          : "";
       setMensaje({
         tipo: "ok",
-        texto: `Se leyeron ${res.fichas.length} contactos en vivo desde ${res.correoGoogle}. Revisa la depuración abajo.`,
+        texto: `Se leyeron ${res.fichas.length} contactos en vivo desde ${res.correoGoogle}${infoFotos}. Revisa la depuración abajo.`,
       });
       await cargarEstadoGoogle();
       desplazarAResultados();
@@ -2886,6 +2894,23 @@ export function DepuradorAgendaGooglePanel({
                       onChange={(e) => actualizarFicha(f.id, { seleccionado: e.target.checked })}
                       style={{ marginTop: "4px", flexShrink: 0 }}
                     />
+
+                    {f.fotoUrl && (
+                      <img
+                        src={f.fotoUrl}
+                        alt={f.nombreLimpio}
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "999px",
+                          objectFit: "cover",
+                          flexShrink: 0,
+                          border: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                        }}
+                      />
+                    )}
 
                     <div style={{ flex: "1 1 200px", display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>

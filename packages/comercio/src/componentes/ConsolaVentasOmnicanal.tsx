@@ -63,6 +63,7 @@ import {
   listarEntregaInmediataAction,
   obtenerInventarioRosasAction,
 } from "../acciones-operaciones-taller";
+import { sincronizarFotosGoogleContactsAction } from "../acciones-google-contacts";
 import {
   formatearFechaCorteInventario,
   formatearResumenInventarioTexto,
@@ -1008,6 +1009,7 @@ export function ConsolaVentasOmnicanal({
     useState<ConversacionOmnicanal | null>(null);
   const [eliminandoConversacion, setEliminandoConversacion] = useState<boolean>(false);
   const [actualizandoPrivacidad, setActualizandoPrivacidad] = useState<boolean>(false);
+  const [sincronizandoFotosGoogle, setSincronizandoFotosGoogle] = useState<boolean>(false);
   const [lineaWhatsappFiltroId, setLineaWhatsappFiltroId] = useState<string>("");
   const esAdminAplicacion = Boolean(tablero.esAdminAplicacion);
   const [modalFichaClienteContexto, setModalFichaClienteContexto] = useState<{
@@ -2513,6 +2515,21 @@ export function ConsolaVentasOmnicanal({
     }
   };
 
+  const handleSincronizarFotosGoogle = async () => {
+    setSincronizandoFotosGoogle(true);
+    setErrorMsg(null);
+    const res = await sincronizarFotosGoogleContactsAction({ negocio: negNorm });
+    setSincronizandoFotosGoogle(false);
+    if (!res.ok) {
+      setErrorMsg(res.error);
+      return;
+    }
+    await recargarTablero(true);
+    setMensajeInfo(
+      `📷 Fotos Google sincronizadas (${res.cuentasProcesadas} cuenta${res.cuentasProcesadas === 1 ? "" : "s"}): ${res.fotosDetectadas} foto(s) encontradas · ${res.chatsActualizados} chat(s) en vivo actualizados.`
+    );
+  };
+
   const handleCambiarPrivacidadChat = async (
     accion: "MARCAR_PERSONAL" | "PASAR_A_VENTAS" | "ACTIVAR_IA_CLIENTE",
     politicaPersonal: "SOLO_TITULAR" | "OCULTO_ADMIN" | "IGNORAR_TOTAL" = "SOLO_TITULAR",
@@ -3653,6 +3670,35 @@ export function ConsolaVentasOmnicanal({
             </span>
           </div>
 
+          {modoLayoutInbox !== "movil" && esAdminAplicacion && (
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              disabled={sincronizandoFotosGoogle}
+              onClick={() => void handleSincronizarFotosGoogle()}
+              title="Traer fotos de perfil y nombres de tus contactos desde Google Contacts hacia los chats en vivo"
+              aria-label="Fotos Google"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 11px",
+                borderRadius: "9px",
+                border: "1px solid var(--cb-bfdbfe, #BFDBFE)",
+                background: "var(--cf-eef4ff, #EFF6FF)",
+                color: "var(--ct-1e40af, #1E40AF)",
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                cursor: sincronizandoFotosGoogle ? "wait" : "pointer",
+              }}
+            >
+              {sincronizandoFotosGoogle ? <Loader2 size={14} /> : <Camera size={14} />}
+              <span className="btn-texto-responsive">
+                {sincronizandoFotosGoogle ? "Cargando…" : "Fotos Google"}
+              </span>
+            </button>
+          )}
+
           {modoLayoutInbox !== "movil" && (
             <button
               type="button"
@@ -4374,6 +4420,7 @@ export function ConsolaVentasOmnicanal({
                         <AvatarConCanalOmnicanal
                           nombre={grupo.nombreMostrado}
                           canal={convActivaEnGrupo.canal}
+                          fotoUrl={convActivaEnGrupo.remitenteFotoUrl || conv.remitenteFotoUrl}
                           size={38}
                         />
 
@@ -5010,6 +5057,7 @@ export function ConsolaVentasOmnicanal({
                         <AvatarConCanalOmnicanal
                           nombre={conversacionActiva.remitenteNombre}
                           canal={conversacionActiva.canal}
+                          fotoUrl={conversacionActiva.remitenteFotoUrl}
                           size={34}
                         />
                       </button>

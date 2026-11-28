@@ -296,6 +296,7 @@ export interface ConversacionOmnicanal {
   remitenteNombre: string;
   remitenteCorreo?: string | null;
   remitenteTelefono?: string | null;
+  remitenteFotoUrl?: string | null;
   usuarioId?: string | null;
   clienteId?: string | null;
   estadoAtencion: EstadoAtencionOmnicanal;
