@@ -7,6 +7,7 @@ import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   AlertTriangle,
   ArrowLeft,
+  Award,
   BarChart3,
   Bot,
   Building2,
@@ -18,6 +19,7 @@ import {
   ClipboardList,
   Clock,
   CreditCard,
+  DollarSign,
   Download,
   ExternalLink,
   FileText,
@@ -138,8 +140,12 @@ import {
   nombreLegibleCanal,
 } from "./IconoCanalOmnicanal";
 import { ModalAdministrarEtiquetas } from "./ModalAdministrarEtiquetas";
+import { ModalCierreVentaComision } from "./ModalCierreVentaComision";
 import { ModalFichaClienteOmnicanal } from "./ModalFichaClienteOmnicanal";
 import { ModalLinkPagoChat } from "./ModalLinkPagoChat";
+import { TableroVentasComisiones } from "./TableroVentasComisiones";
+import { calcularParticipacionChatOmnicanal } from "../comisiones";
+import { obtenerTableroComisionesAction } from "../acciones-comisiones";
 import {
   ModalSelectorCatalogoChat,
   type SeleccionProductoCatalogoChat,
@@ -166,6 +172,7 @@ type PestanaPrincipal =
   | "chat_equipo"
   | "simulador_ia"
   | "compras"
+  | "ventas_comisiones"
   | "usuarios"
   | "ia_config";
 type FiltroBandejaIzquierda =
@@ -981,6 +988,9 @@ export function ConsolaVentasOmnicanal({
   const [vistaMenuOpciones, setVistaMenuOpciones] = useState<"principal" | "asignar">("principal");
   const [modalCatalogoChatAbierto, setModalCatalogoChatAbierto] = useState<boolean>(false);
   const [modalLinkPagoAbierto, setModalLinkPagoAbierto] = useState<boolean>(false);
+  const [modalCierreVentaAbierto, setModalCierreVentaAbierto] = useState<boolean>(false);
+  const [tasasComisionMapa, setTasasComisionMapa] = useState<Record<string, number>>({});
+  const [tasaComisionDefectoPct, setTasaComisionDefectoPct] = useState<number>(5);
   const [montoLinkPagoOverride, setMontoLinkPagoOverride] = useState<number | null>(null);
   const [configCheckoutTienda, setConfigCheckoutTienda] =
     useState<ConfiguracionTiendaCheckout | null>(null);
@@ -1935,6 +1945,26 @@ export function ConsolaVentasOmnicanal({
     );
   }, [conversacionActiva, tablero.usuariosYClientes]);
 
+  const participacionChatActiva = useMemo(
+    () => calcularParticipacionChatOmnicanal(mensajesActivos, tablero.equipo),
+    [mensajesActivos, tablero.equipo]
+  );
+
+  useEffect(() => {
+    let cancelado = false;
+    obtenerTableroComisionesAction({ negocio: negNorm, periodo: "hoy" })
+      .then((res) => {
+        if (!cancelado && res.ok) {
+          setTasasComisionMapa(res.datos.tasasMapa);
+          setTasaComisionDefectoPct(res.datos.tasaPorDefectoPct);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, [negNorm]);
+
   const respuestasSugeridasPorAtajo = useMemo(() => {
     const t = textoRespuesta.trim().toLowerCase();
     if (!mostrarMenuRespuestas && !t.startsWith("/")) return [];
@@ -2830,9 +2860,15 @@ export function ConsolaVentasOmnicanal({
   };
 
   const handleCerrarConversacionConMotivo = async (
-    motivoCodigo: CodigoMotivoCierreOmnicanal
+    motivoCodigo: CodigoMotivoCierreOmnicanal,
+    saltarModalVenta = false
   ) => {
     if (!conversacionActiva) return;
+    if (motivoCodigo === "VENTA_COMPLETADA" && !saltarModalVenta) {
+      setMenuCabeceraAbierto(null);
+      setModalCierreVentaAbierto(true);
+      return;
+    }
     const defMotivo = MOTIVOS_CIERRE_OMNICANAL.find((m) => m.codigo === motivoCodigo);
     const notaLimpia = notaCierreInput.trim() || null;
 
@@ -3607,6 +3643,12 @@ export function ConsolaVentasOmnicanal({
                 cortoMovil: "Compras",
                 icono: ShoppingBag,
                 contador: metricas.totalComprasWeb,
+              },
+              {
+                id: "ventas_comisiones" as const,
+                etiqueta: "Ventas y Comisiones",
+                cortoMovil: "Ventas",
+                icono: DollarSign,
               },
               {
                 id: "usuarios" as const,
@@ -7349,6 +7391,108 @@ export function ConsolaVentasOmnicanal({
                   </div>
                 )}
 
+                {/* Indicador en vivo de participación colaborativa (IA vs Equipo) */}
+                {participacionChatActiva.totalMensajesAtencion > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                      padding: modoLayoutInbox === "movil" ? "5px 10px" : "5px 14px",
+                      background: "var(--cf-ffffff, #FFFFFF)",
+                      borderBottom: "1px solid var(--cb-e6e2da, #E6E2DA)",
+                      overflowX: "auto",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        flexWrap: "nowrap",
+                        minWidth: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.67rem",
+                          fontWeight: 700,
+                          color: "var(--ct-847d74, #847D74)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Participación:
+                      </span>
+                      {participacionChatActiva.participantes.map((p) => {
+                        const esLider =
+                          !p.esIa && participacionChatActiva.liderHumano?.clave === p.clave;
+                        return (
+                          <span
+                            key={p.clave}
+                            title={`${p.nombre}: ${p.porcentajeReal}% (${p.mensajesConteo} mensajes)`}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              padding: "1px 7px",
+                              borderRadius: "999px",
+                              fontSize: "0.66rem",
+                              fontWeight: 700,
+                              whiteSpace: "nowrap",
+                              background: p.esIa
+                                ? "var(--cf-f2f6f3, #F2F6F3)"
+                                : esLider
+                                  ? "var(--cf-faf6ec, #FAF6EC)"
+                                  : "var(--cf-f8f7f4, #F8F7F4)",
+                              color: p.esIa
+                                ? "var(--ct-2f4737, #2F4737)"
+                                : esLider
+                                  ? "var(--ct-745622, #745622)"
+                                  : "var(--ct-57524c, #57524C)",
+                              border: esLider
+                                ? "1px solid var(--cb-e8dec6, #E8DEC6)"
+                                : "1px solid var(--cb-e6e2da, #E6E2DA)",
+                            }}
+                          >
+                            {p.esIa && <Bot size={10} />}
+                            {esLider && <Award size={10} />}
+                            <span>
+                              {p.esIa ? "IA" : p.nombre.split(" ")[0]} {p.porcentajeReal}%
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setModalCierreVentaAbierto(true)}
+                      title="Cerrar venta y definir reparto de comisión"
+                      aria-label="Cerrar venta"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "3px 8px",
+                        borderRadius: "7px",
+                        border: "1px solid var(--cb-ceddd3, #CEDDD3)",
+                        background: "var(--cf-f2f6f3, #F2F6F3)",
+                        color: "var(--ct-2f4737, #2F4737)",
+                        fontSize: "0.68rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <DollarSign size={11} />
+                      <span>Cerrar venta</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Línea de Tiempo de Mensajes — Paleta Limpia y Sobria */}
                 <div
                   ref={scrollMensajesRef}
@@ -9113,6 +9257,17 @@ export function ConsolaVentasOmnicanal({
       )}
 
       {/* =====================================================================
+          PESTAÑA 2.5: VENTAS CERRADAS Y COMISIONES (HOY PARA ASESORES / FULL ADMIN)
+      ===================================================================== */}
+      {pestana === "ventas_comisiones" && (
+        <TableroVentasComisiones
+          negocio={negNorm}
+          equipo={tablero.equipo}
+          esMovil={modoLayoutInbox === "movil"}
+        />
+      )}
+
+      {/* =====================================================================
           PESTAÑA 2: COMPRAS REALIZADAS EN LA WEB (REGISTRADOS Y NO REGISTRADOS)
       ===================================================================== */}
       {pestana === "compras" && (
@@ -9654,6 +9809,30 @@ export function ConsolaVentasOmnicanal({
             }),
           }));
           setMensajeInfo("Ficha del cliente guardada y sincronizada en todos sus canales.");
+        }}
+      />
+
+      {/* Modal de Cierre de Venta y Reparto de Comisiones Colaborativas */}
+      <ModalCierreVentaComision
+        abierto={modalCierreVentaAbierto}
+        negocio={negNorm}
+        esAdmin={esAdminAplicacion}
+        esMovil={modoLayoutInbox === "movil"}
+        conversacion={conversacionActiva}
+        mensajes={mensajesActivos}
+        equipo={tablero.equipo}
+        comprasVinculadas={comprasDeConversacionActiva}
+        tasasPorUsuarioId={tasasComisionMapa}
+        tasaPorDefectoPct={tasaComisionDefectoPct}
+        onCerrar={() => setModalCierreVentaAbierto(false)}
+        onGuardado={(ventaGuardada) => {
+          setModalCierreVentaAbierto(false);
+          setMensajeInfo(
+            `✅ Venta registrada ($${ventaGuardada.desglose.ventaTotalUsd.toFixed(2)} · Comisión $${ventaGuardada.totalComisionUsd.toFixed(2)}).`
+          );
+          if (conversacionActiva && conversacionActiva.estadoAtencion !== "CERRADO") {
+            void handleCerrarConversacionConMotivo("VENTA_COMPLETADA", true);
+          }
         }}
       />
 

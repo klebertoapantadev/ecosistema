@@ -21,7 +21,7 @@ responsable: Kleber Toapanta
 | :--- | :--- | :---: | :---: | :--- |
 | **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-002`** | **E-Commerce Web, Separación Vertical (Flores / Renta / Eventos), Proformas Multi-Variación + PDF, Pasarela PLUX y Facturación Electrónica SRI** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
+| **`TNK-003`** | **Vendedoras, Atención Colaborativa con Indicadores de Participación (IA vs Equipo), Ventas Diarias y Liquidación de Comisiones Variables por Asesor** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat, Visor Multimedia Bidireccional y Consola (HITL)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-005`** | **Taller de Armado Floral, Pantalla Smart TV Taller & Showroom Eventos (YouTube Elástico, Prioridad Manual, Colores/Extras y Google Fotos + QR), Inventario IA de Bonches, Galería Entrega Inmediata (1–2h) y Entregas GPS Offline + Informes IESS** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-006`** | **Chat Grupal de Trabajo del Equipo (`@menciones`, Fotografías, Respuestas Citadas y Reenvío Bidireccional WhatsApp ↔ Equipo)** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -97,10 +97,10 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
   - **Clientes No Registrados / Invitados (`clienteRegistrado = false` y `envioGratisSoloRegistrados = true`):** No disponen de zona de cobertura gratuita; todo envío a domicilio cobra la **tarifa mínima de `$1.00 USD` + `$0.50 USD` por kilómetro** (`tarifaBaseNoRegistradoUsd` + `tarifaPorKmNoRegistradoUsd × km`), mostrando en vivo cuánto ahorraría si crea su cuenta gratuita y recalculando a `$0.00` automáticamente tras registrarse.
   - Aplica **redondeo comercial en tramos de `$0.50 USD`** (`< 25 ctv` baja al entero `.00`; `25 a 50 ctv` aproxima a `.50`; `> 50 ctv` sube al siguiente entero superior), geocodificación inversa automática y solapamiento de áreas aplicando la tarifa más baja. La fórmula interna nunca se muestra al cliente, pero se audita íntegramente en `/panel/pedidos`.
 
-### TNK-003 — Gestión de Vendedoras y Liquidación Automatizada de Comisiones
-- **Enlaces con Atribución:** Cada asesora cuenta con enlaces y QR únicos (`tinkay.com/chat?asesora=paola`) para atribución de la conversación y venta.
-- **Fórmula de Base Comisionable Neta:** La comisión se calcula sobre la utilidad bruta operativa deduciendo descuentos, delivery real, montajes, fees de plataforma y la comisión de pasarela (Payphone).
-- **Widget de Liquidación:** Reporte quincenal en el panel administrativo para pago ágil a las vendedoras sin hojas de cálculo manuales.
+### TNK-003 — Gestión de Vendedoras, Atención Colaborativa y Liquidación Automatizada de Comisiones
+- **Atención Colaborativa sin Bloqueo Exclusivo (`comisiones.ts`, `ConsolaVentasOmnicanal.tsx`):** Cualquier integrante del equipo puede tomar o retomar un chat; el sistema calcula en tiempo real los porcentajes de participación sobre las respuestas salientes al cliente (`IA` vs cada asesor humano, ej. `IA 50% · Nan 30% · Kleber 10% · Johana 10%`) e identifica automáticamente al líder humano de mayor aporte.
+- **Comisión Variable por Asesor y Decisión de Reparto al Cierre (`20261128000003_comisiones_ventas_colaborativas_y_tasas_asesor.sql`, `ModalCierreVentaComision.tsx`):** Cada asesor tiene su propia tasa de comisión configurable por el Administrador (`com_comision_asesor_tasa`). Al marcar `Venta completada` se registra el desglose financiero (`Venta Total`, `Arreglo`, `Extras`, `Delivery fijo`, `Cargo extra delivery`, `Descuentos`, `Pasarela` → `Base Comisionable Neta`) y por defecto preselecciona al líder humano (`Ganador único 100%`), permitiendo al Administrador optar por `Ganador único`, `Proporcional real (IA queda para tienda)`, `Proporcional humanos (100%)` o `Manual libre (%)`.
+- **Tablero Diario y Liquidación con Visibilidad Estricta por Rol (`TableroVentasComisiones.tsx`, `acciones-comisiones.ts`):** Los asesores de ventas visualizan únicamente las ventas de **HOY** (propias, de sus compañeros y total diario de tienda), bloqueando a nivel de UI, Server Action y RLS cualquier consulta semanal o mensual; los Administradores acceden a todos los periodos (`Hoy`, `Ayer`, `Semana`, `Quincena`, `Mes`, `Rango`), ajuste de tasas/reparto, aprobación/pago y exportación `DataGrid`.
 
 ### TNK-004 — Agente ARIA WhatsApp (YCloud) y Consola de Supervisión Humana (*Human-in-the-Loop*)
 - **Definición completa:** [`agente-aria-whatsapp-ycloud.md`](agente-aria-whatsapp-ycloud.md).
